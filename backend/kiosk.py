@@ -21,7 +21,11 @@ def launch_kiosk(url: str):
         
     try:
         cmd = []
-        if shutil.which('google-chrome'):
+        if shutil.which('brave-browser'):
+            cmd = ['brave-browser', f'--app={url}', '--kiosk', '--start-maximized', '--no-errdialogs', '--disable-infobars']
+        elif shutil.which('brave'):
+            cmd = ['brave', f'--app={url}', '--kiosk', '--start-maximized', '--no-errdialogs', '--disable-infobars']
+        elif shutil.which('google-chrome'):
             cmd = ['google-chrome', f'--app={url}', '--kiosk', '--start-maximized', '--no-errdialogs', '--disable-infobars']
         elif shutil.which('chromium-browser'):
             cmd = ['chromium-browser', f'--app={url}', '--kiosk', '--start-maximized', '--no-errdialogs', '--disable-infobars']
