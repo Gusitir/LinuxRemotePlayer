@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Remote Player</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white flex flex-col items-center justify-center h-screen select-none">
+
+    <div class="mb-8 text-center">
+        <h1 class="text-3xl font-bold text-blue-400">Remote Kiosk</h1>
+        <p id="status" class="text-red-500 text-sm">Disconnected</p>
+    </div>
+
+    <!-- D-Pad -->
+    <div class="grid grid-cols-3 gap-2 mb-8">
+        <div></div>
+        <button onclick="sendKey('BTN_DPAD_UP')" class="bg-gray-700 p-4 rounded-lg active:bg-gray-500">Up</button>
+        <div></div>
+        <button onclick="sendKey('BTN_DPAD_LEFT')" class="bg-gray-700 p-4 rounded-lg active:bg-gray-500">Left</button>
+        <button onclick="sendKey('BTN_A')" class="bg-blue-600 p-4 rounded-lg active:bg-blue-400 font-bold">OK</button>
+        <button onclick="sendKey('BTN_DPAD_RIGHT')" class="bg-gray-700 p-4 rounded-lg active:bg-gray-500">Right</button>
+        <div></div>
+        <button onclick="sendKey('BTN_DPAD_DOWN')" class="bg-gray-700 p-4 rounded-lg active:bg-gray-500">Down</button>
+        <div></div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex gap-4">
+        <button onclick="sendKey('BTN_B')" class="bg-red-600 px-6 py-3 rounded-full active:bg-red-400 font-bold">Back</button>
+        <button class="bg-green-600 px-6 py-3 rounded-full active:bg-green-400 font-bold">🎤 Voice</button>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
