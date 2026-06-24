@@ -7,6 +7,8 @@ from kiosk import launch_kiosk, kill_existing_kiosks
 from ai_pipeline import transcribe_audio, parse_intent
 from auth import validate_license_and_increment
 import json
+import os
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI(title="LinuxRemotePlayer API")
 
@@ -105,3 +107,6 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
                 await websocket.send_text(json.dumps({"status": "received", "payload": payload}))
     except WebSocketDisconnect:
         print("Client disconnected")
+
+frontend_path = os.path.join(os.path.dirname(__file__), "..", "frontend")
+app.mount("/", StaticFiles(directory=frontend_path, html=True), name="static")
