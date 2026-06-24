@@ -14,8 +14,10 @@ class VirtualGamepad:
         if not EVDEV_AVAILABLE:
             return
             
+        # Añadir teclas del 1 al 100 (las más comunes del teclado) para que el entorno gráfico no ignore el dispositivo
+        keys = list(range(1, 100)) + [e.BTN_A, e.BTN_B, e.BTN_X, e.BTN_Y, e.BTN_START, e.BTN_SELECT, e.BTN_DPAD_UP, e.BTN_DPAD_DOWN, e.BTN_DPAD_LEFT, e.BTN_DPAD_RIGHT, e.KEY_UP, e.KEY_DOWN, e.KEY_LEFT, e.KEY_RIGHT, e.KEY_ENTER, e.KEY_ESC, e.KEY_BACKSPACE, e.KEY_PLAYPAUSE]
         cap = {
-            e.EV_KEY: [e.BTN_A, e.BTN_B, e.BTN_X, e.BTN_Y, e.BTN_START, e.BTN_SELECT, e.BTN_DPAD_UP, e.BTN_DPAD_DOWN, e.BTN_DPAD_LEFT, e.BTN_DPAD_RIGHT, e.KEY_UP, e.KEY_DOWN, e.KEY_LEFT, e.KEY_RIGHT, e.KEY_ENTER, e.KEY_ESC, e.KEY_BACKSPACE, e.KEY_PLAYPAUSE]
+            e.EV_KEY: keys
         }
         try:
             self.ui = UInput(cap, name='LinuxRemotePlayer Virtual Pad', version=0x3)
@@ -29,6 +31,7 @@ class VirtualGamepad:
             
         try:
             btn = getattr(e, btn_code)
+            print(f"[evdev] Injecting key: {btn_code}")
             self.ui.write(e.EV_KEY, btn, 1)
             self.ui.syn()
             await asyncio.sleep(0.05)

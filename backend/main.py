@@ -65,6 +65,9 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
         while True:
             message = await websocket.receive()
             
+            if message.get("type") == "websocket.disconnect":
+                break
+                
             if message.get("bytes"):
                 audio_data = message.get("bytes")
                 
