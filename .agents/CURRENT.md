@@ -1,8 +1,10 @@
-PHASE: 2 (KIOSK & DISCOVERY)
+PHASE: 3 (CLOUD AI)
 STATUS: DONE
 
 TASKS:
-- [x] Implement `backend/discovery.py` to parse `/usr/share/applications/` .desktop files.
-- [x] Implement `backend/kiosk.py` using `subprocess` to launch Chromium in kiosk mode and kill previous instances.
-- [x] Integrate discovery and kiosk endpoints in `backend/main.py`.
-- [x] Update `frontend/index.html` and `app.js` to fetch and render the app grid dynamically.
+- [x] Set up Supabase connection and Edge function endpoints for license validation.
+- [x] Implement Audio capture (MediaRecorder API) in `frontend/app.js` and add voice button logic.
+- [x] Implement audio binary reception in `backend/main.py` WebSockets.
+- [x] Integrate NVIDIA NIM API (Nemotron-3.5-ASR) for Speech-to-Text in backend.
+- [x] Integrate OpenRouter API (llama-3.1-8b-instruct:free) for Intent Parsing.
+- [x] Execute parsed intent locally (launch_kiosk, media_control, etc).

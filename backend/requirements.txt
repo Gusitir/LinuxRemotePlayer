@@ -1,3 +1,6 @@
 fastapi
 uvicorn[standard]
 evdev
+python-dotenv
+supabase
+httpx
