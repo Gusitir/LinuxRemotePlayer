@@ -1,8 +1,8 @@
-# PH1: SCAFFOLD & CORE (FASTAPI+EVDEV)
-- [ ] Dir init (backend, frontend, scripts)
-- [ ] backend/main.py (FastAPI, WebSockets)
-- [ ] backend/input_emulator.py (evdev gamepad/media)
-- [ ] frontend/ PWA base (index.html, app.js, css)
+# PH1: SCAFFOLD & CORE (FASTAPI+EVDEV) - [DONE]
+- [x] Dir init (backend, frontend, scripts)
+- [x] backend/main.py (FastAPI, WebSockets)
+- [x] backend/input_emulator.py (evdev gamepad/media)
+- [x] frontend/ PWA base (index.html, app.js, css)
 
 # PH2: KIOSK & DISCOVERY
 - [ ] Parse .desktop files

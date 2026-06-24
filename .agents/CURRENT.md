@@ -1,10 +1,8 @@
-PHASE: 1 (SCAFFOLD & CORE)
+PHASE: 2 (KIOSK & DISCOVERY)
 STATUS: DONE
 
 TASKS:
-- [x] Create `backend`, `frontend`, `scripts` dirs.
-- [x] Create `backend/requirements.txt` (fastapi, uvicorn, evdev).
-- [x] Implement `backend/input_emulator.py` (evdev setup).
-- [x] Implement `backend/main.py` (WebSocket echo + evdev test).
-- [x] Implement `frontend/index.html` (Basic UI gamepad).
-- [x] Implement `frontend/app.js` (WebSocket connection & payload sender).
+- [x] Implement `backend/discovery.py` to parse `/usr/share/applications/` .desktop files.
+- [x] Implement `backend/kiosk.py` using `subprocess` to launch Chromium in kiosk mode and kill previous instances.
+- [x] Integrate discovery and kiosk endpoints in `backend/main.py`.
+- [x] Update `frontend/index.html` and `app.js` to fetch and render the app grid dynamically.

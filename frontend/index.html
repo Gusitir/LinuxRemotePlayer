@@ -6,30 +6,57 @@
     <title>Remote Player</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-900 text-white flex flex-col items-center justify-center h-screen select-none">
+<body class="bg-gray-900 text-white flex flex-col h-screen select-none">
 
-    <div class="mb-8 text-center">
-        <h1 class="text-3xl font-bold text-blue-400">Remote Kiosk</h1>
-        <p id="status" class="text-red-500 text-sm">Disconnected</p>
+    <!-- Header -->
+    <div class="p-4 flex justify-between items-center bg-gray-800 shadow-md">
+        <h1 class="text-xl font-bold text-blue-400">Remote Kiosk</h1>
+        <p id="status" class="text-red-500 text-sm font-bold">Disconnected</p>
     </div>
 
-    <!-- D-Pad -->
-    <div class="grid grid-cols-3 gap-2 mb-8">
-        <div></div>
-        <button onclick="sendKey('BTN_DPAD_UP')" class="bg-gray-700 p-4 rounded-lg active:bg-gray-500">Up</button>
-        <div></div>
-        <button onclick="sendKey('BTN_DPAD_LEFT')" class="bg-gray-700 p-4 rounded-lg active:bg-gray-500">Left</button>
-        <button onclick="sendKey('BTN_A')" class="bg-blue-600 p-4 rounded-lg active:bg-blue-400 font-bold">OK</button>
-        <button onclick="sendKey('BTN_DPAD_RIGHT')" class="bg-gray-700 p-4 rounded-lg active:bg-gray-500">Right</button>
-        <div></div>
-        <button onclick="sendKey('BTN_DPAD_DOWN')" class="bg-gray-700 p-4 rounded-lg active:bg-gray-500">Down</button>
-        <div></div>
+    <!-- Main Content Tabs (Apps vs Remote) -->
+    <div class="flex-1 overflow-y-auto p-4" id="main-content">
+        <!-- App Grid -->
+        <h2 class="text-lg font-semibold mb-4 text-gray-400">Suggested Web Kiosks</h2>
+        <div id="suggested-grid" class="grid grid-cols-3 gap-4 mb-8">
+            <!-- Rendered by JS -->
+        </div>
+
+        <h2 class="text-lg font-semibold mb-4 text-gray-400">Native Apps</h2>
+        <div id="apps-grid" class="grid grid-cols-3 gap-4 mb-8">
+            <!-- Rendered by JS -->
+        </div>
     </div>
 
-    <!-- Actions -->
-    <div class="flex gap-4">
-        <button onclick="sendKey('BTN_B')" class="bg-red-600 px-6 py-3 rounded-full active:bg-red-400 font-bold">Back</button>
-        <button class="bg-green-600 px-6 py-3 rounded-full active:bg-green-400 font-bold">🎤 Voice</button>
+    <!-- Remote Control UI (Floating or Bottom) -->
+    <div class="bg-gray-800 p-4 rounded-t-3xl shadow-[0_-4px_10px_rgba(0,0,0,0.5)]">
+        <div class="flex justify-between items-center mb-4">
+            <button onclick="killKiosk()" class="bg-red-700 px-4 py-2 rounded-lg text-sm font-bold">Close App</button>
+            <button class="bg-green-600 px-6 py-2 rounded-full active:bg-green-400 font-bold flex items-center gap-2">
+                🎤 Voice
+            </button>
+        </div>
+
+        <!-- D-Pad and Buttons -->
+        <div class="flex justify-between items-center">
+            <!-- D-Pad -->
+            <div class="grid grid-cols-3 gap-2">
+                <div></div>
+                <button onclick="sendKey('BTN_DPAD_UP')" class="bg-gray-700 w-12 h-12 rounded-lg active:bg-gray-500 flex justify-center items-center font-bold">U</button>
+                <div></div>
+                <button onclick="sendKey('BTN_DPAD_LEFT')" class="bg-gray-700 w-12 h-12 rounded-lg active:bg-gray-500 flex justify-center items-center font-bold">L</button>
+                <button onclick="sendKey('BTN_A')" class="bg-blue-600 w-12 h-12 rounded-lg active:bg-blue-400 font-bold flex justify-center items-center">OK</button>
+                <button onclick="sendKey('BTN_DPAD_RIGHT')" class="bg-gray-700 w-12 h-12 rounded-lg active:bg-gray-500 flex justify-center items-center font-bold">R</button>
+                <div></div>
+                <button onclick="sendKey('BTN_DPAD_DOWN')" class="bg-gray-700 w-12 h-12 rounded-lg active:bg-gray-500 flex justify-center items-center font-bold">D</button>
+                <div></div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col gap-4">
+                <button onclick="sendKey('BTN_B')" class="bg-red-600 w-16 h-16 rounded-full active:bg-red-400 font-bold">Back</button>
+            </div>
+        </div>
     </div>
 
     <script src="app.js"></script>
