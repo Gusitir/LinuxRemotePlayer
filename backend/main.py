@@ -24,6 +24,15 @@ app.add_middleware(
 def health_check():
     return {"status": "ok"}
 
+@app.get("/api/debug")
+def debug_info():
+    import input_emulator
+    return {
+        "evdev_available": input_emulator.EVDEV_AVAILABLE,
+        "is_ui_created": getattr(input_emulator.gamepad, 'ui', None) is not None,
+        "os": __import__('platform').system()
+    }
+
 @app.get("/api/apps")
 def list_apps():
     return {
