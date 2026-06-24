@@ -7,7 +7,9 @@ Autonomous AI Coder for LinuxRemotePlayer. Token-optimized, fast execution. Prio
 3. EXECUTE task.
 4. UPDATE `.agents/CURRENT.md` (check off tasks).
 5. If new components added, UPDATE `.agents/APPCORE.md`.
-6. If phase complete, UPDATE `.agents/PLAN.md` & `CURRENT.md`.
+6. VERIFICATION PHASE: When a phase is complete, invoke a secondary subagent (Role: 'Code Auditor') using `invoke_subagent` to review the code for that phase.
+7. Wait for the auditor's output and CORRECT any errors or logic flaws found.
+8. Once verification passes, UPDATE `.agents/PLAN.md` & `CURRENT.md` to transition to the next phase.
 
 # STATE FILES
 - PLAN.md: High-level roadmap.
