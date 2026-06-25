@@ -1,12 +1,15 @@
 import asyncio
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Header, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from input_emulator import gamepad
 from discovery import get_installed_apps
 from kiosk import launch_kiosk, kill_existing_kiosks
 from ai_pipeline import transcribe_audio, parse_intent
-from auth import validate_license_and_increment
+from auth import validate_license_and_increment, verify_access
 import json
+import re
+import subprocess
+from urllib.parse import quote_plus
 import os
 from fastapi.staticfiles import StaticFiles
 
@@ -15,7 +18,7 @@ app = FastAPI(title="LinuxRemotePlayer API")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -45,7 +48,11 @@ def list_apps():
         ]
     }
 
-@app.post("/api/kiosk/launch")
+def require_token(x_auth_token: str = Header(default="")):
+    if not verify_access(x_auth_token):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+@app.post("/api/kiosk/launch", dependencies=[Depends(require_token)])
 async def start_kiosk(payload: dict):
     target = payload.get("url")
     if target:
@@ -53,55 +60,90 @@ async def start_kiosk(payload: dict):
         return {"status": "success" if success else "error"}
     return {"status": "error", "message": "Missing url"}
 
-@app.post("/api/kiosk/kill")
+@app.post("/api/kiosk/kill", dependencies=[Depends(require_token)])
 async def stop_kiosk():
     kill_existing_kiosks()
     return {"status": "success"}
 
+@app.post("/api/app/launch", dependencies=[Depends(require_token)])
+async def launch_native_app(payload: dict):
+    app_id = payload.get("id")
+    if not app_id:
+        return {"status": "error", "message": "Missing id"}
+    match = next((a for a in get_installed_apps() if a["id"] == app_id), None)
+    if not match or not match.get("exec"):
+        return {"status": "error", "message": "App not found"}
+    import shlex
+    cleaned = re.sub(r'%[a-zA-Z]', '', match["exec"]).strip()
+    try:
+        subprocess.Popen(shlex.split(cleaned), stdout=subprocess.DEVNULL,
+                         stderr=subprocess.DEVNULL, start_new_session=True)
+        return {"status": "success"}
+    except Exception as ex:
+        return {"status": "error", "message": str(ex)}
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
     await websocket.accept()
+    if not await asyncio.to_thread(verify_access, token):
+        await websocket.send_text(json.dumps({"status": "error", "message": "Unauthorized"}))
+        await websocket.close(code=1008)
+        return
     try:
         while True:
             message = await websocket.receive()
-            
+
             if message.get("type") == "websocket.disconnect":
                 break
-                
+
             if message.get("bytes"):
                 audio_data = message.get("bytes")
-                
+                if len(audio_data) > 5_000_000:
+                    await websocket.send_text(json.dumps({"status": "error", "message": "Audio too large"}))
+                    continue
+
                 # Correr peticion sincrona a supabase en un thread
                 is_valid = await asyncio.to_thread(validate_license_and_increment, token)
                 if not is_valid:
                     await websocket.send_text(json.dumps({"status": "error", "message": "Rate limit exceeded or invalid license."}))
                     continue
-                
+
                 await websocket.send_text(json.dumps({"status": "processing", "message": "Listening..."}))
                 text = await transcribe_audio(audio_data)
-                
+
                 if text:
                     await websocket.send_text(json.dumps({"status": "processing", "message": f"Intent: {text}"}))
                     intent = await parse_intent(text)
-                    
+
                     action = intent.get("action")
                     params = intent.get("parameters", {})
-                    
+
                     if action == "launch_kiosk":
                         target = params.get("target_id")
                         if target:
-                            url = f"https://{target}.com"
-                            if target == "youtube":
-                                url = f"https://youtube.com/results?search_query={params.get('search_query', '')}"
+                            safe_target = re.sub(r'[^a-z0-9]', '', str(target).lower())
+                            if not safe_target:
+                                await websocket.send_text(json.dumps({"status": "error", "message": "Invalid target"}))
+                                continue
+                            url = f"https://{safe_target}.com"
+                            if safe_target == "youtube":
+                                query = quote_plus(params.get('search_query', ''))
+                                url = f"https://youtube.com/results?search_query={query}"
                             launch_kiosk(url)
                             await websocket.send_text(json.dumps({"status": "success", "message": "Launched app"}))
                     elif action == "media_control":
-                        print(f"Media control requested: {params}")
+                        media_key = params.get("key")
+                        allowed_media = {"KEY_VOLUMEUP", "KEY_VOLUMEDOWN", "KEY_MUTE", "KEY_PLAYPAUSE"}
+                        if media_key in allowed_media:
+                            await gamepad.press_button(media_key)
+                            await websocket.send_text(json.dumps({"status": "success", "message": f"Media: {media_key}"}))
+                        else:
+                            await websocket.send_text(json.dumps({"status": "error", "message": "Invalid media key"}))
                     else:
                         await websocket.send_text(json.dumps({"status": "error", "message": "Unknown action"}))
                 else:
                     await websocket.send_text(json.dumps({"status": "error", "message": "Could not understand audio"}))
-                
+
             elif message.get("text"):
                 data = message.get("text")
                 try:
@@ -109,13 +151,18 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
                 except json.JSONDecodeError:
                     await websocket.send_text(json.dumps({"status": "error", "message": "Invalid JSON format"}))
                     continue
-                
+
                 if payload.get("type") == "input" and payload.get("device") == "gamepad":
                     action = payload.get("action")
                     key = payload.get("key")
                     if action == "press" and key:
                         await gamepad.press_button(key)
-                        
+                elif payload.get("action") == "media_control":
+                    media_key = payload.get("parameters", {}).get("key")
+                    allowed_media = {"KEY_VOLUMEUP", "KEY_VOLUMEDOWN", "KEY_MUTE", "KEY_PLAYPAUSE", "KEY_NEXTSONG", "KEY_PREVIOUSSONG"}
+                    if media_key in allowed_media:
+                        await gamepad.press_button(media_key)
+
                 await websocket.send_text(json.dumps({"status": "received", "payload": payload}))
     except WebSocketDisconnect:
         print("Client disconnected")

@@ -21,12 +21,12 @@ OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.1:8b")
 
 async def transcribe_audio(audio_bytes: bytes) -> str:
     files = {'file': ('audio.webm', audio_bytes, 'audio/webm')}
-    
+
     if USE_LOCAL_AI:
         if not LOCAL_WHISPER_URL:
             print("Error: LOCAL_WHISPER_URL no configurado.")
             return ""
-            
+
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.post(
@@ -44,9 +44,9 @@ async def transcribe_audio(audio_bytes: bytes) -> str:
         if not NVIDIA_KEY:
             print("Warning: NVIDIA API key missing. Mocking STT.")
             return "launch youtube"
-            
+
         try:
-            data = {'model': 'nvidia/nemotron-3.5-asr'}
+            data = {'model': os.getenv("NVIDIA_ASR_MODEL", "nvidia/nemotron-3.5-asr")}
             async with httpx.AsyncClient() as client:
                 response = await client.post(
                     NVIDIA_API_URL,
@@ -64,16 +64,16 @@ async def transcribe_audio(audio_bytes: bytes) -> str:
 
 async def parse_intent(transcription: str) -> dict:
     system_prompt = """
-    You are an intent parser for a TV remote. Output ONLY valid JSON. 
-    Allowed actions: 'launch_kiosk', 'media_control', 'search'. 
+    You are an intent parser for a TV remote. Output ONLY valid JSON.
+    Allowed actions: 'launch_kiosk', 'media_control', 'search'.
     Example: {"action": "launch_kiosk", "parameters": {"target_id": "youtube", "search_query": "gatos"}}
     """
-    
+
     if USE_LOCAL_AI:
         if not LOCAL_OLLAMA_URL:
             print("Error: LOCAL_OLLAMA_URL no configurado.")
             return {"action": "error"}
-            
+
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.post(
@@ -98,7 +98,7 @@ async def parse_intent(transcription: str) -> dict:
         if not OPENROUTER_KEY:
             print("Warning: OpenRouter key missing. Mocking LLM.")
             return {"action": "launch_kiosk", "parameters": {"target_id": "youtube"}}
-            
+
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.post(

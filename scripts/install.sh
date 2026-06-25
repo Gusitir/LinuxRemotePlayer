@@ -25,6 +25,14 @@ read -p "Select installation mode [1/2]: " mode
 apt-get update
 apt-get install -y python3-venv python3-dev ufw
 
+# --- evdev / uinput permissions (FIX F1: Phase 6 blocker) ---
+modprobe uinput || true
+echo uinput > /etc/modules-load.d/uinput.conf
+echo 'KERNEL=="uinput", MODE="0660", GROUP="input", OPTIONS+="static_node=uinput"' > /etc/udev/rules.d/99-uinput.rules
+usermod -aG input "$SUDO_USER"
+udevadm control --reload-rules && udevadm trigger
+echo "[i] Added '$SUDO_USER' to 'input' group. REBOOT or re-login required before uinput works."
+
 # Setup Venv
 BACKEND_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../backend" && pwd)"
 cd "$BACKEND_DIR"
@@ -40,7 +48,7 @@ ufw allow 8000/tcp
 if [ "$mode" == "1" ]; then
     echo "Configuring Appliance Mode..."
     echo "[!] Note: Autologin configuration must be done manually depending on your Display Manager."
-    
+
     cat <<EOF > /etc/systemd/system/linuxremoteplayer.service
 [Unit]
 Description=Linux Remote Player Backend API
@@ -66,7 +74,7 @@ else
     echo "Configuring Desktop Mode..."
     USER_SVC_DIR="$USER_HOME/.config/systemd/user"
     sudo -u "$SUDO_USER" mkdir -p "$USER_SVC_DIR"
-    
+
     cat <<EOF > "$USER_SVC_DIR/linuxremoteplayer.service"
 [Unit]
 Description=Linux Remote Player Backend API
@@ -83,7 +91,7 @@ RestartSec=5
 WantedBy=default.target
 EOF
     chown -R "$SUDO_USER":"$SUDO_USER" "$USER_HOME/.config"
-    
+
     export XDG_RUNTIME_DIR="/run/user/$(id -u "$SUDO_USER")"
     sudo -u "$SUDO_USER" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" systemctl --user daemon-reload
     sudo -u "$SUDO_USER" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" systemctl --user enable linuxremoteplayer.service

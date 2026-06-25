@@ -13,9 +13,9 @@ class VirtualGamepad:
         self.ui = None
         if not EVDEV_AVAILABLE:
             return
-            
+
         # Añadir teclas del 1 al 100 (las más comunes del teclado) para que el entorno gráfico no ignore el dispositivo
-        keys = list(range(1, 100)) + [e.BTN_A, e.BTN_B, e.BTN_X, e.BTN_Y, e.BTN_START, e.BTN_SELECT, e.BTN_DPAD_UP, e.BTN_DPAD_DOWN, e.BTN_DPAD_LEFT, e.BTN_DPAD_RIGHT, e.KEY_UP, e.KEY_DOWN, e.KEY_LEFT, e.KEY_RIGHT, e.KEY_ENTER, e.KEY_ESC, e.KEY_BACKSPACE, e.KEY_PLAYPAUSE]
+        keys = list(range(1, 100)) + [e.BTN_A, e.BTN_B, e.BTN_X, e.BTN_Y, e.BTN_START, e.BTN_SELECT, e.BTN_DPAD_UP, e.BTN_DPAD_DOWN, e.BTN_DPAD_LEFT, e.BTN_DPAD_RIGHT, e.KEY_UP, e.KEY_DOWN, e.KEY_LEFT, e.KEY_RIGHT, e.KEY_ENTER, e.KEY_ESC, e.KEY_BACKSPACE, e.KEY_PLAYPAUSE, e.KEY_VOLUMEUP, e.KEY_VOLUMEDOWN, e.KEY_MUTE, e.KEY_NEXTSONG, e.KEY_PREVIOUSSONG]
         cap = {
             e.EV_KEY: keys
         }
@@ -28,7 +28,7 @@ class VirtualGamepad:
         if not self.ui or not EVDEV_AVAILABLE:
             print(f"[Mock] Button pressed: {btn_code}")
             return
-            
+
         try:
             btn = getattr(e, btn_code)
             print(f"[evdev] Injecting key: {btn_code}")

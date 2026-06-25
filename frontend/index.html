@@ -42,8 +42,13 @@
                 <div></div>
             </div>
 
-            <div class="flex flex-col gap-4">
+            <div class="flex flex-col gap-2">
                 <button onclick="sendKey('KEY_ESC')" class="bg-red-600 w-16 h-16 rounded-full active:bg-red-400 font-bold">Back</button>
+                <div class="flex gap-2">
+                    <button onclick="sendMedia('KEY_VOLUMEDOWN')" class="bg-gray-700 w-12 h-10 rounded-lg active:bg-gray-500 font-bold">V-</button>
+                    <button onclick="sendMedia('KEY_MUTE')" class="bg-gray-700 w-12 h-10 rounded-lg active:bg-gray-500 font-bold">M</button>
+                    <button onclick="sendMedia('KEY_VOLUMEUP')" class="bg-gray-700 w-12 h-10 rounded-lg active:bg-gray-500 font-bold">V+</button>
+                </div>
             </div>
         </div>
     </div>

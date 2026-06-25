@@ -8,8 +8,9 @@ let audioChunks = [];
 const host = window.location.hostname === '' || window.location.hostname === 'localhost' ? '127.0.0.1' : window.location.hostname;
 const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
 const token = localStorage.getItem('license_token') || 'guest';
-const wsUrl = `${protocol}${host}:8000/ws?token=${token}`;
-const apiUrl = `${window.location.protocol}//${host}:8000/api`;
+const port = window.location.port || '8000';
+const wsUrl = `${protocol}${host}:${port}/ws?token=${token}`;
+const apiUrl = `${window.location.protocol}//${host}:${port}/api`;
 
 function connect() {
     ws = new WebSocket(wsUrl);
@@ -28,7 +29,7 @@ function connect() {
     ws.onerror = (err) => {
         console.error('WebSocket Error:', err);
     };
-    
+
     ws.onmessage = (e) => {
         try {
             const res = JSON.parse(e.data);
@@ -56,6 +57,14 @@ function sendKey(btnCode) {
     }
 }
 
+function sendMedia(mediaKey) {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        const payload = { action: "media_control", parameters: { key: mediaKey } };
+        ws.send(JSON.stringify(payload));
+        if (navigator.vibrate) navigator.vibrate(30);
+    }
+}
+
 async function startVoice() {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         alert("Audio capture is not supported.");
@@ -64,11 +73,11 @@ async function startVoice() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-        
+
         mediaRecorder.ondataavailable = e => {
             if (e.data.size > 0) audioChunks.push(e.data);
         };
-        
+
         mediaRecorder.onstop = () => {
             const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
             if (ws && ws.readyState === WebSocket.OPEN) {
@@ -77,7 +86,7 @@ async function startVoice() {
             audioChunks = [];
             stream.getTracks().forEach(track => track.stop());
         };
-        
+
         mediaRecorder.start();
         if (navigator.vibrate) navigator.vibrate(50);
         statusEl.textContent = 'Listening...';
@@ -101,7 +110,7 @@ async function fetchApps() {
         const res = await fetch(`${apiUrl}/apps`);
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
-        
+
         suggestedGrid.innerHTML = (data.suggested_kiosks || []).map(app => `
             <div onclick="launchKiosk('${app.url}')" class="bg-gray-800 p-4 rounded-xl flex flex-col items-center justify-center cursor-pointer active:scale-95 transition-transform border border-gray-700">
                 <div class="w-12 h-12 bg-blue-600 rounded-full mb-2 flex items-center justify-center text-xl font-bold">${app.name[0]}</div>
@@ -110,7 +119,7 @@ async function fetchApps() {
         `).join('');
 
         appsGrid.innerHTML = (data.installed_apps || []).slice(0, 12).map(app => `
-            <div class="bg-gray-800 p-4 rounded-xl flex flex-col items-center justify-center cursor-pointer active:scale-95 transition-transform opacity-50 border border-gray-700">
+            <div onclick="launchApp('${app.id}')" class="bg-gray-800 p-4 rounded-xl flex flex-col items-center justify-center cursor-pointer active:scale-95 transition-transform border border-gray-700">
                 <div class="w-10 h-10 bg-gray-600 rounded-lg mb-2"></div>
                 <span class="text-xs text-center truncate w-full">${app.name}</span>
             </div>
@@ -125,7 +134,7 @@ async function launchKiosk(url) {
     try {
         const res = await fetch(`${apiUrl}/kiosk/launch`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'X-Auth-Token': token },
             body: JSON.stringify({ url })
         });
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
@@ -137,10 +146,24 @@ async function launchKiosk(url) {
 async function killKiosk() {
     if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
     try {
-        const res = await fetch(`${apiUrl}/kiosk/kill`, { method: 'POST' });
+        const res = await fetch(`${apiUrl}/kiosk/kill`, { method: 'POST', headers: { 'X-Auth-Token': token } });
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     } catch (e) {
         console.error("Kill Error:", e);
+    }
+}
+
+async function launchApp(id) {
+    if (navigator.vibrate) navigator.vibrate(100);
+    try {
+        const res = await fetch(`${apiUrl}/app/launch`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Auth-Token': token },
+            body: JSON.stringify({ id })
+        });
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    } catch (e) {
+        console.error("App launch error:", e);
     }
 }
 
