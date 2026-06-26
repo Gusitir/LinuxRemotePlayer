@@ -66,6 +66,11 @@
 - [ ] Bind purchased token to licenses table
 
 # PH11: FEATURE COMPLETENESS & POLISH
+- [x] Voice/AI optional (ENABLE_VOICE flag; /api/config; mic hidden + audio rejected when off) — remote works with NO AI setup
+- [x] Kiosk launches with graphical-session env (DISPLAY/Wayland/XDG_RUNTIME_DIR) so Chromium opens from the systemd service
+- [x] TESTING.md: install + on-TV test guide (no AI)
+- [ ] On-hardware test pass on the real TV (evdev keyboard+mouse, kiosk launch, PWA install)
+- [ ] Appliance autologin auto-detect (SDDM / LightDM) + enable-linger for the user service
 - [ ] Gamepad UI in PWA (A/B/X/Y, Start/Select) — backend already supports the codes
 - [ ] Smarter voice->app mapping (multi-word targets, not just {name}.com)
 - [ ] Discovery: filter by category (AudioVideo / Network / Game)

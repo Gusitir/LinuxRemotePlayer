@@ -227,9 +227,22 @@ window.addEventListener('appinstalled', () => {
     }
 });
 
+async function loadConfig() {
+    try {
+        const res = await fetch(`${apiUrl}/config`);
+        if (!res.ok) return;
+        const cfg = await res.json();
+        if (!cfg.voice_enabled) {
+            const m = document.getElementById('mic-row');
+            if (m) m.style.display = 'none';
+        }
+    } catch (e) {}
+}
+
 if (isStandalone) {
     connect();
     fetchApps();
+    loadConfig();
 } else {
     showInstallScreen();
 }

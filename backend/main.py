@@ -23,9 +23,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+VOICE_ENABLED = os.getenv("ENABLE_VOICE", "false").lower() == "true"
+
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
+
+@app.get("/api/config")
+def get_config():
+    return {"voice_enabled": VOICE_ENABLED}
 
 @app.get("/api/debug")
 def debug_info():
@@ -103,6 +109,9 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
                 break
 
             if message.get("bytes"):
+                if not VOICE_ENABLED:
+                    await websocket.send_text(json.dumps({"status": "error", "message": "Voice disabled"}))
+                    continue
                 audio_data = message.get("bytes")
                 if len(audio_data) > 5_000_000:
                     await websocket.send_text(json.dumps({"status": "error", "message": "Audio too large"}))

@@ -19,6 +19,23 @@ def find_chromium():
     return None
 
 
+def _gui_env():
+    """Build an environment so the browser can open even when launched from a
+    systemd service, which lacks the graphical-session variables.
+
+    DISPLAY=:0 works for X11 and for Wayland via XWayland; WAYLAND_DISPLAY is set
+    when a native Wayland socket is found.
+    """
+    env = os.environ.copy()
+    env.setdefault("DISPLAY", ":0")
+    if hasattr(os, "getuid"):
+        runtime = env.get("XDG_RUNTIME_DIR") or f"/run/user/{os.getuid()}"
+        env["XDG_RUNTIME_DIR"] = runtime
+        if "WAYLAND_DISPLAY" not in env and os.path.exists(os.path.join(runtime, "wayland-0")):
+            env["WAYLAND_DISPLAY"] = "wayland-0"
+    return env
+
+
 def kill_existing_kiosks():
     try:
         # Use '--' so '--kiosk' is treated as a pattern by pkill, not an option.
@@ -46,7 +63,7 @@ def launch_kiosk(url: str):
     try:
         cmd = [chromium, f'--app={url}', '--kiosk', '--start-maximized', '--no-errdialogs', '--disable-infobars']
         print(f"Launching kiosk: {' '.join(cmd)}")
-        subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+        subprocess.Popen(cmd, env=_gui_env(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
         return True
     except Exception as e:
         print(f"Failed to launch kiosk: {e}")
