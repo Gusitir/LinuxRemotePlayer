@@ -1,7 +1,7 @@
 import asyncio
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Header, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from input_emulator import gamepad
+from input_emulator import gamepad, mouse
 from discovery import get_installed_apps
 from kiosk import launch_kiosk, kill_existing_kiosks
 from ai_pipeline import transcribe_audio, parse_intent
@@ -42,9 +42,15 @@ def list_apps():
         "type": "discovery_sync",
         "installed_apps": get_installed_apps(),
         "suggested_kiosks": [
-            {"id": "netflix", "name": "Netflix", "url": "https://netflix.com", "icon": "netflix"},
-            {"id": "youtube", "name": "YouTube", "url": "https://youtube.com/tv", "icon": "youtube"},
-            {"id": "twitch", "name": "Twitch", "url": "https://twitch.tv", "icon": "twitch"}
+            {"id": "netflix", "name": "Netflix", "url": "https://netflix.com", "color": "#E50914"},
+            {"id": "youtube", "name": "YouTube", "url": "https://youtube.com/tv", "color": "#FF0000"},
+            {"id": "hulu", "name": "Hulu", "url": "https://hulu.com", "color": "#1CE783"},
+            {"id": "hbomax", "name": "Max", "url": "https://play.max.com", "color": "#7B2BF9"},
+            {"id": "primevideo", "name": "Prime Video", "url": "https://www.primevideo.com", "color": "#00A8E1"},
+            {"id": "disney", "name": "Disney+", "url": "https://www.disneyplus.com", "color": "#113CCF"},
+            {"id": "spotify", "name": "Spotify", "url": "https://open.spotify.com", "color": "#1DB954"},
+            {"id": "twitch", "name": "Twitch", "url": "https://twitch.tv", "color": "#9146FF"},
+            {"id": "plex", "name": "Plex", "url": "https://app.plex.tv", "color": "#E5A00D"}
         ]
     }
 
@@ -139,6 +145,13 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
                             await websocket.send_text(json.dumps({"status": "success", "message": f"Media: {media_key}"}))
                         else:
                             await websocket.send_text(json.dumps({"status": "error", "message": "Invalid media key"}))
+                    elif action == "search":
+                        query = quote_plus(params.get("search_query", ""))
+                        if query:
+                            launch_kiosk(f"https://www.youtube.com/results?search_query={query}")
+                            await websocket.send_text(json.dumps({"status": "success", "message": f"Searching: {params.get('search_query', '')}"}))
+                        else:
+                            await websocket.send_text(json.dumps({"status": "error", "message": "Empty search"}))
                     else:
                         await websocket.send_text(json.dumps({"status": "error", "message": "Unknown action"}))
                 else:
@@ -152,18 +165,27 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
                     await websocket.send_text(json.dumps({"status": "error", "message": "Invalid JSON format"}))
                     continue
 
-                if payload.get("type") == "input" and payload.get("device") == "gamepad":
+                msg_type = payload.get("type")
+                if msg_type == "input" and payload.get("device") == "gamepad":
                     action = payload.get("action")
                     key = payload.get("key")
                     if action == "press" and key:
                         await gamepad.press_button(key)
+                    await websocket.send_text(json.dumps({"status": "received"}))
+                elif msg_type == "pointer":
+                    click = payload.get("click")
+                    if click:
+                        await mouse.click("right" if click == "right" else "left")
+                    else:
+                        await mouse.move(payload.get("dx", 0), payload.get("dy", 0))
+                elif msg_type == "text":
+                    await gamepad.type_text(payload.get("text", ""))
                 elif payload.get("action") == "media_control":
                     media_key = payload.get("parameters", {}).get("key")
-                    allowed_media = {"KEY_VOLUMEUP", "KEY_VOLUMEDOWN", "KEY_MUTE", "KEY_PLAYPAUSE", "KEY_NEXTSONG", "KEY_PREVIOUSSONG"}
+                    allowed_media = {"KEY_VOLUMEUP", "KEY_VOLUMEDOWN", "KEY_MUTE", "KEY_PLAYPAUSE", "KEY_PLAY", "KEY_PAUSE", "KEY_STOP", "KEY_NEXTSONG", "KEY_PREVIOUSSONG", "KEY_FASTFORWARD", "KEY_REWIND"}
                     if media_key in allowed_media:
                         await gamepad.press_button(media_key)
-
-                await websocket.send_text(json.dumps({"status": "received", "payload": payload}))
+                    await websocket.send_text(json.dumps({"status": "received"}))
     except WebSocketDisconnect:
         print("Client disconnected")
 

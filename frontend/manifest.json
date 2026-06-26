@@ -1,0 +1,19 @@
+{
+  "name": "LinuxRemotePlayer",
+  "short_name": "RemoteKiosk",
+  "description": "AI-powered remote control for Linux HTPCs",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#111827",
+  "theme_color": "#1f2937",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

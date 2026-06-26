@@ -23,7 +23,7 @@ read -p "Select installation mode [1/2]: " mode
 
 # Install dependencies
 apt-get update
-apt-get install -y python3-venv python3-dev ufw
+apt-get install -y python3-venv python3-dev ufw openssl
 
 # --- evdev / uinput permissions (FIX F1: Phase 6 blocker) ---
 modprobe uinput || true
@@ -32,6 +32,22 @@ echo 'KERNEL=="uinput", MODE="0660", GROUP="input", OPTIONS+="static_node=uinput
 usermod -aG input "$SUDO_USER"
 udevadm control --reload-rules && udevadm trigger
 echo "[i] Added '$SUDO_USER' to 'input' group. REBOOT or re-login required before uinput works."
+
+# --- Ensure Chromium is installed (the only browser used to launch kiosk web apps) ---
+if command -v chromium >/dev/null 2>&1 || command -v chromium-browser >/dev/null 2>&1; then
+    echo "[i] Chromium already installed."
+else
+    echo "[i] Chromium not found. Installing..."
+    if apt-get install -y chromium; then
+        echo "[i] Installed 'chromium'."
+    elif apt-get install -y chromium-browser; then
+        echo "[i] Installed 'chromium-browser'."
+    elif command -v snap >/dev/null 2>&1 && snap install chromium; then
+        echo "[i] Installed Chromium via snap."
+    else
+        echo "[!] Could not install Chromium automatically. Install it manually: sudo apt install chromium"
+    fi
+fi
 
 # Setup Venv
 BACKEND_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../backend" && pwd)"
@@ -44,6 +60,11 @@ sudo -u "$SUDO_USER" bash -c "source .venv/bin/activate && pip install -r requir
 
 # Configure UFW
 ufw allow 8000/tcp
+
+# --- HTTPS (automatic) ---
+# run.py self-generates a self-signed cert for the current LAN IP on every start
+# and regenerates it if the IP changes. No prompt, no manual step needed.
+echo "[i] HTTPS will be enabled automatically on first start (self-signed cert)."
 
 if [ "$mode" == "1" ]; then
     echo "Configuring Appliance Mode..."
@@ -58,7 +79,7 @@ After=graphical.target network.target
 Type=simple
 User=$SUDO_USER
 WorkingDirectory=$BACKEND_DIR
-ExecStart="$BACKEND_DIR/.venv/bin/uvicorn" main:app --host 0.0.0.0 --port 8000
+ExecStart="$BACKEND_DIR/.venv/bin/python" run.py
 Restart=always
 RestartSec=5
 
@@ -83,7 +104,7 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=$BACKEND_DIR
-ExecStart="$BACKEND_DIR/.venv/bin/uvicorn" main:app --host 0.0.0.0 --port 8000
+ExecStart="$BACKEND_DIR/.venv/bin/python" run.py
 Restart=always
 RestartSec=5
 
@@ -101,5 +122,5 @@ fi
 
 echo "======================================"
 echo " Installation Complete!               "
-echo " Access PWA at: http://<your-ip>:8000 "
+echo " Access PWA at: http(s)://<your-ip>:8000 "
 echo "======================================"
