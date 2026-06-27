@@ -183,7 +183,9 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
                     await websocket.send_text(json.dumps({"status": "received"}))
                 elif msg_type == "pointer":
                     click = payload.get("click")
-                    if click:
+                    if payload.get("scroll") is not None:
+                        await mouse.scroll(payload.get("scroll", 0))
+                    elif click:
                         await mouse.click("right" if click == "right" else "left")
                     else:
                         await mouse.move(payload.get("dx", 0), payload.get("dy", 0))

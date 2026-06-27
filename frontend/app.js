@@ -43,6 +43,25 @@ function wsSend(obj) {
     if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj));
 }
 
+let toastTimer = null;
+function toast(msg) {
+    let t = document.getElementById('toast');
+    if (!t) {
+        t = document.createElement('div');
+        t.id = 'toast';
+        t.style.cssText = 'position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 16px;border-radius:9999px;font-size:13px;z-index:60;box-shadow:0 4px 14px rgba(0,0,0,.5);opacity:0;transition:opacity .2s;pointer-events:none';
+        document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.style.opacity = '1';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.style.opacity = '0'; }, 1800);
+}
+
+function comingSoon() { toast('Próximamente'); }
+function openSettings() { const d = document.getElementById('settings-drawer'); if (d) d.classList.add('open'); }
+function closeSettings() { const d = document.getElementById('settings-drawer'); if (d) d.classList.remove('open'); }
+
 function connect() {
     ws = new WebSocket(wsUrl);
     ws.onopen = () => { statusEl.textContent = 'Connected'; statusEl.className = 'text-green-500 text-xs font-bold'; };
@@ -61,11 +80,14 @@ function connect() {
 }
 
 // --- Keys / media ---
+// Transport (play/seek) uses ordinary keys so they hit the FOREGROUND kiosk window,
+// not whatever holds the system media session (e.g. a background browser tab).
+// Volume/mute stay as media keys because those act globally at the OS mixer.
 function sendKey(key) { wsSend({ type: 'input', device: 'gamepad', action: 'press', key }); if (navigator.vibrate) navigator.vibrate(35); }
 function sendMedia(key) { wsSend({ action: 'media_control', parameters: { key } }); if (navigator.vibrate) navigator.vibrate(25); }
 function homeAction() { killKiosk(); }
 
-// --- Touchpad pointer ---
+// --- Touchpad pointer (tap = left click, long-press = right click) ---
 const pad = document.getElementById('touchpad');
 let padLast = null, padMoved = 0, padDown = 0, accX = 0, accY = 0, rafPending = false;
 const POINTER_SENS = 1.6;
@@ -84,11 +106,36 @@ if (pad) {
         if (!rafPending) { rafPending = true; requestAnimationFrame(flushPointer); }
     });
     const padEnd = () => {
-        if (padLast && padMoved < 10 && Date.now() - padDown < 250) { wsSend({ type: 'pointer', click: 'left' }); if (navigator.vibrate) navigator.vibrate(20); }
+        if (padLast && padMoved < 10) {
+            const dur = Date.now() - padDown;
+            if (dur < 250) { wsSend({ type: 'pointer', click: 'left' }); if (navigator.vibrate) navigator.vibrate(20); }
+            else if (dur > 500) { wsSend({ type: 'pointer', click: 'right' }); if (navigator.vibrate) navigator.vibrate([20, 40]); }
+        }
         padLast = null;
     };
     pad.addEventListener('pointerup', padEnd);
     pad.addEventListener('pointercancel', () => { padLast = null; });
+}
+
+// --- Scroll strip (drag vertically -> mouse wheel) ---
+const scrollStrip = document.getElementById('scroll-strip');
+let scLast = null, scAcc = 0;
+const SCROLL_STEP = 18;
+if (scrollStrip) {
+    scrollStrip.addEventListener('pointerdown', (e) => { scrollStrip.setPointerCapture(e.pointerId); scLast = e.clientY; scAcc = 0; });
+    scrollStrip.addEventListener('pointermove', (e) => {
+        if (scLast === null) return;
+        scAcc += e.clientY - scLast;
+        scLast = e.clientY;
+        while (Math.abs(scAcc) >= SCROLL_STEP) {
+            // Drag down -> content scrolls down (REL_WHEEL negative).
+            wsSend({ type: 'pointer', scroll: scAcc > 0 ? -1 : 1 });
+            scAcc += scAcc > 0 ? -SCROLL_STEP : SCROLL_STEP;
+        }
+    });
+    const scEnd = () => { scLast = null; };
+    scrollStrip.addEventListener('pointerup', scEnd);
+    scrollStrip.addEventListener('pointercancel', scEnd);
 }
 
 // --- System keyboard bridge ---
@@ -143,15 +190,27 @@ const PALETTE = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899
 
 function allApps() { return [...suggestedApps, ...getCustomApps()]; }
 
+function faviconUrl(url) {
+    try { return `https://www.google.com/s2/favicons?sz=64&domain=${new URL(url).hostname}`; }
+    catch (e) { return ''; }
+}
+
 function tileHTML(app, removable) {
     const color = app.color || '#2563eb';
     const initial = (app.name || '?').charAt(0).toUpperCase();
+    const isNative = app.kind === 'native';
+    const onclick = isNative ? `launchNative('${app.nativeId}','${app.id}')` : `launchKiosk('${app.url}','${app.id}')`;
+    const fav = isNative ? '' : faviconUrl(app.url);
+    const img = fav ? `<img src="${fav}" alt="" class="relative w-7 h-7" onerror="this.remove()">` : '';
     const remove = removable
-        ? `<button onclick="event.stopPropagation(); removeCustomApp('${app.id}')" class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-600 text-white text-xs flex items-center justify-center">x</button>`
+        ? `<button onclick="event.stopPropagation(); removeCustomApp('${app.id}')" class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-600 text-white text-xs flex items-center justify-center z-10">x</button>`
         : '';
-    return `<div onclick="launchKiosk('${app.url}','${app.id}')" class="applauncher relative flex flex-col items-center gap-1 cursor-pointer">
+    return `<div onclick="${onclick}" class="applauncher relative flex flex-col items-center gap-1 cursor-pointer">
         ${remove}
-        <div class="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold text-white" style="background:${color}">${initial}</div>
+        <div class="w-12 h-12 rounded-full relative flex items-center justify-center overflow-hidden" style="background:${color}">
+            <span class="absolute inset-0 flex items-center justify-center text-lg font-bold text-white">${initial}</span>
+            ${img}
+        </div>
         <span class="text-[10px] text-gray-300 truncate w-full text-center">${app.name}</span>
     </div>`;
 }
@@ -194,30 +253,35 @@ function renderNativeList() {
         el.innerHTML = '<p class="text-xs text-gray-500">No se detectaron apps del sistema (o el backend no corre en Linux).</p>';
         return;
     }
-    el.innerHTML = installedApps.slice(0, 60).map((a) =>
-        `<button onclick="launchNative('${a.id}')" class="flex items-center justify-between bg-gray-700 rounded px-3 py-2 text-left active:bg-gray-600">
-            <span class="truncate">${a.name}</span><span class="text-green-400 text-xs ml-2">Lanzar</span>
-        </button>`
-    ).join('');
+    el.innerHTML = installedApps.slice(0, 80).map((a) => {
+        const safeName = String(a.name).replace(/'/g, "\\'");
+        return `<div class="flex items-center justify-between bg-gray-700 rounded px-3 py-2">
+            <span class="truncate flex-1 cursor-pointer" onclick="launchNative('${a.id}')">${a.name}</span>
+            <button onclick="event.stopPropagation(); addNativeApp('${a.id}','${safeName}')" class="text-blue-400 text-xs ml-2 whitespace-nowrap">+ Añadir</button>
+        </div>`;
+    }).join('');
 }
 
 function addCustomApp() {
     const nameEl = document.getElementById('new-app-name');
     const urlEl = document.getElementById('new-app-url');
+    if (!nameEl || !urlEl) return;
     const name = (nameEl.value || '').trim();
     let url = (urlEl.value || '').trim();
-    if (!name || !url) return;
+    if (!name || !url) { alert('Escribe un nombre y una URL.'); return; }
     if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
     const apps = getCustomApps();
     apps.push({ id: 'custom-' + Date.now(), name, url, color: PALETTE[apps.length % PALETTE.length] });
     saveCustomApps(apps);
     nameEl.value = ''; urlEl.value = '';
-    renderDrawer(); renderMainRow();
+    renderDrawer();
+    renderMainRow();
 }
 
 function removeCustomApp(id) {
     saveCustomApps(getCustomApps().filter((a) => a.id !== id));
-    renderDrawer(); renderMainRow();
+    renderDrawer();
+    renderMainRow();
 }
 
 async function fetchApps() {
@@ -233,6 +297,8 @@ async function fetchApps() {
 
 async function launchKiosk(url, id) {
     if (id) bumpUsage(id);
+    const a = allApps().find((x) => x.id === id);
+    toast('Abriendo ' + (a ? a.name : 'app') + '...');
     if (navigator.vibrate) navigator.vibrate(80);
     closeDrawer();
     try {
@@ -241,13 +307,26 @@ async function launchKiosk(url, id) {
     } catch (e) { console.error('Launch error:', e); }
 }
 
-async function launchNative(id) {
+async function launchNative(nativeId, usageId) {
+    if (usageId) bumpUsage(usageId);
+    const a = installedApps.find((x) => x.id === nativeId) || allApps().find((x) => x.nativeId === nativeId);
+    toast('Abriendo ' + (a ? a.name : 'app') + '...');
     if (navigator.vibrate) navigator.vibrate(80);
     closeDrawer();
     try {
-        const res = await fetch(`${apiUrl}/app/launch`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Auth-Token': token }, body: JSON.stringify({ id }) });
+        const res = await fetch(`${apiUrl}/app/launch`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Auth-Token': token }, body: JSON.stringify({ id: nativeId }) });
         if (!res.ok) throw new Error('HTTP ' + res.status);
     } catch (e) { console.error('Native launch error:', e); }
+}
+
+function addNativeApp(nativeId, name) {
+    const apps = getCustomApps();
+    if (apps.some((a) => a.nativeId === nativeId)) { toast(name + ' ya está en el menú'); return; }
+    apps.push({ id: 'native-' + nativeId, name, kind: 'native', nativeId, color: PALETTE[apps.length % PALETTE.length] });
+    saveCustomApps(apps);
+    renderDrawer();
+    renderMainRow();
+    toast(name + ' añadido al menú');
 }
 
 async function killKiosk() {

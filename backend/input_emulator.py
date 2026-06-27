@@ -149,8 +149,14 @@ class VirtualMouse:
     async def scroll(self, amount):
         if not self.ui or not EVDEV_AVAILABLE:
             return
-        self.ui.write(e.EV_REL, e.REL_WHEEL, 1 if amount > 0 else -1)
-        self.ui.syn()
+        try:
+            n = int(amount)
+        except (TypeError, ValueError):
+            return
+        step = 1 if n >= 0 else -1
+        for _ in range(min(abs(n) or 1, 15)):
+            self.ui.write(e.EV_REL, e.REL_WHEEL, step)
+            self.ui.syn()
 
 
 gamepad = VirtualGamepad()

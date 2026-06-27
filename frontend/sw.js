@@ -1,4 +1,4 @@
-const CACHE = 'lrp-v8';
+const CACHE = 'lrp-v10';
 const ASSETS = ['./', './index.html', './app.js', './manifest.json', './icon.svg'];
 
 self.addEventListener('install', (event) => {
