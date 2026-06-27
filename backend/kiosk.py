@@ -19,7 +19,7 @@ def find_chromium():
     return None
 
 
-def _gui_env():
+def gui_env():
     """Build an environment so the browser can open even when launched from a
     systemd service, which lacks the graphical-session variables.
 
@@ -63,7 +63,7 @@ def launch_kiosk(url: str):
     try:
         cmd = [chromium, f'--app={url}', '--kiosk', '--start-maximized', '--no-errdialogs', '--disable-infobars']
         print(f"Launching kiosk: {' '.join(cmd)}")
-        subprocess.Popen(cmd, env=_gui_env(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+        subprocess.Popen(cmd, env=gui_env(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
         return True
     except Exception as e:
         print(f"Failed to launch kiosk: {e}")

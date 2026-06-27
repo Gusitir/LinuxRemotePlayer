@@ -3,7 +3,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Header, Depends, HT
 from fastapi.middleware.cors import CORSMiddleware
 from input_emulator import gamepad, mouse
 from discovery import get_installed_apps
-from kiosk import launch_kiosk, kill_existing_kiosks
+from kiosk import launch_kiosk, kill_existing_kiosks, gui_env
 from ai_pipeline import transcribe_audio, parse_intent
 from auth import validate_license_and_increment, verify_access
 import json
@@ -88,7 +88,7 @@ async def launch_native_app(payload: dict):
     import shlex
     cleaned = re.sub(r'%[a-zA-Z]', '', match["exec"]).strip()
     try:
-        subprocess.Popen(shlex.split(cleaned), stdout=subprocess.DEVNULL,
+        subprocess.Popen(shlex.split(cleaned), env=gui_env(), stdout=subprocess.DEVNULL,
                          stderr=subprocess.DEVNULL, start_new_session=True)
         return {"status": "success"}
     except Exception as ex:

@@ -2,6 +2,8 @@ const statusEl = document.getElementById('status');
 let ws;
 let mediaRecorder;
 let audioChunks = [];
+let suggestedApps = [];
+let installedApps = [];
 
 // Lock zoom: block pinch-zoom (iOS gesture events) and ctrl+wheel zoom.
 ['gesturestart', 'gesturechange', 'gestureend'].forEach((ev) =>
@@ -35,7 +37,8 @@ const port = window.location.port || '8000';
 const wsUrl = `${protocol}${host}:${port}/ws?token=${token}`;
 const apiUrl = `${window.location.protocol}//${host}:${port}/api`;
 
-// Helper: safe JSON WS send
+const ICON_PLUS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M5 12h14"/><path d="M12 5v14"/></svg>';
+
 function wsSend(obj) {
     if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj));
 }
@@ -92,8 +95,8 @@ if (pad) {
 const kbBar = document.getElementById('kb-bar');
 const kbInput = document.getElementById('kb-input');
 let kbPrev = '';
-function openKeyboard() { if (!kbBar) return; kbBar.hidden = false; kbInput.value = ''; kbPrev = ''; kbInput.focus(); }
-function closeKeyboard() { if (!kbBar) return; kbInput.blur(); kbBar.hidden = true; }
+function openKeyboard() { if (!kbBar) return; kbBar.style.display = 'flex'; kbInput.value = ''; kbPrev = ''; kbInput.focus(); }
+function closeKeyboard() { if (!kbBar) return; kbInput.blur(); kbBar.style.display = 'none'; }
 if (kbInput) {
     kbInput.addEventListener('input', () => {
         const v = kbInput.value;
@@ -130,47 +133,121 @@ function stopVoice() {
     }
 }
 
-// --- App grid (most-used first + more) ---
+// --- Apps: usage, custom apps, tiles ---
 function getUsage() { try { return JSON.parse(localStorage.getItem('app_usage') || '{}'); } catch (e) { return {}; } }
 function bumpUsage(id) { const u = getUsage(); u[id] = (u[id] || 0) + 1; localStorage.setItem('app_usage', JSON.stringify(u)); }
 
-function appTile(app) {
+function getCustomApps() { try { return JSON.parse(localStorage.getItem('custom_apps') || '[]'); } catch (e) { return []; } }
+function saveCustomApps(arr) { localStorage.setItem('custom_apps', JSON.stringify(arr)); }
+const PALETTE = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6'];
+
+function allApps() { return [...suggestedApps, ...getCustomApps()]; }
+
+function tileHTML(app, removable) {
     const color = app.color || '#2563eb';
-    const initial = (app.name || '?').charAt(0);
-    return `<div onclick="launchKiosk('${app.url}','${app.id}')" class="flex flex-col items-center gap-1 cursor-pointer active:scale-95">
-        <div class="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold" style="background:${color}">${initial}</div>
+    const initial = (app.name || '?').charAt(0).toUpperCase();
+    const remove = removable
+        ? `<button onclick="event.stopPropagation(); removeCustomApp('${app.id}')" class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-600 text-white text-xs flex items-center justify-center">x</button>`
+        : '';
+    return `<div onclick="launchKiosk('${app.url}','${app.id}')" class="applauncher relative flex flex-col items-center gap-1 cursor-pointer">
+        ${remove}
+        <div class="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold text-white" style="background:${color}">${initial}</div>
         <span class="text-[10px] text-gray-300 truncate w-full text-center">${app.name}</span>
     </div>`;
 }
 
-function renderApps(kiosks) {
-    const usage = getUsage();
-    const sorted = [...kiosks].sort((a, b) => (usage[b.id] || 0) - (usage[a.id] || 0));
-    document.getElementById('apps-row').innerHTML = sorted.slice(0, 5).map(appTile).join('');
-    const rest = sorted.slice(5);
-    document.getElementById('apps-more').innerHTML = rest.map(appTile).join('');
-    const moreBtn = document.getElementById('more-btn');
-    if (moreBtn) moreBtn.style.display = rest.length ? 'block' : 'none';
+function plusTileHTML() {
+    return `<div onclick="toggleAddPanel()" class="applauncher flex flex-col items-center gap-1 cursor-pointer">
+        <div class="w-12 h-12 rounded-full border-2 border-dashed border-gray-500 flex items-center justify-center text-gray-400">${ICON_PLUS}</div>
+        <span class="text-[10px] text-gray-400 text-center">Añadir</span>
+    </div>`;
 }
 
-function toggleMore() { const m = document.getElementById('apps-more'); if (m) m.hidden = !m.hidden; }
+function renderMainRow() {
+    const usage = getUsage();
+    const sorted = [...allApps()].sort((a, b) => (usage[b.id] || 0) - (usage[a.id] || 0));
+    const row = document.getElementById('apps-row');
+    if (row) row.innerHTML = sorted.slice(0, 5).map((a) => tileHTML(a, false)).join('');
+}
+
+// --- App drawer ---
+function openDrawer() { renderDrawer(); const d = document.getElementById('app-drawer'); if (d) d.classList.add('open'); }
+function closeDrawer() { const d = document.getElementById('app-drawer'); if (d) d.classList.remove('open'); const p = document.getElementById('add-panel'); if (p) p.style.display = 'none'; }
+function toggleAddPanel() { const p = document.getElementById('add-panel'); if (p) p.style.display = p.style.display === 'none' ? 'block' : 'none'; }
+
+function renderDrawer() {
+    const custom = getCustomApps();
+    const grid = [
+        ...suggestedApps.map((a) => tileHTML(a, false)),
+        ...custom.map((a) => tileHTML(a, true)),
+        plusTileHTML(),
+    ].join('');
+    const g = document.getElementById('drawer-grid');
+    if (g) g.innerHTML = grid;
+    renderNativeList();
+}
+
+function renderNativeList() {
+    const el = document.getElementById('native-list');
+    if (!el) return;
+    if (!installedApps.length) {
+        el.innerHTML = '<p class="text-xs text-gray-500">No se detectaron apps del sistema (o el backend no corre en Linux).</p>';
+        return;
+    }
+    el.innerHTML = installedApps.slice(0, 60).map((a) =>
+        `<button onclick="launchNative('${a.id}')" class="flex items-center justify-between bg-gray-700 rounded px-3 py-2 text-left active:bg-gray-600">
+            <span class="truncate">${a.name}</span><span class="text-green-400 text-xs ml-2">Lanzar</span>
+        </button>`
+    ).join('');
+}
+
+function addCustomApp() {
+    const nameEl = document.getElementById('new-app-name');
+    const urlEl = document.getElementById('new-app-url');
+    const name = (nameEl.value || '').trim();
+    let url = (urlEl.value || '').trim();
+    if (!name || !url) return;
+    if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+    const apps = getCustomApps();
+    apps.push({ id: 'custom-' + Date.now(), name, url, color: PALETTE[apps.length % PALETTE.length] });
+    saveCustomApps(apps);
+    nameEl.value = ''; urlEl.value = '';
+    renderDrawer(); renderMainRow();
+}
+
+function removeCustomApp(id) {
+    saveCustomApps(getCustomApps().filter((a) => a.id !== id));
+    renderDrawer(); renderMainRow();
+}
 
 async function fetchApps() {
     try {
         const res = await fetch(`${apiUrl}/apps`);
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
-        renderApps(data.suggested_kiosks || []);
+        suggestedApps = data.suggested_kiosks || [];
+        installedApps = data.installed_apps || [];
+        renderMainRow();
     } catch (e) { console.error('Failed to load apps:', e); }
 }
 
 async function launchKiosk(url, id) {
     if (id) bumpUsage(id);
     if (navigator.vibrate) navigator.vibrate(80);
+    closeDrawer();
     try {
         const res = await fetch(`${apiUrl}/kiosk/launch`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Auth-Token': token }, body: JSON.stringify({ url }) });
         if (!res.ok) throw new Error('HTTP ' + res.status);
     } catch (e) { console.error('Launch error:', e); }
+}
+
+async function launchNative(id) {
+    if (navigator.vibrate) navigator.vibrate(80);
+    closeDrawer();
+    try {
+        const res = await fetch(`${apiUrl}/app/launch`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Auth-Token': token }, body: JSON.stringify({ id }) });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+    } catch (e) { console.error('Native launch error:', e); }
 }
 
 async function killKiosk() {
@@ -181,7 +258,21 @@ async function killKiosk() {
     } catch (e) { console.error('Kill error:', e); }
 }
 
-// --- Browser tab vs installed app ---
+async function loadConfig() {
+    try {
+        const res = await fetch(`${apiUrl}/config`);
+        if (!res.ok) return;
+        const cfg = await res.json();
+        if (!cfg.voice_enabled) {
+            const m = document.getElementById('mic-row');
+            if (m) m.style.display = 'none';
+        }
+    } catch (e) {}
+}
+
+// --- Where to show the remote vs the install tutorial ---
+const ua = navigator.userAgent || '';
+const isMobile = /android|iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const isStandalone = window.matchMedia('(display-mode: standalone)').matches
     || window.matchMedia('(display-mode: fullscreen)').matches
     || window.matchMedia('(display-mode: minimal-ui)').matches
@@ -198,14 +289,13 @@ window.addEventListener('beforeinstallprompt', (e) => {
 function showInstallScreen() {
     const appUI = document.getElementById('app-ui');
     const installUI = document.getElementById('install-ui');
-    if (appUI) appUI.hidden = true;
-    if (installUI) installUI.hidden = false;
-    const ua = navigator.userAgent || '';
+    if (appUI) appUI.style.display = 'none';
+    if (installUI) installUI.style.display = 'flex';
     const isIOS = /iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     const iosSteps = document.getElementById('steps-ios');
     const androidSteps = document.getElementById('steps-android');
-    if (iosSteps) iosSteps.hidden = !isIOS;
-    if (androidSteps) androidSteps.hidden = isIOS;
+    if (iosSteps) iosSteps.style.display = isIOS ? 'block' : 'none';
+    if (androidSteps) androidSteps.style.display = isIOS ? 'none' : 'block';
     const btn = document.getElementById('install-btn');
     if (btn) {
         btn.addEventListener('click', async () => {
@@ -227,22 +317,12 @@ window.addEventListener('appinstalled', () => {
     }
 });
 
-async function loadConfig() {
-    try {
-        const res = await fetch(`${apiUrl}/config`);
-        if (!res.ok) return;
-        const cfg = await res.json();
-        if (!cfg.voice_enabled) {
-            const m = document.getElementById('mic-row');
-            if (m) m.style.display = 'none';
-        }
-    } catch (e) {}
-}
-
-if (isStandalone) {
+// Show the remote when installed OR on a desktop/computer (so it can be tested there).
+// Only mobile-browser-not-installed gets the install tutorial.
+if (!isStandalone && isMobile) {
+    showInstallScreen();
+} else {
     connect();
     fetchApps();
     loadConfig();
-} else {
-    showInstallScreen();
 }
