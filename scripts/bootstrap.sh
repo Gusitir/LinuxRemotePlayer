@@ -5,7 +5,7 @@
 set -e
 
 # Repository URL placeholder - Sync with target repository
-REPO_URL="https://github.com/agustin/linuxremoteplayer.git"
+REPO_URL="https://github.com/Gusitir/LinuxRemotePlayer.git"
 INSTALL_DIR="/opt/linuxremoteplayer"
 
 if [ "$EUID" -ne 0 ]; then

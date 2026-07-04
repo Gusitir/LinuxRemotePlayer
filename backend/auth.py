@@ -11,7 +11,7 @@ logger = logging.getLogger("auth")
 
 load_dotenv()
 
-LICENSE_API_URL = os.getenv("LICENSE_API_URL", "")
+LICENSE_API_URL = os.getenv("LICENSE_API_URL", "https://tbijfdbtauzxbsbkujbs.functions.supabase.co/validate-license")
 CACHE_FILE = os.path.join(os.path.dirname(__file__), ".license_cache")
 PAIRING_TOKEN = os.getenv("PAIRING_TOKEN")
 

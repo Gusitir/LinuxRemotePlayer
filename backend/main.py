@@ -208,7 +208,7 @@ def get_config():
         "voice_enabled": VOICE_ENABLED,
         "hostname": socket.gethostname(),
         "version": VERSION,
-        "buy_url": os.getenv("BUY_URL", "https://buy.stripe.com/mock-link")
+        "buy_url": os.getenv("BUY_URL", "https://buy.stripe.com/test_5kQ3cv99t9aY8pu1aVe3e00")
     }
 
 
@@ -274,7 +274,7 @@ async def get_license_status():
 
 @app.get("/api/update/check", dependencies=[Depends(require_token)])
 async def check_update():
-    repo = os.getenv("GITHUB_REPO", "agustin/linuxremoteplayer")
+    repo = os.getenv("GITHUB_REPO", "Gusitir/LinuxRemotePlayer")
     url = f"https://api.github.com/repos/{repo}/releases/latest"
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:

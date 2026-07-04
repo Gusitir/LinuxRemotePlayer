@@ -109,7 +109,7 @@ serve(async (req) => {
       const resendApiKey = Deno.env.get('RESEND_API_KEY');
       if (resendApiKey) {
         const fromEmail = Deno.env.get('RESEND_FROM') || 'onboarding@resend.dev';
-        const buyUrl = Deno.env.get('BUY_URL') || 'https://linuxremoteplayer.com';
+        const buyUrl = Deno.env.get('BUY_URL') || 'https://linux-remote-player.vercel.app';
 
         try {
           const resendResponse = await fetch('https://api.resend.com/emails', {
@@ -144,7 +144,7 @@ serve(async (req) => {
                   </p>
                   <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 20px 0;">
                   <p style="font-size: 12px; color: #9ca3af; text-align: center; margin-bottom: 0;">
-                    ¿Tienes problemas? Escríbenos a <a href="mailto:soporte@linuxremoteplayer.com" style="color: #3b82f6;">soporte@linuxremoteplayer.com</a>
+                    ¿Tienes problemas? Escríbenos a <a href="mailto:aeciminer02@gmail.com" style="color: #3b82f6;">aeciminer02@gmail.com</a>
                   </p>
                 </div>
               `,

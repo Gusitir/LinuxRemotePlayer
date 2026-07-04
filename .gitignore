@@ -218,3 +218,7 @@ __marimo__/
 .streamlit/secrets.toml
 backend/certs/
 backend/.pairing_token
+backend/.license_cache
+supabase/.temp/
+GUIA_AGUSTIN.md
+.agents/

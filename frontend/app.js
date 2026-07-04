@@ -822,11 +822,13 @@ function buyLicense() {
     window.open(buyUrl, '_blank');
 }
 
+const WEBSITE_URL = 'https://linux-remote-player.vercel.app/';
+
 function shareApp() {
     const shareData = {
         title: 'LinuxRemotePlayer',
         text: '🎬 Convertí mi PC Linux en una Smart TV con control remoto desde el móvil. Touchpad, teclado, apps y voz. Mirá:',
-        url: buyUrl
+        url: WEBSITE_URL
     };
     if (navigator.share) {
         navigator.share(shareData).catch(() => {});
@@ -913,7 +915,12 @@ async function saveOnboardingToken() {
     
     toast('Dispositivo emparejado con éxito');
     showPairingScreen(false);
-    
+
+    // Always connect after onboarding; activate any pending license afterwards.
+    fetchConfig().then(() => {
+        connect();
+        fetchApps();
+    });
     const pending = localStorage.getItem('pending_license');
     if (pending) {
         localStorage.removeItem('pending_license');
@@ -922,11 +929,6 @@ async function saveOnboardingToken() {
             if (input) input.value = pending;
             await activateLicenseKey();
         }, 1200);
-    } else {
-        fetchConfig().then(() => {
-            connect();
-            fetchApps();
-        });
     }
 }
 
