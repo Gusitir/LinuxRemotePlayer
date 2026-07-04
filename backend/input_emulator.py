@@ -1,14 +1,26 @@
 # input_emulator.py
 import asyncio
 import string
+import time
+import logging
+
+logger = logging.getLogger("input_emulator")
 
 try:
     import evdev
     from evdev import UInput, ecodes as e
     EVDEV_AVAILABLE = True
 except ImportError:
-    print("Warning: evdev not found. Virtual input disabled. (Only supported on Linux)")
+    logger.warning("evdev not found. Virtual input disabled. (Only supported on Linux)")
     EVDEV_AVAILABLE = False
+
+ALLOWED_KEYS = frozenset({
+    "KEY_UP", "KEY_DOWN", "KEY_LEFT", "KEY_RIGHT", "KEY_ENTER", "KEY_ESC",
+    "KEY_BACKSPACE", "KEY_TAB", "KEY_LEFTSHIFT", "KEY_SPACE",
+    "KEY_PLAYPAUSE", "KEY_PLAY", "KEY_PAUSE", "KEY_STOP",
+    "KEY_NEXTSONG", "KEY_PREVIOUSSONG", "KEY_FASTFORWARD", "KEY_REWIND",
+    "KEY_VOLUMEUP", "KEY_VOLUMEDOWN", "KEY_MUTE"
+})
 
 
 def _build_char_keys():
@@ -52,9 +64,12 @@ class VirtualGamepad:
 
     def __init__(self):
         self.ui = None
+        self._last_init_attempt = 0
         if not EVDEV_AVAILABLE:
             return
-        # Codes 1..99 cover the standard typing keys; the named ones add the rest.
+        self._try_init()
+
+    def _try_init(self):
         keys = list(range(1, 100)) + [
             e.BTN_A, e.BTN_B, e.BTN_X, e.BTN_Y, e.BTN_START, e.BTN_SELECT,
             e.BTN_DPAD_UP, e.BTN_DPAD_DOWN, e.BTN_DPAD_LEFT, e.BTN_DPAD_RIGHT,
@@ -66,17 +81,32 @@ class VirtualGamepad:
         ]
         try:
             self.ui = UInput({e.EV_KEY: keys}, name='LinuxRemotePlayer Virtual Keyboard', version=0x3)
+            logger.info("UInput keyboard device created successfully.")
         except Exception as ex:
-            print(f"Warning: Could not init keyboard UInput (needs Linux + uinput perms). {ex}")
+            logger.warning(f"Could not init keyboard UInput (needs Linux + uinput perms). {ex}")
+
+    def _ensure_ui(self):
+        if self.ui is not None or not EVDEV_AVAILABLE:
+            return
+        now = time.time()
+        if now - self._last_init_attempt < 5.0:
+            return
+        self._last_init_attempt = now
+        logger.info("Retrying UInput keyboard device creation (late init)...")
+        self._try_init()
 
     async def press_button(self, btn_code):
+        if btn_code not in ALLOWED_KEYS:
+            logger.warning(f"Key press rejected (not in whitelist): {btn_code}")
+            return
+        self._ensure_ui()
         if not self.ui or not EVDEV_AVAILABLE:
-            print(f"[Mock] Key: {btn_code}")
+            logger.debug(f"[Mock] Key: {btn_code}")
             return
         try:
             btn = getattr(e, btn_code)
         except AttributeError:
-            print(f"Invalid key code: {btn_code}")
+            logger.error(f"Invalid key code: {btn_code}")
             return
         self.ui.write(e.EV_KEY, btn, 1)
         self.ui.syn()
@@ -85,8 +115,9 @@ class VirtualGamepad:
         self.ui.syn()
 
     async def type_text(self, text):
+        self._ensure_ui()
         if not self.ui or not EVDEV_AVAILABLE:
-            print(f"[Mock] type: {text}")
+            logger.debug(f"[Mock] type: {text}")
             return
         for ch in text:
             entry = CHAR_KEYS.get(ch)
@@ -114,18 +145,34 @@ class VirtualMouse:
 
     def __init__(self):
         self.ui = None
+        self._last_init_attempt = 0
         if not EVDEV_AVAILABLE:
             return
+        self._try_init()
+
+    def _try_init(self):
         cap = {
             e.EV_KEY: [e.BTN_LEFT, e.BTN_RIGHT],
             e.EV_REL: [e.REL_X, e.REL_Y, e.REL_WHEEL],
         }
         try:
             self.ui = UInput(cap, name='LinuxRemotePlayer Virtual Mouse', version=0x3)
+            logger.info("UInput mouse device created successfully.")
         except Exception as ex:
-            print(f"Warning: Could not init mouse UInput (needs Linux + uinput perms). {ex}")
+            logger.warning(f"Could not init mouse UInput (needs Linux + uinput perms). {ex}")
+
+    def _ensure_ui(self):
+        if self.ui is not None or not EVDEV_AVAILABLE:
+            return
+        now = time.time()
+        if now - self._last_init_attempt < 5.0:
+            return
+        self._last_init_attempt = now
+        logger.info("Retrying UInput mouse device creation (late init)...")
+        self._try_init()
 
     async def move(self, dx, dy):
+        self._ensure_ui()
         if not self.ui or not EVDEV_AVAILABLE:
             return
         try:
@@ -133,11 +180,12 @@ class VirtualMouse:
             self.ui.write(e.EV_REL, e.REL_Y, int(dy))
             self.ui.syn()
         except Exception as ex:
-            print(f"Mouse move error: {ex}")
+            logger.error(f"Mouse move error: {ex}")
 
     async def click(self, button="left"):
+        self._ensure_ui()
         if not self.ui or not EVDEV_AVAILABLE:
-            print(f"[Mock] click: {button}")
+            logger.debug(f"[Mock] click: {button}")
             return
         code = e.BTN_RIGHT if button == "right" else e.BTN_LEFT
         self.ui.write(e.EV_KEY, code, 1)
@@ -147,6 +195,7 @@ class VirtualMouse:
         self.ui.syn()
 
     async def scroll(self, amount):
+        self._ensure_ui()
         if not self.ui or not EVDEV_AVAILABLE:
             return
         try:

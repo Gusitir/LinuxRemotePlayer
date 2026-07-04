@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinuxRemotePlayer — Convierte tu PC Linux en una Smart TV</title>
+    <meta name="description" content="Control remoto completo desde tu teléfono: touchpad, teclado, apps de streaming y control por voz. Sin hardware extra, sin cuentas, funcionando en tu propia red.">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="LinuxRemotePlayer — Convierte tu PC Linux en una Smart TV">
+    <meta property="og:description" content="Control remoto completo desde tu teléfono: touchpad, teclado, apps de streaming y control por voz. Sin hardware extra, sin cuentas, funcionando en tu propia red.">
+    <meta property="og:image" content="/icon-512.png">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="LinuxRemotePlayer — Convierte tu PC Linux en una Smart TV">
+    <meta property="twitter:description" content="Control remoto completo desde tu teléfono: touchpad, teclado, apps de streaming y control por voz. Sin hardware extra, sin cuentas, funcionando en tu propia red.">
+    <meta property="twitter:image" content="/icon-512.png">
+    
+    <link rel="icon" type="image/png" href="/icon-192.png">
+
+    <!-- Placeholders: {{BUY_URL}}, {{REPO_URL}}, {{REPO_URL_RAW}}, {{SUPPORT_EMAIL}} -->
+    <style>
+        :root {
+            --bg-base: #0b1220;
+            --bg-raised: #111827;
+            --bg-elevated: #1f2937;
+            --border: #28364d;
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --success: #22c55e;
+            --glow: rgba(59, 130, 246, 0.2);
+            --glow-green: rgba(34, 197, 94, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            line-height: 1.7;
+            font-size: 1.06rem;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Ambient Glow Backgrounds */
+        .ambient-glow-1 {
+            position: absolute;
+            top: -100px;
+            left: -100px;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, var(--glow) 0%, rgba(11,18,32,0) 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .ambient-glow-2 {
+            position: absolute;
+            top: 400px;
+            right: -200px;
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, var(--glow-green) 0%, rgba(11,18,32,0) 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Nav Bar */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background-color: rgba(11, 18, 32, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-container {
+            max-width: 1080px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .logo img {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        nav a:hover {
+            color: var(--text-primary);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: 1px solid transparent;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            background-color: var(--success);
+            color: #0b1220;
+            box-shadow: 0 8px 24px rgba(34, 197, 94, 0.25);
+        }
+
+        .btn-primary:hover {
+            background-color: #4ade80;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .btn-secondary:hover {
+            background-color: rgba(59, 130, 246, 0.08);
+            border-color: var(--accent-hover);
+        }
+
+        .btn-large {
+            padding: 14px 28px;
+            font-size: 1.05rem;
+        }
+
+        /* Layout Sections */
+        section {
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: clamp(64px, 10vw, 120px) 24px;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: clamp(1.6rem, 4vw, 2.1rem);
+            font-weight: 800;
+            margin-bottom: 48px;
+            letter-spacing: -0.01em;
+        }
+
+        /* Hero */
+        .hero {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 48px;
+            align-items: center;
+            padding-top: clamp(40px, 8vw, 80px);
+            padding-bottom: clamp(64px, 10vw, 120px);
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+
+        .hero h1 {
+            font-size: var(--h1);
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+            margin-bottom: 20px;
+        }
+
+        .hero p.subtitle {
+            font-size: 1.15rem;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+            max-width: 580px;
+        }
+
+        .hero-ctas {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .trust-line {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .hero-mockup {
+            display: flex;
+            justify-content: center;
+            position: relative;
+        }
+
+        .hero-mockup-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120%;
+            height: 120%;
+            background: radial-gradient(circle, var(--glow) 0%, rgba(11,18,32,0) 65%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Step Section (Cómo funciona) */
+        .step-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+        }
+
+        .step-card {
+            background-color: var(--bg-raised);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            transition: all 0.2s;
+        }
+
+        .step-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent);
+        }
+
+        .step-icon {
+            color: var(--accent);
+            margin-bottom: 20px;
+            display: flex;
+        }
+
+        .step-card h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .step-card p {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+        }
+
+        /* Features Section */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .feature-card {
+            background-color: var(--bg-raised);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent);
+        }
+
+        .feature-icon {
+            margin-bottom: 16px;
+            display: flex;
+        }
+
+        .feature-card h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .feature-badge {
+            background-color: rgba(34, 197, 94, 0.1);
+            color: var(--success);
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-weight: 700;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .feature-card p {
+            font-size: 0.92rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Installation Section */
+        .installation-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .installation-intro {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .terminal {
+            background-color: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            padding: 16px 20px;
+            position: relative;
+            margin-bottom: 32px;
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+        }
+
+        .terminal-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 10px;
+        }
+
+        .terminal-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .terminal-dot-red { background-color: #ef4444; }
+        .terminal-dot-yellow { background-color: #eab308; }
+        .terminal-dot-green { background-color: #22c55e; }
+
+        .terminal-body {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .terminal-command {
+            font-size: 0.95rem;
+            color: var(--text-primary);
+        }
+
+        .btn-copy {
+            background-color: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .btn-copy:hover {
+            background-color: rgba(255,255,255,0.1);
+            color: var(--text-primary);
+        }
+
+        .install-steps {
+            list-style: none;
+            max-width: 600px;
+            margin: 0 auto 32px;
+        }
+
+        .install-steps li {
+            position: relative;
+            padding-left: 36px;
+            margin-bottom: 16px;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+        }
+
+        .install-steps li strong {
+            color: var(--text-primary);
+        }
+
+        .install-steps li::before {
+            content: attr(data-step);
+            position: absolute;
+            left: 0;
+            top: 2px;
+            width: 22px;
+            height: 22px;
+            background-color: var(--bg-elevated);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .installation-footnote {
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .installation-footnote a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .installation-footnote a:hover {
+            text-decoration: underline;
+        }
+
+        /* Price Section */
+        .price-card {
+            max-width: 420px;
+            margin: 0 auto;
+            background-color: var(--bg-raised);
+            border: 1px solid var(--success);
+            border-radius: 20px;
+            padding: 40px 32px;
+            box-shadow: 0 15px 35px -5px rgba(0,0,0,0.3), 0 0 25px var(--glow-green);
+            text-align: center;
+        }
+
+        .price-plan {
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+
+        .price-amount {
+            font-size: clamp(2.5rem, 8vw, 3.5rem);
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .price-period {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            font-weight: normal;
+        }
+
+        .price-list {
+            list-style: none;
+            text-align: left;
+            margin: 32px 0;
+        }
+
+        .price-list li {
+            position: relative;
+            padding-left: 28px;
+            margin-bottom: 14px;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+        }
+
+        .price-list li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--success);
+            font-weight: bold;
+        }
+
+        .price-cta {
+            width: 100%;
+            margin-bottom: 16px;
+        }
+
+        .price-footer {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .free-reminder {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .free-reminder a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .free-reminder a:hover {
+            text-decoration: underline;
+        }
+
+        /* FAQ Section */
+        .faq-container {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-col: column;
+            gap: 16px;
+            flex-direction: column;
+        }
+
+        details {
+            background-color: var(--bg-raised);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+
+        details[open] {
+            border-color: var(--accent);
+        }
+
+        summary {
+            padding: 18px 24px;
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+            color: var(--text-primary);
+            outline: none;
+        }
+
+        summary:hover {
+            background-color: rgba(255,255,255,0.02);
+        }
+
+        .faq-answer {
+            padding: 0 24px 20px;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* Final CTA */
+        .final-cta {
+            background-color: var(--bg-raised);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+            padding: 80px 24px;
+        }
+
+        .final-cta h2 {
+            font-size: clamp(1.8rem, 5vw, 2.5rem);
+            font-weight: 800;
+            margin-bottom: 16px;
+            letter-spacing: -0.01em;
+        }
+
+        .final-cta p {
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .final-cta-buttons {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 60px 24px 40px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .footer-container {
+            max-width: 1080px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-about h4 {
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+        }
+
+        .footer-links {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .footer-legal {
+            max-width: 1080px;
+            margin: 0 auto;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-top: 24px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Responsiveness breakpoint */
+        @media (max-width: 760px) {
+            nav, .nav-container .btn {
+                display: none;
+            }
+
+            .hero {
+                grid-template-columns: 1fr;
+                gap: 40px;
+                text-align: center;
+            }
+
+            .hero p.subtitle {
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .hero-ctas {
+                justify-content: center;
+            }
+
+            .step-grid, .features-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .footer-container {
+                grid-template-columns: 1fr;
+                gap: 32px;
+                text-align: center;
+            }
+
+            .footer-links {
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-glow-1"></div>
+    <div class="ambient-glow-2"></div>
+
+    <!-- 2.1 NAV -->
+    <header>
+        <div class="nav-container">
+            <a href="#" class="logo">
+                <img src="/icon-192.png" alt="Logo">
+                <span>LinuxRemotePlayer</span>
+            </a>
+            <nav>
+                <a href="#como-funciona">Cómo funciona</a>
+                <a href="#caracteristicas">Características</a>
+                <a href="#instalacion">Instalación</a>
+                <a href="#precio">Precio</a>
+                <a href="#faq">FAQ</a>
+            </nav>
+            <a href="{{BUY_URL}}" class="btn btn-primary">Comprar licencia</a>
+        </div>
+    </header>
+
+    <!-- 2.2 HERO -->
+    <section class="hero">
+        <div>
+            <span class="hero-badge">🐧 Para HTPCs y PCs con Linux</span>
+            <h1>Convierte tu PC con Linux en una Smart TV</h1>
+            <p class="subtitle">Control remoto completo desde tu teléfono: touchpad, teclado, apps de streaming y control por voz. Sin hardware extra, sin cuentas, funcionando en tu propia red.</p>
+            <div class="hero-ctas">
+                <a href="{{BUY_URL}}" class="btn btn-primary btn-large">Comprar licencia — pago único</a>
+                <a href="#instalacion" class="btn btn-secondary btn-large">Instalar gratis</a>
+            </div>
+            <p class="trust-line">✓ Control básico gratis y open source  ·  ✓ La licencia desbloquea la voz con IA  ·  ✓ Tus datos nunca salen de tu casa</p>
+        </div>
+        <div class="hero-mockup">
+            <div class="hero-mockup-glow"></div>
+            <!-- Hand-built PWA Remote SVG Mockup -->
+            <svg width="300" height="600" viewBox="0 0 300 600" xmlns="http://www.w3.org/2000/svg">
+                <!-- Phone shell frame -->
+                <rect x="10" y="10" width="280" height="580" rx="40" fill="#1f2937" stroke="#28364d" stroke-width="4" />
+                <rect x="20" y="20" width="260" height="560" rx="30" fill="#0b1220" />
+                
+                <!-- Status bar -->
+                <circle cx="45" cy="45" r="5" fill="#22c55e" />
+                <text x="58" y="49" fill="#f3f4f6" font-size="11" font-family="sans-serif" font-weight="600">Conectado (Smart TV)</text>
+                
+                <!-- App grid row -->
+                <circle cx="50" cy="90" r="16" fill="#E50914" />
+                <text x="50" y="94" text-anchor="middle" fill="#fff" font-size="12" font-family="sans-serif" font-weight="bold">N</text>
+                
+                <circle cx="95" cy="90" r="16" fill="#FF0000" />
+                <text x="95" y="94" text-anchor="middle" fill="#fff" font-size="12" font-family="sans-serif" font-weight="bold">Y</text>
+                
+                <circle cx="140" cy="90" r="16" fill="#1DB954" />
+                <text x="140" y="94" text-anchor="middle" fill="#fff" font-size="12" font-family="sans-serif" font-weight="bold">S</text>
+                
+                <circle cx="185" cy="90" r="16" fill="#113CCF" />
+                <text x="185" y="94" text-anchor="middle" fill="#fff" font-size="12" font-family="sans-serif" font-weight="bold">D</text>
+                
+                <circle cx="230" cy="90" r="16" fill="#9146FF" />
+                <text x="230" y="94" text-anchor="middle" fill="#fff" font-size="12" font-family="sans-serif" font-weight="bold">T</text>
+                
+                <!-- Touchpad -->
+                <rect x="35" y="130" width="230" height="240" rx="16" fill="#111827" stroke="#28364d" stroke-width="2" />
+                <text x="150" y="250" text-anchor="middle" fill="#9ca3af" font-size="13" font-family="sans-serif" font-weight="700" letter-spacing="1">TOUCHPAD</text>
+                <rect x="235" y="150" width="16" height="200" rx="8" fill="#1f2937" />
+                
+                <!-- Play media controls -->
+                <circle cx="90" cy="420" r="20" fill="#1f2937" />
+                <polygon points="94,414 94,426 84,420" fill="#9ca3af" />
+                <rect x="82" y="414" width="2" height="12" fill="#9ca3af" />
+                
+                <circle cx="150" cy="420" r="28" fill="#3b82f6" />
+                <polygon points="144,410 144,430 162,420" fill="#fff" />
+                
+                <circle cx="210" cy="420" r="20" fill="#1f2937" />
+                <polygon points="206,414 206,426 216,420" fill="#9ca3af" />
+                <rect x="216" y="414" width="2" height="12" fill="#9ca3af" />
+                
+                <!-- Mic glow and icon -->
+                <circle cx="150" cy="510" r="30" fill="#22c55e" />
+                <path d="M150,498 C147,498 145,500 145,503 L145,511 C145,514 147,516 150,516 C153,516 155,514 155,511 L155,503 C155,500 153,498 150,498 Z" fill="#fff"/>
+                <path d="M139,507 L139,511 C139,517 144,522 150,522 C156,522 161,517 161,511 L161,507" stroke="#fff" stroke-width="2.5" stroke-linecap="round" fill="none" />
+                <line x1="150" y1="522" x2="150" y2="526" stroke="#fff" stroke-width="2.5" stroke-linecap="round" />
+            </svg>
+        </div>
+    </section>
+
+    <!-- 2.3 CÓMO FUNCIONA -->
+    <section id="como-funciona">
+        <h2 class="section-title">Listo en tres pasos</h2>
+        <div class="step-grid">
+            <div class="step-card">
+                <div class="step-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                </div>
+                <h3>1. Instala en tu PC</h3>
+                <p>Un solo comando en la terminal de tu PC con Linux. El instalador configura todo: servicio, HTTPS y permisos de hardware automáticamente.</p>
+            </div>
+            <div class="step-card">
+                <div class="step-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><rect x="7" y="7" width="3" height="3"/><rect x="14" y="7" width="3" height="3"/><rect x="7" y="14" width="3" height="3"/><rect x="14" y="14" width="3" height="3"/></svg>
+                </div>
+                <h3>2. Empareja tu teléfono</h3>
+                <p>Abre el enlace de emparejamiento seguro que te entrega el instalador, acepta el certificado de red una vez e instala la app en tu pantalla de inicio. Sin tiendas de aplicaciones.</p>
+            </div>
+            <div class="step-card">
+                <div class="step-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 0 0-10 10v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-7a10 10 0 0 0-10-10z"/><path d="M19 15v4"/><path d="M5 15v4"/><path d="M12 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
+                </div>
+                <h3>3. Controla desde el sofá</h3>
+                <p>Netflix, YouTube, Spotify y tus apps locales de Linux. Touchpad, control multimedia y teclado. Con la licencia opcional, también mediante comandos de voz.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 2.4 CARACTERÍSTICAS -->
+    <section id="caracteristicas">
+        <h2 class="section-title">Todo lo que trae</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><polyline points="21 3 14 10 3 21"/></svg>
+                </div>
+                <h3>Touchpad y ratón</h3>
+                <p>Mueve el puntero con precisión, haz clic, doble clic y scroll vertical como en una laptop. Mantén presionado para el clic derecho.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"/><line x1="6" y1="8" x2="6" y2="8"/><line x1="10" y1="8" x2="10" y2="8"/><line x1="14" y1="8" x2="14" y2="8"/><line x1="18" y1="8" x2="18" y2="8"/><line x1="6" y1="12" x2="6" y2="12"/><line x1="10" y1="12" x2="10" y2="12"/><line x1="14" y1="12" x2="14" y2="12"/><line x1="18" y1="12" x2="18" y2="12"/><line x1="7" y1="16" x2="17" y2="16"/></svg>
+                </div>
+                <h3>Teclado del teléfono</h3>
+                <p>Escribe cómodamente búsquedas, contraseñas o comandos desde el teclado nativo de tu móvil y envíalo en tiempo real a la TV.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+                </div>
+                <h3>Tus apps de streaming</h3>
+                <p>Lanza Netflix, YouTube, Max, Disney+, Twitch y más a pantalla completa con Chromium Kiosk. También puedes agregar tus propias aplicaciones.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon" style="color: var(--success);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                </div>
+                <h3>Control por voz con IA <span class="feature-badge">Con licencia</span></h3>
+                <p>«Pon vídeos de música en YouTube». Transcribe tu audio y analiza la intención con modelos de lenguaje integrados de alta velocidad.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </div>
+                <h3>Privado por diseño</h3>
+                <p>La app funciona 100% en tu red local utilizando HTTPS y emparejamiento seguro sin dependencias externas obligatorias, rastreos ni cuentas.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                </div>
+                <h3>Actualizaciones integradas</h3>
+                <p>Comprueba y aplica nuevas versiones de forma automática desde la sección de ajustes de la app. Rápido y sin perder configuración.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 2.5 INSTALACIÓN -->
+    <section id="instalacion">
+        <h2 class="section-title">Instalación en un comando</h2>
+        <div class="installation-container">
+            <p class="installation-intro">En tu PC con Linux (Debian, Ubuntu, Linux Mint y derivados), pega este comando en la terminal:</p>
+            
+            <div class="terminal">
+                <div class="terminal-header">
+                    <div class="terminal-dot terminal-dot-red"></div>
+                    <div class="terminal-dot terminal-dot-yellow"></div>
+                    <div class="terminal-dot terminal-dot-green"></div>
+                </div>
+                <div class="terminal-body">
+                    <span class="terminal-command" id="cmd-text">curl -fsSL {{REPO_URL_RAW}}/main/scripts/bootstrap.sh | sudo bash</span>
+                    <button class="btn-copy" onclick="copyCommand()" id="copy-btn">Copiar</button>
+                </div>
+            </div>
+
+            <ol class="install-steps">
+                <li data-step="1">El instalador te preguntará el modo de instalación (TV dedicada tipo electrodoméstico o aplicación de escritorio común) y configurará los servicios y permisos de hardware.</li>
+                <li data-step="2">Al finalizar, verás en la consola las direcciones de emparejamiento seguras. Ábrelas en el navegador de tu teléfono celular.</li>
+                <li data-step="3">Instala o añade la aplicación a la pantalla de inicio desde tu navegador móvil para disfrutar del control a pantalla completa.</li>
+            </ol>
+
+            <p class="installation-footnote">Requiere un sistema Linux con systemd y navegador Chromium. Código de código abierto disponible en <a href="{{REPO_URL}}" target="_blank">GitHub</a>.</p>
+        </div>
+    </section>
+
+    <!-- 2.6 PRECIO -->
+    <section id="precio">
+        <h2 class="section-title">Precio simple</h2>
+        <!-- Stripe Price Synced Comment: Product: LinuxRemotePlayer, Price: 9.99 EUR one-time -->
+        <div class="price-card">
+            <div class="price-plan">Licencia Personal</div>
+            <div class="price-amount">9,99 €<span class="price-period"> / pago único</span></div>
+            <ul class="price-list">
+                <li>Control por voz con IA (60 comandos/día)</li>
+                <li>Todas las funciones del control básico incluidas</li>
+                <li>Actualizaciones gratuitas garantizadas</li>
+                <li>Uso en 1 HTPC/PC por cada licencia adquirida</li>
+                <li>Envío inmediato de la clave a tu correo</li>
+            </ul>
+            <a href="{{BUY_URL}}" class="btn btn-primary btn-large price-cta">Comprar ahora</a>
+            <p class="price-footer">Pago seguro procesado a través de Stripe. No guardamos información de tu tarjeta de crédito.</p>
+        </div>
+        <p class="free-reminder">¿Solo deseas usar el touchpad y teclado tradicionales sin voz? Es gratuito y libre. Ve a la sección de <a href="#instalacion">Instalación</a>.</p>
+    </section>
+
+    <!-- 2.7 FAQ -->
+    <section id="faq">
+        <h2 class="section-title">Preguntas frecuentes</h2>
+        <div class="faq-container">
+            <details>
+                <summary>¿Cómo recibo mi clave de licencia?</summary>
+                <div class="faq-answer">
+                    Al completar tu pago mediante Stripe, tu clave de licencia (con formato LRP-XXXX-XXXX-XXXX) se enviará a tu correo electrónico en un lapso de 1 a 2 minutos. Luego en la aplicación móvil, entra en Ajustes → Clave de licencia, introduce el código y toca Activar.
+                </div>
+            </details>
+            <details>
+                <summary>¿Se puede utilizar la aplicación de forma gratuita?</summary>
+                <div class="faq-answer">
+                    Sí, el control remoto básico (touchpad, botones multimedia, teclado virtual, lanzador de kiosks y gestor de aplicaciones) es 100% gratuito y de código abierto. La licencia es opcional y desbloquea el módulo de control por voz inteligente con IA.
+                </div>
+            </details>
+            <details>
+                <summary>¿Qué requisitos necesito cumplir?</summary>
+                <div class="faq-answer">
+                    Necesitas un HTPC o PC conectado a tu TV que corra Linux (Debian, Ubuntu, Mint o derivados), y un teléfono móvil (Android o iPhone) conectado a la misma red WiFi que tu computadora.
+                </div>
+            </details>
+            <details>
+                <summary>¿Mis datos y voz se envían a servidores externos?</summary>
+                <div class="faq-answer">
+                    Todo el control del ratón y el teclado se procesa localmente en tu red Wifi. Tus datos nunca viajan por internet. Solo los audios de los comandos de voz se envían de forma encriptada a la nube para su procesamiento en el modelo de lenguaje, únicamente si cuentas con una licencia activa y presionas el botón de voz.
+                </div>
+            </details>
+            <details>
+                <summary>¿Cómo se actualiza el sistema?</summary>
+                <div class="faq-answer">
+                    Puedes actualizar el servidor local en tu PC presionando el botón "Buscar actualización" desde los ajustes de la aplicación en tu celular, o ejecutando manualmente el comando `scripts/update.sh` en tu computadora Linux.
+                </div>
+            </details>
+            <details>
+                <summary>¿Cómo puedo desinstalar el programa por completo?</summary>
+                <div class="faq-answer">
+                    Puedes desinstalar todos los servicios, configuraciones, permisos de red y firewall ejecutando el comando de desinstalación `sudo ./scripts/uninstall.sh` en tu terminal Linux.
+                </div>
+            </details>
+            <details>
+                <summary>¿Ofrecen políticas de reembolso?</summary>
+                <div class="faq-answer">
+                    Sí. Si no estás conforme con el producto, escríbenos a <a href="mailto:{{SUPPORT_EMAIL}}">{{SUPPORT_EMAIL}}</a> dentro de los 14 días posteriores a tu compra y procesaremos tu reembolso sin hacer preguntas.
+                </div>
+            </details>
+        </div>
+    </section>
+
+    <!-- 2.8 CTA FINAL -->
+    <section class="final-cta">
+        <h2>Tu sofá te está esperando</h2>
+        <p>Instala de manera gratuita en menos de 5 minutos en tu TV. Desbloquea la voz cuando lo creas necesario.</p>
+        <div class="final-cta-buttons">
+            <a href="{{BUY_URL}}" class="btn btn-primary btn-large">Comprar licencia</a>
+            <a href="#instalacion" class="btn btn-secondary btn-large">Ver instalación</a>
+        </div>
+    </section>
+
+    <!-- 2.9 FOOTER -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-about">
+                <h4>LinuxRemotePlayer</h4>
+                <p>Hecho para el salón. Diseñado con cariño para el ecosistema de software libre y HTPCs.</p>
+            </div>
+            <div class="footer-links">
+                <a href="{{REPO_URL}}" target="_blank">Código en GitHub</a>
+                <a href="mailto:{{SUPPORT_EMAIL}}">Soporte por correo</a>
+                <a href="#faq">Preguntas frecuentes</a>
+            </div>
+        </div>
+        <div class="footer-legal">
+            © 2026 LinuxRemotePlayer · Los nombres de servicios como Netflix, YouTube, Spotify y otras marcas pertenecen a sus respectivos dueños y este producto no está afiliado ni avalado por ellos de ninguna manera.
+        </div>
+    </footer>
+
+    <!-- Vanilla Javascript Helpers -->
+    <script>
+        function copyCommand() {
+            const text = document.getElementById('cmd-text').textContent;
+            const btn = document.getElementById('copy-btn');
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    btn.textContent = '¡Copiado!';
+                    btn.style.backgroundColor = 'rgba(34, 197, 94, 0.2)';
+                    btn.style.color = '#22c55e';
+                    setTimeout(() => {
+                        btn.textContent = 'Copiar';
+                        btn.style.backgroundColor = '';
+                        btn.style.color = '';
+                    }, 2000);
+                }).catch(() => {
+                    alert('No se pudo copiar automáticamente.');
+                });
+            } else {
+                alert('Portapapeles no soportado. Por favor copia el comando manualmente.');
+            }
+        }
+    </script>
+</body>
+</html>

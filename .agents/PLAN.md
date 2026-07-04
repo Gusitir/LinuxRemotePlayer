@@ -49,16 +49,35 @@
 - [x] Kiosk uses Chromium only (Brave/Firefox dropped); installer auto-detects/installs Chromium
 
 # PH8.5: REMOTE UI REDESIGN — DONE
-- [x] Integrate virtual mouse pointer + keyboard text entry via WebSocket
-- [x] Redesign layout with media apps row, touchpad area, mic button, D-pad + OK, and keyboard bridge
+- [x] Virtual mouse pointer (touchpad: move, tap=left-click, long-press=right-click) + scroll strip
+- [x] Free SVG icons (Lucide-style) on all control buttons; app tiles use site favicons (letter fallback)
+- [x] Transport uses ordinary keys (Space / Left / Right) so it hits the FOREGROUND kiosk, not the system media session; volume/mute stay as global media keys
+- [x] D-pad removed (touchpad replaces it); media transport occupies that space
+- [x] System keyboard bridge with Done + Enter/Search; backspace (delete) button
+- [x] App drawer (slide-up): suggested + custom web apps (+ add) + detected system apps (.desktop) pinnable to the menu
+- [x] Settings drawer (placeholders only): general, app info, web link, share-control QR (local IP), buy premium, skins (premium)
+- [x] Browser-vs-installed-app detection fixed (style.display, not the hidden attr that Tailwind flex/grid overrides); desktop browsers show the remote directly for testing
+- [x] Toast feedback on launch; safe-area (notch) padding
+
+# PH8.8: AUDIT & REMEDIATION PLAN — DONE
+- [x] Stable mDNS hostname resolution (avahi-daemon) + DNS certificate SANs
+- [x] Two-tier certificate authority (ca.pem + leaf certs) preventing trust breakage
+- [x] Reconnection exponential backoff, WS heartbeat liveness, and offline tailwind-lite.css
+- [x] Resilient IndexedDB + LocalStorage pairing token storage & settings entry UI
+- [x] Late/lazy initialization of uinput devices to handle installation startup races
+- [x] Security: auto-generated pairing token, Same-Origin CORS, and whitelist for evdev keys
+- [x] DOM-based XSS protection for dynamic UI tiles & whitelist for voice intent domains
+- [x] Atomic rate-limiting via Supabase RPC functions
+- [x] Correctness: X11/Xauthority kiosk launch, standard python logging, and IME input diffing
+- [x] Round 2 post-implementation review fixes: bootstrap mobile detection, delete custom apps, and toast alerts
 
 ## ⬜ REMAINING
 
-# PH9: PAIRING UX & LICENSING BACKEND
-- [ ] Backend endpoint to issue/persist a device token
-- [ ] /pair page that renders a QR encoding https://<ip>:<port>/?token=<token>
-- [ ] Apply supabase_schema.sql to the project; add RLS policies
-- [ ] First-run onboarding in PWA (no token -> show pairing prompt instead of 'guest')
+# PH9: PAIRING UX & LICENSING BACKEND — DONE
+- [x] Backend endpoint to issue/persist a device token
+- [x] /pair page that renders a QR encoding https://<ip>:<port>/?token=<token>
+- [x] Apply supabase_schema.sql to the project; add RLS policies
+- [x] First-run onboarding in PWA (no token -> show pairing prompt instead of 'guest')
 
 # PH10: MONETIZATION (Stripe)
 - [ ] Stripe checkout ($4.99 lifetime)
@@ -69,14 +88,30 @@
 - [x] Voice/AI optional (ENABLE_VOICE flag; /api/config; mic hidden + audio rejected when off) — remote works with NO AI setup
 - [x] Kiosk launches with graphical-session env (DISPLAY/Wayland/XDG_RUNTIME_DIR) so Chromium opens from the systemd service
 - [x] TESTING.md: install + on-TV test guide (no AI)
+- [x] Discovery widened to Flatpak/Snap/local paths + Type/category filtering (hide Settings/System noise)
 - [ ] On-hardware test pass on the real TV (evdev keyboard+mouse, kiosk launch, PWA install)
 - [ ] Appliance autologin auto-detect (SDDM / LightDM) + enable-linger for the user service
-- [ ] Gamepad UI in PWA (A/B/X/Y, Start/Select) — backend already supports the codes
+- [ ] "TV navigation mode" toggle (re-enable arrows + OK for leanback apps that don't use a pointer)
+- [ ] Develop the Settings sections (currently placeholders): share-control QR, app info, web link
 - [ ] Smarter voice->app mapping (multi-word targets, not just {name}.com)
-- [ ] Discovery: filter by category (AudioVideo / Network / Game)
-- [ ] Appliance autologin auto-detect (SDDM / LightDM injection)
 - [ ] Add backend/certs/ to .gitignore
 - [ ] Tests (pytest) + on-hardware evdev injection test
+
+# PH12: DISTRIBUTION
+- [ ] Build a .deb (use fpm) with a postinst that runs the install.sh logic (venv, systemd, uinput, cert); declare deps (python3-venv, chromium, ufw, openssl)
+- [ ] Install-from-web one-liner: host install.sh and run via `curl -fsSL <url> | bash`
+- [ ] Landing page on Vercel (download .deb + install command + docs; LATER Stripe checkout)
+- [ ] The phone client needs NO app store (PWA "add to home screen"); the .deb only installs the SERVER on the Linux HTPC
+- [ ] Avoid Flatpak/Snap: their sandbox blocks uinput / systemd / launching browsers (bad fit for this app)
+
+# PH13: CODE PROTECTION / ANTI-CLONE
+- [ ] Make the GitHub repo PRIVATE; distribute the built artifact (.deb), not the source repo
+- [ ] Replace LICENSE with a proprietary/commercial license (current one may be open/GPL — revisit before selling)
+- [ ] Compile the Python backend (Nuitka -> binary, or PyInstaller) and ship the binary in the .deb instead of .py
+- [ ] Minify/obfuscate frontend JS (deterrent only — PWA JS is always visible in the browser)
+- [ ] NEVER ship API keys (NVIDIA/OpenRouter/Supabase service) in the client; route AI through a proxy server you control
+- [ ] REAL protection is server-side: license activation against your server + AI/premium gated by license. Copying the client yields a useless shell without your cloud.
+- [ ] Reality: client-side code can't be fully hidden; move the value (AI, premium, license) to your server.
 
 ## NOTES / MANUAL ACTIONS
 - HTTPS is automatic: run.py self-generates and self-heals the cert. The only manual
@@ -85,3 +120,6 @@
 - Set PAIRING_TOKEN in backend/.env, else control endpoints are open in dev mode.
 - Create the 'licenses' table in Supabase (backend/supabase_schema.sql) + set SUPABASE_URL/KEY.
 - Verify the real NVIDIA NIM ASR model id (NVIDIA_ASR_MODEL); current default is unverified.
+- Owner deferred Supabase + Stripe + AI; current focus is on-TV testing of the control without AI.
+- Distribution model: PWA client (no store) + a SERVER package (.deb) for the Linux HTPC. See PH12.
+- Anti-clone: legal (private repo + proprietary license) + compiled backend + server-side license/AI proxy. See PH13.

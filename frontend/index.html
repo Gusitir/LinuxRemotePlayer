@@ -2,16 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <!-- HYG-01 rationale: remote-control UI requires disabling user-zoom so that double-taps on buttons and dragging on touchpad does not accidentally scale the browser layout. -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Remote Player</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1f2937">
-    <link rel="apple-touch-icon" href="icon.svg">
+    <link rel="apple-touch-icon" href="icon-192.png">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Remote Kiosk">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="tailwind-lite.css">
     <style>
       html, body { touch-action: manipulation; overscroll-behavior: none; }
       /* Respect the notch / status bar (safe areas). */
@@ -28,19 +29,28 @@
       .drawer { position: fixed; inset: 0; background:#0b1220; transform: translateY(100%); transition: transform .25s ease; z-index: 40; display:flex; flex-direction:column; padding-top: env(safe-area-inset-top); }
       .drawer.open { transform: translateY(0); }
       .applauncher:active { transform: scale(0.95); }
-      .settings-row { background:#1f2937; border-radius:0.75rem; padding:0.9rem 1rem; text-align:left; color:#e5e7eb; }
+      .settings-row { background:#1f2937; border-radius:0.75rem; padding:0.9rem 1rem; text-align:left; color:#e5e7eb; display:block; width: 100%; }
       .settings-row:active { background:#374151; }
     </style>
 </head>
 <body class="bg-gray-900 text-white flex flex-col h-screen select-none">
 
+    <!-- Troubleshooting banner (Spanish) - CONN-03 -->
+    <div id="conn-error-banner" style="display:none" class="bg-red-900/95 text-white p-3 text-sm text-center border-b border-red-700 flex flex-col gap-1 z-50">
+        <div><span>No se puede conectar a: </span><span id="conn-target-url" class="font-mono"></span></div>
+        <div>
+            <a id="conn-link" href="#" target="_blank" class="underline font-bold text-red-300">Abre esta dirección en el navegador y acepta el certificado</a>.
+        </div>
+        <div id="conn-hostname-hint" class="text-xs text-red-200"></div>
+    </div>
+
     <!-- Mobile browser only: install tutorial. Hidden by default; JS shows it. -->
-    <div id="install-ui" style="display:none" class="flex-1 flex-col items-center justify-center text-center p-6 gap-4 overflow-y-auto">
+    <div id="install-ui" hidden class="flex flex-1 flex-col items-center justify-center text-center p-6 gap-4 overflow-y-auto">
         <img src="icon.svg" alt="" class="w-24 h-24 rounded-2xl">
         <h1 class="text-2xl font-bold text-blue-400">Instala Remote Kiosk</h1>
         <p class="text-gray-300 max-w-sm">Para usar el control, añádela a tu pantalla de inicio. Se abrirá como una app, sin la barra del navegador.</p>
         <button id="install-btn" style="display:none" class="bg-green-600 px-6 py-3 rounded-full font-bold active:bg-green-400">Instalar app</button>
-        <div id="steps-ios" style="display:none" class="text-left bg-gray-800 rounded-xl p-4 max-w-sm w-full">
+        <div id="steps-ios" hidden class="text-left bg-gray-800 rounded-xl p-4 max-w-sm w-full">
             <p class="font-bold mb-2 text-blue-300">iPhone / iPad (Safari)</p>
             <ol class="list-decimal list-inside space-y-1 text-sm text-gray-300">
                 <li>Toca <b>Compartir</b> (el cuadro con la flecha).</li>
@@ -48,15 +58,33 @@
                 <li>Toca <b>Añadir</b> y abre desde el nuevo icono.</li>
             </ol>
         </div>
-        <div id="steps-android" style="display:none" class="text-left bg-gray-800 rounded-xl p-4 max-w-sm w-full">
+        <div id="steps-android" hidden class="text-left bg-gray-800 rounded-xl p-4 max-w-sm w-full">
             <p class="font-bold mb-2 text-blue-300">Android (Chrome)</p>
             <ol class="list-decimal list-inside space-y-1 text-sm text-gray-300">
-                <li>Pulsa el menu (tres puntos, arriba a la derecha).</li>
+                <li>Pulsa el menú (tres puntos, arriba a la derecha).</li>
                 <li>Elige <b>"Instalar app"</b> o <b>"Añadir a pantalla de inicio"</b>.</li>
                 <li>Confirma y abre desde el nuevo icono.</li>
             </ol>
         </div>
         <p class="text-xs text-gray-500 max-w-sm">¿Ya la instalaste? Ábrela desde el icono, no desde el navegador.</p>
+    </div>
+
+    <!-- Onboarding pairing prompt for first run. Hidden by default; JS shows it if token == 'guest'. -->
+    <div id="pairing-prompt-ui" hidden class="flex flex-1 flex-col items-center justify-center text-center p-6 gap-6 overflow-y-auto">
+        <div class="w-16 h-16 bg-blue-600/10 border border-blue-500/30 rounded-full flex items-center justify-center text-blue-400">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+        </div>
+        <div class="space-y-2">
+            <h1 class="text-2xl font-bold text-gray-100">Emparejar Control</h1>
+            <p class="text-sm text-gray-400 max-w-xs">Ingresa el código de emparejamiento que aparece en la pantalla de tu TV (o en la terminal del instalador).</p>
+        </div>
+        
+        <div class="w-full max-w-xs flex flex-col gap-3">
+            <input id="onboarding-token-input" type="password" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-center text-lg tracking-widest outline-none focus:border-blue-500 transition" placeholder="TOKEN">
+            <button onclick="saveOnboardingToken()" class="w-full bg-green-600 hover:bg-green-500 active:bg-green-700 py-3 rounded-xl font-bold text-white shadow-lg shadow-green-600/15 transition">Conectar</button>
+        </div>
+        
+        <p class="text-xs text-gray-600 max-w-xs">El control remoto se conecta localmente a través de tu red WiFi de forma segura.</p>
     </div>
 
     <!-- The remote (default view). -->
@@ -87,9 +115,9 @@
             </div>
         </div>
 
-        <!-- Mic (only shown when voice/AI is enabled). -->
+        <!-- Mic (only shown when voice/AI is enabled). - COR-02: pointer events registered in app.js -->
         <div id="mic-row" class="flex justify-center mb-2">
-            <button id="mic-btn" onmousedown="startVoice()" onmouseup="stopVoice()" onmouseleave="stopVoice()" ontouchstart="startVoice()" ontouchend="stopVoice()"
+            <button id="mic-btn"
                 class="w-14 h-14 rounded-full bg-green-500/80 active:bg-green-400 flex items-center justify-center text-white shadow-[0_0_20px_rgba(34,197,94,0.5)] select-none">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-lg"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
             </button>
@@ -146,7 +174,7 @@
     </div>
 
     <!-- System keyboard bridge. Hidden by default. -->
-    <div id="kb-bar" style="display:none" class="fixed bottom-0 left-0 right-0 bg-gray-800 p-2 flex gap-2 items-center z-50 border-t border-gray-700">
+    <div id="kb-bar" hidden class="fixed bottom-0 left-0 right-0 bg-gray-800 p-2 flex gap-2 items-center z-50 border-t border-gray-700">
         <input id="kb-input" type="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false"
             class="flex-1 bg-gray-700 rounded px-3 py-2 text-white outline-none" placeholder="Escribe... se envía a la TV">
         <button onclick="sendKey('KEY_ENTER')" class="bg-blue-600 px-3 py-2 rounded font-bold flex items-center" title="Buscar / Enter">
@@ -179,7 +207,7 @@
         </div>
     </div>
 
-    <!-- Settings drawer (slide-up). Placeholders only — to be developed. -->
+    <!-- Settings drawer (slide-up). -->
     <div id="settings-drawer" class="drawer">
         <div class="flex items-center justify-between p-4 border-b border-gray-700">
             <h2 class="text-lg font-bold text-blue-400">Ajustes</h2>
@@ -188,13 +216,41 @@
             </button>
         </div>
         <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
-            <button onclick="comingSoon()" class="settings-row">Ajustes generales</button>
-            <button onclick="comingSoon()" class="settings-row">Información de la app</button>
-            <button onclick="comingSoon()" class="settings-row">Página web</button>
-            <button onclick="comingSoon()" class="settings-row flex justify-between items-center"><span>Compartir control (QR)</span><span class="text-gray-500 text-xs">IP local</span></button>
-            <button onclick="comingSoon()" class="settings-row text-amber-300 font-bold">Comprar Premium</button>
-            <button onclick="comingSoon()" class="settings-row flex justify-between items-center"><span>Skins / Temas</span><span class="text-xs text-gray-400">Premium</span></button>
-            <p class="text-xs text-gray-600 text-center mt-4">v0.1 — secciones en construcción</p>
+            <div class="settings-row flex flex-col gap-1">
+                <span class="text-sm font-semibold">Clave de licencia</span>
+                <div class="flex gap-2 mt-1">
+                    <input id="license-input" type="text" class="flex-1 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm outline-none font-mono" placeholder="LRP-XXXX-XXXX-XXXX">
+                    <button onclick="activateLicenseKey()" class="bg-green-600 px-3 py-1 rounded text-sm font-bold active:bg-green-500">Activar</button>
+                </div>
+                <p id="license-status-text" class="text-xs text-gray-400 mt-1">Cargando estado...</p>
+            </div>
+            <div class="settings-row flex flex-col gap-1">
+                <span class="text-sm font-semibold">Código de emparejamiento</span>
+                <div class="flex gap-2 mt-1">
+                    <input id="token-input" type="password" class="flex-1 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm outline-none" placeholder="Token de emparejamiento">
+                    <button onclick="saveNewToken()" class="bg-green-600 px-3 py-1 rounded text-sm font-bold active:bg-green-500">Guardar</button>
+                </div>
+            </div>
+            <div class="settings-row flex justify-between items-center">
+                <div class="flex flex-col">
+                    <span class="text-sm font-semibold">Actualización</span>
+                    <span id="version-text" class="text-xs text-gray-500">Versión --</span>
+                </div>
+                <button id="update-btn" onclick="checkUpdate()" class="bg-blue-600 px-3 py-1 rounded text-xs font-bold active:bg-blue-500">Buscar actualización</button>
+            </div>
+            <button onclick="buyLicense()" class="settings-row text-amber-300 font-bold flex justify-between items-center">
+                <span>Comprar licencia (Voz con IA)</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+            <button onclick="shareApp()" class="settings-row flex justify-between items-center">
+                <span>Compartir app</span>
+                <span class="text-gray-500 text-xs">Recomendar</span>
+            </button>
+            <a id="ca-download-link" href="/api/ca" download class="settings-row flex justify-between items-center">
+                <span>Descargar Certificado CA</span>
+                <span class="text-xs text-blue-400">Instalar en el móvil</span>
+            </a>
+            <p id="app-version-footer" class="text-xs text-gray-600 text-center mt-4">v1.0.0 — LinuxRemotePlayer</p>
         </div>
     </div>
 

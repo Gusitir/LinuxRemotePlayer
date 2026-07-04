@@ -1,6 +1,14 @@
 import subprocess
 import os
 import shutil
+import glob
+import signal
+import time
+import logging
+
+logger = logging.getLogger("kiosk")
+
+_kiosk_proc = None
 
 
 def find_chromium():
@@ -28,43 +36,88 @@ def gui_env():
     """
     env = os.environ.copy()
     env.setdefault("DISPLAY", ":0")
+    
+    uid = None
     if hasattr(os, "getuid"):
-        runtime = env.get("XDG_RUNTIME_DIR") or f"/run/user/{os.getuid()}"
+        uid = os.getuid()
+        runtime = env.get("XDG_RUNTIME_DIR") or f"/run/user/{uid}"
         env["XDG_RUNTIME_DIR"] = runtime
         if "WAYLAND_DISPLAY" not in env and os.path.exists(os.path.join(runtime, "wayland-0")):
             env["WAYLAND_DISPLAY"] = "wayland-0"
+
+    # COR-04: probe Xauthority paths
+    if "XAUTHORITY" not in env:
+        home = os.path.expanduser("~")
+        xauth_user = os.path.join(home, ".Xauthority")
+        if os.path.exists(xauth_user):
+            env["XAUTHORITY"] = xauth_user
+        elif uid is not None:
+            xauth_gdm = f"/run/user/{uid}/gdm/Xauthority"
+            if os.path.exists(xauth_gdm):
+                env["XAUTHORITY"] = xauth_gdm
+            else:
+                xauth_globs = glob.glob(f"/run/user/{uid}/xauth_*")
+                if xauth_globs:
+                    env["XAUTHORITY"] = xauth_globs[0]
+                    
     return env
 
 
 def kill_existing_kiosks():
+    global _kiosk_proc
+    
+    # SEC-05: Process group kiosk termination
+    if _kiosk_proc is not None and _kiosk_proc.poll() is None:
+        try:
+            pid = _kiosk_proc.pid
+            pgid = os.getpgid(pid)
+            logger.info(f"Terminating kiosk process group {pgid}...")
+            os.killpg(pgid, signal.SIGTERM)
+            
+            for _ in range(30):
+                if _kiosk_proc.poll() is not None:
+                    break
+                time.sleep(0.1)
+                
+            if _kiosk_proc.poll() is None:
+                logger.warning(f"Kiosk process group {pgid} did not terminate, sending SIGKILL...")
+                os.killpg(pgid, signal.SIGKILL)
+                _kiosk_proc.wait()
+            logger.info("Kiosk process group terminated.")
+        except Exception as e:
+            logger.error(f"Error terminating tracked kiosk process: {e}")
+        _kiosk_proc = None
+        return
+
+    logger.info("No active tracked kiosk process found. Running fallback pkill with narrow patterns...")
     try:
-        # Use '--' so '--kiosk' is treated as a pattern by pkill, not an option.
-        subprocess.run(['pkill', '-f', '--', '--kiosk'], check=False)
-        print("Killed existing kiosk instances.")
+        subprocess.run(['pkill', '-f', '--', 'chromium.*--kiosk'], check=False)
+        subprocess.run(['pkill', '-f', '--', 'chromium-browser.*--kiosk'], check=False)
     except Exception as e:
-        print(f"Error killing kiosk: {e}")
+        logger.error(f"Error running fallback pkill: {e}")
 
 
-def launch_kiosk(url: str):
+def launch_kiosk(url: str) -> bool:
+    global _kiosk_proc
     kill_existing_kiosks()
 
     # URL Validation
     if not url.startswith("http://") and not url.startswith("https://"):
-        print(f"Invalid URL: {url}")
+        logger.warning(f"Invalid URL: {url}")
         return False
 
-    # Chromium only — Brave/Firefox proved unreliable in kiosk mode.
     chromium = find_chromium()
     if not chromium:
-        print("Error: Chromium not found. Install it (e.g. 'sudo apt install chromium') "
-              "or re-run scripts/install.sh.")
+        logger.error("Chromium not found. Install it or re-run scripts/install.sh.")
         return False
 
     try:
         cmd = [chromium, f'--app={url}', '--kiosk', '--start-maximized', '--no-errdialogs', '--disable-infobars']
-        print(f"Launching kiosk: {' '.join(cmd)}")
-        subprocess.Popen(cmd, env=gui_env(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+        logger.info(f"Launching kiosk: {' '.join(cmd)}")
+        _kiosk_proc = subprocess.Popen(
+            cmd, env=gui_env(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True
+        )
         return True
     except Exception as e:
-        print(f"Failed to launch kiosk: {e}")
+        logger.error(f"Failed to launch kiosk: {e}")
         return False

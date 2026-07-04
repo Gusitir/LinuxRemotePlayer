@@ -2,8 +2,50 @@ const statusEl = document.getElementById('status');
 let ws;
 let mediaRecorder;
 let audioChunks = [];
-let suggestedApps = [];
-let installedApps = [];
+
+// Resilient token storage helper - CONN-04
+function getDBToken() {
+    return new Promise((resolve) => {
+        try {
+            const req = indexedDB.open('LRPDB', 1);
+            req.onupgradeneeded = (e) => {
+                e.target.result.createObjectStore('config');
+            };
+            req.onsuccess = (e) => {
+                const db = e.target.result;
+                const tx = db.transaction('config', 'readonly');
+                const store = tx.objectStore('config');
+                const getReq = store.get('license_token');
+                getReq.onsuccess = () => resolve(getReq.result);
+                getReq.onerror = () => resolve(null);
+            };
+            req.onerror = () => resolve(null);
+        } catch (err) {
+            resolve(null);
+        }
+    });
+}
+
+function setDBToken(token) {
+    return new Promise((resolve) => {
+        try {
+            const req = indexedDB.open('LRPDB', 1);
+            req.onupgradeneeded = (e) => {
+                e.target.result.createObjectStore('config');
+            };
+            req.onsuccess = (e) => {
+                const db = e.target.result;
+                const tx = db.transaction('config', 'readwrite');
+                const store = tx.objectStore('config');
+                store.put(token, 'license_token');
+                tx.oncomplete = () => resolve(true);
+            };
+            req.onerror = () => resolve(false);
+        } catch (err) {
+            resolve(false);
+        }
+    });
+}
 
 // Lock zoom: block pinch-zoom (iOS gesture events) and ctrl+wheel zoom.
 ['gesturestart', 'gesturechange', 'gestureend'].forEach((ev) =>
@@ -14,13 +56,83 @@ document.addEventListener('wheel', (e) => { if (e.ctrlKey) e.preventDefault(); }
 const host = window.location.hostname === '' || window.location.hostname === 'localhost' ? '127.0.0.1' : window.location.hostname;
 const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
 
-// Pairing: persist ?token= from the URL (e.g. a QR link), then clean the address bar.
-const urlToken = new URLSearchParams(window.location.search).get('token');
-if (urlToken) {
-    localStorage.setItem('license_token', urlToken);
-    history.replaceState({}, document.title, window.location.pathname);
+let token = 'guest';
+let lastSuggestedKiosks = [];
+let buyUrl = 'https://buy.stripe.com/mock-link';
+let isLicensed = false;
+let latestUpdateVersion = null;
+
+function toast(message) {
+    const el = document.createElement('div');
+    el.textContent = message;
+    el.style.position = 'fixed';
+    el.style.bottom = '80px';
+    el.style.left = '50%';
+    el.style.transform = 'translateX(-50%)';
+    el.style.backgroundColor = '#1f2937';
+    el.style.color = '#ffffff';
+    el.style.padding = '8px 16px';
+    el.style.borderRadius = '8px';
+    el.style.fontSize = '14px';
+    el.style.fontWeight = '600';
+    el.style.zIndex = '9999';
+    el.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)';
+    el.style.border = '1px solid #374151';
+    el.style.transition = 'opacity 0.3s ease';
+    el.style.opacity = '0';
+    el.style.pointerEvents = 'none';
+    document.body.appendChild(el);
+    
+    setTimeout(() => { el.style.opacity = '1'; }, 10);
+    setTimeout(() => {
+        el.style.opacity = '0';
+        setTimeout(() => { el.remove(); }, 300);
+    }, 2500);
 }
-const token = localStorage.getItem('license_token') || 'guest';
+
+async function initToken() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlToken = urlParams.get('token');
+    if (urlToken) {
+        localStorage.setItem('license_token', urlToken);
+        await setDBToken(urlToken);
+    }
+    const urlLicense = urlParams.get('license');
+
+    if (urlToken || urlLicense) {
+        history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    let storedToken = localStorage.getItem('license_token');
+    if (!storedToken) {
+        storedToken = await getDBToken();
+        if (storedToken) {
+            localStorage.setItem('license_token', storedToken);
+        }
+    }
+    token = storedToken || 'guest';
+
+    const tokenInput = document.getElementById('token-input');
+    if (tokenInput && token !== 'guest') {
+        tokenInput.value = token;
+    }
+
+    if (urlLicense) {
+        if (token === 'guest') {
+            // Save as pending license (finding #7)
+            localStorage.setItem('pending_license', urlLicense);
+            toast('Clave guardada. Por favor, empareja tu dispositivo primero.');
+            const input = document.getElementById('license-input');
+            if (input) input.value = urlLicense;
+        } else {
+            setTimeout(async () => {
+                const input = document.getElementById('license-input');
+                if (input) input.value = urlLicense;
+                await activateLicenseKey();
+            }, 1000);
+        }
+    }
+}
 
 // Insecure context (http) -> banner pointing to the HTTPS URL (mic needs HTTPS).
 if (!window.isSecureContext && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
@@ -28,66 +140,219 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
     window.addEventListener('load', () => {
         const banner = document.createElement('div');
         banner.style.cssText = 'background:#7f1d1d;color:#fff;padding:8px 12px;font-size:13px;text-align:center';
-        banner.innerHTML = `El microfono necesita HTTPS. <a href="${httpsUrl}" style="color:#fca5a5;font-weight:bold">Abrir version segura</a> y acepta el certificado una vez.`;
+        banner.innerHTML = `El micrófono necesita HTTPS. <a href="${httpsUrl}" style="color:#fca5a5;font-weight:bold">Abrir versión segura</a> y acepta el certificado una vez.`;
         document.body.prepend(banner);
     });
 }
 
 const port = window.location.port || '8000';
-const wsUrl = `${protocol}${host}:${port}/ws?token=${token}`;
+// WS: drop token from URL - SEC-06
+const wsUrl = `${protocol}${host}:${port}/ws`;
 const apiUrl = `${window.location.protocol}//${host}:${port}/api`;
 
-const ICON_PLUS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M5 12h14"/><path d="M12 5v14"/></svg>';
+let connectAttempts = 0;
+let retryTimeoutId = null; // HYG-02: prevent storm reconnects
+let hostname = '';
 
+async function fetchLicenseStatus() {
+    try {
+        const res = await fetch(`${apiUrl}/license/status`, {
+            headers: { 'X-Auth-Token': token }
+        });
+        if (res.ok) {
+            const data = await res.json();
+            isLicensed = data.licensed;
+
+            const micRow = document.getElementById('mic-row');
+            if (micRow) {
+                micRow.style.display = (data.voice_enabled && isLicensed) ? 'flex' : 'none';
+            }
+
+            const statusText = document.getElementById('license-status-text');
+            if (statusText) {
+                statusText.textContent = isLicensed 
+                    ? 'Licencia: activa (lifetime)' 
+                    : 'Sin licencia — funciones de voz bloqueadas';
+                statusText.className = isLicensed 
+                    ? 'text-xs text-green-500 mt-1 font-semibold' 
+                    : 'text-xs text-red-400 mt-1';
+            }
+            const input = document.getElementById('license-input');
+            if (input && isLicensed && !input.value) {
+                input.value = 'LRP-ACTIVA-OCULTA';
+                input.disabled = true;
+            }
+        }
+    } catch (err) {
+        console.error('Failed to get license status:', err);
+    }
+}
+
+async function fetchConfig() {
+    try {
+        const res = await fetch(`${apiUrl}/config`);
+        if (res.ok) {
+            const data = await res.json();
+            hostname = data.hostname || '';
+            buyUrl = data.buy_url || 'https://buy.stripe.com/mock-link';
+
+            const verText = document.getElementById('version-text');
+            if (verText) verText.textContent = `Versión ${data.version || '1.0.0'}`;
+            const footerVer = document.getElementById('app-version-footer');
+            if (footerVer) footerVer.textContent = `${data.version || '1.0.0'} — LinuxRemotePlayer`;
+
+            await fetchLicenseStatus();
+        }
+    } catch (err) {
+        console.error('Config fetch failed:', err);
+    }
+}
+
+function showTroubleBanner(show) {
+    const banner = document.getElementById('conn-error-banner');
+    if (!banner) return;
+    if (show) {
+        document.getElementById('conn-target-url').textContent = wsUrl;
+        const link = document.getElementById('conn-link');
+        link.href = location.origin;
+        const hint = document.getElementById('conn-hostname-hint');
+        if (hostname) {
+            hint.textContent = `¿Cambió la IP del PC? Intenta usar: https://${hostname}.local:${port}`;
+        } else {
+            hint.textContent = '';
+        }
+        banner.style.display = 'flex';
+    } else {
+        banner.style.display = 'none';
+    }
+}
+
+// Helper: safe JSON WS send
 function wsSend(obj) {
     if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj));
 }
 
-let toastTimer = null;
-function toast(msg) {
-    let t = document.getElementById('toast');
-    if (!t) {
-        t = document.createElement('div');
-        t.id = 'toast';
-        t.style.cssText = 'position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 16px;border-radius:9999px;font-size:13px;z-index:60;box-shadow:0 4px 14px rgba(0,0,0,.5);opacity:0;transition:opacity .2s;pointer-events:none';
-        document.body.appendChild(t);
-    }
-    t.textContent = msg;
-    t.style.opacity = '1';
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => { t.style.opacity = '0'; }, 1800);
-}
-
-function comingSoon() { toast('Próximamente'); }
-function openSettings() { const d = document.getElementById('settings-drawer'); if (d) d.classList.add('open'); }
-function closeSettings() { const d = document.getElementById('settings-drawer'); if (d) d.classList.remove('open'); }
-
 function connect() {
+    if (ws) {
+        try { ws.close(); } catch(e) {}
+    }
+    if (retryTimeoutId) {
+        clearTimeout(retryTimeoutId);
+        retryTimeoutId = null;
+    }
+
     ws = new WebSocket(wsUrl);
-    ws.onopen = () => { statusEl.textContent = 'Connected'; statusEl.className = 'text-green-500 text-xs font-bold'; };
-    ws.onclose = () => { statusEl.textContent = 'Reconnecting...'; statusEl.className = 'text-red-500 text-xs font-bold'; setTimeout(connect, 2000); };
+    ws.onopen = () => {
+        connectAttempts = 0;
+        showTroubleBanner(false);
+        statusEl.textContent = 'Connected';
+        statusEl.className = 'text-green-500 text-xs font-bold';
+
+        // SEC-06: WebSocket auth frame
+        ws.send(JSON.stringify({ type: 'auth', token: token }));
+
+        startHeartbeat();
+    };
+    ws.onclose = (event) => {
+        stopHeartbeat();
+        if (event.code === 1008) {
+            statusEl.textContent = 'No autorizado';
+            statusEl.className = 'text-red-500 text-xs font-bold';
+            openSettings();
+            const tokenInput = document.getElementById('token-input');
+            if (tokenInput) tokenInput.focus();
+            return;
+        }
+
+        connectAttempts++;
+        statusEl.textContent = 'Reconnecting...';
+        statusEl.className = 'text-red-500 text-xs font-bold';
+
+        if (connectAttempts >= 5) {
+            showTroubleBanner(true);
+        }
+
+        // Exponential backoff with jitter: 1s, 2s, 4s, 8s, max 15s (CONN-03)
+        const backoff = Math.min(15000, Math.pow(2, connectAttempts - 1) * 1000 + Math.random() * 1000);
+        retryTimeoutId = setTimeout(connect, backoff);
+    };
     ws.onerror = (err) => console.error('WebSocket Error:', err);
     ws.onmessage = (e) => {
         try {
             const res = JSON.parse(e.data);
-            if (res.status === 'processing') { statusEl.textContent = res.message; statusEl.className = 'text-purple-400 text-xs font-bold'; }
-            else if (res.status === 'success' || res.status === 'error') {
+            if (res.type === 'pong') {
+                lastPong = Date.now();
+            } else if (res.status === 'processing') {
+                statusEl.textContent = res.message;
+                statusEl.className = 'text-purple-400 text-xs font-bold';
+            } else if (res.status === 'success' || res.status === 'error') {
                 statusEl.textContent = res.status === 'error' ? `Error: ${res.message}` : 'Connected';
                 statusEl.className = res.status === 'error' ? 'text-red-500 text-xs font-bold' : 'text-green-500 text-xs font-bold';
+                if (res.status === 'success' && res.message === 'Authenticated') {
+                    const row = document.getElementById('apps-row');
+                    if (row && !row.children.length) {
+                        fetchApps();
+                    }
+                }
             }
         } catch (err) {}
     };
 }
 
+// --- Heartbeat - CONN-05 ---
+let heartbeatIntervalId = null;
+let heartbeatTimeoutId = null;
+let lastPong = 0;
+
+function startHeartbeat() {
+    stopHeartbeat();
+    lastPong = Date.now();
+    heartbeatIntervalId = setInterval(() => {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            wsSend({ type: 'ping' });
+            heartbeatTimeoutId = setTimeout(() => {
+                if (Date.now() - lastPong > 5000) {
+                    console.warn('Heartbeat timeout, closing connection.');
+                    ws.close();
+                }
+            }, 5000);
+        }
+    }, 10000);
+}
+
+function stopHeartbeat() {
+    if (heartbeatIntervalId) {
+        clearInterval(heartbeatIntervalId);
+        heartbeatIntervalId = null;
+    }
+    if (heartbeatTimeoutId) {
+        clearTimeout(heartbeatTimeoutId);
+        heartbeatTimeoutId = null;
+    }
+}
+
+// --- Resume trigger handlers - CONN-05 ---
+function handleResume() {
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+        connect();
+    } else {
+        wsSend({ type: 'ping' });
+    }
+}
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        handleResume();
+    }
+});
+window.addEventListener('online', handleResume);
+
+
 // --- Keys / media ---
-// Transport (play/seek) uses ordinary keys so they hit the FOREGROUND kiosk window,
-// not whatever holds the system media session (e.g. a background browser tab).
-// Volume/mute stay as media keys because those act globally at the OS mixer.
 function sendKey(key) { wsSend({ type: 'input', device: 'gamepad', action: 'press', key }); if (navigator.vibrate) navigator.vibrate(35); }
 function sendMedia(key) { wsSend({ action: 'media_control', parameters: { key } }); if (navigator.vibrate) navigator.vibrate(25); }
 function homeAction() { killKiosk(); }
 
-// --- Touchpad pointer (tap = left click, long-press = right click) ---
+// --- Touchpad pointer ---
 const pad = document.getElementById('touchpad');
 let padLast = null, padMoved = 0, padDown = 0, accX = 0, accY = 0, rafPending = false;
 const POINTER_SENS = 1.6;
@@ -108,8 +373,13 @@ if (pad) {
     const padEnd = () => {
         if (padLast && padMoved < 10) {
             const dur = Date.now() - padDown;
-            if (dur < 250) { wsSend({ type: 'pointer', click: 'left' }); if (navigator.vibrate) navigator.vibrate(20); }
-            else if (dur > 500) { wsSend({ type: 'pointer', click: 'right' }); if (navigator.vibrate) navigator.vibrate([20, 40]); }
+            if (dur < 250) {
+                wsSend({ type: 'pointer', click: 'left' });
+                if (navigator.vibrate) navigator.vibrate(20);
+            } else if (dur > 500) {
+                wsSend({ type: 'pointer', click: 'right' });
+                if (navigator.vibrate) navigator.vibrate([20, 40]);
+            }
         }
         padLast = null;
     };
@@ -128,7 +398,6 @@ if (scrollStrip) {
         scAcc += e.clientY - scLast;
         scLast = e.clientY;
         while (Math.abs(scAcc) >= SCROLL_STEP) {
-            // Drag down -> content scrolls down (REL_WHEEL negative).
             wsSend({ type: 'pointer', scroll: scAcc > 0 ? -1 : 1 });
             scAcc += scAcc > 0 ? -SCROLL_STEP : SCROLL_STEP;
         }
@@ -138,25 +407,38 @@ if (scrollStrip) {
     scrollStrip.addEventListener('pointercancel', scEnd);
 }
 
-// --- System keyboard bridge ---
+// --- System keyboard bridge - COR-03 prefix/suffix diff ---
 const kbBar = document.getElementById('kb-bar');
 const kbInput = document.getElementById('kb-input');
 let kbPrev = '';
-function openKeyboard() { if (!kbBar) return; kbBar.style.display = 'flex'; kbInput.value = ''; kbPrev = ''; kbInput.focus(); }
-function closeKeyboard() { if (!kbBar) return; kbInput.blur(); kbBar.style.display = 'none'; }
+function openKeyboard() { if (!kbBar) return; kbBar.hidden = false; kbInput.value = ''; kbPrev = ''; kbInput.focus(); }
+function closeKeyboard() { if (!kbBar) return; kbInput.blur(); kbBar.hidden = true; }
 if (kbInput) {
     kbInput.addEventListener('input', () => {
         const v = kbInput.value;
-        if (v.length > kbPrev.length) { wsSend({ type: 'text', text: v.slice(kbPrev.length) }); }
-        else if (v.length < kbPrev.length) { for (let i = 0; i < kbPrev.length - v.length; i++) wsSend({ type: 'input', device: 'gamepad', action: 'press', key: 'KEY_BACKSPACE' }); }
+        let i = 0;
+        while (i < kbPrev.length && i < v.length && kbPrev[i] === v[i]) {
+            i++;
+        }
+        const backspaces = kbPrev.length - i;
+        const suffix = v.slice(i);
+
+        if (backspaces > 0) {
+            for (let b = 0; b < backspaces; b++) {
+                wsSend({ type: 'input', device: 'gamepad', action: 'press', key: 'KEY_BACKSPACE' });
+            }
+        }
+        if (suffix.length > 0) {
+            wsSend({ type: 'text', text: suffix });
+        }
         kbPrev = v;
     });
     kbInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); wsSend({ type: 'input', device: 'gamepad', action: 'press', key: 'KEY_ENTER' }); } });
 }
 
-// --- Voice ---
+// --- Voice - COR-02 pointer listeners ---
 async function startVoice() {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { alert('Captura de audio no soportada (requiere HTTPS).'); return; }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { toast('Captura de audio no soportada (requiere HTTPS).'); return; }
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
@@ -180,178 +462,389 @@ function stopVoice() {
     }
 }
 
-// --- Apps: usage, custom apps, tiles ---
+const micBtn = document.getElementById('mic-btn');
+if (micBtn) {
+    micBtn.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        if (mediaRecorder && mediaRecorder.state === 'recording') return;
+        startVoice();
+    });
+    micBtn.addEventListener('pointerup', (e) => {
+        e.preventDefault();
+        stopVoice();
+    });
+    micBtn.addEventListener('pointercancel', (e) => {
+        e.preventDefault();
+        stopVoice();
+    });
+}
+
+// --- App grid (most-used first + more) - SEC-03 XSS DOM construction ---
 function getUsage() { try { return JSON.parse(localStorage.getItem('app_usage') || '{}'); } catch (e) { return {}; } }
 function bumpUsage(id) { const u = getUsage(); u[id] = (u[id] || 0) + 1; localStorage.setItem('app_usage', JSON.stringify(u)); }
+function getCustomApps() { try { return JSON.parse(localStorage.getItem('custom_apps') || '[]'); } catch(e) { return []; } }
 
-function getCustomApps() { try { return JSON.parse(localStorage.getItem('custom_apps') || '[]'); } catch (e) { return []; } }
-function saveCustomApps(arr) { localStorage.setItem('custom_apps', JSON.stringify(arr)); }
-const PALETTE = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6'];
+function createAppTile(app) {
+    const div = document.createElement('div');
+    div.className = 'relative flex flex-col items-center gap-1 cursor-pointer active:scale-95';
+    div.dataset.url = app.url || '';
+    div.dataset.id = app.id || '';
 
-function allApps() { return [...suggestedApps, ...getCustomApps()]; }
+    const iconDiv = document.createElement('div');
+    iconDiv.className = 'w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold text-white';
+    iconDiv.style.backgroundColor = app.color || '#2563eb';
+    iconDiv.textContent = (app.name || '?').charAt(0).toUpperCase();
 
-function faviconUrl(url) {
-    try { return `https://www.google.com/s2/favicons?sz=64&domain=${new URL(url).hostname}`; }
-    catch (e) { return ''; }
+    const span = document.createElement('span');
+    span.className = 'text-[10px] text-gray-300 truncate w-full text-center';
+    span.textContent = app.name || '';
+
+    div.appendChild(iconDiv);
+    div.appendChild(span);
+
+    if (app.id && app.id.startsWith('custom_')) {
+        const delBtn = document.createElement('button');
+        delBtn.textContent = '×';
+        delBtn.className = 'absolute -top-1 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs font-bold border border-gray-900';
+        delBtn.dataset.remove = app.id;
+        delBtn.title = 'Eliminar';
+        div.appendChild(delBtn);
+    }
+
+    return div;
 }
 
-function tileHTML(app, removable) {
-    const color = app.color || '#2563eb';
-    const initial = (app.name || '?').charAt(0).toUpperCase();
-    const isNative = app.kind === 'native';
-    const onclick = isNative ? `launchNative('${app.nativeId}','${app.id}')` : `launchKiosk('${app.url}','${app.id}')`;
-    const fav = isNative ? '' : faviconUrl(app.url);
-    const img = fav ? `<img src="${fav}" alt="" class="relative w-7 h-7" onerror="this.remove()">` : '';
-    const remove = removable
-        ? `<button onclick="event.stopPropagation(); removeCustomApp('${app.id}')" class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-600 text-white text-xs flex items-center justify-center z-10">x</button>`
-        : '';
-    return `<div onclick="${onclick}" class="applauncher relative flex flex-col items-center gap-1 cursor-pointer">
-        ${remove}
-        <div class="w-12 h-12 rounded-full relative flex items-center justify-center overflow-hidden" style="background:${color}">
-            <span class="absolute inset-0 flex items-center justify-center text-lg font-bold text-white">${initial}</span>
-            ${img}
-        </div>
-        <span class="text-[10px] text-gray-300 truncate w-full text-center">${app.name}</span>
-    </div>`;
-}
-
-function plusTileHTML() {
-    return `<div onclick="toggleAddPanel()" class="applauncher flex flex-col items-center gap-1 cursor-pointer">
-        <div class="w-12 h-12 rounded-full border-2 border-dashed border-gray-500 flex items-center justify-center text-gray-400">${ICON_PLUS}</div>
-        <span class="text-[10px] text-gray-400 text-center">Añadir</span>
-    </div>`;
-}
-
-function renderMainRow() {
+function renderApps(kiosks) {
     const usage = getUsage();
-    const sorted = [...allApps()].sort((a, b) => (usage[b.id] || 0) - (usage[a.id] || 0));
+    const customApps = getCustomApps();
+    const allKiosks = [...customApps, ...kiosks];
+    const sorted = allKiosks.sort((a, b) => (usage[b.id] || 0) - (usage[a.id] || 0));
+
     const row = document.getElementById('apps-row');
-    if (row) row.innerHTML = sorted.slice(0, 5).map((a) => tileHTML(a, false)).join('');
+    row.innerHTML = '';
+    sorted.slice(0, 5).forEach((app) => {
+        row.appendChild(createAppTile(app));
+    });
+
+    const drawer = document.getElementById('drawer-grid');
+    drawer.innerHTML = '';
+    sorted.forEach((app) => {
+        drawer.appendChild(createAppTile(app));
+    });
 }
 
-// --- App drawer ---
-function openDrawer() { renderDrawer(); const d = document.getElementById('app-drawer'); if (d) d.classList.add('open'); }
-function closeDrawer() { const d = document.getElementById('app-drawer'); if (d) d.classList.remove('open'); const p = document.getElementById('add-panel'); if (p) p.style.display = 'none'; }
-function toggleAddPanel() { const p = document.getElementById('add-panel'); if (p) p.style.display = p.style.display === 'none' ? 'block' : 'none'; }
-
-function renderDrawer() {
-    const custom = getCustomApps();
-    const grid = [
-        ...suggestedApps.map((a) => tileHTML(a, false)),
-        ...custom.map((a) => tileHTML(a, true)),
-        plusTileHTML(),
-    ].join('');
-    const g = document.getElementById('drawer-grid');
-    if (g) g.innerHTML = grid;
-    renderNativeList();
-}
-
-function renderNativeList() {
-    const el = document.getElementById('native-list');
-    if (!el) return;
-    if (!installedApps.length) {
-        el.innerHTML = '<p class="text-xs text-gray-500">No se detectaron apps del sistema (o el backend no corre en Linux).</p>';
+function handleAppLaunchClick(e) {
+    const removeBtn = e.target.closest('[data-remove]');
+    if (removeBtn) {
+        e.stopPropagation();
+        e.preventDefault();
+        const removeId = removeBtn.dataset.remove;
+        let customApps = getCustomApps();
+        customApps = customApps.filter(app => app.id !== removeId);
+        localStorage.setItem('custom_apps', JSON.stringify(customApps));
+        renderApps(lastSuggestedKiosks);
+        toast('Aplicación eliminada');
         return;
     }
-    el.innerHTML = installedApps.slice(0, 80).map((a) => {
-        const safeName = String(a.name).replace(/'/g, "\\'");
-        return `<div class="flex items-center justify-between bg-gray-700 rounded px-3 py-2">
-            <span class="truncate flex-1 cursor-pointer" onclick="launchNative('${a.id}')">${a.name}</span>
-            <button onclick="event.stopPropagation(); addNativeApp('${a.id}','${safeName}')" class="text-blue-400 text-xs ml-2 whitespace-nowrap">+ Añadir</button>
-        </div>`;
-    }).join('');
-}
 
-function addCustomApp() {
-    const nameEl = document.getElementById('new-app-name');
-    const urlEl = document.getElementById('new-app-url');
-    if (!nameEl || !urlEl) return;
-    const name = (nameEl.value || '').trim();
-    let url = (urlEl.value || '').trim();
-    if (!name || !url) { alert('Escribe un nombre y una URL.'); return; }
-    if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
-    const apps = getCustomApps();
-    apps.push({ id: 'custom-' + Date.now(), name, url, color: PALETTE[apps.length % PALETTE.length] });
-    saveCustomApps(apps);
-    nameEl.value = ''; urlEl.value = '';
-    renderDrawer();
-    renderMainRow();
+    const tile = e.target.closest('[data-url]');
+    if (tile) {
+        const url = tile.dataset.url;
+        const id = tile.dataset.id;
+        launchKiosk(url, id);
+    }
 }
+document.getElementById('apps-row').addEventListener('click', handleAppLaunchClick);
+document.getElementById('drawer-grid').addEventListener('click', handleAppLaunchClick);
 
-function removeCustomApp(id) {
-    saveCustomApps(getCustomApps().filter((a) => a.id !== id));
-    renderDrawer();
-    renderMainRow();
-}
+function toggleMore() { const m = document.getElementById('apps-more'); if (m) m.hidden = !m.hidden; }
 
 async function fetchApps() {
     try {
-        const res = await fetch(`${apiUrl}/apps`);
+        const res = await fetch(`${apiUrl}/apps`, {
+            headers: { 'X-Auth-Token': token }
+        });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
-        suggestedApps = data.suggested_kiosks || [];
-        installedApps = data.installed_apps || [];
-        renderMainRow();
+        lastSuggestedKiosks = data.suggested_kiosks || [];
+        renderApps(lastSuggestedKiosks);
+        renderNativeList(data.installed_apps || []);
     } catch (e) { console.error('Failed to load apps:', e); }
 }
 
 async function launchKiosk(url, id) {
     if (id) bumpUsage(id);
-    const a = allApps().find((x) => x.id === id);
-    toast('Abriendo ' + (a ? a.name : 'app') + '...');
     if (navigator.vibrate) navigator.vibrate(80);
-    closeDrawer();
+    toast('Abriendo aplicación...');
     try {
-        const res = await fetch(`${apiUrl}/kiosk/launch`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Auth-Token': token }, body: JSON.stringify({ url }) });
+        const res = await fetch(`${apiUrl}/kiosk/launch`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Auth-Token': token },
+            body: JSON.stringify({ url })
+        });
         if (!res.ok) throw new Error('HTTP ' + res.status);
-    } catch (e) { console.error('Launch error:', e); }
-}
-
-async function launchNative(nativeId, usageId) {
-    if (usageId) bumpUsage(usageId);
-    const a = installedApps.find((x) => x.id === nativeId) || allApps().find((x) => x.nativeId === nativeId);
-    toast('Abriendo ' + (a ? a.name : 'app') + '...');
-    if (navigator.vibrate) navigator.vibrate(80);
-    closeDrawer();
-    try {
-        const res = await fetch(`${apiUrl}/app/launch`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Auth-Token': token }, body: JSON.stringify({ id: nativeId }) });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-    } catch (e) { console.error('Native launch error:', e); }
-}
-
-function addNativeApp(nativeId, name) {
-    const apps = getCustomApps();
-    if (apps.some((a) => a.nativeId === nativeId)) { toast(name + ' ya está en el menú'); return; }
-    apps.push({ id: 'native-' + nativeId, name, kind: 'native', nativeId, color: PALETTE[apps.length % PALETTE.length] });
-    saveCustomApps(apps);
-    renderDrawer();
-    renderMainRow();
-    toast(name + ' añadido al menú');
+        toast('Aplicación abierta');
+    } catch (e) {
+        console.error('Launch error:', e);
+        toast('Error al abrir la aplicación');
+    }
 }
 
 async function killKiosk() {
     if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+    toast('Cerrando aplicación...');
     try {
-        const res = await fetch(`${apiUrl}/kiosk/kill`, { method: 'POST', headers: { 'X-Auth-Token': token } });
+        const res = await fetch(`${apiUrl}/kiosk/kill`, {
+            method: 'POST',
+            headers: { 'X-Auth-Token': token }
+        });
         if (!res.ok) throw new Error('HTTP ' + res.status);
-    } catch (e) { console.error('Kill error:', e); }
+        toast('Aplicación cerrada');
+    } catch (e) {
+        console.error('Kill error:', e);
+        toast('Error al cerrar la aplicación');
+    }
 }
 
-async function loadConfig() {
+// --- Native apps SEC-03 delegated listener ---
+function renderNativeList(apps) {
+    const container = document.getElementById('native-list');
+    if (!container) return;
+    container.innerHTML = '';
+
+    apps.forEach((app) => {
+        const div = document.createElement('div');
+        div.className = 'flex justify-between items-center bg-gray-700/50 p-2 rounded';
+
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'text-xs truncate flex-1';
+        nameSpan.textContent = app.name;
+
+        const btn = document.createElement('button');
+        btn.className = 'bg-blue-600 px-3 py-1 rounded text-xs font-bold active:bg-blue-500';
+        btn.textContent = 'Abrir';
+        btn.dataset.id = app.id;
+
+        div.appendChild(nameSpan);
+        div.appendChild(btn);
+        container.appendChild(div);
+    });
+}
+document.getElementById('native-list').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-id]');
+    if (btn) {
+        launchNativeApp(btn.dataset.id);
+    }
+});
+
+async function launchNativeApp(id) {
+    if (navigator.vibrate) navigator.vibrate(100);
+    toast('Abriendo aplicación nativa...');
     try {
-        const res = await fetch(`${apiUrl}/config`);
-        if (!res.ok) return;
-        const cfg = await res.json();
-        if (!cfg.voice_enabled) {
-            const m = document.getElementById('mic-row');
-            if (m) m.style.display = 'none';
-        }
-    } catch (e) {}
+        const res = await fetch(`${apiUrl}/app/launch`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Auth-Token': token },
+            body: JSON.stringify({ id })
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        toast('Aplicación nativa abierta');
+    } catch (e) {
+        console.error('App launch error:', e);
+        toast('Error al abrir la aplicación nativa');
+    }
 }
 
-// --- Where to show the remote vs the install tutorial ---
-const ua = navigator.userAgent || '';
-const isMobile = /android|iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+function addCustomApp() {
+    const nameInput = document.getElementById('new-app-name');
+    const urlInput = document.getElementById('new-app-url');
+    const name = nameInput.value.trim();
+    const urlStr = urlInput.value.trim();
+
+    if (!name || !urlStr) {
+        toast('Por favor, rellena todos los campos.');
+        return;
+    }
+
+    try {
+        const url = new URL(urlStr);
+        if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+            throw new Error('Protocolo no soportado');
+        }
+    } catch (err) {
+        toast('Por favor, introduce una URL válida (http/https).');
+        return;
+    }
+
+    const customApps = getCustomApps();
+    const newId = 'custom_' + Date.now();
+    customApps.push({ id: newId, name, url: urlStr, color: '#3b82f6' });
+    localStorage.setItem('custom_apps', JSON.stringify(customApps));
+
+    nameInput.value = '';
+    urlInput.value = '';
+    fetchApps();
+}
+
+// --- Settings and Token save ---
+function openSettings() {
+    const d = document.getElementById('settings-drawer');
+    if (d) d.classList.add('open');
+}
+function closeSettings() {
+    const d = document.getElementById('settings-drawer');
+    if (d) d.classList.remove('open');
+}
+function openDrawer() {
+    const d = document.getElementById('app-drawer');
+    if (d) d.classList.add('open');
+    const panel = document.getElementById('add-panel');
+    if (panel) panel.style.display = 'block';
+}
+function closeDrawer() {
+    const d = document.getElementById('app-drawer');
+    if (d) d.classList.remove('open');
+}
+function comingSoon() {
+    toast('Esta sección estará disponible próximamente.');
+}
+
+async function saveNewToken() {
+    const input = document.getElementById('token-input');
+    if (!input) return;
+    const val = input.value.trim();
+    if (!val) return;
+    localStorage.setItem('license_token', val);
+    await setDBToken(val);
+    token = val;
+    toast('Token guardado. Reconectando...');
+    closeSettings();
+    connect();
+
+    // Check for pending license (finding #7)
+    const pending = localStorage.getItem('pending_license');
+    if (pending) {
+        localStorage.removeItem('pending_license');
+        setTimeout(async () => {
+            const input = document.getElementById('license-input');
+            if (input) input.value = pending;
+            await activateLicenseKey();
+        }, 1200);
+    } else {
+        fetchConfig();
+        fetchApps();
+    }
+}
+
+async function activateLicenseKey() {
+    const input = document.getElementById('license-input');
+    if (!input) return;
+    const key = input.value.trim();
+    if (!key) {
+        toast('Por favor, ingresa una clave de licencia.');
+        return;
+    }
+    toast('Activando licencia...');
+    try {
+        const res = await fetch(`${apiUrl}/license/activate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Auth-Token': token
+            },
+            body: JSON.stringify({ key })
+        });
+        if (res.ok) {
+            toast('Licencia activada con éxito');
+            await fetchConfig();
+        } else {
+            const data = await res.json().catch(() => ({}));
+            toast(data.detail || 'Clave no válida');
+        }
+    } catch (err) {
+        console.error(err);
+        toast('Error al conectar con el servidor local');
+    }
+}
+
+async function checkUpdate() {
+    const btn = document.getElementById('update-btn');
+    if (!btn) return;
+
+    if (latestUpdateVersion) {
+        applyUpdate();
+        return;
+    }
+
+    toast('Buscando actualizaciones...');
+    try {
+        const res = await fetch(`${apiUrl}/update/check`, {
+            headers: { 'X-Auth-Token': token }
+        });
+        if (res.ok) {
+            const data = await res.json();
+            if (data.update_available) {
+                latestUpdateVersion = data.latest;
+                btn.textContent = `Actualizar a v${data.latest}`;
+                btn.className = 'bg-green-600 px-3 py-1 rounded text-xs font-bold active:bg-green-500';
+                toast(`Actualización disponible: v${data.latest}`);
+            } else {
+                toast('La app está actualizada');
+            }
+        } else {
+            toast('Error al comprobar actualizaciones');
+        }
+    } catch (err) {
+        console.error(err);
+        toast('Error de conexión');
+    }
+}
+
+async function applyUpdate() {
+    toast('Aplicando actualización...');
+    try {
+        const res = await fetch(`${apiUrl}/update/apply`, {
+            method: 'POST',
+            headers: { 'X-Auth-Token': token }
+        });
+        if (res.ok) {
+            toast('Actualizando... la app se reconectará sola');
+            closeSettings();
+        } else {
+            toast('Error al aplicar actualización');
+        }
+    } catch (err) {
+        console.error(err);
+        toast('Error de conexión');
+    }
+}
+
+function buyLicense() {
+    window.open(buyUrl, '_blank');
+}
+
+function shareApp() {
+    const shareData = {
+        title: 'LinuxRemotePlayer',
+        text: '🎬 Convertí mi PC Linux en una Smart TV con control remoto desde el móvil. Touchpad, teclado, apps y voz. Mirá:',
+        url: buyUrl
+    };
+    if (navigator.share) {
+        navigator.share(shareData).catch(() => {});
+    } else {
+        const text = `${shareData.text} ${shareData.url}`;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+                toast('Enlace copiado — pégalo donde quieras');
+            }).catch(() => {
+                toast('No se pudo copiar el enlace automáticamente');
+            });
+        } else {
+            toast('Compartir no soportado en este dispositivo');
+        }
+    }
+}
+
+// --- Browser tab vs installed app ---
 const isStandalone = window.matchMedia('(display-mode: standalone)').matches
     || window.matchMedia('(display-mode: fullscreen)').matches
     || window.matchMedia('(display-mode: minimal-ui)').matches
@@ -368,13 +861,14 @@ window.addEventListener('beforeinstallprompt', (e) => {
 function showInstallScreen() {
     const appUI = document.getElementById('app-ui');
     const installUI = document.getElementById('install-ui');
-    if (appUI) appUI.style.display = 'none';
-    if (installUI) installUI.style.display = 'flex';
+    if (appUI) appUI.hidden = true;
+    if (installUI) installUI.hidden = false;
+    const ua = navigator.userAgent || '';
     const isIOS = /iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     const iosSteps = document.getElementById('steps-ios');
     const androidSteps = document.getElementById('steps-android');
-    if (iosSteps) iosSteps.style.display = isIOS ? 'block' : 'none';
-    if (androidSteps) androidSteps.style.display = isIOS ? 'none' : 'block';
+    if (iosSteps) iosSteps.hidden = !isIOS;
+    if (androidSteps) androidSteps.hidden = isIOS;
     const btn = document.getElementById('install-btn');
     if (btn) {
         btn.addEventListener('click', async () => {
@@ -396,12 +890,88 @@ window.addEventListener('appinstalled', () => {
     }
 });
 
-// Show the remote when installed OR on a desktop/computer (so it can be tested there).
-// Only mobile-browser-not-installed gets the install tutorial.
-if (!isStandalone && isMobile) {
-    showInstallScreen();
-} else {
-    connect();
-    fetchApps();
-    loadConfig();
+const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+function showPairingScreen(show) {
+    const appUI = document.getElementById('app-ui');
+    const pairingUI = document.getElementById('pairing-prompt-ui');
+    if (appUI) appUI.style.display = show ? 'none' : 'flex';
+    if (pairingUI) pairingUI.hidden = !show;
 }
+
+async function saveOnboardingToken() {
+    const input = document.getElementById('onboarding-token-input');
+    if (!input) return;
+    const val = input.value.trim();
+    if (!val) return;
+    localStorage.setItem('license_token', val);
+    await setDBToken(val);
+    token = val;
+    
+    const tokenInput = document.getElementById('token-input');
+    if (tokenInput) tokenInput.value = val;
+    
+    toast('Dispositivo emparejado con éxito');
+    showPairingScreen(false);
+    
+    const pending = localStorage.getItem('pending_license');
+    if (pending) {
+        localStorage.removeItem('pending_license');
+        setTimeout(async () => {
+            const input = document.getElementById('license-input');
+            if (input) input.value = pending;
+            await activateLicenseKey();
+        }, 1200);
+    } else {
+        fetchConfig().then(() => {
+            connect();
+            fetchApps();
+        });
+    }
+}
+
+initToken().then(() => {
+    const onboardingInput = document.getElementById('onboarding-token-input');
+    if (onboardingInput) {
+        onboardingInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                saveOnboardingToken();
+            }
+        });
+    }
+
+    const tokenInput = document.getElementById('token-input');
+    if (tokenInput) {
+        tokenInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                saveNewToken();
+            }
+        });
+    }
+
+    const licenseInput = document.getElementById('license-input');
+    if (licenseInput) {
+        licenseInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                activateLicenseKey();
+            }
+        });
+    }
+
+    if (!isStandalone && isMobile) {
+        showInstallScreen();
+    } else {
+        if (token === 'guest') {
+            showPairingScreen(true);
+        } else {
+            showPairingScreen(false);
+            fetchConfig().then(() => {
+                connect();
+                fetchApps();
+            });
+        }
+    }
+});

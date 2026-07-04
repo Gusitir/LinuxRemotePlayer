@@ -1,10 +1,8 @@
-PHASE: 11 (FEATURE COMPLETENESS & POLISH - REMOTE UI)
+PHASE: 9 (PAIRING UX & LICENSING BACKEND)
 STATUS: DONE
 
 TASKS:
-- [x] TASK B1: Import mouse in backend/main.py
-- [x] TASK B2: Expand suggested kiosks list in backend/main.py
-- [x] TASK B3: Update WebSocket handler for pointer, text, and media control
-- [x] TASK F1: Redesign index.html with touchpad, media keys, and keyboard bridge
-- [x] TASK F2: Implement app.js handlers for touchpad gestures and UI updates
-- [x] TASK F3: Bump cache version in sw.js to lrp-v6
+- [x] Backend endpoint to issue/persist a device token
+- [x] /pair page that renders a QR encoding https://<ip>:<port>/?token=<token>
+- [x] Apply supabase_schema.sql to the project; add RLS policies
+- [x] First-run onboarding in PWA (no token -> show pairing prompt instead of 'guest')

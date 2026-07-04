@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡Gracias por tu compra! — LinuxRemotePlayer</title>
+    <!-- Placeholders: {{SUPPORT_EMAIL}} -->
+    <style>
+        :root {
+            --bg-base: #0b1220;
+            --bg-raised: #111827;
+            --bg-elevated: #1f2937;
+            --border: #28364d;
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --success: #22c55e;
+            --glow: rgba(59, 130, 246, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Decorative background glow */
+        .bg-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, var(--glow) 0%, rgba(11,18,32,0) 70%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .container {
+            max-width: 560px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+            background-color: var(--bg-raised);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 40px 32px;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3), 0 10px 10px -5px rgba(0,0,0,0.3);
+        }
+
+        .checkmark-container {
+            margin-bottom: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 80px;
+            height: 80px;
+            background-color: rgba(34, 197, 94, 0.1);
+            border-radius: 50%;
+            color: var(--success);
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
+        }
+
+        .checkmark-icon {
+            width: 44px;
+            height: 44px;
+        }
+
+        h1 {
+            font-size: clamp(1.8rem, 5vw, 2.4rem);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 16px;
+            line-height: 1.2;
+        }
+
+        p {
+            color: var(--text-secondary);
+            font-size: 1.06rem;
+            line-height: 1.6;
+            margin-bottom: 32px;
+        }
+
+        .card {
+            background-color: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: left;
+            margin-bottom: 32px;
+        }
+
+        .card h2 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .steps {
+            list-style: none;
+        }
+
+        .steps li {
+            position: relative;
+            padding-left: 32px;
+            margin-bottom: 16px;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: var(--text-secondary);
+        }
+
+        .steps li:last-child {
+            margin-bottom: 0;
+        }
+
+        .steps li strong {
+            color: var(--text-primary);
+        }
+
+        .steps li::before {
+            content: attr(data-step);
+            position: absolute;
+            left: 0;
+            top: 2px;
+            width: 20px;
+            height: 20px;
+            background-color: var(--accent);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .support-info {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+            border-top: 1px solid var(--border);
+            padding-top: 20px;
+            line-height: 1.6;
+        }
+
+        .support-info a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .support-info a:hover {
+            text-decoration: underline;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 12px 28px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 12px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background-color: var(--bg-elevated);
+            border-color: var(--text-secondary);
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 32px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-glow"></div>
+    <div class="container">
+        <div class="checkmark-container">
+            <svg class="checkmark-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+        </div>
+        
+        <h1>¡Gracias por tu compra!</h1>
+        <p>Tu clave de licencia está en camino. Revisa tu correo electrónico, suele llegar en 1 o 2 minutos. Recuerda mirar también en tu carpeta de correo no deseado o spam.</p>
+        
+        <div class="card">
+            <h2>Cómo activarla</h2>
+            <ul class="steps">
+                <li data-step="1">Abre la app <strong>Remote Kiosk</strong> en tu teléfono.</li>
+                <li data-step="2">Entra en <strong>Ajustes</strong> (icono de engranaje) y ve a la sección <strong>Clave de licencia</strong>.</li>
+                <li data-step="3">Pega la clave <strong>LRP-XXXX-XXXX-XXXX</strong> y toca <strong>Activar</strong>.</li>
+            </ul>
+        </div>
+        
+        <div class="support-info">
+            ¿No llegó en 10 minutos? Escríbenos a <a href="mailto:{{SUPPORT_EMAIL}}">{{SUPPORT_EMAIL}}</a> con el correo que usaste al pagar y te la reenviamos de inmediato.
+        </div>
+        
+        <a href="/" class="btn">Volver al inicio</a>
+    </div>
+</body>
+</html>
