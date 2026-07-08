@@ -27,6 +27,9 @@ from auth import validate_license_and_increment, verify_access, is_license_valid
 
 logger = logging.getLogger("main")
 
+global_dropped_fast = 0
+global_dropped_slow = 0
+
 app = FastAPI(title="LinuxRemotePlayer API")
 
 # SEC-01 CORS allow_origins=[] (rely on same-origin only)
@@ -50,6 +53,9 @@ if VOICE_ENABLED:
         if not ai_pipeline.NVIDIA_KEY or not ai_pipeline.OPENROUTER_KEY:
             logger.error("ENABLE_VOICE is True, but Cloud NVIDIA/OpenRouter API keys are missing.")
 
+import audio
+logger.info(f"Audio backend selected: {audio.get_audio_backend() or 'None (uinput fallback)'}")
+
 # Read VERSION file (C2-3)
 VERSION = "1.0.0"
 version_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "VERSION"))
@@ -60,6 +66,9 @@ if os.path.exists(version_path):
     except Exception:
         pass
 
+connected_clients = 0
+last_input_time = time.time()
+
 
 def is_newer_version(current_ver: str, latest_ver: str) -> bool:
     try:
@@ -68,6 +77,30 @@ def is_newer_version(current_ver: str, latest_ver: str) -> bool:
         return l_parts > c_parts
     except Exception:
         return latest_ver != current_ver
+
+async def monitor_idle_panel():
+    """P4-B: when the TV is IDLE (nothing playing) and no phone has been connected
+    for >=45s, show the status panel with the pairing QR. NEVER interrupts running
+    media — a dropped phone must not kill a movie."""
+    import kiosk
+    global connected_clients, last_input_time
+    while True:
+        await asyncio.sleep(15)
+        if os.getenv("APPLIANCE_IDLE_PANEL", "").lower() != "true":
+            continue
+        media_running = (getattr(kiosk, "_kiosk_proc", None) is not None
+                         and kiosk._kiosk_proc.poll() is None) or any(
+                             p.poll() is None for p in getattr(kiosk, "_native_procs", []))
+        if media_running:
+            continue  # something is on screen (movie, app or the panel itself) -> leave it alone
+        if connected_clients == 0 and (time.time() - last_input_time) >= 45.0:
+            logger.info("TV idle and no clients for 45s -> launching status panel (pairing QR).")
+            await asyncio.to_thread(kiosk.launch_kiosk, "https://127.0.0.1:8000/status")
+
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(monitor_idle_panel())
+
 
 
 # HYG-03 Constants organization
@@ -197,6 +230,51 @@ def get_pairing_qr(request: Request):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
+def get_ips():
+    ips = []
+    try:
+        import psutil
+        import socket
+        for interface, snics in psutil.net_if_addrs().items():
+            for snic in snics:
+                if snic.family == socket.AF_INET and not snic.address.startswith("127."):
+                    ips.append(f"{interface}: {snic.address}")
+    except:
+        pass
+    return ips
+
+
+@app.get("/api/status")
+def get_api_status(request: Request):
+    require_local(request)
+    global connected_clients, last_input_time
+    import kiosk
+    from input_emulator import mouse_ui_created
+    
+    return {
+        "version": VERSION,
+        "licensed": True,
+        "network_ips": get_ips(),
+        "pairing_token": auth.PAIRING_TOKEN,
+        "connected_clients": connected_clients,
+        "last_input_timestamp": last_input_time,
+        "uinput_ok": mouse_ui_created,
+        "voice_enabled": VOICE_ENABLED,
+        "kiosk_active": getattr(kiosk, "_kiosk_proc", None) is not None,
+        "buy_url": "https://linux-remote-player.vercel.app/"
+    }
+
+
+@app.get("/status")
+def get_status_html(request: Request):
+    require_local(request)
+    html_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend", "status.html"))
+    if os.path.exists(html_path):
+        from fastapi.responses import FileResponse
+        return FileResponse(html_path)
+    raise HTTPException(status_code=404, detail="status.html missing")
+
+
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
@@ -223,9 +301,15 @@ def get_ca():
 @app.get("/api/debug", dependencies=[Depends(require_token)])
 def debug_info():
     import input_emulator
+    global global_dropped_fast, global_dropped_slow
     return {
         "evdev_available": input_emulator.EVDEV_AVAILABLE,
         "is_ui_created": getattr(input_emulator.gamepad, 'ui', None) is not None,
+        "mouse_ui_created": getattr(input_emulator.mouse, 'ui', None) is not None,
+        "dropped_msgs_last_min": {
+            "fast": global_dropped_fast,
+            "slow": global_dropped_slow
+        },
         "os": __import__('platform').system()
     }
 
@@ -237,6 +321,27 @@ def list_apps():
         "installed_apps": get_installed_apps(),
         "suggested_kiosks": SUGGESTED_KIOSKS
     }
+
+
+@app.get("/api/icon/{app_id}")
+async def get_app_icon(app_id: str):
+    from fastapi.responses import FileResponse
+    match = next((a for a in get_installed_apps() if a["id"] == app_id), None)
+    if not match or not match.get("icon"):
+        raise HTTPException(status_code=404, detail="Icon not found")
+    
+    icon_val = match["icon"]
+    if icon_val.startswith("/"):
+        if os.path.exists(icon_val):
+            return FileResponse(icon_val)
+    else:
+        for ext in [".png", ".svg", ".xpm"]:
+            p = f"/usr/share/pixmaps/{icon_val}{ext}"
+            if os.path.exists(p): return FileResponse(p)
+            for res in ["48x48", "64x64", "128x128", "256x256", "scalable"]:
+                p2 = f"/usr/share/icons/hicolor/{res}/apps/{icon_val}{ext}"
+                if os.path.exists(p2): return FileResponse(p2)
+    raise HTTPException(status_code=404, detail="Icon not found on disk")
 
 
 @app.post("/api/license/activate", dependencies=[Depends(require_token)])
@@ -274,14 +379,13 @@ async def get_license_status():
 
 @app.get("/api/update/check", dependencies=[Depends(require_token)])
 async def check_update():
-    repo = os.getenv("GITHUB_REPO", "Gusitir/LinuxRemotePlayer")
-    url = f"https://api.github.com/repos/{repo}/releases/latest"
+    manifest_url = os.getenv("UPDATE_MANIFEST_URL", "https://linux-remote-player.vercel.app/latest.json")
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
-            res = await client.get(url)
+            res = await client.get(manifest_url)
         if res.status_code == 200:
             data = res.json()
-            latest = data.get("tag_name", "").lstrip('v')
+            latest = data.get("version", "").lstrip('v')
             if latest:
                 update_avail = is_newer_version(VERSION, latest)
                 return {
@@ -290,7 +394,7 @@ async def check_update():
                     "update_available": update_avail
                 }
     except Exception as e:
-        logger.warning(f"Failed to check GitHub releases: {e}")
+        logger.warning(f"Failed to check update manifest: {e}")
     return {
         "current": VERSION,
         "latest": None,
@@ -327,7 +431,8 @@ async def start_kiosk(payload: KioskLaunchBody):
 
 @app.post("/api/kiosk/kill", dependencies=[Depends(require_token)])
 async def stop_kiosk():
-    kill_existing_kiosks()
+    import kiosk
+    kiosk.close_all()
     return {"status": "success"}
 
 
@@ -341,10 +446,12 @@ async def launch_native_app(payload: AppLaunchBody):
         raise HTTPException(status_code=400, detail="App executable path missing")
 
     import shlex
+    import kiosk
     cleaned = re.sub(r'%[a-zA-Z]', '', match["exec"]).strip()
     try:
-        subprocess.Popen(shlex.split(cleaned), env=gui_env(), stdout=subprocess.DEVNULL,
+        proc = subprocess.Popen(shlex.split(cleaned), env=gui_env(), stdout=subprocess.DEVNULL,
                          stderr=subprocess.DEVNULL, start_new_session=True)
+        kiosk._native_procs.append(proc)
         return {"status": "success"}
     except Exception as ex:
         raise HTTPException(status_code=500, detail=str(ex))
@@ -358,11 +465,14 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
     auth_token = token
     is_authenticated = False
 
+    global connected_clients, last_input_time
     if auth_token and auth_token != "guest":
         if await asyncio.to_thread(verify_access, auth_token):
             is_authenticated = True
+            connected_clients += 1
 
-    rate_limiter = TokenBucket(rate=60.0, capacity=120.0)
+    fast_bucket = TokenBucket(rate=240.0, capacity=480.0)
+    slow_bucket = TokenBucket(rate=30.0, capacity=60.0)
     auth_start = time.time()
 
     async def safe_send_json(data):
@@ -399,6 +509,8 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
                     await safe_send_json({"status": "error", "message": "Unauthorized"})
                     await websocket.close(code=1008)
                     return
+                global last_input_time
+                last_input_time = time.time()
 
                 if not VOICE_ENABLED:
                     await safe_send_json({"status": "error", "message": "Voice disabled"})
@@ -447,7 +559,18 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
                     elif action == "media_control":
                         media_key = params.get("key")
                         if media_key in MEDIA_KEYS:
-                            await gamepad.press_button(media_key)
+                            import audio
+                            import kiosk
+                            if media_key == "KEY_VOLUMEUP":
+                                if not audio.set_volume(5): await gamepad.press_button(media_key)
+                            elif media_key == "KEY_VOLUMEDOWN":
+                                if not audio.set_volume(-5): await gamepad.press_button(media_key)
+                            elif media_key == "KEY_MUTE":
+                                if not audio.toggle_mute(): await gamepad.press_button(media_key)
+                            elif media_key == "KEY_PLAYPAUSE" and getattr(kiosk, "_kiosk_proc", None) is not None:
+                                await gamepad.press_button("KEY_SPACE")
+                            else:
+                                await gamepad.press_button(media_key)
                             await safe_send_json({"status": "success", "message": f"Media: {media_key}"})
                         else:
                             await safe_send_json({"status": "error", "message": "Invalid media key"})
@@ -467,11 +590,6 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
                     await safe_send_json({"status": "error", "message": "Could not understand audio"})
 
             elif message.get("text"):
-                # SEC-07 Rate limit checks
-                if not rate_limiter.consume():
-                    logger.warning("WS message dropped due to rate limit threshold.")
-                    continue
-
                 data = message.get("text")
                 try:
                     payload = json.loads(data)
@@ -481,11 +599,26 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
 
                 msg_type = payload.get("type")
 
+                # SEC-07 Rate limit checks
+                if msg_type in ("pointer", "ping"):
+                    if not fast_bucket.consume():
+                        global global_dropped_fast
+                        global_dropped_fast += 1
+                        continue
+                else:
+                    if not slow_bucket.consume():
+                        global global_dropped_slow
+                        global_dropped_slow += 1
+                        logger.warning("WS message dropped due to rate limit threshold.")
+                        continue
+
                 # SEC-06 auth frame
                 if msg_type == "auth":
                     auth_token = payload.get("token")
                     if auth_token and await asyncio.to_thread(verify_access, auth_token):
-                        is_authenticated = True
+                        if not is_authenticated:
+                            is_authenticated = True
+                            connected_clients += 1
                         await safe_send_json({"status": "success", "message": "Authenticated"})
                     else:
                         await safe_send_json({"status": "error", "message": "Unauthorized"})
@@ -497,6 +630,8 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
                     await safe_send_json({"status": "error", "message": "Unauthorized"})
                     await websocket.close(code=1008)
                     return
+                
+                last_input_time = time.time()
 
                 # CONN-05 Ping/Pong
                 if msg_type == "ping":
@@ -534,7 +669,18 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
                 elif payload.get("action") == "media_control":
                     media_key = payload.get("parameters", {}).get("key")
                     if media_key in MEDIA_KEYS:
-                        await gamepad.press_button(media_key)
+                        import audio
+                        import kiosk
+                        if media_key == "KEY_VOLUMEUP":
+                            if not audio.set_volume(5): await gamepad.press_button(media_key)
+                        elif media_key == "KEY_VOLUMEDOWN":
+                            if not audio.set_volume(-5): await gamepad.press_button(media_key)
+                        elif media_key == "KEY_MUTE":
+                            if not audio.toggle_mute(): await gamepad.press_button(media_key)
+                        elif media_key == "KEY_PLAYPAUSE" and getattr(kiosk, "_kiosk_proc", None) is not None:
+                            await gamepad.press_button("KEY_SPACE")
+                        else:
+                            await gamepad.press_button(media_key)
                         await safe_send_json({"status": "received"})
                     else:
                         await safe_send_json({"status": "error", "message": "Disallowed key"})
@@ -544,6 +690,9 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
 
     except WebSocketDisconnect:
         logger.info("Client disconnected")
+    finally:
+        if is_authenticated:
+            connected_clients = max(0, connected_clients - 1)
 
 frontend_path = os.path.join(os.path.dirname(__file__), "..", "frontend")
 app.mount("/", StaticFiles(directory=frontend_path, html=True), name="static")

@@ -1,5 +1,5 @@
-const CACHE = 'lrp-v12';
-const ASSETS = ['./', './index.html', './app.js', './tailwind-lite.css', './manifest.json', './icon.svg', './icon-192.png', './icon-512.png'];
+const CACHE = 'lrp-v13';
+const ASSETS = ['./', './index.html', './app.js', './tailwind-lite.css', './skins.css', './manifest.json', './icon.svg', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './skins/anime-bg.webp'];
 
 self.addEventListener('install', (event) => {
     event.waitUntil(

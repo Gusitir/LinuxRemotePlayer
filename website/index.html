@@ -896,7 +896,7 @@
                     <div class="terminal-dot terminal-dot-green"></div>
                 </div>
                 <div class="terminal-body">
-                    <span class="terminal-command" id="cmd-text">curl -fsSL https://raw.githubusercontent.com/Gusitir/LinuxRemotePlayer/main/scripts/bootstrap.sh | sudo bash</span>
+                    <span class="terminal-command" id="cmd-text">curl -fsSL https://linux-remote-player.vercel.app/install.sh | sudo bash</span>
                     <button class="btn-copy" onclick="copyCommand()" id="copy-btn">Copiar</button>
                 </div>
             </div>
@@ -968,7 +968,7 @@
             <details>
                 <summary>¿Cómo puedo desinstalar el programa por completo?</summary>
                 <div class="faq-answer">
-                    Puedes desinstalar todos los servicios, configuraciones, permisos de red y firewall ejecutando el comando de desinstalación `sudo ./scripts/uninstall.sh` en tu terminal Linux.
+                    Puedes desinstalar todos los servicios, configuraciones, permisos de red y firewall ejecutando <code>sudo apt remove linuxremoteplayer</code> en tu terminal Linux.
                 </div>
             </details>
             <details>

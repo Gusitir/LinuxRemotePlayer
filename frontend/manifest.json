@@ -1,6 +1,6 @@
 {
-  "name": "LinuxRemotePlayer",
-  "short_name": "RemoteKiosk",
+  "name": "Remote Linux Player",
+  "short_name": "RemoteLinux",
   "description": "AI-powered remote control for Linux HTPCs",
   "start_url": ".",
   "scope": ".",

@@ -169,10 +169,14 @@ def monitor_ip(initial_ip):
         time.sleep(60)
         current_ip = detect_ip()
         if current_ip != initial_ip:
-            logger.warning(
-                f"IP changed from {initial_ip} to {current_ip}. "
-                f"Clients may disconnect. Please restart the service to regenerate the certificate."
-            )
+            if os.getenv("INVOCATION_ID"):
+                logger.warning(f"IP changed from {initial_ip} to {current_ip}. Restarting service to self-heal.")
+                os._exit(3)
+            else:
+                logger.warning(
+                    f"IP changed from {initial_ip} to {current_ip}. "
+                    f"Clients may disconnect. Please restart the service to regenerate the certificate."
+                )
 
 
 if __name__ == "__main__":

@@ -154,6 +154,18 @@ let connectAttempts = 0;
 let retryTimeoutId = null; // HYG-02: prevent storm reconnects
 let hostname = '';
 
+function setSkin(skin) {
+    if (skin !== 'dark' && skin !== 'day' && skin !== 'neon' && skin !== 'anime') {
+        skin = 'dark';
+    }
+    if (skin !== 'dark' && !isLicensed) {
+        toast('Este tema (skin) requiere una licencia pro.');
+        skin = 'dark';
+    }
+    document.documentElement.setAttribute('data-skin', skin);
+    localStorage.setItem('lrp_skin', skin);
+}
+
 async function fetchLicenseStatus() {
     try {
         const res = await fetch(`${apiUrl}/license/status`, {
@@ -162,6 +174,10 @@ async function fetchLicenseStatus() {
         if (res.ok) {
             const data = await res.json();
             isLicensed = data.licensed;
+
+            // Apply saved skin after checking license
+            const savedSkin = localStorage.getItem('lrp_skin') || 'dark';
+            setSkin(savedSkin);
 
             const micRow = document.getElementById('mic-row');
             if (micRow) {
@@ -172,7 +188,7 @@ async function fetchLicenseStatus() {
             if (statusText) {
                 statusText.textContent = isLicensed 
                     ? 'Licencia: activa (lifetime)' 
-                    : 'Sin licencia — funciones de voz bloqueadas';
+                    : 'Sin licencia — funciones de voz/temas bloqueadas';
                 statusText.className = isLicensed 
                     ? 'text-xs text-green-500 mt-1 font-semibold' 
                     : 'text-xs text-red-400 mt-1';
@@ -234,6 +250,7 @@ function wsSend(obj) {
 
 function connect() {
     if (ws) {
+        ws.onclose = null; // P3-4 prevent old socket close from flashing red
         try { ws.close(); } catch(e) {}
     }
     if (retryTimeoutId) {
@@ -243,6 +260,10 @@ function connect() {
 
     ws = new WebSocket(wsUrl);
     ws.onopen = () => {
+        if (typeof wakeTimeoutId !== 'undefined' && wakeTimeoutId) {
+            clearTimeout(wakeTimeoutId);
+            wakeTimeoutId = null;
+        }
         connectAttempts = 0;
         showTroubleBanner(false);
         statusEl.textContent = 'Connected';
@@ -265,8 +286,11 @@ function connect() {
         }
 
         connectAttempts++;
-        statusEl.textContent = 'Reconnecting...';
-        statusEl.className = 'text-red-500 text-xs font-bold';
+        
+        if (typeof wakeTimeoutId === 'undefined' || !wakeTimeoutId) {
+            statusEl.textContent = 'Reconnecting...';
+            statusEl.className = 'text-red-500 text-xs font-bold';
+        }
 
         if (connectAttempts >= 5) {
             showTroubleBanner(true);
@@ -332,8 +356,22 @@ function stopHeartbeat() {
 }
 
 // --- Resume trigger handlers - CONN-05 ---
+let wakeTimeoutId = null;
 function handleResume() {
     if (!ws || ws.readyState !== WebSocket.OPEN) {
+        connectAttempts = 0;
+        statusEl.textContent = 'Conectando...';
+        statusEl.className = 'text-gray-400 text-xs font-bold';
+        
+        if (wakeTimeoutId) clearTimeout(wakeTimeoutId);
+        wakeTimeoutId = setTimeout(() => {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                statusEl.textContent = 'Reconectando...';
+                statusEl.className = 'text-red-500 text-xs font-bold';
+                wakeTimeoutId = null;
+            }
+        }, 3000);
+        
         connect();
     } else {
         wsSend({ type: 'ping' });
@@ -489,17 +527,46 @@ function createAppTile(app) {
     div.className = 'relative flex flex-col items-center gap-1 cursor-pointer active:scale-95';
     div.dataset.url = app.url || '';
     div.dataset.id = app.id || '';
+    if (app.is_native) div.dataset.native = 'true';
 
-    const iconDiv = document.createElement('div');
-    iconDiv.className = 'w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold text-white';
-    iconDiv.style.backgroundColor = app.color || '#2563eb';
-    iconDiv.textContent = (app.name || '?').charAt(0).toUpperCase();
+    const iconWrapper = document.createElement('div');
+    iconWrapper.className = 'w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-gray-800';
+
+    if (app.is_native) {
+        const img = document.createElement('img');
+        img.src = `/api/icon/${app.id}`;
+        img.className = 'w-10 h-10 object-contain';
+        img.onerror = () => {
+            img.outerHTML = `<div class="w-full h-full flex items-center justify-center text-lg font-bold text-white" style="background-color:${app.color || '#10b981'}">${(app.name || '?').charAt(0).toUpperCase()}</div>`;
+        };
+        iconWrapper.appendChild(img);
+    } else {
+        const iconFallback = document.createElement('div');
+        iconFallback.className = 'w-full h-full flex items-center justify-center text-lg font-bold text-white';
+        iconFallback.style.backgroundColor = app.color || '#2563eb';
+        iconFallback.textContent = (app.name || '?').charAt(0).toUpperCase();
+        
+        if (app.url && (app.url.includes('netflix') || app.url.includes('youtube') || app.url.includes('spotify') || app.url.includes('crunchyroll') || app.url.includes('primevideo') || app.url.includes('disney') || app.url.includes('max.com') || app.url.includes('twitch') || app.url.includes('apple'))) {
+            try {
+                const domain = new URL(app.url).hostname;
+                const img = document.createElement('img');
+                img.src = `https://logo.clearbit.com/${domain}`;
+                img.className = 'w-full h-full object-cover';
+                img.onerror = () => { img.outerHTML = iconFallback.outerHTML; };
+                iconWrapper.appendChild(img);
+            } catch(e) {
+                iconWrapper.appendChild(iconFallback);
+            }
+        } else {
+            iconWrapper.appendChild(iconFallback);
+        }
+    }
 
     const span = document.createElement('span');
     span.className = 'text-[10px] text-gray-300 truncate w-full text-center';
     span.textContent = app.name || '';
 
-    div.appendChild(iconDiv);
+    div.appendChild(iconWrapper);
     div.appendChild(span);
 
     if (app.id && app.id.startsWith('custom_')) {
@@ -547,11 +614,14 @@ function handleAppLaunchClick(e) {
         return;
     }
 
-    const tile = e.target.closest('[data-url]');
+    const tile = e.target.closest('[data-id]');
     if (tile) {
-        const url = tile.dataset.url;
         const id = tile.dataset.id;
-        launchKiosk(url, id);
+        if (tile.dataset.native === 'true') {
+            launchNativeApp(id);
+        } else if (tile.dataset.url) {
+            launchKiosk(tile.dataset.url, id);
+        }
     }
 }
 document.getElementById('apps-row').addEventListener('click', handleAppLaunchClick);
@@ -620,13 +690,39 @@ function renderNativeList(apps) {
         nameSpan.className = 'text-xs truncate flex-1';
         nameSpan.textContent = app.name;
 
+        const btnContainer = document.createElement('div');
+        btnContainer.className = 'flex gap-2';
+
+        const addBtn = document.createElement('button');
+        addBtn.className = 'bg-gray-600 px-3 py-1 rounded text-xs font-bold active:bg-gray-500';
+        addBtn.textContent = '+ Añadir';
+        addBtn.onclick = () => {
+            const customApps = getCustomApps();
+            if (!customApps.some(a => a.id === app.id)) {
+                customApps.push({
+                    id: app.id,
+                    name: app.name,
+                    is_native: true,
+                    color: '#10b981'
+                });
+                localStorage.setItem('custom_apps', JSON.stringify(customApps));
+                renderApps(lastSuggestedKiosks);
+                toast('Añadido a favoritos');
+            } else {
+                toast('Ya está en favoritos');
+            }
+        };
+
         const btn = document.createElement('button');
         btn.className = 'bg-blue-600 px-3 py-1 rounded text-xs font-bold active:bg-blue-500';
         btn.textContent = 'Abrir';
         btn.dataset.id = app.id;
 
+        btnContainer.appendChild(addBtn);
+        btnContainer.appendChild(btn);
+
         div.appendChild(nameSpan);
-        div.appendChild(btn);
+        div.appendChild(btnContainer);
         container.appendChild(div);
     });
 }
@@ -888,7 +984,7 @@ window.addEventListener('appinstalled', () => {
     if (installUI) {
         installUI.innerHTML = '<div class="flex-1 flex flex-col items-center justify-center text-center p-6 gap-3">'
             + '<h1 class="text-2xl font-bold text-green-500">Instalada!</h1>'
-            + '<p class="text-gray-300 max-w-sm">Abre Remote Kiosk desde el icono de tu pantalla de inicio.</p></div>';
+            + '<p class="text-gray-300 max-w-sm">Abre Remote Linux Player desde el icono de tu pantalla de inicio.</p></div>';
     }
 });
 

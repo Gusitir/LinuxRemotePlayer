@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estado del Sistema — Remote Linux Player</title>
+    <style>
+        :root {
+            --bg-base: #0b1220;
+            --bg-raised: #111827;
+            --bg-elevated: #1f2937;
+            --border: #28364d;
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --success: #22c55e;
+            --glow: rgba(59, 130, 246, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .bg-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 700px;
+            height: 700px;
+            background: radial-gradient(circle, var(--glow) 0%, rgba(11,18,32,0) 70%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            display: flex;
+            gap: 40px;
+            position: relative;
+            z-index: 2;
+            background-color: var(--bg-raised);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 40px 32px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            flex-wrap: wrap;
+        }
+
+        .left-col {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .right-col {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .icon-container {
+            margin: 0 auto 24px auto;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 64px;
+            height: 64px;
+            background-color: rgba(59, 130, 246, 0.1);
+            border-radius: 50%;
+            color: var(--accent);
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+        }
+
+        p.instructions {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .qr-box {
+            background-color: white;
+            border-radius: 16px;
+            padding: 24px;
+            display: inline-block;
+            margin: 0 auto 30px auto;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        .qr-box img {
+            display: block;
+            max-width: 200px;
+            height: auto;
+        }
+        
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background-color: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .stat-card h2 {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .stat-sub {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            background-color: rgba(34, 197, 94, 0.15);
+            color: var(--success);
+        }
+
+        .badge.error {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+
+        .link-text {
+            font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+            font-size: 0.9rem;
+            color: var(--accent);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .btn-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--accent);
+            color: white;
+            padding: 12px 24px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 12px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            border: none;
+            margin-bottom: 12px;
+        }
+
+        .btn-action:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--bg-elevated);
+            color: var(--text-primary);
+            border-color: var(--text-secondary);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-glow"></div>
+    <div class="container">
+        
+        <div class="left-col">
+            <div class="icon-container">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                    <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                </svg>
+            </div>
+            <h1>Emparejar Teléfono</h1>
+            <p class="instructions">Escanea el código QR con la cámara de tu teléfono móvil o escribe la dirección en tu navegador.</p>
+            
+            <div class="qr-box">
+                <img id="qr-img" src="/api/pairing-qr" alt="Código QR">
+            </div>
+            <div class="link-text" id="pairing-link">Cargando...</div>
+        </div>
+
+        <div class="right-col">
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <h2>Conexiones</h2>
+                    <div class="stat-value" id="val-clients">-</div>
+                    <div class="stat-sub">Teléfonos conectados</div>
+                </div>
+                <div class="stat-card">
+                    <h2>Latencia</h2>
+                    <div class="stat-value" id="val-ping">- ms</div>
+                    <div class="stat-sub">Servidor API</div>
+                </div>
+                <div class="stat-card">
+                    <h2>Estado Kiosk</h2>
+                    <div class="stat-value"><span class="badge" id="val-kiosk">Idle</span></div>
+                    <div class="stat-sub">Modo TV / App</div>
+                </div>
+                <div class="stat-card">
+                    <h2>Sistema</h2>
+                    <div class="stat-value"><span class="badge" id="val-uinput">OK</span></div>
+                    <div class="stat-sub">uinput / audio</div>
+                </div>
+                <div class="stat-card">
+                    <h2>Licencia</h2>
+                    <div class="stat-value"><span class="badge" id="val-license">Activa</span></div>
+                    <div class="stat-sub">Versión <span id="val-version">1.0.0</span></div>
+                </div>
+                <div class="stat-card">
+                    <h2>Voz (IA)</h2>
+                    <div class="stat-value"><span class="badge" id="val-voice">Activado</span></div>
+                    <div class="stat-sub">Micrófono en móvil</div>
+                </div>
+            </div>
+
+            <a href="#" id="btn-buy" target="_blank" class="btn-action">Obtener Licencia Pro</a>
+            <a href="mailto:soporte@linuxremoteplayer.com" class="btn-action btn-secondary">Contactar Soporte</a>
+        </div>
+
+    </div>
+
+    <script>
+        let isPolling = true;
+
+        async function updateStatus() {
+            if (!isPolling) return;
+            const start = performance.now();
+            try {
+                const res = await fetch('/api/status');
+                const lat = Math.round(performance.now() - start);
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    
+                    document.getElementById('val-clients').textContent = data.connected_clients;
+                    document.getElementById('val-ping').textContent = lat + ' ms';
+                    
+                    const kBadge = document.getElementById('val-kiosk');
+                    if (data.kiosk_active) {
+                        kBadge.textContent = "Ejecutando";
+                        kBadge.className = "badge";
+                    } else {
+                        kBadge.textContent = "Inactivo";
+                        kBadge.className = "badge error";
+                    }
+
+                    const uBadge = document.getElementById('val-uinput');
+                    if (data.uinput_ok) {
+                        uBadge.textContent = "OK";
+                        uBadge.className = "badge";
+                    } else {
+                        uBadge.textContent = "Error";
+                        uBadge.className = "badge error";
+                    }
+
+                    const vBadge = document.getElementById('val-voice');
+                    if (data.voice_enabled) {
+                        vBadge.textContent = "Activado";
+                        vBadge.className = "badge";
+                    } else {
+                        vBadge.textContent = "Desactivado";
+                        vBadge.className = "badge error";
+                    }
+
+                    document.getElementById('val-version').textContent = data.version;
+
+                    if (data.pairing_token) {
+                        const port = window.location.port ? ':' + window.location.port : '';
+                        const ip = (data.network_ips && data.network_ips.length > 0) ? data.network_ips[0].split(': ')[1] : window.location.hostname;
+                        document.getElementById('pairing-link').textContent = `https://${ip}${port}/?token=${data.pairing_token}`;
+                    }
+
+                    if (data.buy_url) {
+                        document.getElementById('btn-buy').href = data.buy_url;
+                    }
+
+                }
+            } catch (e) {
+                console.error(e);
+            }
+            
+            setTimeout(updateStatus, 2000);
+        }
+
+        window.onload = updateStatus;
+    </script>
+</body>
+</html>

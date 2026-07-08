@@ -1,4 +1,4 @@
-# LinuxRemotePlayer
+# Remote Linux Player
 
 **Convierte tu PC con Linux en una Smart TV.** Control remoto completo desde el teléfono: touchpad, teclado, apps de streaming en modo kiosk y control por voz con IA — todo en tu red local, sin hardware extra y sin cuentas.
 
@@ -53,15 +53,7 @@ A plug & play remote-control ecosystem for Linux HTPCs: a mobile PWA client talk
 On the Linux PC connected to your TV (Debian/Ubuntu and derivatives, systemd required), install everything with a single command:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Gusitir/LinuxRemotePlayer/main/scripts/bootstrap.sh | sudo bash
-```
-
-Alternatively, you can clone and run manually:
-
-```bash
-git clone https://github.com/Gusitir/LinuxRemotePlayer.git
-cd LinuxRemotePlayer
-sudo ./scripts/install.sh
+curl -fsSL https://linux-remote-player.vercel.app/install.sh | sudo bash
 ```
 
 Choose **Appliance Mode** (dedicated TV box, system service) or **Desktop Mode** (user service). The installer sets up dependencies, `uinput` permissions, Chromium, mDNS, the firewall rule and the systemd service. Reboot or re-login once after the first install.
@@ -157,6 +149,6 @@ All backend options live in `backend/.env` (see [`backend/.env.example`](backend
 
 ---
 
-## License
+## License Plain Elastic License
 
-See [LICENSE](LICENSE).
+See [LICENSE](LICENSE). Plain Elastic License

@@ -131,7 +131,7 @@ serve(async (req) => {
                   </div>
                   <h3 style="color: #111827;">Pasos para activarla:</h3>
                   <ol style="line-height: 1.6; padding-left: 20px;">
-                    <li>Abre la aplicación <strong>Remote Kiosk</strong> en tu teléfono.</li>
+                    <li>Abre la aplicación <strong>Remote Linux Player</strong> en tu teléfono.</li>
                     <li>Entra en <strong>Ajustes</strong> (icono de engranaje) y ve a la sección <strong>Clave de licencia</strong>.</li>
                     <li>Pega la clave de arriba y toca <strong>Activar</strong>.</li>
                   </ol>

@@ -159,7 +159,7 @@ class VirtualMouse:
             self.ui = UInput(cap, name='LinuxRemotePlayer Virtual Mouse', version=0x3)
             logger.info("UInput mouse device created successfully.")
         except Exception as ex:
-            logger.warning(f"Could not init mouse UInput (needs Linux + uinput perms). {ex}")
+            logger.error(f"Could not init mouse UInput (needs Linux + uinput perms). {ex}")
 
     def _ensure_ui(self):
         if self.ui is not None or not EVDEV_AVAILABLE:

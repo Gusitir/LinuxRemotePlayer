@@ -1,39 +1,40 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-skin="dark">
 <head>
     <meta charset="UTF-8">
     <!-- HYG-01 rationale: remote-control UI requires disabling user-zoom so that double-taps on buttons and dragging on touchpad does not accidentally scale the browser layout. -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Remote Player</title>
+    <title>Remote Linux Player</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1f2937">
-    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Remote Kiosk">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Remote Linux Player">
     <link rel="stylesheet" href="tailwind-lite.css">
+    <link rel="stylesheet" href="skins.css">
     <style>
       html, body { touch-action: manipulation; overscroll-behavior: none; }
       /* Respect the notch / status bar (safe areas). */
-      body { -webkit-touch-callout: none; padding-top: env(safe-area-inset-top); }
+      body { -webkit-touch-callout: none; padding-top: env(safe-area-inset-top); height: 100dvh; }
       button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
       .icon { width: 1.4rem; height: 1.4rem; display: block; }
       .icon-lg { width: 1.9rem; height: 1.9rem; display: block; }
-      .util-btn { background:#374151; border-radius:0.6rem; padding:0.55rem 0; display:flex; align-items:center; justify-content:center; color:#e5e7eb; }
-      .util-btn:active { background:#4b5563; }
-      .ctrl-round { width:3rem; height:3rem; border-radius:9999px; background:#374151; display:flex; align-items:center; justify-content:center; color:#e5e7eb; }
-      .ctrl-round:active { background:#4b5563; }
-      #touchpad { background-image: radial-gradient(rgba(255,255,255,0.10) 1px, transparent 1px); background-size: 12px 12px; touch-action: none; }
+      .util-btn { background:var(--bg-btn); border-radius:0.6rem; padding:0.55rem 0; display:flex; align-items:center; justify-content:center; color:var(--text-main); }
+      .util-btn:active { background:var(--bg-btn-active); }
+      .ctrl-round { width:3rem; height:3rem; border-radius:9999px; background:var(--bg-btn); display:flex; align-items:center; justify-content:center; color:var(--text-main); }
+      .ctrl-round:active { background:var(--bg-btn-active); }
+      #touchpad { background-image: radial-gradient(var(--touchpad-dot) 1px, transparent 1px); background-size: 12px 12px; touch-action: none; }
       #scroll-strip { touch-action: none; }
-      .drawer { position: fixed; inset: 0; background:#0b1220; transform: translateY(100%); transition: transform .25s ease; z-index: 40; display:flex; flex-direction:column; padding-top: env(safe-area-inset-top); }
+      .drawer { position: fixed; inset: 0; background:var(--bg-base); transform: translateY(100%); transition: transform .25s ease; z-index: 40; display:flex; flex-direction:column; padding-top: env(safe-area-inset-top); }
       .drawer.open { transform: translateY(0); }
       .applauncher:active { transform: scale(0.95); }
-      .settings-row { background:#1f2937; border-radius:0.75rem; padding:0.9rem 1rem; text-align:left; color:#e5e7eb; display:block; width: 100%; }
-      .settings-row:active { background:#374151; }
+      .settings-row { background:var(--bg-panel); border-radius:0.75rem; padding:0.9rem 1rem; text-align:left; color:var(--text-main); display:block; width: 100%; }
+      .settings-row:active { background:var(--bg-btn); }
     </style>
 </head>
-<body class="bg-gray-900 text-white flex flex-col h-screen select-none">
+<body class="flex flex-col h-screen select-none">
 
     <!-- Troubleshooting banner (Spanish) - CONN-03 -->
     <div id="conn-error-banner" style="display:none" class="bg-red-900/95 text-white p-3 text-sm text-center border-b border-red-700 flex flex-col gap-1 z-50">
@@ -47,7 +48,7 @@
     <!-- Mobile browser only: install tutorial. Hidden by default; JS shows it. -->
     <div id="install-ui" hidden class="flex flex-1 flex-col items-center justify-center text-center p-6 gap-4 overflow-y-auto">
         <img src="icon.svg" alt="" class="w-24 h-24 rounded-2xl">
-        <h1 class="text-2xl font-bold text-blue-400">Instala Remote Kiosk</h1>
+        <h1 class="text-2xl font-bold text-blue-400">Instala Remote Linux Player</h1>
         <p class="text-gray-300 max-w-sm">Para usar el control, añádela a tu pantalla de inicio. Se abrirá como una app, sin la barra del navegador.</p>
         <button id="install-btn" style="display:none" class="bg-green-600 px-6 py-3 rounded-full font-bold active:bg-green-400">Instalar app</button>
         <div id="steps-ios" hidden class="text-left bg-gray-800 rounded-xl p-4 max-w-sm w-full">
@@ -93,7 +94,7 @@
             <button onclick="openSettings()" class="text-gray-400 active:text-white" title="Ajustes">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg>
             </button>
-            <span class="text-xs text-gray-500">Remote Kiosk</span>
+            <span class="text-xs text-gray-500">Remote Linux Player</span>
             <span id="status" class="text-red-500 text-xs font-bold">Disconnected</span>
         </div>
 
@@ -107,8 +108,8 @@
 
         <!-- Touchpad + scroll strip -->
         <div class="flex-1 px-3 py-3 min-h-0 flex gap-2">
-            <div id="touchpad" class="flex-1 h-full rounded-2xl bg-gray-700/30 border border-gray-600"></div>
-            <div id="scroll-strip" class="w-9 h-full rounded-2xl bg-gray-700/40 border border-gray-600 flex flex-col items-center justify-between py-3 text-gray-500">
+            <div id="touchpad" class="flex-1 h-full rounded-2xl skin-touchpad border border-gray-600"></div>
+            <div id="scroll-strip" class="w-9 h-full rounded-2xl skin-touchpad border border-gray-600 flex flex-col items-center justify-between py-3 skin-text-dim">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="m18 15-6-6-6 6"/></svg>
                 <span class="text-[9px] tracking-widest" style="writing-mode:vertical-rl">SCROLL</span>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="m6 9 6 6 6-6"/></svg>
@@ -124,7 +125,7 @@
         </div>
 
         <!-- Control panel -->
-        <div class="bg-slate-600/30 px-4 pt-3 rounded-t-3xl" style="padding-bottom: calc(1rem + env(safe-area-inset-bottom))">
+        <div class="skin-bg-panel px-4 pt-3 rounded-t-3xl" style="padding-bottom: calc(1rem + env(safe-area-inset-bottom))">
             <!-- Utility row -->
             <div class="grid grid-cols-3 gap-2 mb-3">
                 <button onclick="openKeyboard()" class="util-btn" title="Teclado">
@@ -174,13 +175,13 @@
     </div>
 
     <!-- System keyboard bridge. Hidden by default. -->
-    <div id="kb-bar" hidden class="fixed bottom-0 left-0 right-0 bg-gray-800 p-2 flex gap-2 items-center z-50 border-t border-gray-700">
+    <div id="kb-bar" hidden class="fixed bottom-0 left-0 right-0 skin-bg-panel p-2 flex gap-2 items-center z-50 border-t border-gray-700">
         <input id="kb-input" type="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false"
-            class="flex-1 bg-gray-700 rounded px-3 py-2 text-white outline-none" placeholder="Escribe... se envía a la TV">
-        <button onclick="sendKey('KEY_ENTER')" class="bg-blue-600 px-3 py-2 rounded font-bold flex items-center" title="Buscar / Enter">
+            class="flex-1 skin-bg-btn rounded px-3 py-2 skin-text-main outline-none" placeholder="Escribe... se envía a la TV">
+        <button onclick="sendKey('KEY_ENTER')" class="skin-accent px-3 py-2 rounded font-bold flex items-center skin-text-main" title="Buscar / Enter">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><polyline points="9 10 4 15 9 20"/><path d="M20 4v7a4 4 0 0 1-4 4H4"/></svg>
         </button>
-        <button onclick="closeKeyboard()" class="bg-green-600 px-4 py-2 rounded font-bold">Done</button>
+        <button onclick="closeKeyboard()" class="skin-accent-green skin-text-main px-4 py-2 rounded font-bold">Done</button>
     </div>
 
     <!-- App drawer (slide-up). -->
@@ -194,14 +195,14 @@
         <div class="flex-1 overflow-y-auto p-4">
             <div id="drawer-grid" class="grid grid-cols-4 gap-4"></div>
 
-            <div id="add-panel" style="display:none" class="mt-6 bg-gray-800 rounded-xl p-4">
-                <p class="font-bold text-blue-300 mb-2">Añadir app web</p>
+            <div id="add-panel" style="display:none" class="mt-6 skin-bg-panel rounded-xl p-4">
+                <p class="font-bold skin-text-accent mb-2">Añadir app web</p>
                 <div class="flex flex-col gap-2 mb-4">
-                    <input id="new-app-name" type="text" placeholder="Nombre (ej. Stremio)" class="bg-gray-700 rounded px-3 py-2 outline-none">
-                    <input id="new-app-url" type="text" inputmode="url" placeholder="https://web.stremio.com" class="bg-gray-700 rounded px-3 py-2 outline-none">
-                    <button onclick="addCustomApp()" class="bg-green-600 rounded py-2 font-bold active:bg-green-500">Añadir</button>
+                    <input id="new-app-name" type="text" placeholder="Nombre (ej. Stremio)" class="skin-bg-btn rounded px-3 py-2 outline-none skin-text-main">
+                    <input id="new-app-url" type="text" inputmode="url" placeholder="https://web.stremio.com" class="skin-bg-btn rounded px-3 py-2 outline-none skin-text-main">
+                    <button onclick="addCustomApp()" class="skin-accent-green skin-text-main rounded py-2 font-bold opacity-90 hover:opacity-100">Añadir</button>
                 </div>
-                <p class="font-bold text-blue-300 mb-2">Apps del sistema (detectadas)</p>
+                <p class="font-bold skin-text-accent mb-2">Apps del sistema (detectadas)</p>
                 <div id="native-list" class="flex flex-col gap-1 max-h-60 overflow-y-auto"></div>
             </div>
         </div>
@@ -219,16 +220,27 @@
             <div class="settings-row flex flex-col gap-1">
                 <span class="text-sm font-semibold">Clave de licencia</span>
                 <div class="flex gap-2 mt-1">
-                    <input id="license-input" type="text" class="flex-1 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm outline-none font-mono" placeholder="LRP-XXXX-XXXX-XXXX">
-                    <button onclick="activateLicenseKey()" class="bg-green-600 px-3 py-1 rounded text-sm font-bold active:bg-green-500">Activar</button>
+                    <input id="license-input" type="text" class="flex-1 skin-bg-btn border border-gray-700 rounded px-2 py-1 text-sm outline-none font-mono skin-text-main" placeholder="LRP-XXXX-XXXX-XXXX">
+                    <button onclick="activateLicenseKey()" class="skin-accent-green skin-text-main px-3 py-1 rounded text-sm font-bold opacity-90 hover:opacity-100">Activar</button>
                 </div>
-                <p id="license-status-text" class="text-xs text-gray-400 mt-1">Cargando estado...</p>
+                <p id="license-status-text" class="text-xs skin-text-dim mt-1">Cargando estado...</p>
             </div>
+            
+            <div class="settings-row flex flex-col gap-1">
+                <span class="text-sm font-semibold">Tema (Skin)</span>
+                <div class="grid grid-cols-4 gap-2 mt-2">
+                    <button onclick="setSkin('dark')" class="bg-[#111827] border border-gray-600 rounded aspect-square flex items-center justify-center text-xs font-bold text-white relative" title="Dark (Clásico)">Dark</button>
+                    <button onclick="setSkin('day')" class="bg-[#f1f5f9] border border-gray-300 rounded aspect-square flex items-center justify-center text-xs font-bold text-slate-800 relative" title="Day (Claro)">Day</button>
+                    <button onclick="setSkin('neon')" class="bg-[#09090b] border border-cyan-500 rounded aspect-square flex items-center justify-center text-xs font-bold text-cyan-400 relative" title="Neon (Pro)">Neon</button>
+                    <button onclick="setSkin('anime')" class="bg-fuchsia-900 border border-fuchsia-400 rounded aspect-square flex items-center justify-center text-xs font-bold text-fuchsia-200 relative" title="Anime (Pro)">Anime</button>
+                </div>
+            </div>
+
             <div class="settings-row flex flex-col gap-1">
                 <span class="text-sm font-semibold">Código de emparejamiento</span>
                 <div class="flex gap-2 mt-1">
-                    <input id="token-input" type="password" class="flex-1 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm outline-none" placeholder="Token de emparejamiento">
-                    <button onclick="saveNewToken()" class="bg-green-600 px-3 py-1 rounded text-sm font-bold active:bg-green-500">Guardar</button>
+                    <input id="token-input" type="password" class="flex-1 skin-bg-btn border border-gray-700 rounded px-2 py-1 text-sm outline-none skin-text-main" placeholder="Token de emparejamiento">
+                    <button onclick="saveNewToken()" class="skin-accent-green skin-text-main px-3 py-1 rounded text-sm font-bold opacity-90 hover:opacity-100">Guardar</button>
                 </div>
             </div>
             <div class="settings-row flex justify-between items-center">

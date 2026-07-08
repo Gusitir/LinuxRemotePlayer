@@ -28,7 +28,8 @@ fi
 if [ -d "$INSTALL_DIR" ]; then
     echo "[i] Update directory exists. Pulling latest commits..."
     cd "$INSTALL_DIR"
-    git pull
+    git fetch --all
+    git reset --hard origin/main
 else
     echo "[i] Cloning repository to $INSTALL_DIR..."
     git clone "$REPO_URL" "$INSTALL_DIR"
@@ -41,4 +42,4 @@ fi
 
 # Execute the main installer
 echo "[i] Running main installation script..."
-exec bash "$INSTALL_DIR/scripts/install.sh"
+LRP_MODE="${LRP_MODE:-}" exec bash "$INSTALL_DIR/scripts/install.sh"

@@ -9,6 +9,7 @@ import logging
 logger = logging.getLogger("kiosk")
 
 _kiosk_proc = None
+_native_procs = []
 
 
 def find_chromium():
@@ -61,6 +62,24 @@ def gui_env():
                     env["XAUTHORITY"] = xauth_globs[0]
                     
     return env
+
+
+def close_all():
+    kill_existing_kiosks()
+    global _native_procs
+    for proc in _native_procs:
+        if proc.poll() is None:
+            try:
+                pgid = os.getpgid(proc.pid)
+                os.killpg(pgid, signal.SIGTERM)
+            except Exception as e:
+                logger.error(f"Error terminating native process group: {e}")
+    _native_procs.clear()
+
+    if os.getenv("APPLIANCE_IDLE_PANEL", "").lower() == "true":
+        port = os.getenv("PORT", "8000")
+        url = f"https://127.0.0.1:{port}/status"
+        launch_kiosk(url)
 
 
 def kill_existing_kiosks():

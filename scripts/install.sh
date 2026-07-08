@@ -17,9 +17,16 @@ fi
 
 USER_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
 
-echo "1) Appliance Mode (Dedicated TV Kiosk - system-wide service)"
-echo "2) Desktop Mode (Standard App - user-level service)"
-read -p "Select installation mode [1/2]: " mode
+if [ ! -t 0 ] && [ -e /dev/tty ]; then exec < /dev/tty; fi
+
+if [ -n "$LRP_MODE" ]; then
+    mode="$LRP_MODE"
+    echo "[i] Using mode from LRP_MODE environment variable: $mode"
+else
+    echo "1) Appliance Mode (Dedicated TV Kiosk - system-wide service)"
+    echo "2) Desktop Mode (Standard App - user-level service)"
+    read -p "Select installation mode [1/2]: " mode
+fi
 
 # Install dependencies (including avahi-daemon for mDNS hostname resolution)
 apt-get update
@@ -93,6 +100,7 @@ After=graphical.target network.target display-manager.service
 Type=simple
 User=$SUDO_USER
 WorkingDirectory=$BACKEND_DIR
+Environment="APPLIANCE_IDLE_PANEL=true"
 ExecStart="$BACKEND_DIR/.venv/bin/python" run.py
 Restart=always
 RestartSec=5
@@ -132,6 +140,23 @@ EOF
     sudo -u "$SUDO_USER" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" systemctl --user enable linuxremoteplayer.service
     sudo -u "$SUDO_USER" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" systemctl --user restart linuxremoteplayer.service
     echo "User-level service enabled and started."
+
+    echo "Creating desktop shortcut for Status Panel..."
+    APPS_DIR="$USER_HOME/.local/share/applications"
+    sudo -u "$SUDO_USER" mkdir -p "$APPS_DIR"
+    cat <<EOF > "$APPS_DIR/linuxremoteplayer-panel.desktop"
+[Desktop Entry]
+Version=1.0
+Name=Remote Linux Player Panel
+Comment=Linux Remote Player Status Panel
+Exec=chromium --app=https://127.0.0.1:8000/status
+Icon=remote-linux-player
+Terminal=false
+Type=Application
+Categories=Utility;
+EOF
+    chown "$SUDO_USER":"$SUDO_USER" "$APPS_DIR/linuxremoteplayer-panel.desktop"
+    echo "Desktop shortcut created."
 fi
 
 HOSTNAME_LOCAL="$(hostname).local"
