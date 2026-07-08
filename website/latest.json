@@ -1,5 +1,5 @@
 {
-  "version": "1.1.0",
-  "deb_url": "https://linux-remote-player.vercel.app/downloads/linuxremoteplayer_1.1.0_all.deb",
-  "sha256": "d5995092022bc7c503b4d7b51d43fd53510ce280b7fe7061d7a3e45e2a7abd37"
+  "version": "1.1.1",
+  "deb_url": "https://linux-remote-player.vercel.app/downloads/linuxremoteplayer_1.1.1_all.deb",
+  "sha256": "3525d95e2384199aea68d002a98c8bdf079c98f5d38dabb49bdfdf9b517f71da"
 }

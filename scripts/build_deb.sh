@@ -35,6 +35,8 @@ cd pkg/opt/linuxremoteplayer
 rm -rf backend/.venv backend/certs backend/.pairing_token backend/.env backend/__pycache__ scripts/__pycache__
 cd ../../..
 
+chmod +x pkg/opt/linuxremoteplayer/scripts/*.sh
+
 # DEBIAN/control
 cat <<EOF > pkg/DEBIAN/control
 Package: linuxremoteplayer
@@ -144,7 +146,7 @@ chmod 755 pkg/DEBIAN/prerm
 echo "%input ALL=(root) NOPASSWD: /usr/local/bin/lrp-update" > pkg/etc/sudoers.d/linuxremoteplayer
 chmod 440 pkg/etc/sudoers.d/linuxremoteplayer
 
-dpkg-deb --build pkg dist/linuxremoteplayer_${VERSION}_all.deb
+dpkg-deb --root-owner-group --build pkg dist/linuxremoteplayer_${VERSION}_all.deb
 cd dist
 sha256sum linuxremoteplayer_${VERSION}_all.deb > linuxremoteplayer_${VERSION}_all.deb.sha256
 echo "Done! Wrote dist/linuxremoteplayer_${VERSION}_all.deb and sha256."
