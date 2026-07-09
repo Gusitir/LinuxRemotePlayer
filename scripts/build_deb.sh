@@ -44,7 +44,7 @@ Version: ${VERSION}
 Architecture: all
 Maintainer: LinuxRemotePlayer
 Description: Remote Linux Player API and web interface
-Depends: python3, python3-venv, openssl, avahi-daemon
+Depends: python3, python3-venv, python3-dev, build-essential, openssl, avahi-daemon
 Recommends: chromium | chromium-browser, ufw
 EOF
 
@@ -65,7 +65,9 @@ cd "$BACKEND_DIR"
 if [ ! -d ".venv" ]; then
     python3 -m venv .venv
 fi
-.venv/bin/pip install -r requirements.txt
+set +e
+.venv/bin/pip install -r requirements.txt || echo "[!] Advertencia: falló pip install, intente ejecutar 'sudo lrp-setup' de nuevo si hay problemas."
+set -e
 
 # Create lrp-setup
 cat <<'INNEREOF' > /usr/local/bin/lrp-setup

@@ -57,14 +57,11 @@ else
     fi
 fi
 
-# Setup Venv
+# Define BACKEND_DIR for systemd paths and token generation
 BACKEND_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../backend" && pwd)"
 cd "$BACKEND_DIR"
 
-if [ ! -d ".venv" ]; then
-    sudo -u "$SUDO_USER" bash -c "python3 -m venv .venv"
-fi
-sudo -u "$SUDO_USER" bash -c "source .venv/bin/activate && pip install -r requirements.txt"
+# (Venv is now managed by the .deb postinst script globally)
 
 # Configure UFW
 ufw allow 8000/tcp
