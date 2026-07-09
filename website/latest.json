@@ -1,6 +1,5 @@
 {
-  "version": "1.4.0",
-  "deb_url": "https://linux-remote-player.vercel.app/downloads/linuxremoteplayer_1.4.0_all.deb",
-  "sha256": "9ba94d43388443a0b5ddefb78ac98100346531fee4d88b7046650a66b009a548",
-  "notes": "Rediseño de ajustes, Modo Navegación (D-Pad), tour inicial y feedback en la app"
+    "version": "v1.5.0",
+    "deb_url": "https://linuxremoteplayer.com/downloads/linuxremoteplayer_1.5.0_all.deb",
+    "sha256": "3b3b97c8e02d8bd36812bd922cb33fd796690e0c42bc38b7b745d13d45ae7ad0"
 }
