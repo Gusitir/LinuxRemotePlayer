@@ -107,6 +107,13 @@ if [ -s /tmp/ubol.zip ]; then
     command -v unzip >/dev/null 2>&1 || apt-get install -y unzip
     unzip -qo /tmp/ubol.zip -d "$UBOL_DIR" || echo "[!] No se pudo extraer uBOL; el kiosk funcionará sin bloqueador."
     rm -f /tmp/ubol.zip
+    if [ -d "$UBOL_DIR" ] && [ ! -f "$UBOL_DIR/manifest.json" ]; then
+        SUBDIR=$(find "$UBOL_DIR" -mindepth 1 -maxdepth 1 -type d | head -n 1)
+        if [ -n "$SUBDIR" ] && [ -f "$SUBDIR/manifest.json" ]; then
+            mv "$SUBDIR"/* "$UBOL_DIR"/
+            rmdir "$SUBDIR"
+        fi
+    fi
 else
     echo "[!] No se pudo descargar el bloqueador de anuncios; el kiosk funcionará sin él."
 fi

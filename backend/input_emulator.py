@@ -77,11 +77,26 @@ class VirtualGamepad:
             e.KEY_BACKSPACE, e.KEY_TAB, e.KEY_LEFTSHIFT,
             e.KEY_PLAYPAUSE, e.KEY_PLAY, e.KEY_PAUSE, e.KEY_STOP,
             e.KEY_NEXTSONG, e.KEY_PREVIOUSSONG, e.KEY_FASTFORWARD, e.KEY_REWIND,
-            e.KEY_VOLUMEUP, e.KEY_VOLUMEDOWN, e.KEY_MUTE,
+            e.KEY_VOLUMEUP, e.KEY_VOLUMEDOWN, e.KEY_MUTE, e.KEY_LEFTMETA,
+            e.KEY_LEFTALT, e.KEY_F4
         ]
         try:
             self.ui = UInput({e.EV_KEY: keys}, name='LinuxRemotePlayer Virtual Keyboard', version=0x3)
             logger.info("UInput keyboard device created successfully.")
+            
+            # Startup guard
+            caps = self.ui.capabilities()
+            if e.EV_KEY in caps:
+                device_keys = set(caps[e.EV_KEY])
+                required_names = set(ALLOWED_KEYS) | {"KEY_LEFTALT", "KEY_F4"}
+                missing = []
+                for k in required_names:
+                    code = getattr(e, k, None)
+                    if code is not None and code not in device_keys:
+                        missing.append(k)
+                if missing:
+                    logger.error(f"UInput device missing required capabilities for keys: {missing}")
+
         except Exception as ex:
             logger.warning(f"Could not init keyboard UInput (needs Linux + uinput perms). {ex}")
 

@@ -366,6 +366,7 @@ async def get_api_status(request: Request):
         "uinput_ok": mouse_ui_created,
         "voice_enabled": VOICE_ENABLED,
         "kiosk_active": getattr(kiosk, "_kiosk_proc", None) is not None,
+        "ubol_active": kiosk.is_ubol_active(),
         "buy_url": "https://linux-remote-player.vercel.app/"
     }
 

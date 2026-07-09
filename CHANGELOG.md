@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-07-09
+
+### Added
+- **Settings Categories**: Redesigned settings drawer with accordion categories for better UX.
+- **Nav Mode**: Touchpad now supports a D-Pad mode (Up, Down, Left, Right, Enter, Esc) for easier navigation on Bigscreen.
+- **App Tour**: Added a first-run tutorial highlighting UI elements.
+- **Feedback Module**: Built-in support form linked to a new Supabase Edge Function to securely send suggestions to the owner.
+
+### Changed
+- **Favicons**: Implemented an automatic favicon resolution chain (Google -> DDG -> Domain) for custom apps and missing suggested apps.
+- **Default Apps**: Default suggested apps can now be hidden/restored by the user.
+
+### Fixed
+- **Ad-block Hardening**: uBlock Origin Lite zip is now robustly flattened during installation, ensuring the Chromium kiosk correctly loads the manifest.
+- **Meta Key Bug**: Restored OS Menu key functionality by correctly injecting the LEFTMETA capability requirement in the UInput emulator.
+- **UI Overflow**: Fixed horizontal scroll issues in the settings panel by changing the skin carousel to a responsive grid.
+
 ## [1.3.1] - 2026-07-09
 
 ### Fixed

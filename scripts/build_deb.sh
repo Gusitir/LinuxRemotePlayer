@@ -152,6 +152,13 @@ mkdir -p "$UBOL_DIR"
 if curl -fsSL "https://github.com/uBlockOrigin/uBOL-home/releases/latest/download/uBOLite_mv3.zip" -o /tmp/ubol.zip 2>/dev/null || wget -qO /tmp/ubol.zip "https://github.com/uBlockOrigin/uBOL-home/releases/latest/download/uBOLite_mv3.zip"; then
     unzip -qo /tmp/ubol.zip -d "$UBOL_DIR" || true
     rm -f /tmp/ubol.zip
+    if [ -d "$UBOL_DIR" ] && [ ! -f "$UBOL_DIR/manifest.json" ]; then
+        SUBDIR=$(find "$UBOL_DIR" -mindepth 1 -maxdepth 1 -type d | head -n 1)
+        if [ -n "$SUBDIR" ] && [ -f "$SUBDIR/manifest.json" ]; then
+            mv "$SUBDIR"/* "$UBOL_DIR"/
+            rmdir "$SUBDIR"
+        fi
+    fi
 else
     echo "[!] No se pudo actualizar uBOL (continuando sin él)."
 fi

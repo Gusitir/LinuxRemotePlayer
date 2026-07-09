@@ -112,6 +112,11 @@ def kill_existing_kiosks():
         logger.error(f"Error running fallback pkill: {e}")
 
 
+def is_ubol_active() -> bool:
+    home_ext = os.path.expanduser("~/lrp-extensions/ubol")
+    opt_ext = "/opt/linuxremoteplayer/extensions/ubol"
+    return os.path.exists(os.path.join(home_ext, "manifest.json")) or os.path.exists(os.path.join(opt_ext, "manifest.json"))
+
 def launch_kiosk(url: str) -> bool:
     global _kiosk_proc
     kill_existing_kiosks()
@@ -132,10 +137,14 @@ def launch_kiosk(url: str) -> bool:
         home_ext = os.path.expanduser("~/lrp-extensions/ubol")
         opt_ext = "/opt/linuxremoteplayer/extensions/ubol"
         ext_path = home_ext if os.path.exists(os.path.join(home_ext, "manifest.json")) else opt_ext
+        
         cmd = [chromium, f'--app={url}', '--kiosk', '--start-maximized', '--no-errdialogs', '--disable-infobars']
         if os.path.exists(os.path.join(ext_path, "manifest.json")):
             cmd.append(f'--load-extension={ext_path}')
-        
+            logger.info(f"Loaded uBOL extension from {ext_path}")
+        else:
+            logger.warning(f"uBOL no encontrado en {home_ext} o {opt_ext} — kiosk sin bloqueador")
+            
         logger.info(f"Launching kiosk: {' '.join(cmd)}")
         _kiosk_proc = subprocess.Popen(
             cmd, env=gui_env(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True

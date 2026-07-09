@@ -184,19 +184,33 @@ async function fetchLicenseStatus() {
                 micRow.style.display = (data.voice_enabled && isLicensed) ? 'flex' : 'none';
             }
 
-            const statusText = document.getElementById('license-status-text');
-            if (statusText) {
-                statusText.textContent = isLicensed 
-                    ? 'Licencia: activa (lifetime)' 
-                    : 'Sin licencia — funciones de voz/temas bloqueadas';
-                statusText.className = isLicensed 
-                    ? 'text-xs text-green-500 mt-1 font-semibold' 
-                    : 'text-xs text-red-400 mt-1';
+            const unlicBlock = document.getElementById('license-unlicensed');
+            const licBlock = document.getElementById('license-licensed');
+            if (unlicBlock && licBlock) {
+                if (isLicensed) {
+                    unlicBlock.classList.add('hidden');
+                    unlicBlock.classList.remove('flex');
+                    licBlock.classList.remove('hidden');
+                    licBlock.classList.add('flex');
+                    
+                    const infoText = document.getElementById('license-info-text');
+                    if (infoText) {
+                        const masked = (token || '').substring(0, 4) + '••••••••' + (token || '').slice(-4);
+                        infoText.innerText = `Clave: LRP-${masked}\nPlan: Lifetime\n${data.voice_enabled ? 'Voz con IA: Activa (100 cmds/día)' : 'Voz con IA: se activará al configurar el servicio'}`;
+                    }
+                } else {
+                    unlicBlock.classList.remove('hidden');
+                    unlicBlock.classList.add('flex');
+                    licBlock.classList.add('hidden');
+                    licBlock.classList.remove('flex');
+                }
             }
-            const inputGroup = document.getElementById('license-input-group');
-            if (inputGroup) {
-                inputGroup.style.display = isLicensed ? 'none' : 'flex';
-            }
+            
+            const locks = document.querySelectorAll('.pro-lock');
+            locks.forEach(lock => {
+                if (isLicensed) lock.classList.add('hidden');
+                else lock.classList.remove('hidden');
+            });
         }
     } catch (err) {
         console.error('Failed to get license status:', err);
@@ -316,6 +330,7 @@ function connect() {
                     if (row && !row.children.length) {
                         fetchApps();
                     }
+                    setTimeout(showTour, 500);
                 }
             }
         } catch (err) {}
@@ -389,39 +404,101 @@ function sendKey(key) { wsSend({ type: 'input', device: 'gamepad', action: 'pres
 function sendMedia(key) { wsSend({ action: 'media_control', parameters: { key } }); if (navigator.vibrate) navigator.vibrate(25); }
 function homeAction() { killKiosk(); }
 
-// --- Touchpad pointer ---
+// --- Touchpad pointer & Nav Mode ---
+let navMode = (localStorage.getItem('nav_mode') === 'true');
+function toggleNavMode() {
+    navMode = !navMode;
+    localStorage.setItem('nav_mode', navMode);
+    updateNavUI();
+}
+function updateNavUI() {
+    const btn = document.getElementById('btn-nav-mode');
+    const overlay = document.getElementById('nav-overlay');
+    if (!btn || !overlay) return;
+    if (navMode) {
+        btn.classList.add('text-blue-400');
+        btn.classList.remove('text-gray-400');
+        overlay.classList.remove('hidden');
+        overlay.classList.add('flex');
+    } else {
+        btn.classList.add('text-gray-400');
+        btn.classList.remove('text-blue-400');
+        overlay.classList.add('hidden');
+        overlay.classList.remove('flex');
+    }
+}
+document.addEventListener('DOMContentLoaded', updateNavUI);
+
 const pad = document.getElementById('touchpad');
 let padLast = null, padMoved = 0, padDown = 0, accX = 0, accY = 0, rafPending = false;
+let navInterval = null, navAxis = null;
 const POINTER_SENS = 1.6;
+
 function flushPointer() {
     rafPending = false;
     if (accX || accY) { wsSend({ type: 'pointer', dx: Math.round(accX * POINTER_SENS), dy: Math.round(accY * POINTER_SENS) }); accX = 0; accY = 0; }
 }
+
 if (pad) {
-    pad.addEventListener('pointerdown', (e) => { pad.setPointerCapture(e.pointerId); padLast = { x: e.clientX, y: e.clientY }; padMoved = 0; padDown = Date.now(); });
+    pad.addEventListener('pointerdown', (e) => { 
+        pad.setPointerCapture(e.pointerId); 
+        padLast = { x: e.clientX, y: e.clientY }; 
+        padMoved = 0; 
+        padDown = Date.now(); 
+        navAxis = null;
+        if (navInterval) { clearInterval(navInterval); navInterval = null; }
+    });
     pad.addEventListener('pointermove', (e) => {
         if (!padLast) return;
         const dx = e.clientX - padLast.x, dy = e.clientY - padLast.y;
-        padLast = { x: e.clientX, y: e.clientY };
-        padMoved += Math.abs(dx) + Math.abs(dy);
-        accX += dx; accY += dy;
-        if (!rafPending) { rafPending = true; requestAnimationFrame(flushPointer); }
+        
+        if (navMode) {
+            if (!navAxis && (Math.abs(dx) >= 40 || Math.abs(dy) >= 40)) {
+                navAxis = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'KEY_RIGHT' : 'KEY_LEFT') : (dy > 0 ? 'KEY_DOWN' : 'KEY_UP');
+                sendKey(navAxis);
+                if (navigator.vibrate) navigator.vibrate(15);
+                padMoved = 100; // prevent tap
+                navInterval = setInterval(() => {
+                    sendKey(navAxis);
+                    if (navigator.vibrate) navigator.vibrate(15);
+                }, 300);
+            }
+        } else {
+            padLast = { x: e.clientX, y: e.clientY };
+            padMoved += Math.abs(dx) + Math.abs(dy);
+            accX += dx; accY += dy;
+            if (!rafPending) { rafPending = true; requestAnimationFrame(flushPointer); }
+        }
     });
     const padEnd = () => {
-        if (padLast && padMoved < 10) {
+        if (navInterval) { clearInterval(navInterval); navInterval = null; }
+        if (padLast && padMoved < 10 && (!navMode || !navAxis)) {
             const dur = Date.now() - padDown;
-            if (dur < 250) {
-                wsSend({ type: 'pointer', click: 'left' });
-                if (navigator.vibrate) navigator.vibrate(20);
-            } else if (dur > 500) {
-                wsSend({ type: 'pointer', click: 'right' });
-                if (navigator.vibrate) navigator.vibrate([20, 40]);
+            if (navMode) {
+                if (dur < 250) {
+                    sendKey('KEY_ENTER');
+                    if (navigator.vibrate) navigator.vibrate(20);
+                } else if (dur >= 500) {
+                    sendKey('KEY_ESC');
+                    if (navigator.vibrate) navigator.vibrate([20, 40]);
+                }
+            } else {
+                if (dur < 250) {
+                    wsSend({ type: 'pointer', click: 'left' });
+                    if (navigator.vibrate) navigator.vibrate(20);
+                } else if (dur > 500) {
+                    wsSend({ type: 'pointer', click: 'right' });
+                    if (navigator.vibrate) navigator.vibrate([20, 40]);
+                }
             }
         }
         padLast = null;
     };
     pad.addEventListener('pointerup', padEnd);
-    pad.addEventListener('pointercancel', () => { padLast = null; });
+    pad.addEventListener('pointercancel', () => { 
+        padLast = null; 
+        if (navInterval) { clearInterval(navInterval); navInterval = null; } 
+    });
 }
 
 // --- Scroll strip (drag vertically -> mouse wheel) ---
@@ -520,6 +597,27 @@ if (micBtn) {
 function getUsage() { try { return JSON.parse(localStorage.getItem('app_usage') || '{}'); } catch (e) { return {}; } }
 function bumpUsage(id) { const u = getUsage(); u[id] = (u[id] || 0) + 1; localStorage.setItem('app_usage', JSON.stringify(u)); }
 function getCustomApps() { try { return JSON.parse(localStorage.getItem('custom_apps') || '[]'); } catch(e) { return []; } }
+function getHiddenApps() { try { return JSON.parse(localStorage.getItem('hidden_apps') || '[]'); } catch(e) { return []; } }
+
+function setTileFavicon(img, domain, fallbackEl) {
+    const s2 = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+    const ddg = `https://icons.duckduckgo.com/ip3/${domain}.ico`;
+    const root = `https://${domain}/favicon.ico`;
+    
+    let step = 0;
+    img.onload = () => {
+        if (step === 0 && img.naturalWidth <= 16) {
+            img.onerror();
+        }
+    };
+    img.onerror = () => {
+        step++;
+        if (step === 1) img.src = ddg;
+        else if (step === 2) img.src = root;
+        else img.replaceWith(fallbackEl);
+    };
+    img.src = s2;
+}
 
 function createAppTile(app) {
     const div = document.createElement('div');
@@ -544,15 +642,13 @@ function createAppTile(app) {
         iconFallback.className = 'w-full h-full flex items-center justify-center text-lg font-bold text-white';
         iconFallback.style.backgroundColor = app.color || '#2563eb';
         iconFallback.textContent = (app.name || '?').charAt(0).toUpperCase();
-        
-        if (app.url && (app.url.includes('netflix') || app.url.includes('youtube') || app.url.includes('spotify') || app.url.includes('crunchyroll') || app.url.includes('primevideo') || app.url.includes('disney') || app.url.includes('max.com') || app.url.includes('twitch') || app.url.includes('apple'))) {
+        if (app.url) {
             try {
                 const domain = new URL(app.url).hostname;
                 const img = document.createElement('img');
-                img.src = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
                 img.className = 'w-full h-full object-cover';
-                img.onerror = () => { img.outerHTML = iconFallback.outerHTML; };
                 iconWrapper.appendChild(img);
+                setTileFavicon(img, domain, iconFallback);
             } catch(e) {
                 iconWrapper.appendChild(iconFallback);
             }
@@ -575,6 +671,13 @@ function createAppTile(app) {
         delBtn.dataset.remove = app.id;
         delBtn.title = 'Eliminar';
         div.appendChild(delBtn);
+    } else if (app.id && !app.is_native) {
+        const hideBtn = document.createElement('button');
+        hideBtn.textContent = '×';
+        hideBtn.className = 'absolute -top-1 right-2 bg-gray-600 hover:bg-gray-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs font-bold border border-gray-900 opacity-60 hover:opacity-100 transition-opacity';
+        hideBtn.dataset.hide = app.id;
+        hideBtn.title = 'Ocultar';
+        div.appendChild(hideBtn);
     }
 
     return div;
@@ -583,7 +686,10 @@ function createAppTile(app) {
 function renderApps(kiosks) {
     const usage = getUsage();
     const customApps = getCustomApps();
-    const allKiosks = [...customApps, ...kiosks];
+    const hiddenApps = getHiddenApps();
+    
+    const visibleKiosks = kiosks.filter(k => !hiddenApps.includes(k.id));
+    const allKiosks = [...customApps, ...visibleKiosks];
     const sorted = allKiosks.sort((a, b) => (usage[b.id] || 0) - (usage[a.id] || 0));
 
     const row = document.getElementById('apps-row');
@@ -597,6 +703,26 @@ function renderApps(kiosks) {
     sorted.forEach((app) => {
         drawer.appendChild(createAppTile(app));
     });
+    
+    let restoreBtn = document.getElementById('restore-hidden-apps');
+    if (!restoreBtn) {
+        restoreBtn = document.createElement('button');
+        restoreBtn.id = 'restore-hidden-apps';
+        restoreBtn.className = 'text-blue-400 text-sm mt-4 underline text-center w-full block hover:text-blue-300';
+        restoreBtn.onclick = () => {
+            localStorage.setItem('hidden_apps', '[]');
+            renderApps(lastSuggestedKiosks);
+            toast('Apps restauradas');
+        };
+        drawer.parentNode.insertBefore(restoreBtn, drawer.nextSibling);
+    }
+    
+    if (hiddenApps.length > 0) {
+        restoreBtn.textContent = `Restablecer apps ocultas (${hiddenApps.length})`;
+        restoreBtn.style.display = 'block';
+    } else {
+        restoreBtn.style.display = 'none';
+    }
 }
 
 function handleAppLaunchClick(e) {
@@ -610,6 +736,21 @@ function handleAppLaunchClick(e) {
         localStorage.setItem('custom_apps', JSON.stringify(customApps));
         renderApps(lastSuggestedKiosks);
         toast('Aplicación eliminada');
+        return;
+    }
+
+    const hideBtn = e.target.closest('[data-hide]');
+    if (hideBtn) {
+        e.stopPropagation();
+        e.preventDefault();
+        const hideId = hideBtn.dataset.hide;
+        let hidden = getHiddenApps();
+        if (!hidden.includes(hideId)) {
+            hidden.push(hideId);
+            localStorage.setItem('hidden_apps', JSON.stringify(hidden));
+        }
+        renderApps(lastSuggestedKiosks);
+        toast('App oculta');
         return;
     }
 
@@ -873,12 +1014,6 @@ async function activateLicenseKey() {
             body: JSON.stringify({ key })
         });
         if (res.ok) {
-            toast('Licencia activada con éxito');
-            await fetchConfig();
-        } else {
-            const data = await res.json().catch(() => ({}));
-            toast(data.detail || 'Clave no válida');
-        }
     } catch (err) {
         console.error(err);
         toast('Error al conectar con el servidor local');
@@ -963,6 +1098,132 @@ function shareApp() {
             toast('Compartir no soportado en este dispositivo');
         }
     }
+}
+
+async function sendFeedback() {
+    const msgEl = document.getElementById('feedback-msg');
+    const emailEl = document.getElementById('feedback-email');
+    if (!msgEl) return;
+    const msg = msgEl.value.trim();
+    if (!msg) {
+        toast('El mensaje está vacío');
+        return;
+    }
+    
+    toast('Enviando...');
+    try {
+        const res = await fetch('https://tbijfdbtauzxbsbkujbs.functions.supabase.co/send-feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                message: msg,
+                email: emailEl ? emailEl.value.trim() : '',
+                version: '1.4.0'
+            })
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        toast('Feedback enviado. ¡Gracias!');
+        msgEl.value = '';
+        if (emailEl) emailEl.value = '';
+    } catch(e) {
+        toast('Feedback enviado.'); 
+        msgEl.value = '';
+    }
+}
+
+function showTour() {
+    if (localStorage.getItem('tour_done')) return;
+    
+    const overlay = document.createElement('div');
+    overlay.className = 'fixed inset-0 z-[100] flex flex-col items-center justify-center pointer-events-auto transition-opacity duration-300';
+    
+    const steps = [
+        { text: "Tus apps favoritas — un toque y se abren en la TV", highlightId: "apps-row", pos: "bottom" },
+        { text: "Desliza para mover el puntero. El botón cruceta lo convierte en flechas", highlightId: "touchpad", pos: "top" },
+        { text: "Multimedia, volumen, Atrás y Home", highlightId: "control-cluster", pos: "top" },
+        { text: "Todo lo demás vive en Ajustes — incluidos los tutoriales", highlightId: "btn-settings", pos: "bottom" }
+    ];
+    
+    let currentStep = 0;
+    
+    const box = document.createElement('div');
+    box.className = 'bg-gray-800 text-white rounded-xl p-4 m-4 max-w-sm w-[90%] shadow-2xl border border-gray-600 relative z-10 transition-all';
+    
+    const textEl = document.createElement('p');
+    textEl.className = 'text-sm font-bold mb-4';
+    
+    const flexBtn = document.createElement('div');
+    flexBtn.className = 'flex justify-between items-center';
+    
+    const skipBtn = document.createElement('button');
+    skipBtn.textContent = 'Saltar';
+    skipBtn.className = 'text-gray-400 text-xs font-bold px-2 py-1';
+    
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'bg-blue-600 hover:bg-blue-500 px-4 py-1.5 rounded-lg text-sm font-bold text-white';
+    
+    flexBtn.appendChild(skipBtn);
+    flexBtn.appendChild(nextBtn);
+    box.appendChild(textEl);
+    box.appendChild(flexBtn);
+    
+    const highlight = document.createElement('div');
+    highlight.className = 'absolute rounded-xl pointer-events-none transition-all duration-300 ring-2 ring-blue-500 shadow-[0_0_0_9999px_rgba(0,0,0,0.8)]';
+    highlight.style.zIndex = '-1';
+    
+    overlay.appendChild(highlight);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    
+    function renderStep() {
+        if (currentStep >= steps.length) {
+            finishTour();
+            return;
+        }
+        const s = steps[currentStep];
+        textEl.textContent = s.text;
+        nextBtn.textContent = currentStep === steps.length - 1 ? 'Terminar' : 'Siguiente';
+        
+        const target = document.getElementById(s.highlightId);
+        if (target) {
+            const rect = target.getBoundingClientRect();
+            highlight.style.left = (rect.left - 4) + 'px';
+            highlight.style.top = (rect.top - 4) + 'px';
+            highlight.style.width = (rect.width + 8) + 'px';
+            highlight.style.height = (rect.height + 8) + 'px';
+            
+            if (s.pos === 'bottom') {
+                box.style.marginTop = Math.max(0, rect.bottom + 20) + 'px';
+                box.style.marginBottom = '0';
+                overlay.style.justifyContent = 'flex-start';
+            } else if (s.pos === 'top') {
+                box.style.marginTop = '0';
+                box.style.marginBottom = Math.max(0, window.innerHeight - rect.top + 20) + 'px';
+                overlay.style.justifyContent = 'flex-end';
+            }
+        } else {
+            // Target missing? just skip step
+            currentStep++;
+            renderStep();
+        }
+    }
+    
+    function finishTour() {
+        localStorage.setItem('tour_done', 'true');
+        overlay.style.opacity = '0';
+        setTimeout(() => overlay.remove(), 300);
+    }
+    
+    nextBtn.onclick = () => { currentStep++; renderStep(); };
+    skipBtn.onclick = finishTour;
+    
+    setTimeout(renderStep, 100);
+}
+
+function relaunchTour() {
+    localStorage.removeItem('tour_done');
+    closeSettings();
+    showTour();
 }
 
 // --- Browser tab vs installed app ---
