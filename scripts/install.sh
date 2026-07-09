@@ -45,9 +45,12 @@ if [ -n "$LRP_MODE" ]; then
     mode="$LRP_MODE"
     echo "[i] Using mode from LRP_MODE environment variable: $mode"
 else
-    echo "1) Appliance Mode (Dedicated TV Kiosk - system-wide service)"
-    echo "2) Desktop Mode (Standard App - user-level service)"
-    read -p "Select installation mode [1/2]: " mode
+    read -p "¿Esta PC está dedicada a la TV? [S/n]: " ans
+    if [ "$ans" = "n" ] || [ "$ans" = "N" ]; then
+        mode="2"
+    else
+        mode="1"
+    fi
 fi
 
 # Install dependencies (including avahi-daemon for mDNS hostname resolution)
@@ -128,6 +131,15 @@ if [ "$mode" == "1" ]; then
     echo "Configuring Appliance Mode..."
     echo "[!] Note: Autologin configuration must be done manually depending on your Display Manager."
 
+    USER_SVC_DIR="$USER_HOME/.config/systemd/user"
+    if [ -f "$USER_SVC_DIR/linuxremoteplayer.service" ]; then
+        echo "[i] Removing previous Desktop Mode configuration..."
+        export XDG_RUNTIME_DIR="/run/user/$(id -u "$TARGET_USER")"
+        sudo -u "$TARGET_USER" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" systemctl --user stop linuxremoteplayer.service 2>/dev/null || true
+        sudo -u "$TARGET_USER" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" systemctl --user disable linuxremoteplayer.service 2>/dev/null || true
+        rm -f "$USER_SVC_DIR/linuxremoteplayer.service"
+    fi
+
     # Added After=display-manager.service (COR-04)
     cat <<EOF > /etc/systemd/system/linuxremoteplayer.service
 [Unit]
@@ -153,6 +165,15 @@ EOF
 
 else
     echo "Configuring Desktop Mode..."
+    
+    if [ -f /etc/systemd/system/linuxremoteplayer.service ]; then
+        echo "[i] Removing previous Appliance Mode configuration..."
+        systemctl stop linuxremoteplayer.service 2>/dev/null || true
+        systemctl disable linuxremoteplayer.service 2>/dev/null || true
+        rm -f /etc/systemd/system/linuxremoteplayer.service
+        systemctl daemon-reload
+    fi
+
     USER_SVC_DIR="$USER_HOME/.config/systemd/user"
     sudo -u "$TARGET_USER" mkdir -p "$USER_SVC_DIR"
 

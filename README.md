@@ -56,7 +56,7 @@ On the Linux PC connected to your TV (Debian/Ubuntu and derivatives, systemd req
 curl -fsSL https://linux-remote-player.vercel.app/install.sh | sudo bash
 ```
 
-Choose **Appliance Mode** (dedicated TV box, system service) or **Desktop Mode** (user service). The installer sets up dependencies, `uinput` permissions, Chromium, mDNS, the firewall rule and the systemd service. Reboot or re-login once after the first install.
+Run the setup script. When asked "¿Esta PC está dedicada a la TV?", answer **S** (Yes) to install as a system service (Appliance mode), or **n** (No) for a user service (Desktop mode). The installer sets up dependencies, `uinput` permissions, Chromium, mDNS, the firewall rule and the systemd service. Reboot or re-login once after the first install.
 
 ---
 
