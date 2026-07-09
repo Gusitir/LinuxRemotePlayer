@@ -113,7 +113,15 @@ SHA256=$(echo "$LATEST_JSON" | grep -o '"sha256"\s*:\s*"[^"]*"' | cut -d'"' -f4)
 
 cd /tmp
 echo "Downloading $DEB_URL..."
-curl -fsSL -o "linuxremoteplayer_${VERSION}_all.deb" "$DEB_URL"
+# Snap-packaged curl cannot write files outside $HOME (error 23). Fall back to wget.
+if ! curl -fsSL -o "linuxremoteplayer_${VERSION}_all.deb" "$DEB_URL" 2>/dev/null; then
+    echo "[!] curl no pudo escribir el archivo (¿curl de snap?). Intentando con wget..."
+    wget -qO "linuxremoteplayer_${VERSION}_all.deb" "$DEB_URL"
+fi
+if [ ! -s "linuxremoteplayer_${VERSION}_all.deb" ]; then
+    echo "[!] ERROR: no se pudo descargar la actualización. Instala el curl real: sudo apt install curl"
+    exit 1
+fi
 
 echo "$SHA256 linuxremoteplayer_${VERSION}_all.deb" | sha256sum -c -
 
@@ -132,16 +140,24 @@ else
     done
 fi
 
-# Update uBlock Origin Lite
+# Update uBlock Origin Lite (in the user's HOME — snap Chromium cannot read /opt)
 echo "Actualizando uBlock Origin Lite..."
-mkdir -p /opt/linuxremoteplayer/extensions
-curl -fsSL "https://github.com/uBlockOrigin/uBOL-home/releases/latest/download/uBOLite_mv3.zip" -o /tmp/ubol.zip
-unzip -qo /tmp/ubol.zip -d /opt/linuxremoteplayer/extensions/ubol || true
-rm -f /tmp/ubol.zip
-# Ownership is fixed by install.sh or by the running service.
-# Let's fix it here for good measure
-if [ -n "$SUDO_USER" ]; then
-    chown -R "$SUDO_USER":"$SUDO_USER" /opt/linuxremoteplayer/extensions
+UBOL_HOME=$(getent passwd "${SUDO_USER:-root}" | cut -d: -f6)
+if [ -n "$UBOL_HOME" ] && [ "$UBOL_HOME" != "/root" ]; then
+    UBOL_DIR="$UBOL_HOME/lrp-extensions/ubol"
+else
+    UBOL_DIR="/opt/linuxremoteplayer/extensions/ubol"
+fi
+mkdir -p "$UBOL_DIR"
+if curl -fsSL "https://github.com/uBlockOrigin/uBOL-home/releases/latest/download/uBOLite_mv3.zip" -o /tmp/ubol.zip 2>/dev/null || wget -qO /tmp/ubol.zip "https://github.com/uBlockOrigin/uBOL-home/releases/latest/download/uBOLite_mv3.zip"; then
+    unzip -qo /tmp/ubol.zip -d "$UBOL_DIR" || true
+    rm -f /tmp/ubol.zip
+else
+    echo "[!] No se pudo actualizar uBOL (continuando sin él)."
+fi
+# Fix ownership of the extension dir for the real user
+if [ -n "$SUDO_USER" ] && [ "$SUDO_USER" != "root" ]; then
+    chown -R "$SUDO_USER":"$SUDO_USER" "$(dirname "$UBOL_DIR")" 2>/dev/null || true
 fi
 INNEREOF
 chmod 755 /usr/local/bin/lrp-update
