@@ -234,12 +234,18 @@
                 </svg>
             </div>
             <h1>Emparejar Teléfono</h1>
-            <p class="instructions">Escanea el código QR con la cámara de tu teléfono móvil o escribe la dirección en tu navegador.</p>
+            <p class="instructions">Abre la app en tu teléfono y escribe este PIN:</p>
             
-            <div class="qr-box">
-                <img id="qr-img" src="/api/pairing-qr" alt="Código QR">
+            <div style="margin-bottom: 20px;">
+                <div style="font-size: 3.5rem; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-weight: 800; letter-spacing: 0.1em; color: var(--accent); line-height: 1;" id="display-pin">------</div>
+                <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 8px;">Expira en <span id="pin-countdown">--</span>s</div>
             </div>
-            <div class="link-text" id="pairing-link">Cargando...</div>
+
+            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 12px;">o escanea para instalar la app:</p>
+            <div class="qr-box" style="margin-bottom: 16px; padding: 16px;">
+                <img id="qr-img" src="/api/pairing-qr" alt="Código QR" style="max-width: 140px;">
+            </div>
+            <div class="link-text" id="pairing-link" style="font-size: 0.75rem; word-break: break-all;">Cargando...</div>
         </div>
 
         <div class="right-col">
@@ -266,7 +272,7 @@
                 </div>
                 <div class="stat-card">
                     <h2>Licencia</h2>
-                    <div class="stat-value"><span class="badge" id="val-license">Activa</span></div>
+                    <div class="stat-value"><span class="badge error" id="val-license" style="background-color: var(--bg-elevated); color: var(--text-secondary);">Verificando...</span></div>
                     <div class="stat-sub">Versión <span id="val-version">1.0.0</span></div>
                 </div>
                 <div class="stat-card">
@@ -284,6 +290,39 @@
 
     <script>
         let isPolling = true;
+        let currentPinExp = 0;
+        let countdownTimer = null;
+
+        async function updatePin() {
+            if (!isPolling) return;
+            try {
+                const res = await fetch('/api/pairing-pin');
+                if (res.ok) {
+                    const data = await res.json();
+                    const pinStr = data.pin || '------';
+                    // Group digits like "483 921"
+                    if (pinStr.length === 6) {
+                        document.getElementById('display-pin').textContent = pinStr.substring(0, 3) + ' ' + pinStr.substring(3, 6);
+                    } else {
+                        document.getElementById('display-pin').textContent = pinStr;
+                    }
+                    
+                    currentPinExp = data.expires_in;
+                    document.getElementById('pin-countdown').textContent = currentPinExp;
+                    
+                    if (countdownTimer) clearInterval(countdownTimer);
+                    countdownTimer = setInterval(() => {
+                        if (currentPinExp > 0) {
+                            currentPinExp--;
+                            document.getElementById('pin-countdown').textContent = currentPinExp;
+                        }
+                    }, 1000);
+                }
+            } catch (e) {
+                console.error("Error fetching PIN", e);
+            }
+            setTimeout(updatePin, 5000);
+        }
 
         async function updateStatus() {
             if (!isPolling) return;
@@ -325,6 +364,21 @@
                         vBadge.className = "badge error";
                     }
 
+                    const lBadge = document.getElementById('val-license');
+                    if (data.licensed === true) {
+                        lBadge.textContent = "Activa (Pro)";
+                        lBadge.className = "badge";
+                        lBadge.style = "";
+                    } else if (data.licensed === false) {
+                        lBadge.textContent = "Sin licencia";
+                        lBadge.className = "badge error";
+                        lBadge.style = "background-color: var(--bg-elevated); color: var(--text-secondary);";
+                    } else {
+                        lBadge.textContent = "Error al verificar";
+                        lBadge.className = "badge error";
+                        lBadge.style = "background-color: rgba(245, 158, 11, 0.15); color: #f59e0b;";
+                    }
+
                     document.getElementById('val-version').textContent = data.version;
 
                     if (data.pairing_token) {
@@ -345,7 +399,10 @@
             setTimeout(updateStatus, 2000);
         }
 
-        window.onload = updateStatus;
+        window.onload = () => {
+            updateStatus();
+            updatePin();
+        };
     </script>
 </body>
 </html>

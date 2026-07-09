@@ -185,9 +185,93 @@ def detect_ip():
 def require_local(request: Request):
     client_host = request.client.host
     if client_host.startswith("::ffff:"):
-        client_host = client_host[7:]
-    if client_host not in ("127.0.0.1", "::1", "localhost"):
+        client_host = client_host.replace("::ffff:", "")
+    if client_host not in ["127.0.0.1", "localhost", "::1"]:
+        logger.warning(f"Blocked non-local access attempt from {client_host}")
         raise HTTPException(status_code=403, detail="Forbidden. Local access only.")
+
+# P1-1: PIN Manager
+import hmac
+
+class PinManager:
+    def __init__(self):
+        self.pin: str = None
+        self.expires_at: float = 0.0
+        self.failed_attempts: dict = {}  # ip -> {"count": int, "locked_until": float}
+        self.global_failed: int = 0
+        self.global_window_start: float = time.time()
+
+    def generate_pin(self) -> str:
+        import secrets
+        # 6 random digits
+        self.pin = "".join(str(secrets.randbelow(10)) for _ in range(6))
+        self.expires_at = time.time() + 120.0
+        self.global_failed = 0
+        self.global_window_start = time.time()
+        logger.info("Generated new 6-digit PIN for pairing.")
+        return self.pin
+
+    def get_valid_pin(self) -> tuple[str, float]:
+        now = time.time()
+        if not self.pin or now > self.expires_at:
+            self.generate_pin()
+        return self.pin, max(0.0, self.expires_at - time.time())
+
+    def consume_pin(self):
+        self.pin = None
+        self.expires_at = 0.0
+
+pin_manager = PinManager()
+
+class PairPinBody(BaseModel):
+    pin: str
+
+@app.get("/api/pairing-pin")
+def get_pairing_pin(request: Request):
+    require_local(request)
+    pin, expires_in = pin_manager.get_valid_pin()
+    return {"pin": pin, "expires_in": int(expires_in)}
+
+@app.post("/api/pair")
+def pair_with_pin(body: PairPinBody, request: Request):
+    # LAN-accessible, NO auth
+    client_ip = request.client.host
+    if client_ip.startswith("::ffff:"):
+        client_ip = client_ip.replace("::ffff:", "")
+    now = time.time()
+
+    # Global brute-force guard (20 fails / minute)
+    if now - pin_manager.global_window_start > 60:
+        pin_manager.global_failed = 0
+        pin_manager.global_window_start = now
+    
+    if pin_manager.global_failed >= 20:
+        pin_manager.generate_pin() # Invalidates current PIN
+        pin_manager.global_failed = 0
+        raise HTTPException(status_code=429, detail="Global PIN rate limit exceeded. Check TV for new PIN.")
+
+    # Per-IP guard (5 fails / 60s)
+    ip_state = pin_manager.failed_attempts.get(client_ip, {"count": 0, "locked_until": 0.0})
+    if now < ip_state["locked_until"]:
+        raise HTTPException(status_code=429, detail="Demasiados intentos, espera un minuto")
+    
+    if not pin_manager.pin or now > pin_manager.expires_at:
+        raise HTTPException(status_code=410, detail="El PIN expiró, en la TV aparecerá uno nuevo")
+
+    if not hmac.compare_digest(pin_manager.pin, body.pin):
+        pin_manager.global_failed += 1
+        ip_state["count"] += 1
+        if ip_state["count"] >= 5:
+            ip_state["locked_until"] = now + 60.0
+            ip_state["count"] = 0
+        pin_manager.failed_attempts[client_ip] = ip_state
+        raise HTTPException(status_code=401, detail="PIN incorrecto")
+
+    # Success
+    pin_manager.consume_pin()
+    # Reset lockouts for this IP
+    pin_manager.failed_attempts.pop(client_ip, None)
+    return {"token": auth.PAIRING_TOKEN}
 
 
 @app.get("/api/pairing-token")
@@ -245,15 +329,18 @@ def get_ips():
 
 
 @app.get("/api/status")
-def get_api_status(request: Request):
+async def get_api_status(request: Request):
     require_local(request)
     global connected_clients, last_input_time
     import kiosk
     from input_emulator import mouse_ui_created
     
+    license_token = os.getenv("LICENSE_TOKEN", "")
+    licensed = await asyncio.to_thread(auth.is_license_valid_cached_or_online, license_token) if license_token else False
+
     return {
         "version": VERSION,
-        "licensed": True,
+        "licensed": licensed,
         "network_ips": get_ips(),
         "pairing_token": auth.PAIRING_TOKEN,
         "connected_clients": connected_clients,

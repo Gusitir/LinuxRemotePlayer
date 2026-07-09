@@ -26,6 +26,21 @@ mkdir -p pkg/opt/linuxremoteplayer
 mkdir -p pkg/DEBIAN
 mkdir -p pkg/usr/local/bin
 mkdir -p pkg/etc/sudoers.d
+mkdir -p pkg/usr/share/applications
+mkdir -p pkg/usr/share/icons/hicolor/512x512/apps
+
+cp frontend/icon-512.png pkg/usr/share/icons/hicolor/512x512/apps/linuxremoteplayer.png
+
+cat <<EOF > pkg/usr/share/applications/linuxremoteplayer-panel.desktop
+[Desktop Entry]
+Type=Application
+Name=Remote Linux Player
+Comment=Panel de estado y emparejamiento
+Exec=sh -c 'chromium --app=https://127.0.0.1:8000/status || chromium-browser --app=https://127.0.0.1:8000/status'
+Icon=linuxremoteplayer
+Categories=AudioVideo;Video;Player;
+Terminal=false
+EOF
 
 # Copy core components
 cp -r backend frontend scripts VERSION pkg/opt/linuxremoteplayer/
@@ -66,7 +81,10 @@ if [ ! -d ".venv" ]; then
     python3 -m venv .venv
 fi
 set +e
-.venv/bin/pip install -r requirements.txt || echo "[!] Advertencia: falló pip install, intente ejecutar 'sudo lrp-setup' de nuevo si hay problemas."
+if ! .venv/bin/pip install -r requirements.txt; then
+    echo "[!] Advertencia: falló pip install. Dependencias incompletas."
+    touch /opt/linuxremoteplayer/.deps_incomplete
+fi
 set -e
 
 # Create lrp-setup
@@ -74,10 +92,6 @@ cat <<'INNEREOF' > /usr/local/bin/lrp-setup
 #!/bin/bash
 if [ "$EUID" -ne 0 ]; then
   echo "Please run as root (sudo lrp-setup)"
-  exit 1
-fi
-if [ -z "$SUDO_USER" ]; then
-  echo "Error: SUDO_USER is not set. Please run via 'sudo lrp-setup'."
   exit 1
 fi
 cd /opt/linuxremoteplayer/scripts
@@ -141,6 +155,9 @@ for d in /run/user/*; do
         sudo -u "#$uid" XDG_RUNTIME_DIR="$d" systemctl --user disable linuxremoteplayer.service 2>/dev/null || true
     fi
 done
+
+update-desktop-database /usr/share/applications 2>/dev/null || true
+gtk-update-icon-cache /usr/share/icons/hicolor 2>/dev/null || true
 EOF
 chmod 755 pkg/DEBIAN/prerm
 

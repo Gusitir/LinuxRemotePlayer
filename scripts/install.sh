@@ -10,12 +10,34 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
-if [ -z "$SUDO_USER" ]; then
-  echo "Error: SUDO_USER is not set. Please run the script via 'sudo ./install.sh' and not directly as root."
-  exit 1
+TARGET_USER=""
+if [ -n "$SUDO_USER" ] && [ "$SUDO_USER" != "root" ]; then
+    TARGET_USER="$SUDO_USER"
+elif logname >/dev/null 2>&1 && [ "$(logname)" != "root" ]; then
+    TARGET_USER="$(logname)"
+else
+    # Try to find the active graphical session owner
+    if command -v loginctl >/dev/null 2>&1; then
+        TARGET_USER=$(loginctl list-sessions --no-legend | awk '$3!="root"{print $3; exit}')
+    fi
 fi
 
-USER_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+if [ -n "$TARGET_USER" ]; then
+    read -p "¿Qué usuario usará la TV? [$TARGET_USER]: " PROMPT_USER
+    if [ -n "$PROMPT_USER" ]; then
+        TARGET_USER="$PROMPT_USER"
+    fi
+else
+    read -p "¿Qué usuario usará la TV?: " TARGET_USER
+fi
+
+if [ -z "$TARGET_USER" ] || [ "$TARGET_USER" = "root" ]; then
+    echo -e "\e[31m[!] ABORTANDO: No se pudo determinar un usuario válido o se especificó 'root'. Nunca configures este servicio para root.\e[0m"
+    exit 1
+fi
+
+echo "[i] Configurando para el usuario: $TARGET_USER"
+USER_HOME=$(getent passwd "$TARGET_USER" | cut -d: -f6)
 
 if [ ! -t 0 ] && [ -e /dev/tty ]; then exec < /dev/tty; fi
 
@@ -37,9 +59,9 @@ systemctl enable --now avahi-daemon || true
 modprobe uinput || true
 echo uinput > /etc/modules-load.d/uinput.conf
 echo 'KERNEL=="uinput", MODE="0660", GROUP="input", OPTIONS+="static_node=uinput"' > /etc/udev/rules.d/99-uinput.rules
-usermod -aG input "$SUDO_USER"
+usermod -aG input "$TARGET_USER"
 udevadm control --reload-rules && udevadm trigger
-echo "[i] Added '$SUDO_USER' to 'input' group. REBOOT or re-login required before uinput works."
+echo "[i] Added '$TARGET_USER' to 'input' group. REBOOT or re-login required before uinput works."
 
 # --- Ensure Chromium is installed ---
 if command -v chromium >/dev/null 2>&1 || command -v chromium-browser >/dev/null 2>&1; then
@@ -65,15 +87,31 @@ cd "$BACKEND_DIR"
 
 # Fix permissions: Give full ownership of the app directory to the user
 # so they can write tokens, caches, and logs without sudo errors.
-chown -R "$SUDO_USER":"$SUDO_USER" /opt/linuxremoteplayer
+chown -R "$TARGET_USER":"$TARGET_USER" /opt/linuxremoteplayer
+
+# Validate venv dependencies
+if [ -f /opt/linuxremoteplayer/.deps_incomplete ] || ! "$BACKEND_DIR/.venv/bin/python" -c "import fastapi, evdev, segno" 2>/dev/null; then
+    echo -e "\n\e[31m[!] Dependencias incompletas. La instalación falló durante 'pip install'.\e[0m"
+    echo -e "\e[31m[!] Ejecuta: sudo /opt/linuxremoteplayer/backend/.venv/bin/pip install -r /opt/linuxremoteplayer/backend/requirements.txt\e[0m"
+    echo -e "\e[31m[!] Luego vuelve a ejecutar: sudo lrp-setup\e[0m"
+    exit 1
+fi
+rm -f /opt/linuxremoteplayer/.deps_incomplete
 
 # Configure UFW
 ufw allow 8000/tcp
-echo "[i] Enabling UFW firewall..."
-ufw --force enable
+if [ "$mode" = "1" ]; then
+    echo "[i] Enabling UFW firewall for Appliance Mode (allowing OpenSSH first)..."
+    ufw allow OpenSSH || ufw allow 22/tcp
+    ufw --force enable
+else
+    if ufw status | grep -q "inactive"; then
+      echo "[!] WARNING: UFW firewall is currently INACTIVE. The allow rule for port 8000 will have no effect until you enable it (sudo ufw enable)."
+    fi
+fi
 
 # Pre-generate pairing token if not exists (SEC-01)
-sudo -u "$SUDO_USER" "$BACKEND_DIR/.venv/bin/python" -c "
+sudo -u "$TARGET_USER" "$BACKEND_DIR/.venv/bin/python" -c "
 import os, secrets
 token_file = os.path.join('$BACKEND_DIR', '.pairing_token')
 if not os.path.exists(token_file):
@@ -98,7 +136,7 @@ After=graphical.target network.target display-manager.service
 
 [Service]
 Type=simple
-User=$SUDO_USER
+User=$TARGET_USER
 WorkingDirectory=$BACKEND_DIR
 Environment="APPLIANCE_IDLE_PANEL=true"
 ExecStart="$BACKEND_DIR/.venv/bin/python" run.py
@@ -116,7 +154,7 @@ EOF
 else
     echo "Configuring Desktop Mode..."
     USER_SVC_DIR="$USER_HOME/.config/systemd/user"
-    sudo -u "$SUDO_USER" mkdir -p "$USER_SVC_DIR"
+    sudo -u "$TARGET_USER" mkdir -p "$USER_SVC_DIR"
 
     cat <<EOF > "$USER_SVC_DIR/linuxremoteplayer.service"
 [Unit]
@@ -133,30 +171,13 @@ RestartSec=5
 [Install]
 WantedBy=default.target
 EOF
-    chown -R "$SUDO_USER":"$SUDO_USER" "$USER_HOME/.config"
+    chown -R "$TARGET_USER":"$TARGET_USER" "$USER_HOME/.config"
 
-    export XDG_RUNTIME_DIR="/run/user/$(id -u "$SUDO_USER")"
-    sudo -u "$SUDO_USER" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" systemctl --user daemon-reload
-    sudo -u "$SUDO_USER" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" systemctl --user enable linuxremoteplayer.service
-    sudo -u "$SUDO_USER" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" systemctl --user restart linuxremoteplayer.service
+    export XDG_RUNTIME_DIR="/run/user/$(id -u "$TARGET_USER")"
+    sudo -u "$TARGET_USER" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" systemctl --user daemon-reload
+    sudo -u "$TARGET_USER" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" systemctl --user enable linuxremoteplayer.service
+    sudo -u "$TARGET_USER" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" systemctl --user restart linuxremoteplayer.service
     echo "User-level service enabled and started."
-
-    echo "Creating desktop shortcut for Status Panel..."
-    APPS_DIR="$USER_HOME/.local/share/applications"
-    sudo -u "$SUDO_USER" mkdir -p "$APPS_DIR"
-    cat <<EOF > "$APPS_DIR/linuxremoteplayer-panel.desktop"
-[Desktop Entry]
-Version=1.0
-Name=Remote Linux Player Panel
-Comment=Linux Remote Player Status Panel
-Exec=chromium --app=https://127.0.0.1:8000/status
-Icon=remote-linux-player
-Terminal=false
-Type=Application
-Categories=Utility;
-EOF
-    chown "$SUDO_USER":"$SUDO_USER" "$APPS_DIR/linuxremoteplayer-panel.desktop"
-    echo "Desktop shortcut created."
 fi
 
 HOSTNAME_LOCAL="$(hostname).local"
@@ -174,3 +195,14 @@ echo " Access PWA at:                       "
 echo "   https://$HOSTNAME_LOCAL:8000/?token=$TOKEN"
 echo "   https://$IP_ADDR:8000/?token=$TOKEN"
 echo "======================================"
+
+sudo -u "$TARGET_USER" kbuildsycoca6 --noincremental 2>/dev/null || sudo -u "$TARGET_USER" kbuildsycoca5 2>/dev/null || true
+
+echo "[i] Waiting for service to start..."
+for i in {1..15}; do
+  if curl -sk https://127.0.0.1:8000/health >/dev/null 2>&1; then break; fi
+  sleep 1
+done
+
+echo "[i] Launching Status Panel..."
+sudo -u "$TARGET_USER" DISPLAY=:0 XDG_RUNTIME_DIR="/run/user/$(id -u "$TARGET_USER")" xdg-open "https://127.0.0.1:8000/status" 2>/dev/null || sudo -u "$TARGET_USER" DISPLAY=:0 XDG_RUNTIME_DIR="/run/user/$(id -u "$TARGET_USER")" chromium --app="https://127.0.0.1:8000/status" 2>/dev/null || echo -e "\n[!] No se pudo abrir automáticamente. Abre: https://$IP_ADDR:8000/status"

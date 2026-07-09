@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-07-09
+
+### Added
+- **PIN Pairing**: Replaced manual token entry with an intuitive 6-digit TV PIN mechanism.
+- **Bigscreen Integration**: Native app icon and desktop entry specifically targeted for KDE Plasma Bigscreen.
+- **Auto-Launch Status Panel**: The panel now opens automatically on the TV at the end of the installation process.
+
+### Fixed
+- **License Status Bug**: Corrected a bug where the UI would report the license as active on a fresh install.
+- **Installer User Binding**: Setup script now robustly identifies the active user (e.g. `tv`) instead of mistakenly binding permissions to `root`.
+- **UFW Robustness**: UFW is only forcibly enabled in Appliance mode, and guarantees SSH access (port 22) is kept open to avoid customer lockouts.
+
 ## [1.0.0] - 2026-07-04
 
 ### Added

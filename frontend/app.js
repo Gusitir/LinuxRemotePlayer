@@ -997,6 +997,49 @@ function showPairingScreen(show) {
     if (pairingUI) pairingUI.hidden = !show;
 }
 
+function toggleManualToken() {
+    const ui = document.getElementById('manual-token-ui');
+    if (ui) ui.classList.toggle('hidden');
+}
+
+async function checkPinInput(input) {
+    input.value = input.value.replace(/[^0-9]/g, '');
+    const errorMsg = document.getElementById('pin-error-msg');
+    if (errorMsg) errorMsg.classList.add('hidden');
+
+    if (input.value.length === 6) {
+        input.disabled = true;
+        try {
+            const res = await fetch(`${apiUrl}/pair`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pin: input.value })
+            });
+            const data = await res.json();
+            if (res.ok && data.token) {
+                const tokenInput = document.getElementById('onboarding-token-input');
+                if (tokenInput) tokenInput.value = data.token;
+                await saveOnboardingToken();
+                input.value = '';
+            } else {
+                if (errorMsg) {
+                    errorMsg.textContent = data.detail || 'PIN incorrecto';
+                    errorMsg.classList.remove('hidden');
+                }
+                if (res.status === 401) input.value = '';
+            }
+        } catch (e) {
+            if (errorMsg) {
+                errorMsg.textContent = 'Error de conexión';
+                errorMsg.classList.remove('hidden');
+            }
+        } finally {
+            input.disabled = false;
+            if (input.value.length < 6) input.focus();
+        }
+    }
+}
+
 async function saveOnboardingToken() {
     const input = document.getElementById('onboarding-token-input');
     if (!input) return;
