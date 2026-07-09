@@ -1,6 +1,6 @@
 {
-  "version": "1.3.1",
-  "deb_url": "https://linux-remote-player.vercel.app/downloads/linuxremoteplayer_1.3.1_all.deb",
-  "sha256": "d07454288db948417b7f79387288e1ee9a108a27222ff51b3a9d570d530e8c26",
-  "notes": "updater hardening, catalog fixes, and uBol fixes"
+  "version": "1.4.0",
+  "deb_url": "https://linux-remote-player.vercel.app/downloads/linuxremoteplayer_1.4.0_all.deb",
+  "sha256": "58520be8efa4959bd06e0b93a5084d20da192d616792cfb1defd3e4c4e38f57e",
+  "notes": "Rediseño de ajustes, Modo Navegación (D-Pad), tour inicial y feedback en la app"
 }
