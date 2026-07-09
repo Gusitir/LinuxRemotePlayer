@@ -1,6 +1,6 @@
 {
-  "version": "1.2.0",
-  "deb_url": "https://linux-remote-player.vercel.app/downloads/linuxremoteplayer_1.2.0_all.deb",
-  "sha256": "3613c5061776ce5ce1f211710b0bda6f2b3beabd9bdd06af543fb6e0ce371f3c",
-  "notes": "Added 6-digit TV PIN pairing, Plasma Bigscreen desktop entry, auto-launching panel, and fixed license bug on fresh installs."
+  "version": "1.2.1",
+  "deb_url": "https://linux-remote-player.vercel.app/downloads/linuxremoteplayer_1.2.1_all.deb",
+  "sha256": "9f5209a546532b76d133c6f5adb553888c65e659956d9a2eb9c0085b0d7e3489",
+  "notes": "Improved Installer UX: auto-invokes setup after download, simplifies interactive mode question, and ensures mode switches securely teardown previous services."
 }
