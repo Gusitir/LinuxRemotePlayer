@@ -72,7 +72,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         from: 'Feedback LRP <onboarding@resend.dev>',
-        to: 'soporte@linuxremoteplayer.com', // fallback support
+        to: Deno.env.get('SUPPORT_EMAIL') || 'aeciminer02@gmail.com', // support inbox
         subject: `Nuevo feedback de LRP v${version}`,
         text: `Email del usuario: ${email}\n\nMensaje:\n${message}`,
       })

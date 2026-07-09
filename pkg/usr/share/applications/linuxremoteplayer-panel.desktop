@@ -1,8 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=Remote Linux Player
-Comment=Panel de estado y emparejamiento
-Exec=sh -c 'chromium --app=https://127.0.0.1:8000/status || chromium-browser --app=https://127.0.0.1:8000/status'
-Icon=linuxremoteplayer
-Categories=AudioVideo;Video;Player;
-Terminal=false

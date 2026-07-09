@@ -222,3 +222,5 @@ backend/.license_cache
 supabase/.temp/
 GUIA_AGUSTIN.md
 .agents/
+# .deb build staging (output of build_deb.sh — must not be committed)
+pkg/

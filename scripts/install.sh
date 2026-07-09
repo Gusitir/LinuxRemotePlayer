@@ -279,4 +279,11 @@ for i in {1..15}; do
 done
 
 echo "[i] Launching Status Panel..."
-sudo -u "$TARGET_USER" DISPLAY=:0 XDG_RUNTIME_DIR="/run/user/$(id -u "$TARGET_USER")" xdg-open "https://127.0.0.1:8000/status" 2>/dev/null || sudo -u "$TARGET_USER" DISPLAY=:0 XDG_RUNTIME_DIR="/run/user/$(id -u "$TARGET_USER")" chromium --app="https://127.0.0.1:8000/status" 2>/dev/null || echo -e "\n[!] No se pudo abrir automáticamente. Abre: https://$IP_ADDR:8000/status"
+sudo -u "$TARGET_USER" DISPLAY=:0 XDG_RUNTIME_DIR="/run/user/$(id -u "$TARGET_USER")" xdg-open "https://127.0.0.1:8000/status" 2>/dev/null || sudo -u "$TARGET_USER" DISPLAY=:0 XDG_RUNTIME_DIR="/run/user/$(id -u "$TARGET_USER")" chromium --app="https://127.0.0.1:8000/status" 2>/dev/null || true
+
+echo "======================================"
+echo " Panel de estado (ábrelo en el navegador"
+echo " de ESTA TV si no se abrió solo):        "
+echo "   https://localhost:8000/status"
+echo "   https://127.0.0.1:8000/status"
+echo "======================================"
