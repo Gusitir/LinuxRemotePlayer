@@ -127,11 +127,7 @@ def launch_kiosk(url: str) -> bool:
         return False
 
     try:
-        # uBOL path: prefer the user's HOME (snap-packaged Chromium on Ubuntu/KDE Neon
-        # CANNOT read /opt due to confinement); /opt kept as fallback for non-snap builds.
-        home_ext = os.path.expanduser("~/lrp-extensions/ubol")
-        opt_ext = "/opt/linuxremoteplayer/extensions/ubol"
-        ext_path = home_ext if os.path.exists(os.path.join(home_ext, "manifest.json")) else opt_ext
+        ext_path = "/opt/linuxremoteplayer/extensions/ubol"
         cmd = [chromium, f'--app={url}', '--kiosk', '--start-maximized', '--no-errdialogs', '--disable-infobars']
         if os.path.exists(os.path.join(ext_path, "manifest.json")):
             cmd.append(f'--load-extension={ext_path}')

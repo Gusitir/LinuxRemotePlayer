@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emparejar Teléfono — Remote Linux Player</title>
+    <style>
+        :root {
+            --bg-base: #0b1220;
+            --bg-raised: #111827;
+            --bg-elevated: #1f2937;
+            --border: #28364d;
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --success: #22c55e;
+            --glow: rgba(59, 130, 246, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .bg-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 700px;
+            height: 700px;
+            background: radial-gradient(circle, var(--glow) 0%, rgba(11,18,32,0) 70%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+            background-color: var(--bg-raised);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 40px 32px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+        }
+
+        .icon-container {
+            margin-bottom: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 64px;
+            height: 64px;
+            background-color: rgba(59, 130, 246, 0.1);
+            border-radius: 50%;
+            color: var(--accent);
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+        }
+
+        p.instructions {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .qr-box {
+            background-color: white;
+            border-radius: 16px;
+            padding: 24px;
+            display: inline-block;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .qr-box img {
+            display: block;
+            max-width: 220px;
+            height: auto;
+        }
+
+        .link-card {
+            background-color: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: left;
+            margin-bottom: 30px;
+        }
+
+        .link-card h2 {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+        }
+
+        .link-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .link-text {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            word-break: break-all;
+            user-select: all;
+        }
+
+        .btn-copy {
+            background-color: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .btn-copy:hover {
+            background-color: rgba(255,255,255,0.1);
+            color: var(--text-primary);
+        }
+
+        .btn-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 12px 24px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 12px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            margin-bottom: 12px;
+        }
+
+        .btn-action:hover {
+            background-color: var(--bg-elevated);
+            color: var(--text-primary);
+            border-color: var(--text-secondary);
+        }
+
+        .btn-back {
+            display: inline-block;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+
+        .btn-back:hover {
+            color: var(--text-primary);
+            text-decoration: underline;
+        }
+
+        .error-message {
+            color: #f87171;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-glow"></div>
+    <div class="container">
+        <div class="icon-container">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                <line x1="12" y1="18" x2="12.01" y2="18"></line>
+            </svg>
+        </div>
+        
+        <h1>Emparejar tu teléfono</h1>
+        <p class="instructions">Escanea el código QR con la cámara de tu teléfono móvil o escribe la dirección de abajo para conectar el control remoto.</p>
+        
+        <div id="error-alert" class="error-message"></div>
+
+        <div class="qr-box">
+            <img id="qr-img" src="/api/pairing-qr" alt="Código QR de Emparejamiento">
+        </div>
+        
+        <div class="link-card">
+            <h2>Enlace de emparejamiento</h2>
+            <div class="link-row">
+                <span class="link-text" id="pairing-link">Cargando...</span>
+                <button class="btn-copy" onclick="copyLink()" id="copy-btn">Copiar</button>
+            </div>
+        </div>
+        
+        <button class="btn-action" onclick="regenerateToken()">Generar nuevo código</button>
+        <a href="/" class="btn-back">Ir al Panel de Control</a>
+    </div>
+
+    <script>
+        let currentLink = '';
+
+        async function loadToken() {
+            const errAlert = document.getElementById('error-alert');
+            try {
+                const res = await fetch('/api/pairing-token');
+                if (res.ok) {
+                    const data = await res.json();
+                    const token = data.token;
+                    currentLink = `${window.location.origin}/?token=${token}`;
+                    document.getElementById('pairing-link').textContent = currentLink;
+                    document.getElementById('qr-img').src = `/api/pairing-qr?t=${Date.now()}`;
+                    errAlert.style.display = 'none';
+                } else {
+                    if (res.status === 403) {
+                        errAlert.textContent = "Error: Acceso permitido únicamente desde la pantalla local de la TV (localhost).";
+                    } else {
+                        errAlert.textContent = "Error al cargar el token del servidor.";
+                    }
+                    errAlert.style.display = 'block';
+                }
+            } catch (err) {
+                console.error(err);
+                errAlert.textContent = "No se pudo conectar con el servidor local.";
+                errAlert.style.display = 'block';
+            }
+        }
+
+        async function regenerateToken() {
+            if (!confirm("Esto desconectará los dispositivos emparejados anteriormente. ¿Continuar?")) {
+                return;
+            }
+            const errAlert = document.getElementById('error-alert');
+            try {
+                const res = await fetch('/api/pairing-token/regenerate', { method: 'POST' });
+                if (res.ok) {
+                    await loadToken();
+                } else {
+                    errAlert.textContent = "Error al regenerar el token.";
+                    errAlert.style.display = 'block';
+                }
+            } catch (err) {
+                console.error(err);
+                errAlert.textContent = "Error al conectar con el servidor.";
+                errAlert.style.display = 'block';
+            }
+        }
+
+        function copyLink() {
+            if (!currentLink) return;
+            const btn = document.getElementById('copy-btn');
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(currentLink).then(() => {
+                    btn.textContent = 'Copiado';
+                    setTimeout(() => { btn.textContent = 'Copiar'; }, 2000);
+                }).catch(() => {
+                    alert('No se pudo copiar automáticamente.');
+                });
+            } else {
+                alert('Copiar no está soportado en este navegador (requiere HTTPS o localhost).');
+            }
+        }
+
+        window.onload = loadToken;
+    </script>
+</body>
+</html>

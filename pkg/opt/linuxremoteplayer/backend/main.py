@@ -106,12 +106,7 @@ async def startup_event():
 # HYG-03 Constants organization
 SUGGESTED_KIOSKS = [
     {"id": "netflix", "name": "Netflix", "url": "https://netflix.com", "color": "#E50914"},
-    {"id": "youtube", "name": "YouTube", "url": "https://youtube.com", "color": "#FF0000"},
-    {"id": "plutotv", "name": "Pluto TV", "url": "https://pluto.tv", "color": "#FAD000"},
-    {"id": "kick", "name": "Kick", "url": "https://kick.com", "color": "#53FC18"},
-    {"id": "tiktok", "name": "TikTok", "url": "https://www.tiktok.com", "color": "#FE2C55"},
-    {"id": "instagram", "name": "Instagram", "url": "https://www.instagram.com", "color": "#E4405F"},
-    {"id": "facebook", "name": "Facebook", "url": "https://www.facebook.com", "color": "#1877F2"},
+    {"id": "youtube", "name": "YouTube", "url": "https://youtube.com/tv", "color": "#FF0000"},
     {"id": "hbomax", "name": "Max", "url": "https://play.max.com", "color": "#7B2BF9"},
     {"id": "primevideo", "name": "Prime Video", "url": "https://www.primevideo.com", "color": "#00A8E1"},
     {"id": "disney", "name": "Disney+", "url": "https://www.disneyplus.com", "color": "#113CCF"},

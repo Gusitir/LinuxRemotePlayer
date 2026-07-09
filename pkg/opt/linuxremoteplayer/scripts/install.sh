@@ -93,24 +93,23 @@ cd "$BACKEND_DIR"
 chown -R "$TARGET_USER":"$TARGET_USER" /opt/linuxremoteplayer
 
 # P5: Ad-blocking (uBlock Origin Lite)
-# IMPORTANT: installed in the user's HOME, NOT /opt — snap-packaged Chromium
-# (Ubuntu/KDE Neon) cannot read /opt due to snap confinement.
-UBOL_DIR="$USER_HOME/lrp-extensions/ubol"
 echo "[i] Descargando uBlock Origin Lite para bloqueo de anuncios en el Kiosko..."
-mkdir -p "$UBOL_DIR"
-if command -v curl >/dev/null 2>&1; then
-    curl -sL "https://github.com/uBlockOrigin/uBOL-home/releases/latest/download/uBOLite_mv3.zip" -o /tmp/ubol.zip
-else
-    wget -qO /tmp/ubol.zip "https://github.com/uBlockOrigin/uBOL-home/releases/latest/download/uBOLite_mv3.zip"
-fi
-if [ -s /tmp/ubol.zip ]; then
-    command -v unzip >/dev/null 2>&1 || apt-get install -y unzip
-    unzip -qo /tmp/ubol.zip -d "$UBOL_DIR" || echo "[!] No se pudo extraer uBOL; el kiosk funcionará sin bloqueador."
+mkdir -p /opt/linuxremoteplayer/extensions
+if [ ! -f "/opt/linuxremoteplayer/extensions/ubol/manifest.json" ]; then
+    if command -v curl >/dev/null 2>&1; then
+        curl -sL "https://github.com/uBlockOrigin/uBOL-home/releases/latest/download/uBOLite_mv3.zip" -o /tmp/ubol.zip
+    else
+        wget -qO /tmp/ubol.zip "https://github.com/uBlockOrigin/uBOL-home/releases/latest/download/uBOLite_mv3.zip"
+    fi
+    if command -v unzip >/dev/null 2>&1; then
+        unzip -qo /tmp/ubol.zip -d /opt/linuxremoteplayer/extensions/ubol || true
+    else
+        apt-get install -y unzip
+        unzip -qo /tmp/ubol.zip -d /opt/linuxremoteplayer/extensions/ubol || true
+    fi
     rm -f /tmp/ubol.zip
-else
-    echo "[!] No se pudo descargar el bloqueador de anuncios; el kiosk funcionará sin él."
 fi
-chown -R "$TARGET_USER":"$TARGET_USER" "$USER_HOME/lrp-extensions" 2>/dev/null || true
+chown -R "$TARGET_USER":"$TARGET_USER" /opt/linuxremoteplayer/extensions
 
 # Validate venv dependencies
 if [ -f /opt/linuxremoteplayer/.deps_incomplete ] || ! "$BACKEND_DIR/.venv/bin/python" -c "import fastapi, evdev, segno" 2>/dev/null; then

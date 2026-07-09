@@ -549,7 +549,7 @@ function createAppTile(app) {
             try {
                 const domain = new URL(app.url).hostname;
                 const img = document.createElement('img');
-                img.src = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+                img.src = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
                 img.className = 'w-full h-full object-cover';
                 img.onerror = () => { img.outerHTML = iconFallback.outerHTML; };
                 iconWrapper.appendChild(img);

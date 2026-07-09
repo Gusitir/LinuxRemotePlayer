@@ -1,0 +1,15 @@
+#!/bin/bash
+set -e
+systemctl stop linuxremoteplayer.service 2>/dev/null || true
+systemctl disable linuxremoteplayer.service 2>/dev/null || true
+
+for d in /run/user/*; do
+    if [ -d "$d" ]; then
+        uid=$(basename "$d")
+        sudo -u "#$uid" XDG_RUNTIME_DIR="$d" systemctl --user stop linuxremoteplayer.service 2>/dev/null || true
+        sudo -u "#$uid" XDG_RUNTIME_DIR="$d" systemctl --user disable linuxremoteplayer.service 2>/dev/null || true
+    fi
+done
+
+update-desktop-database /usr/share/applications 2>/dev/null || true
+gtk-update-icon-cache /usr/share/icons/hicolor 2>/dev/null || true

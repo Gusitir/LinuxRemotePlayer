@@ -1,0 +1,1 @@
+%input ALL=(root) NOPASSWD: /usr/local/bin/lrp-update

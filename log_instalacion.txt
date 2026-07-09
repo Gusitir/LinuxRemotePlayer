@@ -1,0 +1,608 @@
+----------
+INSTALL_LOG
+----------
+tv@TV:~$ curl -fsSL https://linux-remote-player.vercel.app/install.sh | sudo bash
+[sudo] password for tv:
+======================================
+ LinuxRemotePlayer Initial Installer
+======================================
+Fetching latest version from https://linux-remote-player.vercel.app/latest.json...
+Downloading v1.1.2 from https://linux-remote-player.vercel.app/downloads/linuxremoteplayer_1.1.2_all.deb...
+Verifying checksum...
+linuxremoteplayer_1.1.2_all.deb: OK
+Installing package...
+Failed to start apt-news.service: Unit apt-news.service is masked.
+Failed to start esm-cache.service: Unit esm-cache.service not found.
+Des:1 file:/var/lib/preinstalled-pool noble InRelease
+Ign:1 file:/var/lib/preinstalled-pool noble InRelease
+Des:2 file:/var/lib/preinstalled-pool noble Release [3.949 B]
+Des:2 file:/var/lib/preinstalled-pool noble Release [3.949 B]
+Obj:4 http://archive.ubuntu.com/ubuntu noble InRelease
+Obj:5 http://security.ubuntu.com/ubuntu noble-security InRelease
+Des:6 http://archive.neon.kde.org/user noble InRelease [217 kB]
+Obj:7 http://archive.ubuntu.com/ubuntu noble-updates InRelease
+Obj:8 https://packages.mozilla.org/apt mozilla InRelease
+Descargados 217 kB en 1s (168 kB/s)
+Updating KDE neon pins... Done
+Leyendo lista de paquetes... Hecho
+Leyendo lista de paquetes... Hecho
+Creando árbol de dependencias... Hecho
+Leyendo la información de estado... Hecho
+Nota, seleccionando «linuxremoteplayer» en lugar de «./linuxremoteplayer_1.1.2_all.deb»
+Starting pkgProblemResolver with broken count: 0
+Starting 2 pkgProblemResolver with broken count: 0
+Done
+Se instalarán los siguientes paquetes adicionales:
+  binutils binutils-common binutils-x86-64-linux-gnu build-essential bzip2 dpkg-dev fakeroot g++ g++-13 g++-13-x86-64-linux-gnu g++-x86-64-linux-gnu gcc gcc-13 gcc-13-x86-64-linux-gnu
+  gcc-x86-64-linux-gnu libalgorithm-diff-perl libalgorithm-diff-xs-perl libalgorithm-merge-perl libasan8 libbinutils libcc1-0 libctf-nobfd0 libctf0 libdpkg-perl libexpat1-dev libfakeroot
+  libfile-fcntllock-perl libgcc-13-dev libgprofng0 libhwasan0 libitm1 libjs-sphinxdoc liblsan0 libpython3-dev libpython3.12-dev libquadmath0 libsframe1 libstdc++-13-dev libtsan2
+  libubsan1 lto-disabled-list make python3-dev python3.12-dev zlib1g-dev
+Paquetes sugeridos:
+  binutils-doc gprofng-gui bzip2-doc debian-keyring g++-multilib g++-13-multilib gcc-13-doc gcc-multilib autoconf automake libtool flex bison gcc-doc gcc-13-multilib gcc-13-locales
+  gdb-x86-64-linux-gnu git bzr libstdc++-13-doc make-doc
+Se instalarán los siguientes paquetes NUEVOS:
+  binutils binutils-common binutils-x86-64-linux-gnu build-essential bzip2 dpkg-dev fakeroot g++ g++-13 g++-13-x86-64-linux-gnu g++-x86-64-linux-gnu gcc gcc-13 gcc-13-x86-64-linux-gnu
+  gcc-x86-64-linux-gnu libalgorithm-diff-perl libalgorithm-diff-xs-perl libalgorithm-merge-perl libasan8 libbinutils libcc1-0 libctf-nobfd0 libctf0 libdpkg-perl libexpat1-dev libfakeroot
+  libfile-fcntllock-perl libgcc-13-dev libgprofng0 libhwasan0 libitm1 libjs-sphinxdoc liblsan0 libpython3-dev libpython3.12-dev libquadmath0 libsframe1 libstdc++-13-dev libtsan2
+  libubsan1 lto-disabled-list make python3-dev python3.12-dev zlib1g-dev
+Se actualizarán los siguientes paquetes:
+  linuxremoteplayer
+1 actualizados, 45 nuevos se instalarán, 0 para eliminar y 79 no actualizados.
+1 no instalados del todo o eliminados.
+Se necesita descargar 62,6 MB/62,8 MB de archivos.
+Se utilizarán 227 MB de espacio de disco adicional después de esta operación.
+Des:1 /tmp/linuxremoteplayer_1.1.2_all.deb linuxremoteplayer all 1.1.2 [236 kB]
+Des:2 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 zlib1g-dev amd64 1:1.3.dfsg-3.1ubuntu2.1 [894 kB]
+Des:3 http://security.ubuntu.com/ubuntu noble-security/main amd64 libexpat1-dev amd64 2.6.1-2ubuntu0.4 [140 kB]
+Des:4 http://security.ubuntu.com/ubuntu noble-security/main amd64 libpython3.12-dev amd64 3.12.3-1ubuntu0.15 [5.683 kB]
+Des:5 http://archive.ubuntu.com/ubuntu noble/main amd64 libjs-sphinxdoc all 7.2.6-6 [149 kB]
+Des:6 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 binutils-common amd64 2.42-4ubuntu2.10 [240 kB]
+Des:7 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libsframe1 amd64 2.42-4ubuntu2.10 [15,7 kB]
+Des:8 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libbinutils amd64 2.42-4ubuntu2.10 [577 kB]
+Des:9 http://security.ubuntu.com/ubuntu noble-security/main amd64 libpython3-dev amd64 3.12.3-0ubuntu2.1 [10,3 kB]
+Des:10 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libctf-nobfd0 amd64 2.42-4ubuntu2.10 [98,0 kB]
+Des:11 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libctf0 amd64 2.42-4ubuntu2.10 [94,5 kB]
+Des:12 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libgprofng0 amd64 2.42-4ubuntu2.10 [849 kB]
+Des:13 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 binutils-x86-64-linux-gnu amd64 2.42-4ubuntu2.10 [2.463 kB]
+Des:14 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 binutils amd64 2.42-4ubuntu2.10 [18,2 kB]
+Des:15 http://archive.ubuntu.com/ubuntu noble/main amd64 gcc-x86-64-linux-gnu amd64 4:13.2.0-7ubuntu1 [1.212 B]
+Des:16 http://archive.ubuntu.com/ubuntu noble/main amd64 gcc amd64 4:13.2.0-7ubuntu1 [5.018 B]
+Des:17 http://archive.ubuntu.com/ubuntu noble/main amd64 g++-x86-64-linux-gnu amd64 4:13.2.0-7ubuntu1 [964 B]
+Des:18 http://archive.ubuntu.com/ubuntu noble/main amd64 g++ amd64 4:13.2.0-7ubuntu1 [1.100 B]
+Des:19 http://archive.ubuntu.com/ubuntu noble/main amd64 make amd64 4.3-4.1build2 [180 kB]
+Des:20 http://security.ubuntu.com/ubuntu noble-security/main amd64 python3.12-dev amd64 3.12.3-1ubuntu0.15 [498 kB]
+Des:21 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 bzip2 amd64 1.0.8-5.1build0.1 [34,5 kB]
+Des:22 http://archive.ubuntu.com/ubuntu noble/main amd64 lto-disabled-list all 47 [12,4 kB]
+Des:23 http://archive.ubuntu.com/ubuntu noble/main amd64 build-essential amd64 12.10ubuntu1 [4.928 B]
+Des:24 http://archive.ubuntu.com/ubuntu noble/main amd64 libfakeroot amd64 1.33-1 [32,4 kB]
+Des:25 http://archive.ubuntu.com/ubuntu noble/main amd64 fakeroot amd64 1.33-1 [67,2 kB]
+Des:26 http://archive.ubuntu.com/ubuntu noble/main amd64 libalgorithm-diff-perl all 1.201-1 [41,8 kB]
+Des:27 http://archive.ubuntu.com/ubuntu noble/main amd64 libalgorithm-diff-xs-perl amd64 0.04-8build3 [11,2 kB]
+Des:28 http://archive.ubuntu.com/ubuntu noble/main amd64 libalgorithm-merge-perl all 0.08-5 [11,4 kB]
+Des:29 http://archive.ubuntu.com/ubuntu noble/main amd64 libfile-fcntllock-perl amd64 0.22-4ubuntu5 [30,7 kB]
+Des:30 http://security.ubuntu.com/ubuntu noble-security/main amd64 python3-dev amd64 3.12.3-0ubuntu2.1 [26,7 kB]
+Des:31 http://security.ubuntu.com/ubuntu noble-security/main amd64 libcc1-0 amd64 14.2.0-4ubuntu2~24.04.1 [48,0 kB]
+Des:32 http://security.ubuntu.com/ubuntu noble-security/main amd64 libitm1 amd64 14.2.0-4ubuntu2~24.04.1 [29,7 kB]
+Des:33 http://security.ubuntu.com/ubuntu noble-security/main amd64 libasan8 amd64 14.2.0-4ubuntu2~24.04.1 [3.027 kB]
+Des:34 http://security.ubuntu.com/ubuntu noble-security/main amd64 liblsan0 amd64 14.2.0-4ubuntu2~24.04.1 [1.322 kB]
+Des:35 http://security.ubuntu.com/ubuntu noble-security/main amd64 libtsan2 amd64 14.2.0-4ubuntu2~24.04.1 [2.772 kB]
+Des:36 http://security.ubuntu.com/ubuntu noble-security/main amd64 libubsan1 amd64 14.2.0-4ubuntu2~24.04.1 [1.184 kB]
+Des:37 http://security.ubuntu.com/ubuntu noble-security/main amd64 libhwasan0 amd64 14.2.0-4ubuntu2~24.04.1 [1.641 kB]
+Des:38 http://security.ubuntu.com/ubuntu noble-security/main amd64 libquadmath0 amd64 14.2.0-4ubuntu2~24.04.1 [153 kB]
+Des:39 http://security.ubuntu.com/ubuntu noble-security/main amd64 libgcc-13-dev amd64 13.3.0-6ubuntu2~24.04.1 [2.681 kB]
+Des:40 http://security.ubuntu.com/ubuntu noble-security/main amd64 gcc-13-x86-64-linux-gnu amd64 13.3.0-6ubuntu2~24.04.1 [21,1 MB]
+Des:41 http://security.ubuntu.com/ubuntu noble-security/main amd64 gcc-13 amd64 13.3.0-6ubuntu2~24.04.1 [494 kB]
+Des:42 http://security.ubuntu.com/ubuntu noble-security/main amd64 libstdc++-13-dev amd64 13.3.0-6ubuntu2~24.04.1 [2.420 kB]
+Des:43 http://security.ubuntu.com/ubuntu noble-security/main amd64 g++-13-x86-64-linux-gnu amd64 13.3.0-6ubuntu2~24.04.1 [12,2 MB]
+Des:44 http://security.ubuntu.com/ubuntu noble-security/main amd64 g++-13 amd64 13.3.0-6ubuntu2~24.04.1 [16,0 kB]
+Des:45 http://security.ubuntu.com/ubuntu noble-security/main amd64 libdpkg-perl all 1.22.6ubuntu6.6 [268 kB]
+Des:46 http://security.ubuntu.com/ubuntu noble-security/main amd64 dpkg-dev all 1.22.6ubuntu6.6 [1.074 kB]
+Descargados 62,6 MB en 1min 17s (810 kB/s)
+Extrayendo plantillas para los paquetes: 100%
+Seleccionando el paquete libexpat1-dev:amd64 previamente no seleccionado.
+(Leyendo la base de datos ... 200804 ficheros o directorios instalados actualmente.)
+Preparando para desempaquetar .../00-libexpat1-dev_2.6.1-2ubuntu0.4_amd64.deb ...
+Desempaquetando libexpat1-dev:amd64 (2.6.1-2ubuntu0.4) ...
+Seleccionando el paquete zlib1g-dev:amd64 previamente no seleccionado.
+Preparando para desempaquetar .../01-zlib1g-dev_1%3a1.3.dfsg-3.1ubuntu2.1_amd64.deb ...
+Desempaquetando zlib1g-dev:amd64 (1:1.3.dfsg-3.1ubuntu2.1) ...
+Seleccionando el paquete libpython3.12-dev:amd64 previamente no seleccionado.
+Preparando para desempaquetar .../02-libpython3.12-dev_3.12.3-1ubuntu0.15_amd64.deb ...
+Desempaquetando libpython3.12-dev:amd64 (3.12.3-1ubuntu0.15) ...
+Seleccionando el paquete libpython3-dev:amd64 previamente no seleccionado.
+Preparando para desempaquetar .../03-libpython3-dev_3.12.3-0ubuntu2.1_amd64.deb ...
+Desempaquetando libpython3-dev:amd64 (3.12.3-0ubuntu2.1) ...
+Seleccionando el paquete python3.12-dev previamente no seleccionado.
+Preparando para desempaquetar .../04-python3.12-dev_3.12.3-1ubuntu0.15_amd64.deb ...
+Desempaquetando python3.12-dev (3.12.3-1ubuntu0.15) ...
+Seleccionando el paquete libjs-sphinxdoc previamente no seleccionado.
+Preparando para desempaquetar .../05-libjs-sphinxdoc_7.2.6-6_all.deb ...
+Desempaquetando libjs-sphinxdoc (7.2.6-6) ...
+Seleccionando el paquete python3-dev previamente no seleccionado.
+Preparando para desempaquetar .../06-python3-dev_3.12.3-0ubuntu2.1_amd64.deb ...
+Desempaquetando python3-dev (3.12.3-0ubuntu2.1) ...
+Seleccionando el paquete libcc1-0:amd64 previamente no seleccionado.
+Preparando para desempaquetar .../07-libcc1-0_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Desempaquetando libcc1-0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Seleccionando el paquete binutils-common:amd64 previamente no seleccionado.
+Preparando para desempaquetar .../08-binutils-common_2.42-4ubuntu2.10_amd64.deb ...
+Desempaquetando binutils-common:amd64 (2.42-4ubuntu2.10) ...
+Seleccionando el paquete libsframe1:amd64 previamente no seleccionado.
+Preparando para desempaquetar .../09-libsframe1_2.42-4ubuntu2.10_amd64.deb ...
+Desempaquetando libsframe1:amd64 (2.42-4ubuntu2.10) ...
+Seleccionando el paquete libbinutils:amd64 previamente no seleccionado.
+Preparando para desempaquetar .../10-libbinutils_2.42-4ubuntu2.10_amd64.deb ...
+Desempaquetando libbinutils:amd64 (2.42-4ubuntu2.10) ...
+Seleccionando el paquete libctf-nobfd0:amd64 previamente no seleccionado.
+Preparando para desempaquetar .../11-libctf-nobfd0_2.42-4ubuntu2.10_amd64.deb ...
+Desempaquetando libctf-nobfd0:amd64 (2.42-4ubuntu2.10) ...
+Seleccionando el paquete libctf0:amd64 previamente no seleccionado.
+Preparando para desempaquetar .../12-libctf0_2.42-4ubuntu2.10_amd64.deb ...
+Desempaquetando libctf0:amd64 (2.42-4ubuntu2.10) ...
+Seleccionando el paquete libgprofng0:amd64 previamente no seleccionado.
+Preparando para desempaquetar .../13-libgprofng0_2.42-4ubuntu2.10_amd64.deb ...
+Desempaquetando libgprofng0:amd64 (2.42-4ubuntu2.10) ...
+Seleccionando el paquete binutils-x86-64-linux-gnu previamente no seleccionado.
+Preparando para desempaquetar .../14-binutils-x86-64-linux-gnu_2.42-4ubuntu2.10_amd64.deb ...
+Desempaquetando binutils-x86-64-linux-gnu (2.42-4ubuntu2.10) ...
+Seleccionando el paquete libitm1:amd64 previamente no seleccionado.
+Preparando para desempaquetar .../15-libitm1_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Desempaquetando libitm1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Seleccionando el paquete libasan8:amd64 previamente no seleccionado.
+Preparando para desempaquetar .../16-libasan8_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Desempaquetando libasan8:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Seleccionando el paquete liblsan0:amd64 previamente no seleccionado.
+Preparando para desempaquetar .../17-liblsan0_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Desempaquetando liblsan0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Seleccionando el paquete libtsan2:amd64 previamente no seleccionado.
+Preparando para desempaquetar .../18-libtsan2_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Desempaquetando libtsan2:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Seleccionando el paquete libubsan1:amd64 previamente no seleccionado.
+Preparando para desempaquetar .../19-libubsan1_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Desempaquetando libubsan1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Seleccionando el paquete libhwasan0:amd64 previamente no seleccionado.
+Preparando para desempaquetar .../20-libhwasan0_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Desempaquetando libhwasan0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Seleccionando el paquete libquadmath0:amd64 previamente no seleccionado.
+Preparando para desempaquetar .../21-libquadmath0_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Desempaquetando libquadmath0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Seleccionando el paquete libgcc-13-dev:amd64 previamente no seleccionado.
+Preparando para desempaquetar .../22-libgcc-13-dev_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Desempaquetando libgcc-13-dev:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Seleccionando el paquete gcc-13-x86-64-linux-gnu previamente no seleccionado.
+Preparando para desempaquetar .../23-gcc-13-x86-64-linux-gnu_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Desempaquetando gcc-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Seleccionando el paquete binutils previamente no seleccionado.
+Preparando para desempaquetar .../24-binutils_2.42-4ubuntu2.10_amd64.deb ...
+Desempaquetando binutils (2.42-4ubuntu2.10) ...
+Seleccionando el paquete gcc-13 previamente no seleccionado.
+Preparando para desempaquetar .../25-gcc-13_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Desempaquetando gcc-13 (13.3.0-6ubuntu2~24.04.1) ...
+Seleccionando el paquete gcc-x86-64-linux-gnu previamente no seleccionado.
+Preparando para desempaquetar .../26-gcc-x86-64-linux-gnu_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Desempaquetando gcc-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Seleccionando el paquete gcc previamente no seleccionado.
+Preparando para desempaquetar .../27-gcc_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Desempaquetando gcc (4:13.2.0-7ubuntu1) ...
+Seleccionando el paquete libstdc++-13-dev:amd64 previamente no seleccionado.
+Preparando para desempaquetar .../28-libstdc++-13-dev_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Desempaquetando libstdc++-13-dev:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Seleccionando el paquete g++-13-x86-64-linux-gnu previamente no seleccionado.
+Preparando para desempaquetar .../29-g++-13-x86-64-linux-gnu_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Desempaquetando g++-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Seleccionando el paquete g++-13 previamente no seleccionado.
+Preparando para desempaquetar .../30-g++-13_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Desempaquetando g++-13 (13.3.0-6ubuntu2~24.04.1) ...
+Seleccionando el paquete g++-x86-64-linux-gnu previamente no seleccionado.
+Preparando para desempaquetar .../31-g++-x86-64-linux-gnu_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Desempaquetando g++-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Seleccionando el paquete g++ previamente no seleccionado.
+Preparando para desempaquetar .../32-g++_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Desempaquetando g++ (4:13.2.0-7ubuntu1) ...
+Seleccionando el paquete make previamente no seleccionado.
+Preparando para desempaquetar .../33-make_4.3-4.1build2_amd64.deb ...
+Desempaquetando make (4.3-4.1build2) ...
+Seleccionando el paquete libdpkg-perl previamente no seleccionado.
+Preparando para desempaquetar .../34-libdpkg-perl_1.22.6ubuntu6.6_all.deb ...
+Desempaquetando libdpkg-perl (1.22.6ubuntu6.6) ...
+Seleccionando el paquete bzip2 previamente no seleccionado.
+Preparando para desempaquetar .../35-bzip2_1.0.8-5.1build0.1_amd64.deb ...
+Desempaquetando bzip2 (1.0.8-5.1build0.1) ...
+Seleccionando el paquete lto-disabled-list previamente no seleccionado.
+Preparando para desempaquetar .../36-lto-disabled-list_47_all.deb ...
+Desempaquetando lto-disabled-list (47) ...
+Seleccionando el paquete dpkg-dev previamente no seleccionado.
+Preparando para desempaquetar .../37-dpkg-dev_1.22.6ubuntu6.6_all.deb ...
+Desempaquetando dpkg-dev (1.22.6ubuntu6.6) ...
+Seleccionando el paquete build-essential previamente no seleccionado.
+Preparando para desempaquetar .../38-build-essential_12.10ubuntu1_amd64.deb ...
+Desempaquetando build-essential (12.10ubuntu1) ...
+Preparando para desempaquetar .../39-linuxremoteplayer_1.1.2_all.deb ...
+Desempaquetando linuxremoteplayer (1.1.2) sobre (1.1.1) ...
+Seleccionando el paquete libfakeroot:amd64 previamente no seleccionado.
+Preparando para desempaquetar .../40-libfakeroot_1.33-1_amd64.deb ...
+Desempaquetando libfakeroot:amd64 (1.33-1) ...
+Seleccionando el paquete fakeroot previamente no seleccionado.
+Preparando para desempaquetar .../41-fakeroot_1.33-1_amd64.deb ...
+Desempaquetando fakeroot (1.33-1) ...
+Seleccionando el paquete libalgorithm-diff-perl previamente no seleccionado.
+Preparando para desempaquetar .../42-libalgorithm-diff-perl_1.201-1_all.deb ...
+Desempaquetando libalgorithm-diff-perl (1.201-1) ...
+Seleccionando el paquete libalgorithm-diff-xs-perl:amd64 previamente no seleccionado.
+Preparando para desempaquetar .../43-libalgorithm-diff-xs-perl_0.04-8build3_amd64.deb ...
+Desempaquetando libalgorithm-diff-xs-perl:amd64 (0.04-8build3) ...
+Seleccionando el paquete libalgorithm-merge-perl previamente no seleccionado.
+Preparando para desempaquetar .../44-libalgorithm-merge-perl_0.08-5_all.deb ...
+Desempaquetando libalgorithm-merge-perl (0.08-5) ...
+Seleccionando el paquete libfile-fcntllock-perl previamente no seleccionado.
+Preparando para desempaquetar .../45-libfile-fcntllock-perl_0.22-4ubuntu5_amd64.deb ...
+Desempaquetando libfile-fcntllock-perl (0.22-4ubuntu5) ...
+Configurando lto-disabled-list (47) ...
+Configurando libfile-fcntllock-perl (0.22-4ubuntu5) ...
+Configurando libalgorithm-diff-perl (1.201-1) ...
+Configurando binutils-common:amd64 (2.42-4ubuntu2.10) ...
+Configurando libctf-nobfd0:amd64 (2.42-4ubuntu2.10) ...
+Configurando bzip2 (1.0.8-5.1build0.1) ...
+Configurando libsframe1:amd64 (2.42-4ubuntu2.10) ...
+Configurando libfakeroot:amd64 (1.33-1) ...
+Configurando fakeroot (1.33-1) ...
+update-alternatives: utilizando /usr/bin/fakeroot-sysv para proveer /usr/bin/fakeroot (fakeroot) en modo automático
+Configurando libexpat1-dev:amd64 (2.6.1-2ubuntu0.4) ...
+Configurando make (4.3-4.1build2) ...
+Configurando libquadmath0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Configurando libjs-sphinxdoc (7.2.6-6) ...
+Configurando libdpkg-perl (1.22.6ubuntu6.6) ...
+Configurando libubsan1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Configurando zlib1g-dev:amd64 (1:1.3.dfsg-3.1ubuntu2.1) ...
+Configurando libhwasan0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Configurando libasan8:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Configurando libtsan2:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Configurando libbinutils:amd64 (2.42-4ubuntu2.10) ...
+Configurando libalgorithm-diff-xs-perl:amd64 (0.04-8build3) ...
+Configurando libcc1-0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Configurando liblsan0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Configurando libitm1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Configurando libalgorithm-merge-perl (0.08-5) ...
+Configurando libctf0:amd64 (2.42-4ubuntu2.10) ...
+Configurando libpython3.12-dev:amd64 (3.12.3-1ubuntu0.15) ...
+Configurando libgprofng0:amd64 (2.42-4ubuntu2.10) ...
+Configurando python3.12-dev (3.12.3-1ubuntu0.15) ...
+Configurando libgcc-13-dev:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Configurando libstdc++-13-dev:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Configurando binutils-x86-64-linux-gnu (2.42-4ubuntu2.10) ...
+Configurando libpython3-dev:amd64 (3.12.3-0ubuntu2.1) ...
+Configurando gcc-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Configurando binutils (2.42-4ubuntu2.10) ...
+Configurando dpkg-dev (1.22.6ubuntu6.6) ...
+Configurando python3-dev (3.12.3-0ubuntu2.1) ...
+Configurando gcc-13 (13.3.0-6ubuntu2~24.04.1) ...
+Configurando g++-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Configurando gcc-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Configurando gcc (4:13.2.0-7ubuntu1) ...
+Configurando g++-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Configurando g++-13 (13.3.0-6ubuntu2~24.04.1) ...
+Configurando g++ (4:13.2.0-7ubuntu1) ...
+update-alternatives: utilizando /usr/bin/g++ para proveer /usr/bin/c++ (c++) en modo automático
+Configurando build-essential (12.10ubuntu1) ...
+Configurando linuxremoteplayer (1.1.2) ...
+Collecting fastapi<1.0,>=0.110 (from -r requirements.txt (line 1))
+  Using cached fastapi-0.139.0-py3-none-any.whl.metadata (26 kB)
+Collecting uvicorn<1.0,>=0.27 (from uvicorn[standard]<1.0,>=0.27->-r requirements.txt (line 2))
+  Using cached uvicorn-0.51.0-py3-none-any.whl.metadata (6.6 kB)
+Collecting evdev<2.0,>=1.6 (from -r requirements.txt (line 3))
+  Using cached evdev-1.9.3.tar.gz (32 kB)
+  Installing build dependencies ... done
+  Getting requirements to build wheel ... done
+  Preparing metadata (pyproject.toml) ... done
+Collecting python-dotenv<2.0,>=1.0 (from -r requirements.txt (line 4))
+  Using cached python_dotenv-1.2.2-py3-none-any.whl.metadata (27 kB)
+Collecting httpx<1.0,>=0.26 (from -r requirements.txt (line 5))
+  Using cached httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
+Collecting segno<2.0,>=1.5 (from -r requirements.txt (line 6))
+  Using cached segno-1.6.6-py3-none-any.whl.metadata (7.7 kB)
+Collecting starlette>=0.46.0 (from fastapi<1.0,>=0.110->-r requirements.txt (line 1))
+  Using cached starlette-1.3.1-py3-none-any.whl.metadata (6.4 kB)
+Collecting pydantic>=2.9.0 (from fastapi<1.0,>=0.110->-r requirements.txt (line 1))
+  Using cached pydantic-2.13.4-py3-none-any.whl.metadata (109 kB)
+Collecting typing-extensions>=4.8.0 (from fastapi<1.0,>=0.110->-r requirements.txt (line 1))
+  Using cached typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)
+Collecting typing-inspection>=0.4.2 (from fastapi<1.0,>=0.110->-r requirements.txt (line 1))
+  Using cached typing_inspection-0.4.2-py3-none-any.whl.metadata (2.6 kB)
+Collecting annotated-doc>=0.0.2 (from fastapi<1.0,>=0.110->-r requirements.txt (line 1))
+  Using cached annotated_doc-0.0.4-py3-none-any.whl.metadata (6.6 kB)
+Collecting click>=7.0 (from uvicorn<1.0,>=0.27->uvicorn[standard]<1.0,>=0.27->-r requirements.txt (line 2))
+  Using cached click-8.4.2-py3-none-any.whl.metadata (2.6 kB)
+Collecting h11>=0.8 (from uvicorn<1.0,>=0.27->uvicorn[standard]<1.0,>=0.27->-r requirements.txt (line 2))
+  Using cached h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+Collecting anyio (from httpx<1.0,>=0.26->-r requirements.txt (line 5))
+  Using cached anyio-4.14.1-py3-none-any.whl.metadata (4.6 kB)
+Collecting certifi (from httpx<1.0,>=0.26->-r requirements.txt (line 5))
+  Using cached certifi-2026.6.17-py3-none-any.whl.metadata (2.5 kB)
+Collecting httpcore==1.* (from httpx<1.0,>=0.26->-r requirements.txt (line 5))
+  Using cached httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+Collecting idna (from httpx<1.0,>=0.26->-r requirements.txt (line 5))
+  Using cached idna-3.18-py3-none-any.whl.metadata (6.1 kB)
+Collecting httptools>=0.8.0 (from uvicorn[standard]<1.0,>=0.27->-r requirements.txt (line 2))
+  Using cached httptools-0.8.0-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (3.5 kB)
+Collecting pyyaml>=5.1 (from uvicorn[standard]<1.0,>=0.27->-r requirements.txt (line 2))
+  Using cached pyyaml-6.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.4 kB)
+Collecting uvloop>=0.15.1 (from uvicorn[standard]<1.0,>=0.27->-r requirements.txt (line 2))
+  Using cached uvloop-0.22.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (4.9 kB)
+Collecting watchfiles>=0.20 (from uvicorn[standard]<1.0,>=0.27->-r requirements.txt (line 2))
+  Using cached watchfiles-1.2.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+Collecting websockets>=13.0 (from uvicorn[standard]<1.0,>=0.27->-r requirements.txt (line 2))
+  Using cached websockets-16.0-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (6.8 kB)
+Collecting annotated-types>=0.6.0 (from pydantic>=2.9.0->fastapi<1.0,>=0.110->-r requirements.txt (line 1))
+  Using cached annotated_types-0.7.0-py3-none-any.whl.metadata (15 kB)
+Collecting pydantic-core==2.46.4 (from pydantic>=2.9.0->fastapi<1.0,>=0.110->-r requirements.txt (line 1))
+  Using cached pydantic_core-2.46.4-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.6 kB)
+Using cached fastapi-0.139.0-py3-none-any.whl (130 kB)
+Using cached uvicorn-0.51.0-py3-none-any.whl (73 kB)
+Using cached python_dotenv-1.2.2-py3-none-any.whl (22 kB)
+Using cached httpx-0.28.1-py3-none-any.whl (73 kB)
+Using cached httpcore-1.0.9-py3-none-any.whl (78 kB)
+Using cached segno-1.6.6-py3-none-any.whl (76 kB)
+Using cached annotated_doc-0.0.4-py3-none-any.whl (5.3 kB)
+Using cached click-8.4.2-py3-none-any.whl (119 kB)
+Using cached h11-0.16.0-py3-none-any.whl (37 kB)
+Using cached httptools-0.8.0-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (523 kB)
+Using cached pydantic-2.13.4-py3-none-any.whl (472 kB)
+Using cached pydantic_core-2.46.4-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.1 MB)
+Using cached pyyaml-6.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (807 kB)
+Using cached starlette-1.3.1-py3-none-any.whl (73 kB)
+Using cached anyio-4.14.1-py3-none-any.whl (124 kB)
+Using cached idna-3.18-py3-none-any.whl (65 kB)
+Using cached typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+Using cached typing_inspection-0.4.2-py3-none-any.whl (14 kB)
+Using cached uvloop-0.22.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (4.4 MB)
+Using cached watchfiles-1.2.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (456 kB)
+Using cached websockets-16.0-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (184 kB)
+Using cached certifi-2026.6.17-py3-none-any.whl (133 kB)
+Using cached annotated_types-0.7.0-py3-none-any.whl (13 kB)
+Building wheels for collected packages: evdev
+  Building wheel for evdev (pyproject.toml) ... done
+  Created wheel for evdev: filename=evdev-1.9.3-cp312-cp312-linux_x86_64.whl size=114624 sha256=ba5c029142a2d8f5b12c90071ab6050b18ad27d1cf4820b134c24297f78128bf
+  Stored in directory: /root/.cache/pip/wheels/76/fc/3d/3eed8d918241316fdd8512e3328a1906138f58304b790b135f
+Successfully built evdev
+Installing collected packages: websockets, uvloop, typing-extensions, segno, pyyaml, python-dotenv, idna, httptools, h11, evdev, click, certifi, annotated-types, annotated-doc, uvicorn, typing-inspection, pydantic-core, httpcore, anyio, watchfiles, starlette, pydantic, httpx, fastapi
+Successfully installed annotated-doc-0.0.4 annotated-types-0.7.0 anyio-4.14.1 certifi-2026.6.17 click-8.4.2 evdev-1.9.3 fastapi-0.139.0 h11-0.16.0 httpcore-1.0.9 httptools-0.8.0 httpx-0.28.1 idna-3.18 pydantic-2.13.4 pydantic-core-2.46.4 python-dotenv-1.2.2 pyyaml-6.0.3 segno-1.6.6 starlette-1.3.1 typing-extensions-4.16.0 typing-inspection-0.4.2 uvicorn-0.51.0 uvloop-0.22.1 watchfiles-1.2.0 websockets-16.0
+=================================================
+ Instalación base completada.
+ Ejecuta: sudo lrp-setup para configurar tu modo.
+=================================================
+Procesando disparadores para man-db (2.12.0-4build2) ...
+Not building database; man-db/auto-update is not 'true'.
+Procesando disparadores para libc-bin (2.39-0ubuntu8.7) ...
+
+
+----------
+SETUP_LOG
+----------
+tv@TV:~$ sudo lrp-setup
+[sudo] password for tv:
+======================================
+ LinuxRemotePlayer Installer
+======================================
+1) Appliance Mode (Dedicated TV Kiosk - system-wide service)
+2) Desktop Mode (Standard App - user-level service)
+Select installation mode [1/2]: 1
+Failed to start apt-news.service: Unit apt-news.service is masked.
+Failed to start esm-cache.service: Unit esm-cache.service not found.
+Des:1 file:/var/lib/preinstalled-pool noble InRelease
+Ign:1 file:/var/lib/preinstalled-pool noble InRelease
+Des:2 file:/var/lib/preinstalled-pool noble Release [3.949 B]
+Des:2 file:/var/lib/preinstalled-pool noble Release [3.949 B]
+Des:4 http://archive.neon.kde.org/user noble InRelease [217 kB]
+Obj:5 https://packages.mozilla.org/apt mozilla InRelease
+Obj:6 http://security.ubuntu.com/ubuntu noble-security InRelease
+Obj:7 http://archive.ubuntu.com/ubuntu noble InRelease
+Obj:8 http://archive.ubuntu.com/ubuntu noble-updates InRelease
+Descargados 217 kB en 2s (125 kB/s)
+Updating KDE neon pins... Done
+Leyendo lista de paquetes... Hecho
+Leyendo lista de paquetes... Hecho
+Creando árbol de dependencias... Hecho
+Leyendo la información de estado... Hecho
+python3-venv ya está en su versión más reciente (3.12.3-0ubuntu2.1).
+fijado python3-venv como instalado manualmente.
+python3-dev ya está en su versión más reciente (3.12.3-0ubuntu2.1).
+fijado python3-dev como instalado manualmente.
+ufw ya está en su versión más reciente (0.36.2-6).
+fijado ufw como instalado manualmente.
+openssl ya está en su versión más reciente (3.0.13-0ubuntu3.11).
+fijado openssl como instalado manualmente.
+avahi-daemon ya está en su versión más reciente (0.8-13ubuntu6.2).
+fijado avahi-daemon como instalado manualmente.
+Starting pkgProblemResolver with broken count: 0
+Starting 2 pkgProblemResolver with broken count: 0
+Done
+0 actualizados, 0 nuevos se instalarán, 0 para eliminar y 79 no actualizados.
+[i] Added 'tv' to 'input' group. REBOOT or re-login required before uinput works.
+[i] Chromium already installed.
+Rules updated
+Rules updated (v6)
+[!] WARNING: UFW firewall is currently INACTIVE. The allow rule for port 8000 will have no effect until you enable it (sudo ufw enable).
+Traceback (most recent call last):
+  File "<string>", line 6, in <module>
+PermissionError: [Errno 13] Permission denied: '/opt/linuxremoteplayer/backend/.pairing_token'
+tv@TV:~$ sudo ufw enable
+Firewall is active and enabled on system startup
+tv@TV:~$
+
+================================================================================
+                        REPORTE DE ANÁLISIS PARA IA
+             Instalación LinuxRemotePlayer v1.1.1 → v1.1.2
+================================================================================
+
+1. RESUMEN
+
+   La instalación se ejecutó en 2 fases:
+   Fase 1 (v1.1.1): Falló porque faltaba gcc/build-essential para compilar evdev.
+   Fase 2 (v1.1.2): Éxito en descarga, checksum, compilación e instalación del
+   .deb. Sin embargo, el script lrp-setup → install.sh falló por un error de
+   permisos al crear el pairing_token, lo que impidió configurar el servicio
+   systemd. El usuario tuvo que ejecutar sudo ufw enable manualmente.
+
+   Resultado final: El paquete está instalado, las dependencias Python están
+   en el venv, pero NO hay servicio systemd corriendo, por lo que el backend
+   no escucha en el puerto 8000 y no se puede acceder desde el teléfono.
+
+================================================================================
+
+2. LÍNEA DE TIEMPO (según el log)
+
+   [1]  curl ... | sudo bash
+   [2]  Descarga e instalación del .deb v1.1.2 (correcto)
+   [3]  postinst: venv + pip install (correcto, build-essential ya instalado)
+   [4]  postinst: crea /usr/local/bin/lrp-setup y lrp-update (correcto)
+   [5]  Se ejecuta: sudo lrp-setup
+   [6]  install.sh: Selecciona modo 1 (Appliance Mode / Kiosko)
+   [7]  install.sh: apt-get install dependencias (todo ya instalado)
+   [8]  install.sh: Añade usuario 'tv' al grupo 'input' (correcto)
+   [9]  install.sh: ufw allow 8000/tcp (correcto)
+   [10] install.sh: Genera pairing_token → PERMISSION ERROR (CRÍTICO)
+   [11] install.sh: set -e mata el script → NO configura systemd service
+   [12] Usuario ejecuta manualmente: sudo ufw enable
+
+================================================================================
+
+3. ERROR CRÍTICO: PermissionError en pairing_token
+
+   Archivo:  /opt/linuxremoteplayer/scripts/install.sh
+   Líneas:   72-81
+   Error:
+     Traceback (most recent call last):
+       File "<string>", line 6, in <module>
+     PermissionError: [Errno 13] Permission denied:
+       '/opt/linuxremoteplayer/backend/.pairing_token'
+
+   Causa raíz:
+     El script ejecuta el bloque como usuario 'tv' mediante:
+       sudo -u "$SUDO_USER" "$BACKEND_DIR/.venv/bin/python" -c "..."
+
+     El directorio /opt/linuxremoteplayer/backend/ es propiedad de root
+     (lo dejó así el postinst del .deb). 'tv' no tiene permisos de
+     escritura en ese directorio. Al intentar crear .pairing_token con
+     open(token_file, 'w'), Python lanza PermissionError.
+
+   Código problemático (install.sh):
+     ┌─────────────────────────────────────────────────────────┐
+     │ 72: # Pre-generate pairing token if not exists (SEC-01) │
+     │ 73: sudo -u "$SUDO_USER" "$BACKEND_DIR/.venv/bin/python" -c " │
+     │ 74: import os, secrets                                    │
+     │ 75: token_file = os.path.join('$BACKEND_DIR', '.pairing_token') │
+     │ 76: if not os.path.exists(token_file):                    │
+     │ 77:     token = secrets.token_urlsafe(16)                 │
+     │ 78:     with open(token_file, 'w') as f:                  │
+     │ 79:         f.write(token)                                │
+     │ 80:     os.chmod(token_file, 0o600)                       │
+     │ 81: "                                                     │
+     └─────────────────────────────────────────────────────────┘
+
+   Por qué 'os.path.exists' no ayudó:
+     El archivo NO existía (era la primera vez), así que la condición
+     if not os.path.exists(token_file) fue True, y se intentó crear.
+     El error ocurre específicamente en open(token_file, 'w'), línea 6
+     del script inline (que corresponde a la línea 78 del archivo).
+
+================================================================================
+
+4. ERROR SECUNDARIO: UFW firewall inactivo
+
+   Archivo:  /opt/linuxremoteplayer/scripts/install.sh
+   Línea:    68-70
+   Problema:
+     ufw allow 8000/tcp se ejecuta correctamente, pero si UFW está
+     inactivo (default en KDE neon/Bigscreen), la regla no tiene efecto.
+     El script solo muestra una advertencia, no activa el firewall.
+
+   Solución posible:
+     Agregar ufw --force enable justo después del allow, o al menos
+     preguntar al usuario.
+
+================================================================================
+
+5. CONSECUENCIAS DEL ERROR
+
+   - El script install.sh tiene set -e (línea 2). Al fallar el pairing
+     token, el script termina inmediatamente.
+   - Las líneas 86-111 (configuración del servicio systemd en Appliance
+     Mode) NUNCA se ejecutan.
+   - El servicio linuxremoteplayer.service NO existe en /etc/systemd/system/.
+   - El backend no está corriendo → nada escucha en el puerto 8000.
+   - No se puede acceder desde el teléfono a la PWA.
+   - No se muestra el mensaje final con la URL y el token (líneas 168-173).
+
+================================================================================
+
+6. COMPARATIVA: v1.1.1 vs v1.1.2
+
+   Aspecto              v1.1.1                          v1.1.2
+   ───────────────────  ──────────────────────────────  ──────────────────────
+   build-essential      No en Depends                    Sí, se instaló
+   gcc                  No instalado                     Sí, disponible
+   Compilación evdev    Falló (no gcc)                   Éxito
+   pip install          Falló                            Éxito
+   postinst             Half-configured                  Completed
+   lrp-setup            No creado                        Creado
+   pairing_token        Nunca se intentó                 Falló (permisos)
+   Servicio systemd     No configurado                   No configurado
+   UFW                  No se tocó                       Usuario lo activó manual
+
+================================================================================
+
+7. RECOMENDACIONES PARA CORREGIR (para implementar en install.sh)
+
+   7.1. Arreglar el bloque del pairing_token (líneas 72-81)
+
+   Opción A: Ejecutar como root (recomendada)
+     Eliminar el sudo -u "$SUDO_USER" y ejecutar el Python como root:
+     ┌─────────────────────────────────────────────────────┐
+     │ "$BACKEND_DIR/.venv/bin/python" -c "                │
+     │ import os, secrets                                  │
+     │ token_file = os.path.join('$BACKEND_DIR', '.pairing_token') │
+     │ if not os.path.exists(token_file):                  │
+     │     token = secrets.token_urlsafe(16)               │
+     │     with open(token_file, 'w') as f:                │
+     │         f.write(token)                              │
+     │     os.chmod(token_file, 0o600)                     │
+     │ "                                                   │
+     └─────────────────────────────────────────────────────┘
+
+   Opción B: Cambiar owner del directorio primero
+     Antes del bloque, agregar:
+       chown "$SUDO_USER":"$SUDO_USER" "$BACKEND_DIR"
+     Así 'tv' puede escribir en el directorio.
+
+   7.2. Activar UFW automáticamente (después de línea 70)
+
+     Agregar: ufw --force enable
+     (En Appliance Mode es seguro porque es un TV kiosko dedicado)
+
+   7.3. Tolerancia parcial a errores (opcional)
+
+     Si se quiere evitar que un error menor mate todo el script,
+     considerar remover set -e o usar || true en pasos no críticos.
+
+================================================================================
+
+8. FLUJO IDEAL POST-INSTALACIÓN (cómo debería funcionar)
+
+   sudo lrp-setup
+     ↓
+   install.sh
+     ↓
+   1. Instalar dependencias (apt-get)
+   2. Configurar uinput/input group
+   3. Asegurar Chromium
+   4. Configurar UFW (allow + enable)
+   5. Generar pairing_token (como root)
+   6. Configurar servicio systemd según modo elegido
+   7. Mostrar URL de acceso con token
+     ↓
+   Backend corriendo en puerto 8000
+     ↓
+   Usuario abre https://<ip>:8000/?token=xxx desde el teléfono
+
+================================================================================
+
