@@ -221,6 +221,16 @@ backend/.pairing_token
 backend/.license_cache
 supabase/.temp/
 GUIA_AGUSTIN.md
-.agents/
 # .deb build staging (output of build_deb.sh — must not be committed)
 pkg/
+
+# Reicon raw icon library (only inlined SVGs are used; raw library is dead weight)
+reicon-icons/
+reicon-icons.zip
+reicon_map.json
+
+# Session artifacts / stray files (screenshots, install logs, misc)
+imagen*.jpeg
+imagen*.jpg
+log_instalacion*
+reporte-error-instalacion.md
