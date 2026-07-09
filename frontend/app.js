@@ -1014,9 +1014,18 @@ async function activateLicenseKey() {
             body: JSON.stringify({ key })
         });
         if (res.ok) {
+            toast('Licencia activada con éxito. Actualizando...');
+            input.value = '';
+            setTimeout(() => {
+                fetchLicenseStatus();
+            }, 1000);
+        } else {
+            const err = await res.json();
+            toast(`Error: ${err.detail || 'Clave inválida'}`);
+        }
     } catch (err) {
-        console.error(err);
-        toast('Error al conectar con el servidor local');
+        console.error('Failed to activate license:', err);
+        toast('Error de red al activar licencia.');
     }
 }
 
