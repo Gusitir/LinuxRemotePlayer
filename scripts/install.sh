@@ -98,10 +98,18 @@ chown -R "$TARGET_USER":"$TARGET_USER" /opt/linuxremoteplayer
 UBOL_DIR="$USER_HOME/lrp-extensions/ubol"
 echo "[i] Descargando uBlock Origin Lite para bloqueo de anuncios en el Kiosko..."
 mkdir -p "$UBOL_DIR"
+# The release asset is version-stamped (e.g. uBOLite_2026.614.1502.chromium.zip),
+# so there is NO stable /latest/download/<fixed-name> URL. Resolve it from the API.
+UBOL_ZIP_URL=$(curl -fsSL "https://api.github.com/repos/uBlockOrigin/uBOL-home/releases/latest" 2>/dev/null \
+    | grep -o '"browser_download_url": *"[^"]*\.chromium\.zip"' | head -n1 | cut -d'"' -f4)
+if [ -z "$UBOL_ZIP_URL" ]; then
+    UBOL_ZIP_URL="https://github.com/uBlockOrigin/uBOL-home/releases/latest/download/uBOLite.chromium.zip"
+fi
+echo "[i] uBOL: $UBOL_ZIP_URL"
 if command -v curl >/dev/null 2>&1; then
-    curl -sL "https://github.com/uBlockOrigin/uBOL-home/releases/latest/download/uBOLite_mv3.zip" -o /tmp/ubol.zip
+    curl -fsSL "$UBOL_ZIP_URL" -o /tmp/ubol.zip 2>/dev/null || wget -qO /tmp/ubol.zip "$UBOL_ZIP_URL"
 else
-    wget -qO /tmp/ubol.zip "https://github.com/uBlockOrigin/uBOL-home/releases/latest/download/uBOLite_mv3.zip"
+    wget -qO /tmp/ubol.zip "$UBOL_ZIP_URL"
 fi
 if [ -s /tmp/ubol.zip ]; then
     command -v unzip >/dev/null 2>&1 || apt-get install -y unzip
@@ -157,6 +165,24 @@ echo "[i] HTTPS will be enabled automatically on first start (self-signed cert).
 if [ "$mode" == "1" ]; then
     echo "Configuring Appliance Mode..."
     echo "[!] Note: Autologin configuration must be done manually depending on your Display Manager."
+
+    echo "[i] Disabling screen locker and DPMS for KDE Plasma..."
+    sudo -u "$TARGET_USER" bash -c '
+        if command -v kwriteconfig5 >/dev/null 2>&1; then
+            KWRITE="kwriteconfig5"
+        elif command -v kwriteconfig6 >/dev/null 2>&1; then
+            KWRITE="kwriteconfig6"
+        else
+            KWRITE=""
+        fi
+        if [ -n "$KWRITE" ]; then
+            $KWRITE --file kscreenlockerrc --group Daemon --key Autolock false
+            $KWRITE --file kscreenlockerrc --group Daemon --key LockOnResume false
+            $KWRITE --file powermanagementprofilesrc --group AC --group DPMSControl --key idleTime 0
+            $KWRITE --file powermanagementprofilesrc --group AC --group SuspendSession --key idleTime 0
+            $KWRITE --file powermanagementprofilesrc --group AC --group DimDisplay --key idleTime 0
+        fi
+    '
 
     USER_SVC_DIR="$USER_HOME/.config/systemd/user"
     if [ -f "$USER_SVC_DIR/linuxremoteplayer.service" ]; then

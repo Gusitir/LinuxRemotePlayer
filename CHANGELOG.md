@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-07-09
+
+### Added
+- **Design Line**: Introduced "Cozy Media" as the default design language with self-hosted Space Grotesk fonts.
+- **KDE Bigscreen Support**: The installer now automatically disables `kscreenlocker` and DPMS screen blanking when installed in Appliance Mode to prevent disconnections.
+
+### Changed
+- **Website Compactness**: Simplified the website to focus purely on value proposition, demo, and direct installation.
+
+### Fixed
+- **QR Contrast**: Fixed an issue where the pairing QR code would be invisible on some phones by enforcing a white background with a quiet zone.
+- **Home Button**: Fixed an issue where pressing the Home button would not correctly leave a clean desktop if no other screens were open.
+- **App Updates**: Fixed an issue where the "Actualizar" button in the app failed to trigger the system-level updater script due to permissions.
+- **Custom Apps Icons**: Custom web apps added locally now properly fall back to the default app icon if their favicon fails to load.
+- **iOS Safe Area**: Fixed an issue where the UI could clip behind the notch or dynamic island on iPhones in landscape mode.
+
 ## [1.4.0] - 2026-07-09
 
 ### Added

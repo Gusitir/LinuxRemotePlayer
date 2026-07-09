@@ -325,8 +325,16 @@ def get_pairing_qr(request: Request):
     try:
         qr = segno.make(pairing_url)
         out = io.BytesIO()
-        qr.save(out, kind='svg', scale=6, dark='#3b82f6', finder_dark='#22c55e')
-        return Response(content=out.getvalue(), media_type="image/svg+xml")
+        qr.save(out, kind='svg', scale=6, dark='#000000', light='#ffffff', border=4)
+        svg_content = out.getvalue().decode('utf-8')
+        # Inject viewBox if missing, so CSS can scale it properly
+        if 'viewBox=' not in svg_content:
+            import re
+            match = re.search(r'width="(\d+)"\s+height="(\d+)"', svg_content)
+            if match:
+                w, h = match.groups()
+                svg_content = svg_content.replace('<svg ', f'<svg viewBox="0 0 {w} {h}" ', 1)
+        return Response(content=svg_content, media_type="image/svg+xml")
     except Exception as e:
         logger.error(f"Failed to generate pairing QR: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -510,13 +518,19 @@ async def check_update():
 
 @app.post("/api/update/apply", dependencies=[Depends(require_token)])
 async def apply_update():
-    script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "scripts", "update.sh"))
+    # Execute the sudo wrapper instead of the local script directly
+    script_path = "/usr/local/bin/lrp-update"
     if not os.path.exists(script_path):
-        raise HTTPException(status_code=404, detail="Update script not found")
+        # Fallback for dev environment
+        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "scripts", "update.sh"))
+        cmd = ["bash", script_path]
+    else:
+        cmd = ["sudo", script_path]
+
     try:
         with open("/tmp/lrp-update.log", "a") as log_file:
             subprocess.Popen(
-                ["bash", script_path],
+                cmd,
                 stdout=log_file,
                 stderr=log_file,
                 start_new_session=True
@@ -558,6 +572,8 @@ async def start_kiosk(payload: KioskLaunchBody):
 @app.post("/api/kiosk/kill", dependencies=[Depends(require_token)])
 async def stop_kiosk():
     import kiosk
+    global last_input_time
+    last_input_time = time.time()  # Reset idle timer so APPLIANCE_IDLE_PANEL waits 45s
     kiosk.close_all()
     return {"status": "success"}
 

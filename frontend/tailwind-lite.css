@@ -1,5 +1,21 @@
 /* Tailwind-lite stylesheet for LinuxRemotePlayer - Offline compilation */
 [hidden] { display: none !important; }
+.hidden { display: none !important; }
+
+/* Containment / layout utilities used by newer markup (were missing -> caused
+   horizontal scroll and width-overflow in the settings drawer). */
+.overflow-hidden { overflow: hidden; }
+.overflow-x-hidden { overflow-x: hidden; }
+.overflow-x-auto { overflow-x: auto; }
+.min-w-0 { min-width: 0; }
+.max-w-full { max-width: 100%; }
+.w-full { width: 100%; }
+.break-all { word-break: break-all; }
+.break-words { overflow-wrap: break-word; }
+.shrink-0 { flex-shrink: 0; }
+.resize-none { resize: none; }
+.whitespace-pre-wrap { white-space: pre-wrap; }
+.grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
 :root {
   --color-gray-900: #111827;

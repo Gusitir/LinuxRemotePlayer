@@ -149,6 +149,10 @@ All backend options live in `backend/.env` (see [`backend/.env.example`](backend
 
 ---
 
-## License Plain Elastic License
+## License
 
-See [LICENSE](LICENSE). Plain Elastic License
+Source-available under the [Elastic License 2.0](LICENSE): free to use, copy and
+modify; you may not offer it as a managed service, circumvent the license-key
+functionality, or remove notices.
+
+Third-party components: [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).

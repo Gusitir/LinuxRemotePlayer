@@ -416,13 +416,13 @@ function updateNavUI() {
     const overlay = document.getElementById('nav-overlay');
     if (!btn || !overlay) return;
     if (navMode) {
-        btn.classList.add('text-blue-400');
+        btn.classList.add('util-active');
         btn.classList.remove('text-gray-400');
         overlay.classList.remove('hidden');
         overlay.classList.add('flex');
     } else {
+        btn.classList.remove('util-active');
         btn.classList.add('text-gray-400');
-        btn.classList.remove('text-blue-400');
         overlay.classList.add('hidden');
         overlay.classList.remove('flex');
     }
@@ -634,14 +634,13 @@ function createAppTile(app) {
         img.src = `/api/icon/${app.id}`;
         img.className = 'w-10 h-10 object-contain';
         img.onerror = () => {
-            img.outerHTML = `<div class="w-full h-full flex items-center justify-center text-lg font-bold text-white" style="background-color:${app.color || '#10b981'}">${(app.name || '?').charAt(0).toUpperCase()}</div>`;
+            img.src = './icon.svg';
         };
         iconWrapper.appendChild(img);
     } else {
-        const iconFallback = document.createElement('div');
-        iconFallback.className = 'w-full h-full flex items-center justify-center text-lg font-bold text-white';
-        iconFallback.style.backgroundColor = app.color || '#2563eb';
-        iconFallback.textContent = (app.name || '?').charAt(0).toUpperCase();
+        const iconFallback = document.createElement('img');
+        iconFallback.className = 'w-full h-full object-contain p-1';
+        iconFallback.src = './icon.svg';
         if (app.url) {
             try {
                 const domain = new URL(app.url).hostname;
@@ -873,17 +872,17 @@ function renderNativeList(apps) {
 
     apps.forEach((app) => {
         const div = document.createElement('div');
-        div.className = 'flex justify-between items-center bg-gray-700/50 p-2 rounded';
+        div.className = 'flex justify-between items-center skin-bg-btn p-2 rounded';
 
         const nameSpan = document.createElement('span');
-        nameSpan.className = 'text-xs truncate flex-1';
+        nameSpan.className = 'text-xs truncate flex-1 skin-text-main';
         nameSpan.textContent = app.name;
 
         const btnContainer = document.createElement('div');
         btnContainer.className = 'flex gap-2';
 
         const addBtn = document.createElement('button');
-        addBtn.className = 'bg-gray-600 px-3 py-1 rounded text-xs font-bold active:bg-gray-500';
+        addBtn.className = 'skin-bg-panel px-3 py-1 rounded text-xs font-bold skin-text-main';
         addBtn.textContent = '+ Añadir';
         addBtn.onclick = () => {
             const customApps = getCustomApps();
@@ -903,7 +902,7 @@ function renderNativeList(apps) {
         };
 
         const btn = document.createElement('button');
-        btn.className = 'bg-blue-600 px-3 py-1 rounded text-xs font-bold active:bg-blue-500';
+        btn.className = 'skin-accent px-3 py-1 rounded text-xs font-bold text-white shadow-sm';
         btn.textContent = 'Abrir';
         btn.dataset.id = app.id;
 

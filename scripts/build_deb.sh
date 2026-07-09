@@ -149,7 +149,9 @@ else
     UBOL_DIR="/opt/linuxremoteplayer/extensions/ubol"
 fi
 mkdir -p "$UBOL_DIR"
-if curl -fsSL "https://github.com/uBlockOrigin/uBOL-home/releases/latest/download/uBOLite_mv3.zip" -o /tmp/ubol.zip 2>/dev/null || wget -qO /tmp/ubol.zip "https://github.com/uBlockOrigin/uBOL-home/releases/latest/download/uBOLite_mv3.zip"; then
+UBOL_ZIP_URL=$(curl -fsSL "https://api.github.com/repos/uBlockOrigin/uBOL-home/releases/latest" 2>/dev/null | grep -o '"browser_download_url": *"[^"]*\.chromium\.zip"' | head -n1 | cut -d'"' -f4)
+[ -z "$UBOL_ZIP_URL" ] && UBOL_ZIP_URL="https://github.com/uBlockOrigin/uBOL-home/releases/latest/download/uBOLite.chromium.zip"
+if curl -fsSL "$UBOL_ZIP_URL" -o /tmp/ubol.zip 2>/dev/null || wget -qO /tmp/ubol.zip "$UBOL_ZIP_URL"; then
     unzip -qo /tmp/ubol.zip -d "$UBOL_DIR" || true
     rm -f /tmp/ubol.zip
     if [ -d "$UBOL_DIR" ] && [ ! -f "$UBOL_DIR/manifest.json" ]; then

@@ -1,22 +1,44 @@
 /* skins.css */
 
-/* Base Dark Theme (Current Look) */
+/* Base Dark Theme (Cozy Media Default) */
 :root, [data-skin="dark"] {
-    --bg-base: #111827; /* gray-900 */
-    --bg-panel: #1f2937; /* gray-800 */
-    --bg-btn: #374151; /* gray-700 */
-    --bg-btn-active: #4b5563; /* gray-600 */
-    --text-main: #f9fafb; /* gray-50 */
-    --text-dim: #9ca3af; /* gray-400 */
-    --accent: #3b82f6; /* blue-500 */
-    --accent-green: #22c55e; /* green-500 */
-    --touchpad-bg: #1f2937; /* gray-800 */
-    --touchpad-dot: rgba(59, 130, 246, 0.5); /* blue-500 / 50% */
+    --bg-base: #17151A;
+    --bg-panel: #211E26;
+    --bg-btn: #2B2731;
+    --bg-btn-active: #3A3542;
+    --text-main: #EDE9E4;
+    --text-dim: #A8A29B;
+    --accent: #F4845F;
+    --accent-green: #5FB37A;
+    --touchpad-bg: #211E26;
+    --touchpad-dot: rgba(244,132,95,0.22);
     --bg-image: none;
     --bg-size: cover;
     --bg-position: center;
     --bg-repeat: no-repeat;
     --panel-backdrop: none;
+}
+
+@font-face {
+    font-family: 'Space Grotesk';
+    font-style: normal;
+    font-weight: 300 700;
+    font-display: swap;
+    src: url('./fonts/space-grotesk-bold.woff2') format('woff2-variations');
+}
+@font-face {
+    font-family: 'Space Grotesk';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('./fonts/space-grotesk-regular.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Space Grotesk';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('./fonts/space-grotesk-bold.woff2') format('woff2');
 }
 
 /* Light Theme (Day) */
@@ -80,6 +102,11 @@ body {
     background-attachment: fixed;
     color: var(--text-main);
     transition: background-color 0.3s, background-image 0.3s, color 0.3s;
+    font-family: system-ui, -apple-system, sans-serif;
+}
+
+h1, h2, h3, .font-header {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
 }
 
 /* Dynamic Classes to replace Tailwind colors */
