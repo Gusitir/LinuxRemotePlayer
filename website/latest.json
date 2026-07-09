@@ -1,6 +1,6 @@
 {
   "version": "1.2.1",
   "deb_url": "https://linux-remote-player.vercel.app/downloads/linuxremoteplayer_1.2.1_all.deb",
-  "sha256": "9f5209a546532b76d133c6f5adb553888c65e659956d9a2eb9c0085b0d7e3489",
-  "notes": "Improved Installer UX: auto-invokes setup after download, simplifies interactive mode question, and ensures mode switches securely teardown previous services."
+  "sha256": "ba3f1a29ea6d607e53de163593fd582141697feeb72e17cf08503564a513e5c1",
+  "notes": "Improved Installer UX: auto-invokes setup after download, simplifies interactive mode question, and ensures mode switches securely teardown previous services. Added OTA update button to the Status Panel."
 }

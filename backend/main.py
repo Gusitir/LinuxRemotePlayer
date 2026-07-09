@@ -508,6 +508,26 @@ async def apply_update():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/system/update")
+async def system_apply_update(request: Request):
+    require_local(request)
+    script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "scripts", "update.sh"))
+    if not os.path.exists(script_path):
+        raise HTTPException(status_code=404, detail="Update script not found")
+    try:
+        with open("/tmp/lrp-update.log", "a") as log_file:
+            subprocess.Popen(
+                ["bash", script_path],
+                stdout=log_file,
+                stderr=log_file,
+                start_new_session=True
+            )
+        return {"status": "started"}
+    except Exception as e:
+        logger.error(f"Failed to start update script: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/api/kiosk/launch", dependencies=[Depends(require_token)])
 async def start_kiosk(payload: KioskLaunchBody):
     success = launch_kiosk(payload.url)
