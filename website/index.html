@@ -39,13 +39,6 @@
         @font-face {
             font-family: 'Space Grotesk';
             font-style: normal;
-            font-weight: 300 700;
-            font-display: swap;
-            src: url('./fonts/space-grotesk-bold.woff2') format('woff2-variations');
-        }
-        @font-face {
-            font-family: 'Space Grotesk';
-            font-style: normal;
             font-weight: 400;
             font-display: swap;
             src: url('./fonts/space-grotesk-regular.woff2') format('woff2');
@@ -323,56 +316,6 @@
         }
 
         /* Features Section */
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 24px;
-        }
-
-        .feature-card {
-            background-color: var(--bg-raised);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 24px;
-            position: relative;
-            transition: all 0.2s;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-2px);
-            border-color: var(--accent);
-        }
-
-        .feature-icon {
-            margin-bottom: 16px;
-            display: flex;
-        }
-
-        .feature-card h3 {
-            font-size: 1.1rem;
-            font-weight: 700;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .feature-badge {
-            background-color: rgba(34, 197, 94, 0.1);
-            color: var(--success);
-            font-size: 0.7rem;
-            padding: 2px 8px;
-            border-radius: 9999px;
-            font-weight: 700;
-            border: 1px solid rgba(34, 197, 94, 0.2);
-        }
-
-        .feature-card p {
-            font-size: 0.92rem;
-            color: var(--text-secondary);
-            line-height: 1.6;
-        }
-
         /* Installation Section */
         .installation-container {
             max-width: 800px;
@@ -625,36 +568,6 @@
         }
 
         /* Final CTA */
-        .final-cta {
-            background-color: var(--bg-raised);
-            border-top: 1px solid var(--border);
-            border-bottom: 1px solid var(--border);
-            text-align: center;
-            padding: 80px 24px;
-        }
-
-        .final-cta h2 {
-            font-size: clamp(1.8rem, 5vw, 2.5rem);
-            font-weight: 800;
-            margin-bottom: 16px;
-            letter-spacing: -0.01em;
-        }
-
-        .final-cta p {
-            color: var(--text-secondary);
-            margin-bottom: 32px;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .final-cta-buttons {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 16px;
-        }
-
         /* Footer */
         footer {
             border-top: 1px solid var(--border);
@@ -758,7 +671,7 @@
             </a>
             <nav>
                 <a href="#como-funciona">Cómo funciona</a>
-                <a href="#caracteristicas">Características</a>
+
                 <a href="#instalacion">Instalación</a>
                 <a href="#precio">Precio</a>
                 <a href="#faq">FAQ</a>
