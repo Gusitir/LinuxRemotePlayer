@@ -63,11 +63,14 @@ cd "$BACKEND_DIR"
 
 # (Venv is now managed by the .deb postinst script globally)
 
+# Fix permissions: Give full ownership of the app directory to the user
+# so they can write tokens, caches, and logs without sudo errors.
+chown -R "$SUDO_USER":"$SUDO_USER" /opt/linuxremoteplayer
+
 # Configure UFW
 ufw allow 8000/tcp
-if ufw status | grep -q "inactive"; then
-  echo "[!] WARNING: UFW firewall is currently INACTIVE. The allow rule for port 8000 will have no effect until you enable it (sudo ufw enable)."
-fi
+echo "[i] Enabling UFW firewall..."
+ufw --force enable
 
 # Pre-generate pairing token if not exists (SEC-01)
 sudo -u "$SUDO_USER" "$BACKEND_DIR/.venv/bin/python" -c "
