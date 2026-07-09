@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-07-09
+
+### Added
+- **Ad-blocking**: Integrated uBlock Origin Lite by default in Appliance Mode kiosk for an ad-free streaming experience.
+- **Key Combos**: Backend now supports executing key combinations (e.g., Alt+F4, Alt+Left) securely.
+- **Mobile UI Fixes**: Added proper padding for iOS devices with notches and gesture bars, ensuring the UI remains accessible.
+- **Themes Modal**: Replaced simple skin buttons with a rich horizontal scrolling carousel showing previews for each theme.
+- **New Buttons**: Added "Panel" (opens TV Status Panel), "OS Menu" (triggers the Linux app launcher), and "Close App" (Alt+F4).
+
+### Changed
+- **Catalog Update**: Added Stremio, Crunchyroll, and Apple TV+ to the default app list. Replaced Hulu.
+- **Favicons**: Replaced Clearbit icon engine with Google's native favicon service to avoid ad-blocker domain restrictions.
+- **Home Button Behavior**: The Home button now cleanly closes the active app instead of immediately relaunching the status panel in Appliance mode.
+
+### Fixed
+- **Status Freeze Bug**: Resolved "vundefined" issue and frozen polling data where the `/api/update/check` endpoint blocked non-authenticated local requests.
+- **License View Fix**: Once a license is activated, the token entry fields are now securely hidden, showing only a green "Activa" badge.
+
 ## [1.2.1] - 2026-07-09
 
 ### Improved

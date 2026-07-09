@@ -107,10 +107,12 @@ async def startup_event():
 SUGGESTED_KIOSKS = [
     {"id": "netflix", "name": "Netflix", "url": "https://netflix.com", "color": "#E50914"},
     {"id": "youtube", "name": "YouTube", "url": "https://youtube.com/tv", "color": "#FF0000"},
-    {"id": "hulu", "name": "Hulu", "url": "https://hulu.com", "color": "#1CE783"},
     {"id": "hbomax", "name": "Max", "url": "https://play.max.com", "color": "#7B2BF9"},
     {"id": "primevideo", "name": "Prime Video", "url": "https://www.primevideo.com", "color": "#00A8E1"},
     {"id": "disney", "name": "Disney+", "url": "https://www.disneyplus.com", "color": "#113CCF"},
+    {"id": "stremio", "name": "Stremio", "url": "https://web.stremio.com", "color": "#8a5a99"},
+    {"id": "crunchyroll", "name": "Crunchyroll", "url": "https://www.crunchyroll.com", "color": "#F47521"},
+    {"id": "appletv", "name": "Apple TV+", "url": "https://tv.apple.com", "color": "#555555"},
     {"id": "spotify", "name": "Spotify", "url": "https://open.spotify.com", "color": "#1DB954"},
     {"id": "twitch", "name": "Twitch", "url": "https://twitch.tv", "color": "#9146FF"},
     {"id": "plex", "name": "Plex", "url": "https://app.plex.tv", "color": "#E5A00D"}
@@ -189,6 +191,17 @@ def require_local(request: Request):
     if client_host not in ["127.0.0.1", "localhost", "::1"]:
         logger.warning(f"Blocked non-local access attempt from {client_host}")
         raise HTTPException(status_code=403, detail="Forbidden. Local access only.")
+
+
+def require_local_or_token(request: Request, x_auth_token: str = Header(default="")):
+    client_host = request.client.host
+    if client_host.startswith("::ffff:"):
+        client_host = client_host.replace("::ffff:", "")
+    if client_host in ["127.0.0.1", "localhost", "::1"]:
+        return
+    if verify_access(x_auth_token):
+        return
+    raise HTTPException(status_code=401, detail="Unauthorized")
 
 # P1-1: PIN Manager
 import hmac
@@ -464,7 +477,7 @@ async def get_license_status():
     }
 
 
-@app.get("/api/update/check", dependencies=[Depends(require_token)])
+@app.get("/api/update/check", dependencies=[Depends(require_local_or_token)])
 async def check_update():
     manifest_url = os.getenv("UPDATE_MANIFEST_URL", "https://linux-remote-player.vercel.app/latest.json")
     try:
@@ -541,6 +554,16 @@ async def stop_kiosk():
     import kiosk
     kiosk.close_all()
     return {"status": "success"}
+
+
+@app.post("/api/panel/show", dependencies=[Depends(require_token)])
+async def show_panel():
+    port = os.getenv("PORT", "8000")
+    url = f"https://127.0.0.1:{port}/status"
+    success = launch_kiosk(url)
+    if success:
+        return {"status": "success"}
+    raise HTTPException(status_code=400, detail="Failed to show panel")
 
 
 @app.post("/api/app/launch", dependencies=[Depends(require_token)])
@@ -773,6 +796,13 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
                         logger.warning(f"Truncating incoming text payload from {len(text_payload)} to 500 chars.")
                         text_payload = text_payload[:500]
                     await gamepad.type_text(text_payload)
+                elif msg_type == "combo":
+                    name = payload.get("name")
+                    if name:
+                        await gamepad.press_combo(name)
+                        await safe_send_json({"status": "received"})
+                    else:
+                        await safe_send_json({"status": "error", "message": "Combo name missing"})
                 elif payload.get("action") == "media_control":
                     media_key = payload.get("parameters", {}).get("key")
                     if media_key in MEDIA_KEYS:

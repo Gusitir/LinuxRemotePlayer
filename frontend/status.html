@@ -28,14 +28,14 @@
 
         body {
             font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: var(--bg-base);
+            background-color: var(--bg-color);
             color: var(--text-primary);
-            min-height: 100vh;
+            height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 24px;
-            overflow-x: hidden;
+            overflow: hidden;
             position: relative;
         }
 
@@ -58,12 +58,11 @@
             gap: 40px;
             position: relative;
             z-index: 2;
-            background-color: var(--bg-raised);
+            background-color: var(--bg-elevated);
             border: 1px solid var(--border);
             border-radius: 20px;
             padding: 40px 32px;
             box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-            flex-wrap: wrap;
         }
 
         .left-col {
@@ -243,11 +242,11 @@
                 <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 8px;">Expira en <span id="pin-countdown">--</span>s</div>
             </div>
 
-            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 12px;">o escanea para instalar la app:</p>
-            <div class="qr-box" style="margin-bottom: 16px; padding: 16px;">
-                <img id="qr-img" src="/api/pairing-qr" alt="Código QR" style="max-width: 140px;">
+            <p class="instructions">Usa la cámara de tu teléfono para escanear el código QR y abrir el control remoto.</p>
+            
+            <div class="qr-box">
+                <img src="/api/qr" alt="Código QR para acceso local">
             </div>
-            <div class="link-text" id="pairing-link" style="font-size: 0.75rem; word-break: break-all;">Cargando...</div>
         </div>
 
         <div class="right-col">
@@ -312,11 +311,12 @@
                     </div>
                 </details>
             </div>
-
-            <a href="#" id="btn-buy" target="_blank" class="btn-action">Obtener Licencia Pro</a>
-            <a href="mailto:soporte@linuxremoteplayer.com" class="btn-action btn-secondary">Contactar Soporte</a>
+            
+            <div class="text-sm text-center text-gray-500 mt-4" id="buy-info" style="color: var(--text-secondary); text-align: center; font-size: 0.8rem; margin-top: 10px;">
+                Compra tu licencia en: linux-remote-player.vercel.app
+            </div>
+            
         </div>
-
     </div>
 
     <div id="update-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; flex-direction: column;">
@@ -372,7 +372,7 @@
                 if (res.ok) {
                     const data = await res.json();
                     
-                    document.getElementById('val-clients').textContent = data.connected_clients;
+                    document.getElementById('val-clients').textContent = data.connected_clients !== undefined ? data.connected_clients : "—";
                     document.getElementById('val-ping').textContent = lat + ' ms';
                     
                     const kBadge = document.getElementById('val-kiosk');
@@ -417,21 +417,16 @@
                         lBadge.style = "background-color: rgba(245, 158, 11, 0.15); color: #f59e0b;";
                     }
 
-                    document.getElementById('val-version').textContent = data.version;
-
-                    if (data.pairing_token) {
-                        const port = window.location.port ? ':' + window.location.port : '';
-                        const ip = (data.network_ips && data.network_ips.length > 0) ? data.network_ips[0].split(': ')[1] : window.location.hostname;
-                        document.getElementById('pairing-link').textContent = `https://${ip}${port}/?token=${data.pairing_token}`;
+                    if (data.version) {
+                        document.getElementById('val-version').textContent = data.version;
                     }
 
-                    if (data.buy_url) {
-                        document.getElementById('btn-buy').href = data.buy_url;
-                    }
-
+                } else {
+                    document.getElementById('val-ping').textContent = "—";
                 }
             } catch (e) {
-                console.error(e);
+                console.error("Status polling failed", e);
+                document.getElementById('val-ping').textContent = "—";
             }
             
             setTimeout(updateStatus, 2000);
@@ -440,18 +435,20 @@
         async function checkForUpdates() {
             try {
                 const res = await fetch('/api/update/check');
-                const data = await res.json();
-                const updateText = document.getElementById('update-text');
-                const updateBtn = document.getElementById('btn-update');
-                
-                if (data.update_available) {
-                    updateText.innerText = "Descarga e instala la última versión. La app se reiniciará y esta pantalla se recargará sola (~1 min).";
-                    updateBtn.innerText = `Actualizar a v${data.latest}`;
-                    updateBtn.style.display = "block";
-                    updateBtn.onclick = () => startUpdate(data.latest);
-                } else {
-                    updateText.innerText = `Estás en la última versión (v${data.current}).`;
-                    updateBtn.style.display = "none";
+                if (res.ok) {
+                    const data = await res.json();
+                    const updateText = document.getElementById('update-text');
+                    const updateBtn = document.getElementById('btn-update');
+                    
+                    if (data.update_available) {
+                        updateText.innerText = "Descarga e instala la última versión. La app se reiniciará y esta pantalla se recargará sola (~1 min).";
+                        updateBtn.innerText = `Actualizar a v${data.latest || '?'}`;
+                        updateBtn.style.display = "block";
+                        updateBtn.onclick = () => startUpdate(data.latest);
+                    } else if (data.current) {
+                        updateText.innerText = `Estás en la última versión (v${data.current}).`;
+                        updateBtn.style.display = "none";
+                    }
                 }
             } catch (e) {
                 console.error("Error checking updates", e);

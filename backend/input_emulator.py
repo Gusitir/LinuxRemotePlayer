@@ -19,7 +19,7 @@ ALLOWED_KEYS = frozenset({
     "KEY_BACKSPACE", "KEY_TAB", "KEY_LEFTSHIFT", "KEY_SPACE",
     "KEY_PLAYPAUSE", "KEY_PLAY", "KEY_PAUSE", "KEY_STOP",
     "KEY_NEXTSONG", "KEY_PREVIOUSSONG", "KEY_FASTFORWARD", "KEY_REWIND",
-    "KEY_VOLUMEUP", "KEY_VOLUMEDOWN", "KEY_MUTE"
+    "KEY_VOLUMEUP", "KEY_VOLUMEDOWN", "KEY_MUTE", "KEY_LEFTMETA"
 })
 
 
@@ -138,6 +138,40 @@ class VirtualGamepad:
                 self.ui.write(e.EV_KEY, e.KEY_LEFTSHIFT, 0)
                 self.ui.syn()
             await asyncio.sleep(0.005)
+
+    async def press_combo(self, combo_name):
+        self._ensure_ui()
+        if not self.ui or not EVDEV_AVAILABLE:
+            logger.debug(f"[Mock] combo: {combo_name}")
+            return
+            
+        COMBOS = {
+            "browser_back": ["KEY_LEFTALT", "KEY_LEFT"],
+            "close_window": ["KEY_LEFTALT", "KEY_F4"],
+        }
+        
+        if combo_name not in COMBOS:
+            logger.warning(f"Combo rejected (not in whitelist): {combo_name}")
+            return
+            
+        keys = COMBOS[combo_name]
+        try:
+            btn_codes = [getattr(e, k) for k in keys]
+        except AttributeError as ex:
+            logger.error(f"Invalid combo keys: {ex}")
+            return
+            
+        # Press all down
+        for code in btn_codes:
+            self.ui.write(e.EV_KEY, code, 1)
+        self.ui.syn()
+        
+        await asyncio.sleep(0.04)
+        
+        # Release all up in reverse order
+        for code in reversed(btn_codes):
+            self.ui.write(e.EV_KEY, code, 0)
+        self.ui.syn()
 
 
 class VirtualMouse:

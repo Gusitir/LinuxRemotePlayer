@@ -131,6 +131,18 @@ else
         fi
     done
 fi
+
+# Update uBlock Origin Lite
+echo "Actualizando uBlock Origin Lite..."
+mkdir -p /opt/linuxremoteplayer/extensions
+curl -fsSL "https://github.com/uBlockOrigin/uBOL-home/releases/latest/download/uBOLite_mv3.zip" -o /tmp/ubol.zip
+unzip -qo /tmp/ubol.zip -d /opt/linuxremoteplayer/extensions/ubol || true
+rm -f /tmp/ubol.zip
+# Ownership is fixed by install.sh or by the running service.
+# Let's fix it here for good measure
+if [ -n "$SUDO_USER" ]; then
+    chown -R "$SUDO_USER":"$SUDO_USER" /opt/linuxremoteplayer/extensions
+fi
 INNEREOF
 chmod 755 /usr/local/bin/lrp-update
 
@@ -164,6 +176,8 @@ chmod 755 pkg/DEBIAN/prerm
 # sudoers
 echo "%input ALL=(root) NOPASSWD: /usr/local/bin/lrp-update" > pkg/etc/sudoers.d/linuxremoteplayer
 chmod 440 pkg/etc/sudoers.d/linuxremoteplayer
+
+chmod -R 0755 pkg/DEBIAN
 
 dpkg-deb --root-owner-group --build pkg dist/linuxremoteplayer_${VERSION}_all.deb
 cd dist

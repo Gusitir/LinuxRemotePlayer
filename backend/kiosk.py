@@ -76,10 +76,6 @@ def close_all():
                 logger.error(f"Error terminating native process group: {e}")
     _native_procs.clear()
 
-    if os.getenv("APPLIANCE_IDLE_PANEL", "").lower() == "true":
-        port = os.getenv("PORT", "8000")
-        url = f"https://127.0.0.1:{port}/status"
-        launch_kiosk(url)
 
 
 def kill_existing_kiosks():
@@ -131,7 +127,11 @@ def launch_kiosk(url: str) -> bool:
         return False
 
     try:
+        ext_path = "/opt/linuxremoteplayer/extensions/ubol"
         cmd = [chromium, f'--app={url}', '--kiosk', '--start-maximized', '--no-errdialogs', '--disable-infobars']
+        if os.path.exists(os.path.join(ext_path, "manifest.json")):
+            cmd.append(f'--load-extension={ext_path}')
+        
         logger.info(f"Launching kiosk: {' '.join(cmd)}")
         _kiosk_proc = subprocess.Popen(
             cmd, env=gui_env(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True

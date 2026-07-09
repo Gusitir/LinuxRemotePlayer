@@ -193,10 +193,9 @@ async function fetchLicenseStatus() {
                     ? 'text-xs text-green-500 mt-1 font-semibold' 
                     : 'text-xs text-red-400 mt-1';
             }
-            const input = document.getElementById('license-input');
-            if (input && isLicensed && !input.value) {
-                input.value = 'LRP-ACTIVA-OCULTA';
-                input.disabled = true;
+            const inputGroup = document.getElementById('license-input-group');
+            if (inputGroup) {
+                inputGroup.style.display = isLicensed ? 'none' : 'flex';
             }
         }
     } catch (err) {
@@ -550,7 +549,7 @@ function createAppTile(app) {
             try {
                 const domain = new URL(app.url).hostname;
                 const img = document.createElement('img');
-                img.src = `https://logo.clearbit.com/${domain}`;
+                img.src = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
                 img.className = 'w-full h-full object-cover';
                 img.onerror = () => { img.outerHTML = iconFallback.outerHTML; };
                 iconWrapper.appendChild(img);
@@ -674,6 +673,55 @@ async function killKiosk() {
         console.error('Kill error:', e);
         toast('Error al cerrar la aplicación');
     }
+}
+
+async function showPanel() {
+    if (navigator.vibrate) navigator.vibrate(50);
+    toast('Abriendo panel...');
+    try {
+        const res = await fetch(`${apiUrl}/panel/show`, {
+            method: 'POST',
+            headers: { 'X-Auth-Token': token }
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        toast('Panel abierto en TV');
+    } catch (e) {
+        console.error('Show panel error:', e);
+        toast('Error al abrir el panel');
+    }
+}
+
+function sendCombo(name) {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'combo', name: name }));
+        if (navigator.vibrate) navigator.vibrate(30);
+    }
+}
+
+// Long press for close app
+const btnCloseApp = document.getElementById('btn-close-app');
+if (btnCloseApp) {
+    let pressTimer;
+    const startPress = (e) => {
+        if (e.type !== 'mousedown') e.preventDefault(); // allow touch
+        pressTimer = setTimeout(() => {
+            sendCombo('close_window');
+            toast('App cerrada (Alt+F4)');
+            if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+        }, 800); // 800ms long press
+    };
+    const cancelPress = () => {
+        clearTimeout(pressTimer);
+    };
+    btnCloseApp.addEventListener('pointerdown', startPress);
+    btnCloseApp.addEventListener('pointerup', (e) => {
+        cancelPress();
+        if (e.pointerType === 'touch' || e.type === 'pointerup') {
+            toast('Mantén pulsado para cerrar la app');
+        }
+    });
+    btnCloseApp.addEventListener('pointercancel', cancelPress);
+    btnCloseApp.addEventListener('pointerleave', cancelPress);
 }
 
 // --- Native apps SEC-03 delegated listener ---
@@ -804,32 +852,7 @@ function comingSoon() {
     toast('Esta sección estará disponible próximamente.');
 }
 
-async function saveNewToken() {
-    const input = document.getElementById('token-input');
-    if (!input) return;
-    const val = input.value.trim();
-    if (!val) return;
-    localStorage.setItem('license_token', val);
-    await setDBToken(val);
-    token = val;
-    toast('Token guardado. Reconectando...');
-    closeSettings();
-    connect();
 
-    // Check for pending license (finding #7)
-    const pending = localStorage.getItem('pending_license');
-    if (pending) {
-        localStorage.removeItem('pending_license');
-        setTimeout(async () => {
-            const input = document.getElementById('license-input');
-            if (input) input.value = pending;
-            await activateLicenseKey();
-        }, 1200);
-    } else {
-        fetchConfig();
-        fetchApps();
-    }
-}
 
 async function activateLicenseKey() {
     const input = document.getElementById('license-input');
@@ -1082,15 +1105,7 @@ initToken().then(() => {
         });
     }
 
-    const tokenInput = document.getElementById('token-input');
-    if (tokenInput) {
-        tokenInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                saveNewToken();
-            }
-        });
-    }
+
 
     const licenseInput = document.getElementById('license-input');
     if (licenseInput) {
