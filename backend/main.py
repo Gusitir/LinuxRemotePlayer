@@ -345,10 +345,37 @@ def get_ips():
     try:
         import psutil
         import socket
+        ignored_prefixes = ("docker", "br-", "veth", "virbr", "tun", "tap")
+        valid_ips = []
+        tailscale_ips = []
+        
         for interface, snics in psutil.net_if_addrs().items():
+            if any(interface.startswith(p) for p in ignored_prefixes):
+                continue
             for snic in snics:
                 if snic.family == socket.AF_INET and not snic.address.startswith("127."):
-                    ips.append(f"{interface}: {snic.address}")
+                    if interface.startswith("tailscale"):
+                        tailscale_ips.append((interface, snic.address))
+                    else:
+                        valid_ips.append((interface, snic.address))
+                        
+        def sort_key(item):
+            iface, ip = item
+            score = 10
+            preferred = ("wlan", "eth", "en", "wl")
+            if any(iface.startswith(p) for p in preferred):
+                score -= 5
+            if ip.startswith("192.168.") or ip.startswith("10.") or ip.startswith("172."):
+                score -= 5
+            return score
+            
+        valid_ips.sort(key=sort_key)
+        
+        if not valid_ips and tailscale_ips:
+            valid_ips = tailscale_ips
+            
+        for iface, ip in valid_ips:
+            ips.append(f"{iface}: {ip}")
     except:
         pass
     return ips
