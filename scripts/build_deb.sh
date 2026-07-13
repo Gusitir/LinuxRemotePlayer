@@ -17,6 +17,9 @@ VERSION=$(cat VERSION)
 
 echo "Building linuxremoteplayer_${VERSION}_all.deb..."
 
+echo "Running CSS sync check..."
+python3 scripts/check_css_sync.py
+
 # Clean old dist
 rm -rf pkg dist
 mkdir -p dist
