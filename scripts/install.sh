@@ -53,6 +53,30 @@ else
     fi
 fi
 
+AUTO_LAYOUT="us"
+if command -v localectl >/dev/null 2>&1; then
+    _x11=$(localectl status | grep 'X11 Layout' | awk '{print $3}' | tr -d ' ' || true)
+    if [ "$_x11" = "es" ] || [ "$_x11" = "latam" ]; then
+        AUTO_LAYOUT="$_x11"
+    fi
+fi
+
+if [ -n "$LRP_KEYBOARD" ]; then
+    kb_layout="$LRP_KEYBOARD"
+else
+    echo "¿Selecciona layout de teclado de esta PC?"
+    echo "[1] US (defecto)"
+    echo "[2] ES (España)"
+    echo "[3] LATAM"
+    read -p "Selección (detectado: $AUTO_LAYOUT) [1/2/3/Enter]: " kb_ans
+    case "$kb_ans" in
+        2) kb_layout="es" ;;
+        3) kb_layout="latam" ;;
+        1) kb_layout="us" ;;
+        *) kb_layout="$AUTO_LAYOUT" ;;
+    esac
+fi
+
 # Install dependencies (including avahi-daemon for mDNS hostname resolution)
 apt-get update
 apt-get install -y python3-venv python3-dev ufw openssl avahi-daemon
@@ -85,6 +109,13 @@ fi
 # Define BACKEND_DIR for systemd paths and token generation
 BACKEND_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../backend" && pwd)"
 cd "$BACKEND_DIR"
+
+# Write keyboard layout to .env
+if grep -q "^KEYBOARD_LAYOUT=" "$BACKEND_DIR/.env" 2>/dev/null; then
+    sed -i "s/^KEYBOARD_LAYOUT=.*/KEYBOARD_LAYOUT=$kb_layout/" "$BACKEND_DIR/.env"
+else
+    echo "KEYBOARD_LAYOUT=$kb_layout" >> "$BACKEND_DIR/.env"
+fi
 
 # (Venv is now managed by the .deb postinst script globally)
 
