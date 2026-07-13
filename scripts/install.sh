@@ -79,7 +79,7 @@ fi
 
 # Install dependencies (including avahi-daemon for mDNS hostname resolution)
 apt-get update
-apt-get install -y python3-venv python3-dev ufw openssl avahi-daemon
+apt-get install -y python3-venv python3-dev ufw openssl avahi-daemon libnss3-tools
 systemctl enable --now avahi-daemon || true
 
 # --- evdev / uinput permissions (FIX F1: Phase 6 blocker) ---
@@ -122,6 +122,20 @@ fi
 # Fix permissions: Give full ownership of the app directory to the user
 # so they can write tokens, caches, and logs without sudo errors.
 chown -R "$TARGET_USER":"$TARGET_USER" /opt/linuxremoteplayer
+
+# Trust the CA certificate in the system and the user's NSS db (for Brave/Chromium)
+if [ -f "$BACKEND_DIR/certs/ca.pem" ]; then
+    echo "[i] Installing LRP CA certificate to system trust..."
+    cp "$BACKEND_DIR/certs/ca.pem" /usr/local/share/ca-certificates/lrp-ca.crt
+    update-ca-certificates >/dev/null 2>&1
+    
+    echo "[i] Installing LRP CA certificate to user NSS db..."
+    USER_NSSDB="$USER_HOME/.pki/nssdb"
+    sudo -u "$TARGET_USER" mkdir -p "$USER_NSSDB"
+    # Ensure NSS DB is initialized
+    sudo -u "$TARGET_USER" certutil -d sql:"$USER_NSSDB" -N --empty-password 2>/dev/null || true
+    sudo -u "$TARGET_USER" certutil -d sql:"$USER_NSSDB" -A -t "C,," -n "LRP CA" -i "$BACKEND_DIR/certs/ca.pem" || true
+fi
 
 # P5: Ad-blocking (uBlock Origin Lite) -> Removed for Brave
 
