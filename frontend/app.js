@@ -58,7 +58,7 @@ const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
 
 let token = 'guest';
 let lastSuggestedKiosks = [];
-let buyUrl = 'https://buy.stripe.com/mock-link';
+let buyUrl = 'https://linux-remote-player.vercel.app/';
 let isLicensed = false;
 let latestUpdateVersion = null;
 
@@ -218,7 +218,7 @@ async function fetchConfig() {
         if (res.ok) {
             const data = await res.json();
             hostname = data.hostname || '';
-            buyUrl = data.buy_url || 'https://buy.stripe.com/mock-link';
+            buyUrl = data.buy_url || 'https://linux-remote-player.vercel.app/';
 
             const verText = document.getElementById('version-text');
             if (verText) verText.textContent = `Versión ${data.version || '1.0.0'}`;

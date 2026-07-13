@@ -391,7 +391,7 @@ def get_ips():
             
         for iface, ip in valid_ips:
             ips.append(f"{iface}: {ip}")
-    except:
+    except Exception:
         pass
     return ips
 
