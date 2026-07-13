@@ -217,8 +217,11 @@ class VirtualMouse:
         self._try_init()
 
     def _try_init(self):
+        keys = [e.BTN_LEFT, e.BTN_RIGHT]
+        if hasattr(e, 'BTN_SIDE'):
+            keys.append(e.BTN_SIDE)
         cap = {
-            e.EV_KEY: [e.BTN_LEFT, e.BTN_RIGHT],
+            e.EV_KEY: keys,
             e.EV_REL: [e.REL_X, e.REL_Y, e.REL_WHEEL],
         }
         try:
@@ -252,13 +255,21 @@ class VirtualMouse:
         self._ensure_ui()
         if not self.ui or not EVDEV_AVAILABLE:
             logger.debug(f"[Mock] click: {button}")
-            return
-        code = e.BTN_RIGHT if button == "right" else e.BTN_LEFT
+            return False
+        if button == "right":
+            code = e.BTN_RIGHT
+        elif button == "back":
+            code = getattr(e, 'BTN_SIDE', None)
+            if code is None:
+                return False
+        else:
+            code = e.BTN_LEFT
         self.ui.write(e.EV_KEY, code, 1)
         self.ui.syn()
         await asyncio.sleep(0.02)
         self.ui.write(e.EV_KEY, code, 0)
         self.ui.syn()
+        return True
 
     async def scroll(self, amount):
         self._ensure_ui()

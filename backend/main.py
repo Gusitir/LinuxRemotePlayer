@@ -821,7 +821,11 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
                     await gamepad.type_text(text_payload)
                 elif msg_type == "combo":
                     name = payload.get("name")
-                    if name:
+                    if name == "browser_back":
+                        success = await mouse.click("back")
+                        if not success:
+                            await gamepad.press_combo(name)
+                    elif name:
                         await gamepad.press_combo(name)
                         await safe_send_json({"status": "received"})
                     else:
