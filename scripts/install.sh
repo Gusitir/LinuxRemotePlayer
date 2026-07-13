@@ -90,19 +90,19 @@ usermod -aG input "$TARGET_USER"
 udevadm control --reload-rules && udevadm trigger
 echo "[i] Added '$TARGET_USER' to 'input' group. REBOOT or re-login required before uinput works."
 
-# --- Ensure Chromium is installed ---
-if command -v chromium >/dev/null 2>&1 || command -v chromium-browser >/dev/null 2>&1; then
-    echo "[i] Chromium already installed."
+# --- Ensure Brave Browser is installed ---
+if command -v brave-browser >/dev/null 2>&1; then
+    echo "[i] Brave Browser already installed."
 else
-    echo "[i] Chromium not found. Installing..."
-    if apt-get install -y chromium; then
-        echo "[i] Installed 'chromium'."
-    elif apt-get install -y chromium-browser; then
-        echo "[i] Installed 'chromium-browser'."
-    elif command -v snap >/dev/null 2>&1 && snap install chromium; then
-        echo "[i] Installed Chromium via snap."
+    echo "[i] Brave Browser not found. Installing via official apt repository..."
+    apt-get install -y curl
+    curl -fsSLo /usr/share/keyrings/brave-browser-archive-keyring.gpg https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
+    echo "deb [signed-by=/usr/share/keyrings/brave-browser-archive-keyring.gpg] https://brave-browser-apt-release.s3.brave.com/ stable main" | tee /etc/apt/sources.list.d/brave-browser-release.list
+    apt-get update
+    if apt-get install -y brave-browser; then
+        echo "[i] Installed 'brave-browser'."
     else
-        echo "[!] Could not install Chromium automatically. Install it manually: sudo apt install chromium"
+        echo "[!] Could not install Brave automatically. Install it manually."
     fi
 fi
 
@@ -123,40 +123,7 @@ fi
 # so they can write tokens, caches, and logs without sudo errors.
 chown -R "$TARGET_USER":"$TARGET_USER" /opt/linuxremoteplayer
 
-# P5: Ad-blocking (uBlock Origin Lite)
-# IMPORTANT: installed in the user's HOME, NOT /opt — snap-packaged Chromium
-# (Ubuntu/KDE Neon) cannot read /opt due to snap confinement.
-UBOL_DIR="$USER_HOME/lrp-extensions/ubol"
-echo "[i] Descargando uBlock Origin Lite para bloqueo de anuncios en el Kiosko..."
-mkdir -p "$UBOL_DIR"
-# The release asset is version-stamped (e.g. uBOLite_2026.614.1502.chromium.zip),
-# so there is NO stable /latest/download/<fixed-name> URL. Resolve it from the API.
-UBOL_ZIP_URL=$(curl -fsSL "https://api.github.com/repos/uBlockOrigin/uBOL-home/releases/latest" 2>/dev/null \
-    | grep -o '"browser_download_url": *"[^"]*\.chromium\.zip"' | head -n1 | cut -d'"' -f4)
-if [ -z "$UBOL_ZIP_URL" ]; then
-    UBOL_ZIP_URL="https://github.com/uBlockOrigin/uBOL-home/releases/latest/download/uBOLite.chromium.zip"
-fi
-echo "[i] uBOL: $UBOL_ZIP_URL"
-if command -v curl >/dev/null 2>&1; then
-    curl -fsSL "$UBOL_ZIP_URL" -o /tmp/ubol.zip 2>/dev/null || wget -qO /tmp/ubol.zip "$UBOL_ZIP_URL"
-else
-    wget -qO /tmp/ubol.zip "$UBOL_ZIP_URL"
-fi
-if [ -s /tmp/ubol.zip ]; then
-    command -v unzip >/dev/null 2>&1 || apt-get install -y unzip
-    unzip -qo /tmp/ubol.zip -d "$UBOL_DIR" || echo "[!] No se pudo extraer uBOL; el kiosk funcionará sin bloqueador."
-    rm -f /tmp/ubol.zip
-    if [ -d "$UBOL_DIR" ] && [ ! -f "$UBOL_DIR/manifest.json" ]; then
-        SUBDIR=$(find "$UBOL_DIR" -mindepth 1 -maxdepth 1 -type d | head -n 1)
-        if [ -n "$SUBDIR" ] && [ -f "$SUBDIR/manifest.json" ]; then
-            mv "$SUBDIR"/* "$UBOL_DIR"/
-            rmdir "$SUBDIR"
-        fi
-    fi
-else
-    echo "[!] No se pudo descargar el bloqueador de anuncios; el kiosk funcionará sin él."
-fi
-chown -R "$TARGET_USER":"$TARGET_USER" "$USER_HOME/lrp-extensions" 2>/dev/null || true
+# P5: Ad-blocking (uBlock Origin Lite) -> Removed for Brave
 
 # Validate venv dependencies
 if [ -f /opt/linuxremoteplayer/.deps_incomplete ] || ! "$BACKEND_DIR/.venv/bin/python" -c "import fastapi, evdev, segno" 2>/dev/null; then

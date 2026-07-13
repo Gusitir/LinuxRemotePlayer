@@ -279,6 +279,11 @@
                     <div class="stat-value"><span class="badge" id="val-voice">Activado</span></div>
                     <div class="stat-sub">Micrófono en móvil</div>
                 </div>
+                <div class="stat-card">
+                    <h2>Adblock</h2>
+                    <div class="stat-value"><span class="badge" id="val-adblock">Verificando...</span></div>
+                    <div class="stat-sub">Estado del kiosk</div>
+                </div>
             </div>
 
             <div class="maintenance-section" style="margin-top: 24px; margin-bottom: 24px; padding: 16px; background-color: var(--bg-elevated); border-radius: 12px; border: 1px solid var(--border);">
@@ -398,6 +403,20 @@
                     } else {
                         vBadge.textContent = "Desactivado";
                         vBadge.className = "badge error";
+                    }
+
+                    const aBadge = document.getElementById('val-adblock');
+                    if (aBadge) {
+                        if (data.adblock_status === 'shields') {
+                            aBadge.textContent = "Brave Shields";
+                            aBadge.className = "badge";
+                        } else if (data.adblock_status === 'ubol') {
+                            aBadge.textContent = "uBlock Lite";
+                            aBadge.className = "badge";
+                        } else {
+                            aBadge.textContent = "Inactivo";
+                            aBadge.className = "badge error";
+                        }
                     }
 
                     const lBadge = document.getElementById('val-license');

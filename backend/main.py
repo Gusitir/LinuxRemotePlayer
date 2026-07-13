@@ -402,7 +402,7 @@ async def get_api_status(request: Request):
         "uinput_ok": getattr(input_emulator.mouse, 'ui', None) is not None,
         "voice_enabled": VOICE_ENABLED,
         "kiosk_active": getattr(kiosk, "_kiosk_proc", None) is not None,
-        "ubol_active": kiosk.is_ubol_active(),
+        "adblock_status": kiosk.adblock_status(),
         "buy_url": "https://linux-remote-player.vercel.app/"
     }
 

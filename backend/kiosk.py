@@ -12,20 +12,27 @@ _kiosk_proc = None
 _native_procs = []
 
 
-def find_chromium():
-    """Return a Chromium executable path, or None.
+def find_browser():
+    """Return a Brave or Chromium executable path, and its type.
 
-    Covers distro naming differences (chromium vs chromium-browser) and the snap
-    case, where /snap/bin is often missing from a systemd service's PATH.
+    Covers distro naming differences and snap cases. Brave is preferred.
     """
+    for name in ("brave-browser", "brave-browser-stable", "brave"):
+        path = shutil.which(name)
+        if path:
+            return path, "brave"
+    for path in ("/usr/bin/brave-browser", "/opt/brave.com/brave/brave-browser"):
+        if os.path.exists(path):
+            return path, "brave"
+
     for name in ("chromium", "chromium-browser"):
         path = shutil.which(name)
         if path:
-            return path
+            return path, "chromium"
     for path in ("/usr/bin/chromium", "/usr/bin/chromium-browser", "/snap/bin/chromium"):
         if os.path.exists(path):
-            return path
-    return None
+            return path, "chromium"
+    return None, None
 
 
 def gui_env():
@@ -106,16 +113,22 @@ def kill_existing_kiosks():
 
     logger.info("No active tracked kiosk process found. Running fallback pkill with narrow patterns...")
     try:
+        subprocess.run(['pkill', '-f', '--', 'brave.*--kiosk'], check=False)
         subprocess.run(['pkill', '-f', '--', 'chromium.*--kiosk'], check=False)
         subprocess.run(['pkill', '-f', '--', 'chromium-browser.*--kiosk'], check=False)
     except Exception as e:
         logger.error(f"Error running fallback pkill: {e}")
 
 
-def is_ubol_active() -> bool:
+def adblock_status() -> str:
+    browser_path, browser_type = find_browser()
+    if browser_type == "brave":
+        return "shields"
     home_ext = os.path.expanduser("~/lrp-extensions/ubol")
     opt_ext = "/opt/linuxremoteplayer/extensions/ubol"
-    return os.path.exists(os.path.join(home_ext, "manifest.json")) or os.path.exists(os.path.join(opt_ext, "manifest.json"))
+    if os.path.exists(os.path.join(home_ext, "manifest.json")) or os.path.exists(os.path.join(opt_ext, "manifest.json")):
+        return "ubol"
+    return "none"
 
 def launch_kiosk(url: str) -> bool:
     global _kiosk_proc
@@ -126,25 +139,28 @@ def launch_kiosk(url: str) -> bool:
         logger.warning(f"Invalid URL: {url}")
         return False
 
-    chromium = find_chromium()
-    if not chromium:
-        logger.error("Chromium not found. Install it or re-run scripts/install.sh.")
+    browser_bin, browser_type = find_browser()
+    if not browser_bin:
+        logger.error("Brave/Chromium not found. Install it or re-run scripts/install.sh.")
         return False
 
     try:
+        user_data_dir = os.path.expanduser("~/.config/lrp-kiosk")
+        cmd = [browser_bin, f'--app={url}', '--kiosk', '--start-maximized', '--noerrdialogs', '--disable-infobars', f'--user-data-dir={user_data_dir}']
+
         # uBOL path: prefer the user's HOME (snap-packaged Chromium on Ubuntu/KDE Neon
         # CANNOT read /opt due to confinement); /opt kept as fallback for non-snap builds.
         home_ext = os.path.expanduser("~/lrp-extensions/ubol")
         opt_ext = "/opt/linuxremoteplayer/extensions/ubol"
         ext_path = home_ext if os.path.exists(os.path.join(home_ext, "manifest.json")) else opt_ext
-        
-        cmd = [chromium, f'--app={url}', '--kiosk', '--start-maximized', '--no-errdialogs', '--disable-infobars']
-        if os.path.exists(os.path.join(ext_path, "manifest.json")):
-            cmd.append(f'--load-extension={ext_path}')
-            logger.info(f"Loaded uBOL extension from {ext_path}")
-        else:
-            logger.warning(f"uBOL no encontrado en {home_ext} o {opt_ext} — kiosk sin bloqueador")
-            
+
+        if browser_type == "chromium":
+            if os.path.exists(os.path.join(ext_path, "manifest.json")):
+                cmd.append(f'--load-extension={ext_path}')
+                logger.info(f"Loaded uBOL extension from {ext_path}")
+            else:
+                logger.warning(f"uBOL no encontrado en {home_ext} o {opt_ext} — kiosk sin bloqueador")
+
         logger.info(f"Launching kiosk: {' '.join(cmd)}")
         _kiosk_proc = subprocess.Popen(
             cmd, env=gui_env(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True
