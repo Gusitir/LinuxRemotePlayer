@@ -91,10 +91,25 @@ async def monitor_idle_panel():
         media_running = (getattr(kiosk, "_kiosk_proc", None) is not None
                          and kiosk._kiosk_proc.poll() is None) or any(
                              p.poll() is None for p in getattr(kiosk, "_native_procs", []))
+                             
+        if not media_running:
+            import shutil
+            import subprocess
+            try:
+                if shutil.which("pactl"):
+                    def _check_audio():
+                        return subprocess.check_output(["pactl", "list", "short", "sink-inputs"], text=True, stderr=subprocess.DEVNULL, timeout=2.0)
+                    out = await asyncio.to_thread(_check_audio)
+                    if out.strip():
+                        media_running = True
+            except Exception as e:
+                # Log once or just pass
+                pass
+
         if media_running:
-            continue  # something is on screen (movie, app or the panel itself) -> leave it alone
+            continue  # something is on screen (movie, app or the panel itself) or audio is playing -> leave it alone
         if connected_clients == 0 and (time.time() - last_input_time) >= 45.0:
-            logger.info("TV idle and no clients for 45s -> launching status panel (pairing QR).")
+            logger.info("TV idle, no clients for 45s, and no audio -> launching status panel (pairing QR).")
             await asyncio.to_thread(kiosk.launch_kiosk, "https://127.0.0.1:8000/status")
 
 @app.on_event("startup")
