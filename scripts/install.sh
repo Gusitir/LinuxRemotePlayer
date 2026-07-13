@@ -79,7 +79,7 @@ fi
 
 # Install dependencies (including avahi-daemon for mDNS hostname resolution)
 apt-get update
-apt-get install -y python3-venv python3-dev ufw openssl avahi-daemon libnss3-tools
+apt-get install -y python3-venv python3-dev ufw openssl avahi-daemon libnss3-tools wmctrl
 systemctl enable --now avahi-daemon || true
 
 # --- evdev / uinput permissions (FIX F1: Phase 6 blocker) ---

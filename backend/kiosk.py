@@ -82,6 +82,28 @@ def close_all():
             except Exception as e:
                 logger.error(f"Error terminating native process group: {e}")
     _native_procs.clear()
+    
+    # G-10: Best-effort cleanup of extraneous windows
+    env = gui_env()
+    try:
+        if shutil.which("wmctrl"):
+            out = subprocess.check_output(["wmctrl", "-l"], env=env, text=True, stderr=subprocess.DEVNULL)
+            for line in out.strip().split("\n"):
+                if not line:
+                    continue
+                parts = line.split(maxsplit=3)
+                if len(parts) >= 1:
+                    wid = parts[0]
+                    if len(parts) >= 4:
+                        title = parts[3].lower()
+                        # Exclude desktop shells and critical UI components
+                        if any(x in title for x in ["plasma", "krunner", "desktop"]):
+                            continue
+                    subprocess.run(["wmctrl", "-ic", wid], env=env, check=False, stderr=subprocess.DEVNULL)
+        else:
+            logger.info("wmctrl not found, skipping extraneous window cleanup.")
+    except Exception as e:
+        logger.error(f"Error during window cleanup: {e}")
 
 
 
