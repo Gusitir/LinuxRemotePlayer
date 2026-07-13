@@ -112,11 +112,6 @@ async function initToken() {
     }
     token = storedToken || 'guest';
 
-    const tokenInput = document.getElementById('token-input');
-    if (tokenInput && token !== 'guest') {
-        tokenInput.value = token;
-    }
-
     if (urlLicense) {
         if (token === 'guest') {
             // Save as pending license (finding #7)
@@ -292,9 +287,7 @@ function connect() {
         if (event.code === 1008) {
             statusEl.textContent = 'No autorizado';
             statusEl.className = 'text-red-500 text-xs font-bold';
-            openSettings();
-            const tokenInput = document.getElementById('token-input');
-            if (tokenInput) tokenInput.focus();
+            showPairingScreen(true);
             return;
         }
 
@@ -1309,9 +1302,7 @@ async function checkPinInput(input) {
             });
             const data = await res.json();
             if (res.ok && data.token) {
-                const tokenInput = document.getElementById('onboarding-token-input');
-                if (tokenInput) tokenInput.value = data.token;
-                await saveOnboardingToken();
+                await handlePairingSuccess(data.token);
                 input.value = '';
             } else {
                 if (errorMsg) {
@@ -1332,17 +1323,11 @@ async function checkPinInput(input) {
     }
 }
 
-async function saveOnboardingToken() {
-    const input = document.getElementById('onboarding-token-input');
-    if (!input) return;
-    const val = input.value.trim();
+async function handlePairingSuccess(val) {
     if (!val) return;
     localStorage.setItem('license_token', val);
     await setDBToken(val);
     token = val;
-    
-    const tokenInput = document.getElementById('token-input');
-    if (tokenInput) tokenInput.value = val;
     
     toast('Dispositivo emparejado con éxito');
     showPairingScreen(false);
@@ -1364,18 +1349,6 @@ async function saveOnboardingToken() {
 }
 
 initToken().then(() => {
-    const onboardingInput = document.getElementById('onboarding-token-input');
-    if (onboardingInput) {
-        onboardingInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                saveOnboardingToken();
-            }
-        });
-    }
-
-
-
     const licenseInput = document.getElementById('license-input');
     if (licenseInput) {
         licenseInput.addEventListener('keydown', (e) => {
