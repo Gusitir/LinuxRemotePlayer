@@ -24,7 +24,10 @@ ALLOWED_KEYS = frozenset({
 
 
 def _build_char_keys():
-    """Map characters -> (evdev key name, needs_shift) for a US layout."""
+    """Map characters -> (evdev key name, needs_shift) for a given layout."""
+    import os
+    layout = os.getenv("KEYBOARD_LAYOUT", "us").lower()
+    
     m = {}
     for c in string.ascii_lowercase:
         m[c] = (f"KEY_{c.upper()}", False)
@@ -53,6 +56,20 @@ def _build_char_keys():
         ")": ("KEY_0", True),
     }
     m.update(pairs)
+    
+    # Inmediato y universal para slash (funciona en todos los layouts vía numpad)
+    m["/"] = ("KEY_KPSLASH", False)
+
+    # Diferencias es/latam
+    if layout in ("es", "latam"):
+        es_pairs = {
+            "-": ("KEY_SLASH", False), "_": ("KEY_SLASH", True),
+            ";": ("KEY_COMMA", True), ":": ("KEY_DOT", True),
+            "'": ("KEY_MINUS", False), '"': ("KEY_2", True),
+            "=": ("KEY_0", True), "?": ("KEY_MINUS", True)
+        }
+        m.update(es_pairs)
+        
     return m
 
 
