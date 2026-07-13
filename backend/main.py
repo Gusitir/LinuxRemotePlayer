@@ -359,19 +359,20 @@ async def get_api_status(request: Request):
     require_local(request)
     global connected_clients, last_input_time
     import kiosk
-    from input_emulator import mouse_ui_created
+    import input_emulator
     
     license_token = os.getenv("LICENSE_TOKEN", "")
     licensed = await asyncio.to_thread(auth.is_license_valid_cached_or_online, license_token) if license_token else False
 
     return {
         "version": VERSION,
+        "mode": os.getenv("LRP_MODE", "appliance"),
         "licensed": licensed,
         "network_ips": get_ips(),
         "pairing_token": auth.PAIRING_TOKEN,
         "connected_clients": connected_clients,
         "last_input_timestamp": last_input_time,
-        "uinput_ok": mouse_ui_created,
+        "uinput_ok": getattr(input_emulator.mouse, 'ui', None) is not None,
         "voice_enabled": VOICE_ENABLED,
         "kiosk_active": getattr(kiosk, "_kiosk_proc", None) is not None,
         "ubol_active": kiosk.is_ubol_active(),

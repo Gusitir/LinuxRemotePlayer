@@ -242,7 +242,7 @@
             <p class="instructions">Usa la cámara de tu teléfono para escanear el código QR y abrir el control remoto.</p>
             
             <div class="qr-box">
-                <img src="/api/qr" alt="Código QR para acceso local">
+                <img src="/api/pairing-qr" alt="Código QR para acceso local">
             </div>
         </div>
 
@@ -261,7 +261,7 @@
                 <div class="stat-card">
                     <h2>Estado Kiosk</h2>
                     <div class="stat-value"><span class="badge" id="val-kiosk">Idle</span></div>
-                    <div class="stat-sub">Modo TV / App</div>
+                    <div class="stat-sub">Modo <span id="val-mode">...</span></div>
                 </div>
                 <div class="stat-card">
                     <h2>Sistema</h2>
@@ -310,7 +310,7 @@
             </div>
             
             <div class="text-sm text-center text-gray-500 mt-4" id="buy-info" style="color: var(--text-secondary); text-align: center; font-size: 0.8rem; margin-top: 10px;">
-                Compra tu licencia en: linux-remote-player.vercel.app
+                Compra tu licencia en: <a id="buy-link" href="#" target="_blank" style="color: var(--accent); text-decoration: underline; pointer-events: auto;">Cargando...</a>
             </div>
             
         </div>
@@ -416,6 +416,18 @@
 
                     if (data.version) {
                         document.getElementById('val-version').textContent = data.version;
+                    }
+
+                    if (data.mode) {
+                        document.getElementById('val-mode').textContent = data.mode === "desktop" ? "Escritorio" : "TV";
+                    }
+
+                    if (data.buy_url) {
+                        const link = document.getElementById('buy-link');
+                        if (link) {
+                            link.href = data.buy_url;
+                            link.textContent = data.buy_url.replace(/^https?:\/\//, '');
+                        }
                     }
 
                 } else {
