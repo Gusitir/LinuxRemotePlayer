@@ -96,13 +96,13 @@ def kill_existing_kiosks():
             logger.info(f"Terminating kiosk process group {pgid}...")
             os.killpg(pgid, signal.SIGTERM)
             
-            for _ in range(30):
+            for _ in range(100):
                 if _kiosk_proc.poll() is not None:
                     break
                 time.sleep(0.1)
                 
             if _kiosk_proc.poll() is None:
-                logger.warning(f"Kiosk process group {pgid} did not terminate, sending SIGKILL...")
+                logger.warning(f"Kiosk process group {pgid} did not terminate after 10s, sending SIGKILL...")
                 os.killpg(pgid, signal.SIGKILL)
                 _kiosk_proc.wait()
             logger.info("Kiosk process group terminated.")
