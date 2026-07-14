@@ -9,13 +9,17 @@ logger = logging.getLogger("ai_pipeline")
 
 load_dotenv()
 
-# Cloud URLs
-NVIDIA_API_URL = "https://integrate.api.nvidia.com/v1/audio/transcriptions"
-OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
+# Cloud URLs (Configurable to support Together AI, OpenRouter, NVIDIA, etc.)
+CLOUD_STT_URL = os.getenv("CLOUD_STT_URL", "https://integrate.api.nvidia.com/v1/audio/transcriptions")
+CLOUD_LLM_URL = os.getenv("CLOUD_LLM_URL", "https://openrouter.ai/api/v1/chat/completions")
 
 # Keys
-NVIDIA_KEY = os.getenv("NVIDIA_NIM_API_KEY")
-OPENROUTER_KEY = os.getenv("OPENROUTER_API_KEY")
+CLOUD_STT_KEY = os.getenv("CLOUD_STT_KEY", os.getenv("NVIDIA_NIM_API_KEY"))
+CLOUD_LLM_KEY = os.getenv("CLOUD_LLM_KEY", os.getenv("OPENROUTER_API_KEY"))
+
+# Models
+CLOUD_STT_MODEL = os.getenv("CLOUD_STT_MODEL", os.getenv("NVIDIA_ASR_MODEL", "nvidia/nemotron-3.5-asr"))
+CLOUD_LLM_MODEL = os.getenv("CLOUD_LLM_MODEL", "meta-llama/llama-3.1-8b-instruct:free")
 
 # Local AI Config
 USE_LOCAL_AI = os.getenv("USE_LOCAL_AI", "false").lower() == "true"
@@ -71,18 +75,18 @@ async def transcribe_audio(audio_bytes: bytes) -> str:
             logger.error(f"Local STT Error: {e}")
             return ""
     else:
-        if not NVIDIA_KEY:
+        if not CLOUD_STT_KEY:
             if MOCK_AI:
-                logger.info("NVIDIA API key missing. MOCK_AI active -> mock transcription.")
+                logger.info("Cloud STT API key missing. MOCK_AI active -> mock transcription.")
                 return "launch youtube"
-            logger.error("NVIDIA_NIM_API_KEY missing and MOCK_AI disabled.")
+            logger.error("CLOUD_STT_KEY missing and MOCK_AI disabled.")
             return ""
 
         try:
-            data = {'model': os.getenv("NVIDIA_ASR_MODEL", "nvidia/nemotron-3.5-asr")}
+            data = {'model': CLOUD_STT_MODEL}
             response = await client.post(
-                NVIDIA_API_URL,
-                headers={"Authorization": f"Bearer {NVIDIA_KEY}"},
+                CLOUD_STT_URL,
+                headers={"Authorization": f"Bearer {CLOUD_STT_KEY}"},
                 data=data,
                 files=files,
                 timeout=10.0
@@ -136,23 +140,23 @@ async def parse_intent(transcription: str) -> dict:
             logger.error(f"Local LLM Error: {e}")
             return {"action": "error"}
     else:
-        if not OPENROUTER_KEY:
+        if not CLOUD_LLM_KEY:
             if MOCK_AI:
-                logger.info("OpenRouter key missing. MOCK_AI active -> mock intent.")
+                logger.info("Cloud LLM API key missing. MOCK_AI active -> mock intent.")
                 return {"action": "launch_kiosk", "parameters": {"target_id": "youtube"}}
-            logger.error("OPENROUTER_API_KEY missing and MOCK_AI disabled.")
+            logger.error("CLOUD_LLM_KEY missing and MOCK_AI disabled.")
             return {"action": "error"}
 
         try:
             response = await client.post(
-                OPENROUTER_API_URL,
+                CLOUD_LLM_URL,
                 headers={
-                    "Authorization": f"Bearer {OPENROUTER_KEY}",
+                    "Authorization": f"Bearer {CLOUD_LLM_KEY}",
                     "HTTP-Referer": "http://localhost",
                     "X-Title": "LinuxRemotePlayer"
                 },
                 json={
-                    "model": "meta-llama/llama-3.1-8b-instruct:free",
+                    "model": CLOUD_LLM_MODEL,
                     "messages": [
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": transcription}
