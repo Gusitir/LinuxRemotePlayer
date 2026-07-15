@@ -211,7 +211,10 @@ def launch_kiosk(url: str) -> bool:
 
     try:
         if browser_type == "firefox":
-            profile_dir = os.path.expanduser("~/.config/lrp-kiosk-ff")
+            if browser_bin == "/snap/bin/firefox":
+                profile_dir = os.path.expanduser("~/snap/firefox/common/lrp-kiosk")
+            else:
+                profile_dir = os.path.expanduser("~/.config/lrp-kiosk-ff")
             os.makedirs(profile_dir, exist_ok=True)
             cmd = [browser_bin, '--kiosk', '--no-remote', '-profile', profile_dir, url]
         else:

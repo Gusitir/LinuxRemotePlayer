@@ -327,10 +327,13 @@ if [ -f "$BACKEND_DIR/certs/ca.pem" ]; then
     sudo -u "$TARGET_USER" mkdir -p "$USER_NSSDB"
     sudo -u "$TARGET_USER" certutil -d sql:"$USER_NSSDB" -N --empty-password 2>/dev/null || true
     sudo -u "$TARGET_USER" certutil -d sql:"$USER_NSSDB" -A -t "C,," -n "LRP CA" -i "$BACKEND_DIR/certs/ca.pem" || true
+else
+    echo "[!] CA certificate not generated in time. HTTPS trust may not work locally."
+fi
 
-    echo "[i] Configuring Firefox policies..."
-    mkdir -p /etc/firefox/policies
-    cat <<EOFJSON > /etc/firefox/policies/policies.json
+echo "[i] Configuring Firefox policies..."
+mkdir -p /etc/firefox/policies
+cat <<EOFJSON > /etc/firefox/policies/policies.json
 {
   "policies": {
     "ExtensionSettings": {
@@ -350,9 +353,6 @@ if [ -f "$BACKEND_DIR/certs/ca.pem" ]; then
   }
 }
 EOFJSON
-else
-    echo "[!] CA certificate not generated in time. HTTPS trust may not work locally."
-fi
 
 echo "[i] Launching Status Panel..."
 sudo -u "$TARGET_USER" DISPLAY=:0 XDG_RUNTIME_DIR="/run/user/$(id -u "$TARGET_USER")" xdg-open "https://127.0.0.1:8000/status" 2>/dev/null || sudo -u "$TARGET_USER" DISPLAY=:0 XDG_RUNTIME_DIR="/run/user/$(id -u "$TARGET_USER")" chromium --app="https://127.0.0.1:8000/status" 2>/dev/null || true
