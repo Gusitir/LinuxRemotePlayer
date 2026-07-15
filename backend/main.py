@@ -98,13 +98,14 @@ async def monitor_idle_panel():
             try:
                 if shutil.which("pactl"):
                     def _check_audio():
-                        return subprocess.check_output(["pactl", "list", "short", "sink-inputs"], text=True, stderr=subprocess.DEVNULL, timeout=2.0)
+                        return subprocess.check_output(["pactl", "list", "short", "sink-inputs"], text=True, stderr=subprocess.DEVNULL, timeout=2.0, env=kiosk.gui_env())
                     out = await asyncio.to_thread(_check_audio)
                     if out.strip():
                         media_running = True
             except Exception as e:
-                # Log once or just pass
-                pass
+                if not getattr(monitor_idle_panel, "_pactl_warned", False):
+                    logger.warning(f"Failed to check audio with pactl: {e}")
+                    monitor_idle_panel._pactl_warned = True
 
         if media_running:
             continue  # something is on screen (movie, app or the panel itself) or audio is playing -> leave it alone
