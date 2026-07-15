@@ -1,6 +1,6 @@
 {
-  "version": "1.6.0",
-  "deb_url": "https://linux-remote-player.vercel.app/downloads/linuxremoteplayer_1.6.0_all.deb",
-  "sha256": "cfc7933122bb31983595088b2c70f63f97bf940ebd36f20fcb6a5680489be108",
-  "notes": "Brave+Shields por defecto, panel de estado reparado, teclado es/latam+AltGr, atrás sin rebobinar, Home limpia escritorio, panel idle detecta audio, CA confiada en el sistema, guard anti-deriva CSS, latencia corregida en event loop, fixes varios."
+  "version": "1.7.0",
+  "deb_url": "https://linux-remote-player.vercel.app/downloads/linuxremoteplayer_1.7.0_all.deb",
+  "sha256": "4fff17226f3d451a64b68eabf904445b93b1e81a38941f627d8b03538a434833",
+  "notes": "Firefox+uBlock Origin por defecto, CA vía policies, Home funciona en Wayland/Bigscreen, detección de audio con pulseaudio-utils, opción de deshabilitar suspensión, higiene del .deb sin chromium."
 }
