@@ -63,7 +63,7 @@ Architecture: all
 Maintainer: LinuxRemotePlayer
 Description: Remote Linux Player API and web interface
 Depends: python3, python3-venv, python3-dev, build-essential, openssl, avahi-daemon
-Recommends: firefox-esr | firefox, ufw
+Recommends: firefox-esr | firefox, ufw, pulseaudio-utils
 EOF
 
 # DEBIAN/postinst

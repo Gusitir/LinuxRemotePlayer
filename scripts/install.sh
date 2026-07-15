@@ -79,7 +79,7 @@ fi
 
 # Install dependencies (including avahi-daemon for mDNS hostname resolution)
 apt-get update
-apt-get install -y python3-venv python3-dev ufw openssl avahi-daemon libnss3-tools wmctrl
+apt-get install -y python3-venv python3-dev ufw openssl avahi-daemon libnss3-tools wmctrl pulseaudio-utils
 echo "[i] Installing qdbus for Wayland fallback..."
 apt-get install -y qdbus-qt6 || apt-get install -y qdbus-qt5 || true
 systemctl enable --now avahi-daemon || true

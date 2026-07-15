@@ -102,6 +102,10 @@ async def monitor_idle_panel():
                     out = await asyncio.to_thread(_check_audio)
                     if out.strip():
                         media_running = True
+                else:
+                    if not getattr(monitor_idle_panel, "_pactl_warned_missing", False):
+                        logger.warning("pactl no encontrado: instala pulseaudio-utils para detección de audio")
+                        monitor_idle_panel._pactl_warned_missing = True
             except Exception as e:
                 if not getattr(monitor_idle_panel, "_pactl_warned", False):
                     logger.warning(f"Failed to check audio with pactl: {e}")
