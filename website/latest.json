@@ -1,6 +1,6 @@
 {
-  "version": "1.5.0",
-  "deb_url": "https://linux-remote-player.vercel.app/downloads/linuxremoteplayer_1.5.0_all.deb",
-  "sha256": "3b3b97c8e02d8bd36812bd922cb33fd796690e0c42bc38b7b745d13d45ae7ad0",
-  "notes": "Cozy Media UI (nuevo tema por defecto), web compacta, QR de emparejamiento con contraste, botón Home vuelve al escritorio, safe-area iOS y correcciones varias."
+  "version": "1.6.0",
+  "deb_url": "https://linux-remote-player.vercel.app/downloads/linuxremoteplayer_1.6.0_all.deb",
+  "sha256": "cfc7933122bb31983595088b2c70f63f97bf940ebd36f20fcb6a5680489be108",
+  "notes": "Brave+Shields por defecto, panel de estado reparado, teclado es/latam+AltGr, atrás sin rebobinar, Home limpia escritorio, panel idle detecta audio, CA confiada en el sistema, guard anti-deriva CSS, latencia corregida en event loop, fixes varios."
 }

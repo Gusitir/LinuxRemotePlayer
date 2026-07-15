@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-07-15
+
+### Added
+- **Brave Browser**: Brave with Shields active is now the default kiosk browser for better ad blocking and performance.
+- **Keyboard Layouts**: Added support for es/latam keyboard layouts, including AltGr mapped keys.
+- **CSS Safeguard**: Added anti-drift check for CSS utilities to ensure layout stability.
+
+### Changed
+- **Home Behavior**: The Home button now cleanly closes all desktop windows (via wmctrl/KWin), not just our own apps.
+- **TV Panel Trigger**: The idle panel now properly detects active audio (via pactl) to prevent interrupting media played outside the app.
+- **Navigation Back**: The 'back' combo now correctly simulates browser back without rewinding media players.
+- **Certificates**: Local CA is now automatically trusted at the system level and NSS db, eliminating browser warnings on the HTPC.
+- **Event Loop Performance**: Significantly reduced latency spikes by running blocking system calls in asynchronous threads.
+
+### Fixed
+- Fixed an issue where the TV panel would break due to a missing internal import.
+- Simplified system icons using inline Lucide SVGs for better visual consistency.
+
 ## [1.5.0] - 2026-07-09
 
 ### Added

@@ -113,6 +113,19 @@
 - [ ] REAL protection is server-side: license activation against your server + AI/premium gated by license. Copying the client yields a useless shell without your cloud.
 - [ ] Reality: client-side code can't be fully hidden; move the value (AI, premium, license) to your server.
 
+# PH14: v1.6.0 — BUGS HTPC + BRAVE + HARDENING (detalle: .agents/PLAN_GEMINI_v1.6.md)
+- [x] G-01..G-13 ejecutadas por Gemini (2026-07-13); auditadas por Claude (2026-07-14)
+- [ ] Correcciones de auditoría C-01..C-09 (C-01 CRÍTICO: event loop congelado en launch/close)
+- [ ] G-17 iconos + G-18 terminales (tareas cuyo número usó Gemini para otra cosa)
+- [ ] G-14 Release v1.6.0 en WSL (BLOQUEADO hasta cerrar lo anterior)
+- [ ] G-15/G-16 (necesitan info del dispositivo del dueño)
+- [ ] (dueño) confirmar push de latest.json + deploy send-feedback; Stripe LIVE; dominio + Resend
+
+# PH15: V2.0 — APK ANDROID (aprobado en evaluación; ver PLAN_GEMINI_v1.6.md FASE E)
+- [ ] Prerrequisitos: v1.6.0 estable + ai-proxy Edge Function (claves fuera del dispositivo)
+- [ ] Capacitor wrapper + NSD/mDNS + RECORD_AUDIO + volumen físico + foreground service
+- [ ] WSS con networkSecurityConfig (CA propia embebida) — NO ws:// plano
+
 ## NOTES / MANUAL ACTIONS
 - HTTPS is automatic: run.py self-generates and self-heals the cert. The only manual
   step is each phone accepting the self-signed cert once (browser warning -> proceed).

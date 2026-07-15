@@ -17,6 +17,9 @@ Autonomous AI Coder for LinuxRemotePlayer. Token-optimized, fast execution. Prio
 - APPCORE.md: Core paths/architecture map (kept current through v1.5).
 - CONTEXT.md: Session dumps for context recovery.
 - AUDITS/: heavy code audits for major versions (AUDIT_v1.5.md ...). One file per big audit.
+- PLAN_GEMINI_*.md: task briefs for the external coder (Gemini executes; Claude plans+audits).
+  One task = one commit = one audit checkpoint. Gemini logs out-of-scope findings in
+  CURRENT.md (HALLAZGOS GEMINI) instead of fixing them.
 
 # ENVIRONMENT RULE (critical)
 - The bash mount (/mnt) TRUNCATES large files (~40KB): app.js real=1402 lines, mount shows ~1116.
