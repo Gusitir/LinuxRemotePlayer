@@ -30,45 +30,52 @@ def _build_char_keys():
     
     m = {}
     for c in string.ascii_lowercase:
-        m[c] = (f"KEY_{c.upper()}", False)
+        m[c] = (f"KEY_{c.upper()}", False, False)
     for c in string.ascii_uppercase:
-        m[c] = (f"KEY_{c}", True)
+        m[c] = (f"KEY_{c}", True, False)
     for d in "0123456789":
-        m[d] = (f"KEY_{d}", False)
-    m[" "] = ("KEY_SPACE", False)
-    m["\n"] = ("KEY_ENTER", False)
-    m["\t"] = ("KEY_TAB", False)
+        m[d] = (f"KEY_{d}", False, False)
+    m[" "] = ("KEY_SPACE", False, False)
+    m["\n"] = ("KEY_ENTER", False, False)
+    m["\t"] = ("KEY_TAB", False, False)
     pairs = {
-        "-": ("KEY_MINUS", False), "_": ("KEY_MINUS", True),
-        "=": ("KEY_EQUAL", False), "+": ("KEY_EQUAL", True),
-        "[": ("KEY_LEFTBRACE", False), "{": ("KEY_LEFTBRACE", True),
-        "]": ("KEY_RIGHTBRACE", False), "}": ("KEY_RIGHTBRACE", True),
-        ";": ("KEY_SEMICOLON", False), ":": ("KEY_SEMICOLON", True),
-        "'": ("KEY_APOSTROPHE", False), '"': ("KEY_APOSTROPHE", True),
-        "`": ("KEY_GRAVE", False), "~": ("KEY_GRAVE", True),
-        "\\": ("KEY_BACKSLASH", False), "|": ("KEY_BACKSLASH", True),
-        ",": ("KEY_COMMA", False), "<": ("KEY_COMMA", True),
-        ".": ("KEY_DOT", False), ">": ("KEY_DOT", True),
-        "/": ("KEY_SLASH", False), "?": ("KEY_SLASH", True),
-        "!": ("KEY_1", True), "@": ("KEY_2", True), "#": ("KEY_3", True),
-        "$": ("KEY_4", True), "%": ("KEY_5", True), "^": ("KEY_6", True),
-        "&": ("KEY_7", True), "*": ("KEY_8", True), "(": ("KEY_9", True),
-        ")": ("KEY_0", True),
+        "-": ("KEY_MINUS", False, False), "_": ("KEY_MINUS", True, False),
+        "=": ("KEY_EQUAL", False, False), "+": ("KEY_EQUAL", True, False),
+        "[": ("KEY_LEFTBRACE", False, False), "{": ("KEY_LEFTBRACE", True, False),
+        "]": ("KEY_RIGHTBRACE", False, False), "}": ("KEY_RIGHTBRACE", True, False),
+        ";": ("KEY_SEMICOLON", False, False), ":": ("KEY_SEMICOLON", True, False),
+        "'": ("KEY_APOSTROPHE", False, False), '"': ("KEY_APOSTROPHE", True, False),
+        "`": ("KEY_GRAVE", False, False), "~": ("KEY_GRAVE", True, False),
+        "\\": ("KEY_BACKSLASH", False, False), "|": ("KEY_BACKSLASH", True, False),
+        ",": ("KEY_COMMA", False, False), "<": ("KEY_COMMA", True, False),
+        ".": ("KEY_DOT", False, False), ">": ("KEY_DOT", True, False),
+        "/": ("KEY_SLASH", False, False), "?": ("KEY_SLASH", True, False),
+        "!": ("KEY_1", True, False), "@": ("KEY_2", True, False), "#": ("KEY_3", True, False),
+        "$": ("KEY_4", True, False), "%": ("KEY_5", True, False), "^": ("KEY_6", True, False),
+        "&": ("KEY_7", True, False), "*": ("KEY_8", True, False), "(": ("KEY_9", True, False),
+        ")": ("KEY_0", True, False),
     }
     m.update(pairs)
     
-    # Inmediato y universal para slash (funciona en todos los layouts vía numpad)
-    m["/"] = ("KEY_KPSLASH", False)
+    # Inmediato y universal para slash (funciona en todos layouts vía numpad)
+    m["/"] = ("KEY_KPSLASH", False, False)
 
     # Diferencias es/latam
     if layout in ("es", "latam"):
         es_pairs = {
-            "-": ("KEY_SLASH", False), "_": ("KEY_SLASH", True),
-            ";": ("KEY_COMMA", True), ":": ("KEY_DOT", True),
-            "'": ("KEY_MINUS", False), '"': ("KEY_2", True),
-            "=": ("KEY_0", True), "?": ("KEY_MINUS", True)
+            "-": ("KEY_SLASH", False, False), "_": ("KEY_SLASH", True, False),
+            ";": ("KEY_COMMA", True, False), ":": ("KEY_DOT", True, False),
+            "'": ("KEY_MINUS", False, False), '"': ("KEY_2", True, False),
+            "=": ("KEY_0", True, False), "?": ("KEY_MINUS", True, False),
+            "&": ("KEY_6", True, False), "(": ("KEY_8", True, False),
+            ")": ("KEY_9", True, False), "+": ("KEY_RIGHTBRACE", False, False),
+            "*": ("KEY_RIGHTBRACE", True, False)
         }
         m.update(es_pairs)
+        if layout == "latam":
+            m["@"] = ("KEY_Q", False, True)
+        else:
+            m["@"] = ("KEY_2", False, True)
         
     return m
 
@@ -87,7 +94,7 @@ class VirtualGamepad:
         self._try_init()
 
     def _try_init(self):
-        keys = list(range(1, 100)) + [
+        keys = list(range(1, 105)) + [
             e.BTN_A, e.BTN_B, e.BTN_X, e.BTN_Y, e.BTN_START, e.BTN_SELECT,
             e.BTN_DPAD_UP, e.BTN_DPAD_DOWN, e.BTN_DPAD_LEFT, e.BTN_DPAD_RIGHT,
             e.KEY_UP, e.KEY_DOWN, e.KEY_LEFT, e.KEY_RIGHT, e.KEY_ENTER, e.KEY_ESC,
@@ -95,7 +102,7 @@ class VirtualGamepad:
             e.KEY_PLAYPAUSE, e.KEY_PLAY, e.KEY_PAUSE, e.KEY_STOP,
             e.KEY_NEXTSONG, e.KEY_PREVIOUSSONG, e.KEY_FASTFORWARD, e.KEY_REWIND,
             e.KEY_VOLUMEUP, e.KEY_VOLUMEDOWN, e.KEY_MUTE, e.KEY_LEFTMETA,
-            e.KEY_LEFTALT, e.KEY_F4
+            e.KEY_LEFTALT, e.KEY_RIGHTALT, e.KEY_F4
         ]
         try:
             self.ui = UInput({e.EV_KEY: keys}, name='LinuxRemotePlayer Virtual Keyboard', version=0x3)
@@ -105,7 +112,7 @@ class VirtualGamepad:
             caps = self.ui.capabilities()
             if e.EV_KEY in caps:
                 device_keys = set(caps[e.EV_KEY])
-                required_names = set(ALLOWED_KEYS) | {"KEY_LEFTALT", "KEY_F4"}
+                required_names = set(ALLOWED_KEYS) | {"KEY_LEFTALT", "KEY_RIGHTALT", "KEY_F4"}
                 missing = []
                 for k in required_names:
                     code = getattr(e, k, None)
@@ -155,17 +162,27 @@ class VirtualGamepad:
             entry = CHAR_KEYS.get(ch)
             if not entry:
                 continue
-            keyname, shift = entry
+            if len(entry) == 3:
+                keyname, shift, altgr = entry
+            else:
+                keyname, shift = entry
+                altgr = False
             code = getattr(e, keyname, None)
             if code is None:
                 continue
             if shift:
                 self.ui.write(e.EV_KEY, e.KEY_LEFTSHIFT, 1)
                 self.ui.syn()
+            if altgr:
+                self.ui.write(e.EV_KEY, e.KEY_RIGHTALT, 1)
+                self.ui.syn()
             self.ui.write(e.EV_KEY, code, 1)
             self.ui.syn()
             self.ui.write(e.EV_KEY, code, 0)
             self.ui.syn()
+            if altgr:
+                self.ui.write(e.EV_KEY, e.KEY_RIGHTALT, 0)
+                self.ui.syn()
             if shift:
                 self.ui.write(e.EV_KEY, e.KEY_LEFTSHIFT, 0)
                 self.ui.syn()
