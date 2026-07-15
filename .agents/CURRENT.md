@@ -1,10 +1,15 @@
 # ESTADO ACTUAL
 
-VERSION commiteada: 1.5.0 (Cozy Media). Repo PRIVADO. Licencia: Elastic License 2.0.
+VERSION commiteada y PUBLICADA: 1.6.0. Repo PRIVADO. Licencia: Elastic License 2.0.
 Plan activo: .agents/PLAN_GEMINI_v1.6.md (Gemini programa, Claude planifica/audita).
-Milestone: v1.6.0 (bugs HTPC + Brave + hardening). Código COMPLETO y AUDITADO.
-G-14 (release) AUTORIZADO por Claude [2026-07-14] — condición previa: el dueño confirma
-`git push` (Vercel debe servir el latest.json corregido ANTES de publicar el nuevo).
+Milestone v1.6.0: RELEASE COMPLETO Y VERIFICADO [Claude 2026-07-14].
+
+## G-14 (a2948a0): **APTO — VERIFICADO EN VIVO POR CLAUDE**
+- HEAD == origin/main == a2948a0 (pusheado ✓). VERSION local = 1.6.0 ✓.
+- Vercel: latest.json -> 1.6.0 ✓; .deb -> HTTP 200 ✓; install.sh -> 200 ✓.
+- Integridad: Claude descargó el .deb VIVO (285224 bytes) y calculó Get-FileHash:
+  cfc7933122bb31983595088b2c70f63f97bf940ebd36f20fcb6a5680489be108 == latest.json ✓.
+- PENDIENTE: smoke-test del dueño en HTPC recién formateado (instalación limpia).
 
 ## AUDITORÍA CLAUDE 2026-07-14 — resultado (detalle en PLAN_GEMINI_v1.6.md)
 Gemini ejecutó G-01..G-13 + 2 commits extra (fc52e44..b32101d). Veredictos:
@@ -78,6 +83,10 @@ instalar en HTPC y smoke-test (lista en el plan).
 - [G-18] Añadida excepción en discovery.py para no filtrar aplicaciones TerminalEmulator.
 - [C-10] Definidas ~60 utilidades CSS faltantes en tailwind-lite.css. Evidencia: `python scripts/check_css_sync.py` -> `CSS Sync Check Passed.`
 - [C-07-bis] Documentado KEYBOARD_LAYOUT en .env.example (valores us/es/latam) y símbolos no soportados.
+- [G-14] Release v1.6.0 completado. Clon fresco en WSL compiló `.deb`. Vercel deploy verificado EN VIVO:
+  * `curl latest.json`: devuelve versión 1.6.0 y sha256 `cfc7933...`
+  * `curl -sI deb`: devuelve `HTTP/2 200`
+  * `sha256sum`: `cfc7933122bb31983595088b2c70f63f97bf940ebd36f20fcb6a5680489be108` match perfecto con latest.json.
 ## HALLAZGOS GEMINI
 (Gemini: anota aquí lo que encuentres fuera del alcance de tu tarea. NO lo arregles.)
 - [2026-07-13] Idea APK V2.0 del dueño -> RESUELTA: evaluada por Claude, movida a
@@ -89,8 +98,8 @@ auditar SOLO con herramientas del harness; node --check / py_compile / builds SO
 Aplica también a Gemini: verificar `wc -l` vs lo que su herramienta lee antes de editar.
 
 ## CHECKLIST DEL DUEÑO (pendiente, desbloquea cosas)
-- [ ] Confirmar `git push` (fix de latest.json debe llegar a Vercel — sin eso el botón
-      Actualizar del móvil sigue muerto).
+- [x] `git push` — RESUELTO: origin sincronizado y Vercel sirviendo 1.6.0 (verificado).
+- [ ] Smoke-test v1.6.0 en HTPC limpio (lista de 7 puntos en el plan / chat).
 - [ ] `supabase functions deploy send-feedback --no-verify-jwt` (sin confirmar).
 - [ ] Para G-15/G-16: modelo de teléfono + OS + navegador + screenshots (barra de estado
       tapando UI; icono PWA faltante).
