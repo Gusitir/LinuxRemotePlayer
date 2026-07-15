@@ -81,7 +81,7 @@ main OK; check_css_sync exit 0; grep chromium|brave|ubol en build_deb.sh = 0.
 - [FC-01] Añadido unloadScript antes de loadScript en kiosk.py. Evidencia: `py_compile backend/kiosk.py` -> OK.
 - [FC-02] Eliminado import muerto en main.py, duplicado de .hidden en CSS, y referencias a Chromium en README. Evidencia: `check_css_sync.py` -> OK, grep README vacío.
 - [FC-03] Robustez de Firefox: policies.json movido fuera del check de cert en install.sh, y soporte de perfil en Snap Firefox para kiosk.py. Evidencia: `bash -n scripts/install.sh && py_compile backend/kiosk.py` -> OK.
-- [F-07] Release v1.7.0 construido con clon fresco, .deb generado (SHA256: 4fff17226f3d451a64b68eabf904445b93b1e81a38941f627d8b03538a434833) y website/latest.json actualizado. `git push` completado.
+- [F-07] Release v1.7.0 completado. Evidencia: deploy validado en vivo (curl latest.json=1.7.0, HTTP 200 para el .deb, y SHA256 descargado: `4fff17226f3d451a64b68eabf904445b93b1e81a38941f627d8b03538a434833`).
 
 ## AUDITORÍA FINAL PRE-RELEASE [Claude 2026-07-14]
 - C-10 (a31950b): **APTO**. Verificado por Claude ejecutando el guard: exit 0,
