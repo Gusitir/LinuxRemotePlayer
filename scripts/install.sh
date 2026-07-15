@@ -123,19 +123,6 @@ fi
 # so they can write tokens, caches, and logs without sudo errors.
 chown -R "$TARGET_USER":"$TARGET_USER" /opt/linuxremoteplayer
 
-# Trust the CA certificate in the system and the user's NSS db (for Brave/Chromium)
-if [ -f "$BACKEND_DIR/certs/ca.pem" ]; then
-    echo "[i] Installing LRP CA certificate to system trust..."
-    cp "$BACKEND_DIR/certs/ca.pem" /usr/local/share/ca-certificates/lrp-ca.crt
-    update-ca-certificates >/dev/null 2>&1
-    
-    echo "[i] Installing LRP CA certificate to user NSS db..."
-    USER_NSSDB="$USER_HOME/.pki/nssdb"
-    sudo -u "$TARGET_USER" mkdir -p "$USER_NSSDB"
-    # Ensure NSS DB is initialized
-    sudo -u "$TARGET_USER" certutil -d sql:"$USER_NSSDB" -N --empty-password 2>/dev/null || true
-    sudo -u "$TARGET_USER" certutil -d sql:"$USER_NSSDB" -A -t "C,," -n "LRP CA" -i "$BACKEND_DIR/certs/ca.pem" || true
-fi
 
 # P5: Ad-blocking (uBlock Origin Lite) -> Removed for Brave
 
@@ -289,6 +276,28 @@ for i in {1..15}; do
   if curl -sk https://127.0.0.1:8000/health >/dev/null 2>&1; then break; fi
   sleep 1
 done
+
+echo "[i] Waiting for CA certificate generation (up to 30s)..."
+for i in {1..30}; do
+  if [ -f "$BACKEND_DIR/certs/ca.pem" ]; then break; fi
+  sleep 1
+done
+
+# Trust the CA certificate in the system and the user's NSS db (for Brave/Chromium)
+if [ -f "$BACKEND_DIR/certs/ca.pem" ]; then
+    echo "[i] Installing LRP CA certificate to system trust..."
+    cp "$BACKEND_DIR/certs/ca.pem" /usr/local/share/ca-certificates/lrp-ca.crt
+    update-ca-certificates >/dev/null 2>&1
+    
+    echo "[i] Installing LRP CA certificate to user NSS db..."
+    USER_NSSDB="$USER_HOME/.pki/nssdb"
+    sudo -u "$TARGET_USER" mkdir -p "$USER_NSSDB"
+    # Ensure NSS DB is initialized
+    sudo -u "$TARGET_USER" certutil -d sql:"$USER_NSSDB" -N --empty-password 2>/dev/null || true
+    sudo -u "$TARGET_USER" certutil -d sql:"$USER_NSSDB" -A -t "C,," -n "LRP CA" -i "$BACKEND_DIR/certs/ca.pem" || true
+else
+    echo "[!] CA certificate not generated in time. HTTPS trust may not work locally."
+fi
 
 echo "[i] Launching Status Panel..."
 sudo -u "$TARGET_USER" DISPLAY=:0 XDG_RUNTIME_DIR="/run/user/$(id -u "$TARGET_USER")" xdg-open "https://127.0.0.1:8000/status" 2>/dev/null || sudo -u "$TARGET_USER" DISPLAY=:0 XDG_RUNTIME_DIR="/run/user/$(id -u "$TARGET_USER")" chromium --app="https://127.0.0.1:8000/status" 2>/dev/null || true
