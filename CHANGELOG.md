@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.7.0] - Próximamente
+
+### Added
+- **Firefox Kiosk**: Migrado el navegador por defecto de Brave/Chromium a Firefox con políticas empresariales inyectadas.
+- **Wayland Window Management**: Soporte nativo para cerrar ventanas en KDE Wayland usando KWin Scripting por DBus.
+- **Sleep Management**: Nueva opción en `lrp-setup` para deshabilitar completamente la suspensión/apagado de pantalla a nivel del sistema (ideal para modo Appliance).
+
+### Changed
+- **uBlock Origin**: Ahora instalado automáticamente en Firefox vía `policies.json`, eliminando la necesidad de empaquetar uBOL internamente.
+- **Build Hygiene**: Erradicadas las dependencias y rastros residuales de Chromium y uBOL en los scripts de construcción de .deb.
+- **Idle Audio Detection**: Ahora se advierte proactivamente si `pulseaudio-utils` falta en el sistema anfitrión.
+
 ## [1.6.0] - 2026-07-15
 
 ### Added
