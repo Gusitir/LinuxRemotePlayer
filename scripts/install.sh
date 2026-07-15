@@ -110,6 +110,19 @@ fi
 BACKEND_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../backend" && pwd)"
 cd "$BACKEND_DIR"
 
+# Write mode to .env
+if [ "$mode" = "1" ]; then
+    lrp_mode_str="appliance"
+else
+    lrp_mode_str="desktop"
+fi
+
+if grep -q "^LRP_MODE=" "$BACKEND_DIR/.env" 2>/dev/null; then
+    sed -i "s/^LRP_MODE=.*/LRP_MODE=$lrp_mode_str/" "$BACKEND_DIR/.env"
+else
+    echo "LRP_MODE=$lrp_mode_str" >> "$BACKEND_DIR/.env"
+fi
+
 # Write keyboard layout to .env
 if grep -q "^KEYBOARD_LAYOUT=" "$BACKEND_DIR/.env" 2>/dev/null; then
     sed -i "s/^KEYBOARD_LAYOUT=.*/KEYBOARD_LAYOUT=$kb_layout/" "$BACKEND_DIR/.env"
