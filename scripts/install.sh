@@ -90,20 +90,12 @@ usermod -aG input "$TARGET_USER"
 udevadm control --reload-rules && udevadm trigger
 echo "[i] Added '$TARGET_USER' to 'input' group. REBOOT or re-login required before uinput works."
 
-# --- Ensure Brave Browser is installed ---
-if command -v brave-browser >/dev/null 2>&1; then
-    echo "[i] Brave Browser already installed."
+# --- Ensure Firefox is installed (F-01) ---
+if command -v firefox >/dev/null 2>&1 || command -v firefox-esr >/dev/null 2>&1; then
+    echo "[i] Firefox already installed."
 else
-    echo "[i] Brave Browser not found. Installing via official apt repository..."
-    apt-get install -y curl
-    curl -fsSLo /usr/share/keyrings/brave-browser-archive-keyring.gpg https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
-    echo "deb [signed-by=/usr/share/keyrings/brave-browser-archive-keyring.gpg] https://brave-browser-apt-release.s3.brave.com/ stable main" | tee /etc/apt/sources.list.d/brave-browser-release.list
-    apt-get update
-    if apt-get install -y brave-browser; then
-        echo "[i] Installed 'brave-browser'."
-    else
-        echo "[!] Could not install Brave automatically. Install it manually."
-    fi
+    echo "[i] Firefox not found. Installing..."
+    apt-get install -y firefox-esr || apt-get install -y firefox || true
 fi
 
 # Define BACKEND_DIR for systemd paths and token generation
@@ -305,9 +297,31 @@ if [ -f "$BACKEND_DIR/certs/ca.pem" ]; then
     echo "[i] Installing LRP CA certificate to user NSS db..."
     USER_NSSDB="$USER_HOME/.pki/nssdb"
     sudo -u "$TARGET_USER" mkdir -p "$USER_NSSDB"
-    # Ensure NSS DB is initialized
     sudo -u "$TARGET_USER" certutil -d sql:"$USER_NSSDB" -N --empty-password 2>/dev/null || true
     sudo -u "$TARGET_USER" certutil -d sql:"$USER_NSSDB" -A -t "C,," -n "LRP CA" -i "$BACKEND_DIR/certs/ca.pem" || true
+
+    echo "[i] Configuring Firefox policies..."
+    mkdir -p /etc/firefox/policies
+    cat <<EOFJSON > /etc/firefox/policies/policies.json
+{
+  "policies": {
+    "ExtensionSettings": {
+      "uBlock0@raymondhill.net": {
+        "installation_mode": "force_installed",
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi"
+      }
+    },
+    "Certificates": {
+      "ImportEnterpriseRoots": true,
+      "Install": ["$BACKEND_DIR/certs/ca.pem"]
+    },
+    "EncryptedMediaExtensions": { "Enabled": true },
+    "DisableFirefoxStudies": true,
+    "OverrideFirstRunPage": "",
+    "NoDefaultBookmarks": true
+  }
+}
+EOFJSON
 else
     echo "[!] CA certificate not generated in time. HTTPS trust may not work locally."
 fi

@@ -13,10 +13,18 @@ _native_procs = []
 
 
 def find_browser():
-    """Return a Brave or Chromium executable path, and its type.
+    """Return a browser executable path, and its type.
 
-    Covers distro naming differences and snap cases. Brave is preferred.
+    Covers distro naming differences and snap cases. Firefox is preferred.
     """
+    for name in ("firefox", "firefox-esr"):
+        path = shutil.which(name)
+        if path:
+            return path, "firefox"
+    for path in ("/usr/bin/firefox", "/usr/bin/firefox-esr", "/snap/bin/firefox"):
+        if os.path.exists(path):
+            return path, "firefox"
+
     for name in ("brave-browser", "brave-browser-stable", "brave"):
         path = shutil.which(name)
         if path:
@@ -135,6 +143,7 @@ def kill_existing_kiosks():
 
     logger.info("No active tracked kiosk process found. Running fallback pkill with narrow patterns...")
     try:
+        subprocess.run(['pkill', '-f', '--', 'firefox.*--kiosk'], check=False)
         subprocess.run(['pkill', '-f', '--', 'brave.*--kiosk'], check=False)
         subprocess.run(['pkill', '-f', '--', 'chromium.*--kiosk'], check=False)
         subprocess.run(['pkill', '-f', '--', 'chromium-browser.*--kiosk'], check=False)
@@ -144,6 +153,15 @@ def kill_existing_kiosks():
 
 def adblock_status() -> str:
     browser_path, browser_type = find_browser()
+    if browser_type == "firefox":
+        if os.path.exists("/etc/firefox/policies/policies.json"):
+            try:
+                with open("/etc/firefox/policies/policies.json", "r") as f:
+                    if "ublock" in f.read().lower():
+                        return "ubo-firefox"
+            except Exception:
+                pass
+        return "none"
     if browser_type == "brave":
         return "shields"
     home_ext = os.path.expanduser("~/lrp-extensions/ubol")
@@ -167,21 +185,26 @@ def launch_kiosk(url: str) -> bool:
         return False
 
     try:
-        user_data_dir = os.path.expanduser("~/.config/lrp-kiosk")
-        cmd = [browser_bin, f'--app={url}', '--kiosk', '--start-maximized', '--noerrdialogs', '--disable-infobars', f'--user-data-dir={user_data_dir}']
+        if browser_type == "firefox":
+            profile_dir = os.path.expanduser("~/.config/lrp-kiosk-ff")
+            os.makedirs(profile_dir, exist_ok=True)
+            cmd = [browser_bin, '--kiosk', '--no-remote', '-profile', profile_dir, url]
+        else:
+            user_data_dir = os.path.expanduser("~/.config/lrp-kiosk")
+            cmd = [browser_bin, f'--app={url}', '--kiosk', '--start-maximized', '--noerrdialogs', '--disable-infobars', f'--user-data-dir={user_data_dir}']
 
-        # uBOL path: prefer the user's HOME (snap-packaged Chromium on Ubuntu/KDE Neon
-        # CANNOT read /opt due to confinement); /opt kept as fallback for non-snap builds.
-        home_ext = os.path.expanduser("~/lrp-extensions/ubol")
-        opt_ext = "/opt/linuxremoteplayer/extensions/ubol"
-        ext_path = home_ext if os.path.exists(os.path.join(home_ext, "manifest.json")) else opt_ext
+            # uBOL path: prefer the user's HOME (snap-packaged Chromium on Ubuntu/KDE Neon
+            # CANNOT read /opt due to confinement); /opt kept as fallback for non-snap builds.
+            home_ext = os.path.expanduser("~/lrp-extensions/ubol")
+            opt_ext = "/opt/linuxremoteplayer/extensions/ubol"
+            ext_path = home_ext if os.path.exists(os.path.join(home_ext, "manifest.json")) else opt_ext
 
-        if browser_type == "chromium":
-            if os.path.exists(os.path.join(ext_path, "manifest.json")):
-                cmd.append(f'--load-extension={ext_path}')
-                logger.info(f"Loaded uBOL extension from {ext_path}")
-            else:
-                logger.warning(f"uBOL no encontrado en {home_ext} o {opt_ext} — kiosk sin bloqueador")
+            if browser_type == "chromium":
+                if os.path.exists(os.path.join(ext_path, "manifest.json")):
+                    cmd.append(f'--load-extension={ext_path}')
+                    logger.info(f"Loaded uBOL extension from {ext_path}")
+                else:
+                    logger.warning(f"uBOL no encontrado en {home_ext} o {opt_ext} — kiosk sin bloqueador")
 
         logger.info(f"Launching kiosk: {' '.join(cmd)}")
         _kiosk_proc = subprocess.Popen(

@@ -1,8 +1,22 @@
 # ESTADO ACTUAL
 
 VERSION commiteada y PUBLICADA: 1.6.0. Repo PRIVADO. Licencia: Elastic License 2.0.
-Plan activo: .agents/PLAN_GEMINI_v1.6.md (Gemini programa, Claude planifica/audita).
-Milestone v1.6.0: RELEASE COMPLETO Y VERIFICADO [Claude 2026-07-14].
+Plan activo: .agents/PLAN_GEMINI_v1.7.md (Firefox + fixes smoke-test). v1.6 CERRADO.
+
+## SMOKE-TEST v1.6.0 [dueño, HTPC limpio Plasma Bigscreen, 2026-07-14]
+7/7 funcional: panel completo ✓, kiosks rápidos sin ads ✓, teclado ✓, atrás ✓,
+idle panel respeta audio propio ✓, sesiones persisten ✓, latencia SIN caídas ✓.
+FALLOS -> plan v1.7 (causas raíz verificadas por Claude en repo):
+- Home no cierra apps de sistema: Bigscreen=Wayland, wmctrl ciego -> F-03 (KWin DBus).
+- Audio de apps manuales no detectado: pactl probablemente AUSENTE (código lo salta
+  en silencio) -> F-04 (dep pulseaudio-utils + warning).
+- Advertencia de cert en el panel + chromium REINSTALADO: build_deb.sh:66
+  `Recommends: chromium` + .desktop del .deb lanza chromium (G-07 no tocó el .deb)
+  -> F-02. Cert para Firefox vía política Certificates.Install -> F-01.
+- DECISIÓN DEL DUEÑO: migrar kiosk a FIREFOX (Brave/Chromium buggy en Bigscreen;
+  Firefox está en todas las distros) + uBlock Origin vía policies.json -> F-01.
+- Suspensión de la distro interrumpe reproducción -> opción en lrp-setup -> F-05.
+- Perfil secundario del navegador: intencional (aislamiento), se mantiene.
 
 ## G-14 (a2948a0): **APTO — VERIFICADO EN VIVO POR CLAUDE**
 - HEAD == origin/main == a2948a0 (pusheado ✓). VERSION local = 1.6.0 ✓.
@@ -26,13 +40,13 @@ Gemini ejecutó G-01..G-13 + 2 commits extra (fc52e44..b32101d). Veredictos:
   Recordatorio: claves en dispositivo = solo para pruebas del dueño; ai-proxy sigue
   siendo bloqueante para vender voz.
 
-## PRÓXIMO PASO (Gemini)
-G-14 — Release v1.6.0 (ver PLAN_GEMINI_v1.6.md). AUTORIZADO. Precondición que confirma
-el DUEÑO antes de empezar: `git push` hecho y latest.json corregido visible en Vercel.
-Pasos: VERSION 1.6.0 + CHANGELOG -> build en WSL con CLON FRESCO -> .deb+.sha256 a
-website/downloads/ (borrar 1.5.0) -> latest.json (sha256 REAL con sha256sum) ->
-commit+push -> verificar EN VIVO (curl latest.json=1.6.0, deb 200, sha256 match) ->
-instalar en HTPC y smoke-test (lista en el plan).
+## PRÓXIMO PASO (Gemini) — MODO BACHE
+Ejecutar F-01 -> F-02 -> F-03 -> F-04 -> F-05 -> F-06 de PLAN_GEMINI_v1.7.md, un commit
+por tarea con evidencia real de comandos en la bitácora de abajo. STOP al terminar F-06
+-> Claude audita el bache -> F-07 (release v1.7.0).
+
+## BITÁCORA BACHE F-01..F-06 (Gemini anota aquí cada cierre con evidencia)
+- [F-01] Migrado kiosk a Firefox con uBlock Origin y CA vía policies.json. Evidencia: `bash -n scripts/install.sh && python3 -m py_compile backend/kiosk.py` -> exit 0.
 
 ## AUDITORÍA FINAL PRE-RELEASE [Claude 2026-07-14]
 - C-10 (a31950b): **APTO**. Verificado por Claude ejecutando el guard: exit 0,

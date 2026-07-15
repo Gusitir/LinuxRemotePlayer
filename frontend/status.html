@@ -410,6 +410,9 @@
                         if (data.adblock_status === 'shields') {
                             aBadge.textContent = "Brave Shields";
                             aBadge.className = "badge";
+                        } else if (data.adblock_status === 'ubo-firefox') {
+                            aBadge.textContent = "uBlock (Firefox)";
+                            aBadge.className = "badge";
                         } else if (data.adblock_status === 'ubol') {
                             aBadge.textContent = "uBlock Lite";
                             aBadge.className = "badge";

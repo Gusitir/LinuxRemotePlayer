@@ -113,13 +113,21 @@
 - [ ] REAL protection is server-side: license activation against your server + AI/premium gated by license. Copying the client yields a useless shell without your cloud.
 - [ ] Reality: client-side code can't be fully hidden; move the value (AI, premium, license) to your server.
 
-# PH14: v1.6.0 — BUGS HTPC + BRAVE + HARDENING (detalle: .agents/PLAN_GEMINI_v1.6.md)
-- [x] G-01..G-13 ejecutadas por Gemini (2026-07-13); auditadas por Claude (2026-07-14)
-- [ ] Correcciones de auditoría C-01..C-09 (C-01 CRÍTICO: event loop congelado en launch/close)
-- [ ] G-17 iconos + G-18 terminales (tareas cuyo número usó Gemini para otra cosa)
-- [ ] G-14 Release v1.6.0 en WSL (BLOQUEADO hasta cerrar lo anterior)
-- [ ] G-15/G-16 (necesitan info del dispositivo del dueño)
-- [ ] (dueño) confirmar push de latest.json + deploy send-feedback; Stripe LIVE; dominio + Resend
+# PH14: v1.6.0 — BUGS HTPC + BRAVE + HARDENING — ✅ RELEASED 2026-07-14
+- [x] G-01..G-13 + correcciones C-01..C-10 + G-17/G-18 (auditadas por Claude)
+- [x] G-14 Release v1.6.0 publicado y verificado en vivo (sha256 match, OTA operativo)
+- [x] Smoke-test 7/7 funcional en HTPC limpio (Plasma Bigscreen)
+- [ ] G-15/G-16 (siguen esperando info del dispositivo del dueño)
+
+# PH14b: v1.7.0 — FIREFOX + FIXES DEL SMOKE-TEST (detalle: .agents/PLAN_GEMINI_v1.7.md)
+- [ ] F-01 Kiosk a Firefox + uBlock Origin y CA vía policies.json (decisión del dueño)
+- [ ] F-02 .deb: quitar Recommends chromium (causa del reinstall), .desktop, uBOL de lrp-update
+- [ ] F-03 Home cierra todo en Wayland/KDE (KWin Scripting DBus)
+- [ ] F-04 pulseaudio-utils (pactl ausente en Bigscreen) + warning
+- [ ] F-05 Opción lrp-setup: deshabilitar suspensión (mask sleep/suspend targets)
+- [ ] F-06 Limpieza menor (import muerto, dedupe .hidden, docs)
+- [ ] F-07 Release v1.7.0
+- [ ] (dueño) deploy send-feedback; Stripe LIVE; dominio + Resend
 
 # PH15: V2.0 — APK ANDROID (aprobado en evaluación; ver PLAN_GEMINI_v1.6.md FASE E)
 - [ ] Prerrequisitos: v1.6.0 estable + ai-proxy Edge Function (claves fuera del dispositivo)
