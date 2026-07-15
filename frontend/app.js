@@ -1284,11 +1284,6 @@ function showPairingScreen(show) {
     if (pairingUI) pairingUI.hidden = !show;
 }
 
-function toggleManualToken() {
-    const ui = document.getElementById('manual-token-ui');
-    if (ui) ui.classList.toggle('hidden');
-}
-
 async function checkPinInput(input) {
     input.value = input.value.replace(/[^0-9]/g, '');
     const errorMsg = document.getElementById('pin-error-msg');
