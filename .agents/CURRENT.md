@@ -40,10 +40,26 @@ Gemini ejecutó G-01..G-13 + 2 commits extra (fc52e44..b32101d). Veredictos:
   Recordatorio: claves en dispositivo = solo para pruebas del dueño; ai-proxy sigue
   siendo bloqueante para vender voz.
 
-## PRÓXIMO PASO (Gemini) — MODO BACHE
-Ejecutar F-01 -> F-02 -> F-03 -> F-04 -> F-05 -> F-06 de PLAN_GEMINI_v1.7.md, un commit
-por tarea con evidencia real de comandos en la bitácora de abajo. STOP al terminar F-06
--> Claude audita el bache -> F-07 (release v1.7.0).
+## PRÓXIMO PASO (Gemini)
+Ejecutar FC-01, FC-02, FC-03 (correcciones de auditoría, ver PLAN_GEMINI_v1.7.md).
+Un commit por tarea. STOP -> verificación rápida de Claude -> F-07 (release v1.7.0).
+
+## AUDITORÍA BACHE F-01..F-06 [Claude 2026-07-14]
+Verificación independiente: bash -n install/uninstall/build_deb OK; py_compile kiosk/
+main OK; check_css_sync exit 0; grep chromium|brave|ubol en build_deb.sh = 0.
+- F-01 (9b8f28b): **APTO** — firefox-first correcto, flags --kiosk/--no-remote/-profile
+  OK, policies.json con expansión de $BACKEND_DIR en la ruta real del ca.pem ✓, pkill y
+  adblock_status ✓. Mejoras -> FC-03 (policies fuera del if de ca.pem; perfil para
+  snap firefox).
+- F-02 (b3f6fa2): **APTO** — grep 0 verificado por Claude; .desktop -> xdg-open.
+- F-03 (79af3b7): **APTO CON CORRECCIÓN** — diseño correcto (gate wmctrl, DBUS derivado
+  de XDG_RUNTIME_DIR/bus, tempfile con finally, KWin5/6) PERO loadScript con nombre
+  repetido devuelve -1 -> Home solo funciona 1 vez por sesión KWin. -> FC-01.
+- F-04 (d15a6e6): **APTO** — warning + deps correctos.
+- F-05 (542545b): **APTO** — defaults por modo bien (Appliance S / Desktop N),
+  LRP_NOSLEEP no-interactivo, unmask en uninstall.
+- F-06 (2dd8ba6): **PARCIAL** — CHANGELOG ✓, pero: import muerto main.py:24 SIGUE,
+  .hidden SIGUE duplicada (grep=2), README sigue diciendo Chromium. -> FC-02.
 
 ## BITÁCORA BACHE F-01..F-06 (Gemini anota aquí cada cierre con evidencia)
 - [F-01] Migrado kiosk a Firefox con uBlock Origin y CA vía policies.json. Evidencia: `bash -n scripts/install.sh && python3 -m py_compile backend/kiosk.py` -> exit 0.
@@ -52,6 +68,7 @@ por tarea con evidencia real de comandos en la bitácora de abajo. STOP al termi
 - [F-04] Añadido pulseaudio-utils a deps de apt en install.sh/build_deb.sh y warning de pactl en main.py. Evidencia: `bash -n scripts/install.sh && bash -n scripts/build_deb.sh && python3 -m py_compile backend/main.py` -> OK.
 - [F-05] Opción para deshabilitar suspensión agregada en install.sh y revertida en uninstall.sh. Evidencia: `bash -n scripts/install.sh && bash -n scripts/uninstall.sh` -> OK.
 - [F-06] Limpieza menor: deduplicación visual en tailwind-lite.css y actualización de CHANGELOG.md para v1.7.0. Evidencia: `git diff` verificado.
+- [FC-01] Añadido unloadScript antes de loadScript en kiosk.py. Evidencia: `py_compile backend/kiosk.py` -> OK.
 
 ## AUDITORÍA FINAL PRE-RELEASE [Claude 2026-07-14]
 - C-10 (a31950b): **APTO**. Verificado por Claude ejecutando el guard: exit 0,

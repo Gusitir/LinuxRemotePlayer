@@ -127,6 +127,7 @@ def close_all():
                         env["DBUS_SESSION_BUS_ADDRESS"] = f"unix:path={bus_path}"
                 
                 try:
+                    subprocess.run([qdbus, "org.kde.KWin", "/Scripting", "unloadScript", "lrpCloseAll"], env=env, check=False, timeout=3, stderr=subprocess.DEVNULL)
                     out = subprocess.check_output([qdbus, "org.kde.KWin", "/Scripting", "loadScript", temp_name, "lrpCloseAll"], env=env, text=True, timeout=3, stderr=subprocess.DEVNULL).strip()
                     if out.isdigit():
                         subprocess.run([qdbus, "org.kde.KWin", f"/Scripting/Script{out}", "run"], env=env, check=False, timeout=3, stderr=subprocess.DEVNULL)
