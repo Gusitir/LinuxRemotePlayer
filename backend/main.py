@@ -606,7 +606,7 @@ async def system_apply_update(request: Request):
 
 @app.post("/api/kiosk/launch", dependencies=[Depends(require_token)])
 async def start_kiosk(payload: KioskLaunchBody):
-    success = launch_kiosk(payload.url)
+    success = await asyncio.to_thread(launch_kiosk, payload.url)
     if success:
         return {"status": "success"}
     raise HTTPException(status_code=400, detail="Failed to launch kiosk")
@@ -617,7 +617,7 @@ async def stop_kiosk():
     import kiosk
     global last_input_time
     last_input_time = time.time()  # Reset idle timer so APPLIANCE_IDLE_PANEL waits 45s
-    kiosk.close_all()
+    await asyncio.to_thread(kiosk.close_all)
     return {"status": "success"}
 
 
@@ -625,7 +625,7 @@ async def stop_kiosk():
 async def show_panel():
     port = os.getenv("PORT", "8000")
     url = f"https://127.0.0.1:{port}/status"
-    success = launch_kiosk(url)
+    success = await asyncio.to_thread(launch_kiosk, url)
     if success:
         return {"status": "success"}
     raise HTTPException(status_code=400, detail="Failed to show panel")
@@ -643,10 +643,14 @@ async def launch_native_app(payload: AppLaunchBody):
     import shlex
     import kiosk
     cleaned = re.sub(r'%[a-zA-Z]', '', match["exec"]).strip()
-    try:
+    
+    def _do_launch():
         proc = subprocess.Popen(shlex.split(cleaned), env=gui_env(), stdout=subprocess.DEVNULL,
                          stderr=subprocess.DEVNULL, start_new_session=True)
         kiosk._native_procs.append(proc)
+        
+    try:
+        await asyncio.to_thread(_do_launch)
         return {"status": "success"}
     except Exception as ex:
         raise HTTPException(status_code=500, detail=str(ex))
@@ -742,7 +746,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
                                 if target == "youtube":
                                     query = quote_plus(params.get('search_query', ''))
                                     target_url = f"https://youtube.com/results?search_query={query}"
-                                success = launch_kiosk(target_url)
+                                success = await asyncio.to_thread(launch_kiosk, target_url)
                                 if success:
                                     await safe_send_json({"status": "success", "message": "Launched app"})
                                 else:
@@ -772,7 +776,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
                     elif action == "search":
                         query = quote_plus(params.get("search_query", ""))
                         if query:
-                            success = launch_kiosk(f"https://www.youtube.com/results?search_query={query}")
+                            success = await asyncio.to_thread(launch_kiosk, f"https://www.youtube.com/results?search_query={query}")
                             if success:
                                 await safe_send_json({"status": "success", "message": f"Searching: {params.get('search_query', '')}"})
                             else:
