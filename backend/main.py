@@ -21,7 +21,7 @@ import auth
 
 from input_emulator import gamepad, mouse
 from discovery import get_installed_apps
-from kiosk import launch_kiosk, kill_existing_kiosks, gui_env
+from kiosk import launch_kiosk, gui_env
 from ai_pipeline import transcribe_audio, parse_intent
 from auth import validate_license_and_increment, verify_access, is_license_valid_cached_or_online
 

@@ -16,7 +16,7 @@ A plug & play remote-control ecosystem for Linux HTPCs: a mobile PWA client talk
 ## Features
 
 * **Virtual input emulation** — mouse pointer, clicks, scroll, long-press right click, full keyboard bridge and media keys (transport, volume, mute) injected via `uinput`.
-* **Streaming apps in kiosk mode** — Netflix, YouTube, Max, Disney+, Spotify, Twitch and any custom web app, launched full-screen in Chromium. Native Linux apps are auto-discovered from `.desktop` entries.
+* **Streaming apps in kiosk mode** — Netflix, YouTube, Max, Disney+, Spotify, Twitch and any custom web app, launched full-screen in Firefox. Native Linux apps are auto-discovered from `.desktop` entries.
 * **Installable PWA** — offline-capable app shell, no address bar, no stores. Network-first service worker keeps clients up to date automatically.
 * **Resilient connection** — ping/pong heartbeat, reconnect-on-wake, exponential backoff, and an actionable troubleshooting banner when something is wrong.
 * **Self-healing HTTPS** — local two-tier CA (`ca.pem` + leaf certs) regenerated automatically for the current IP and `hostname.local` (mDNS via avahi). Install the CA once on your phone and never see a warning again.
@@ -56,7 +56,7 @@ On the Linux PC connected to your TV (Debian/Ubuntu and derivatives, systemd req
 curl -fsSL https://linux-remote-player.vercel.app/install.sh | sudo bash
 ```
 
-Run the setup script. When asked "¿Esta PC está dedicada a la TV?", answer **S** (Yes) to install as a system service (Appliance mode), or **n** (No) for a user service (Desktop mode). The installer sets up dependencies, `uinput` permissions, Chromium, mDNS, the firewall rule and the systemd service. Reboot or re-login once after the first install.
+Run the setup script. When asked "¿Esta PC está dedicada a la TV?", answer **S** (Yes) to install as a system service (Appliance mode), or **n** (No) for a user service (Desktop mode). The installer sets up dependencies, `uinput` permissions, Firefox, mDNS, the firewall rule and the systemd service. Reboot or re-login once after the first install.
 
 ---
 

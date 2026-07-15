@@ -69,6 +69,7 @@ main OK; check_css_sync exit 0; grep chromium|brave|ubol en build_deb.sh = 0.
 - [F-05] Opción para deshabilitar suspensión agregada en install.sh y revertida en uninstall.sh. Evidencia: `bash -n scripts/install.sh && bash -n scripts/uninstall.sh` -> OK.
 - [F-06] Limpieza menor: deduplicación visual en tailwind-lite.css y actualización de CHANGELOG.md para v1.7.0. Evidencia: `git diff` verificado.
 - [FC-01] Añadido unloadScript antes de loadScript en kiosk.py. Evidencia: `py_compile backend/kiosk.py` -> OK.
+- [FC-02] Eliminado import muerto en main.py, duplicado de .hidden en CSS, y referencias a Chromium en README. Evidencia: `check_css_sync.py` -> OK, grep README vacío.
 
 ## AUDITORÍA FINAL PRE-RELEASE [Claude 2026-07-14]
 - C-10 (a31950b): **APTO**. Verificado por Claude ejecutando el guard: exit 0,
