@@ -347,8 +347,6 @@ function startHeartbeat() {
                     ws.close();
                 }
             }, 5000);
-        } else if (!ws || ws.readyState === WebSocket.CLOSED) {
-            location.reload();
         }
     }, 10000);
 }
