@@ -39,7 +39,7 @@ cat <<EOF > pkg/usr/share/applications/linuxremoteplayer-panel.desktop
 Type=Application
 Name=Remote Linux Player
 Comment=Panel de estado y emparejamiento
-Exec=sh -c 'chromium --app=https://127.0.0.1:8000/status || chromium-browser --app=https://127.0.0.1:8000/status'
+Exec=xdg-open https://127.0.0.1:8000/status
 Icon=linuxremoteplayer
 Categories=AudioVideo;Video;Player;
 Terminal=false
@@ -63,7 +63,7 @@ Architecture: all
 Maintainer: LinuxRemotePlayer
 Description: Remote Linux Player API and web interface
 Depends: python3, python3-venv, python3-dev, build-essential, openssl, avahi-daemon
-Recommends: chromium | chromium-browser, ufw
+Recommends: firefox-esr | firefox, ufw
 EOF
 
 # DEBIAN/postinst
@@ -143,34 +143,7 @@ else
     done
 fi
 
-# Update uBlock Origin Lite (in the user's HOME — snap Chromium cannot read /opt)
-echo "Actualizando uBlock Origin Lite..."
-UBOL_HOME=$(getent passwd "${SUDO_USER:-root}" | cut -d: -f6)
-if [ -n "$UBOL_HOME" ] && [ "$UBOL_HOME" != "/root" ]; then
-    UBOL_DIR="$UBOL_HOME/lrp-extensions/ubol"
-else
-    UBOL_DIR="/opt/linuxremoteplayer/extensions/ubol"
-fi
-mkdir -p "$UBOL_DIR"
-UBOL_ZIP_URL=$(curl -fsSL "https://api.github.com/repos/uBlockOrigin/uBOL-home/releases/latest" 2>/dev/null | grep -o '"browser_download_url": *"[^"]*\.chromium\.zip"' | head -n1 | cut -d'"' -f4)
-[ -z "$UBOL_ZIP_URL" ] && UBOL_ZIP_URL="https://github.com/uBlockOrigin/uBOL-home/releases/latest/download/uBOLite.chromium.zip"
-if curl -fsSL "$UBOL_ZIP_URL" -o /tmp/ubol.zip 2>/dev/null || wget -qO /tmp/ubol.zip "$UBOL_ZIP_URL"; then
-    unzip -qo /tmp/ubol.zip -d "$UBOL_DIR" || true
-    rm -f /tmp/ubol.zip
-    if [ -d "$UBOL_DIR" ] && [ ! -f "$UBOL_DIR/manifest.json" ]; then
-        SUBDIR=$(find "$UBOL_DIR" -mindepth 1 -maxdepth 1 -type d | head -n 1)
-        if [ -n "$SUBDIR" ] && [ -f "$SUBDIR/manifest.json" ]; then
-            mv "$SUBDIR"/* "$UBOL_DIR"/
-            rmdir "$SUBDIR"
-        fi
-    fi
-else
-    echo "[!] No se pudo actualizar uBOL (continuando sin él)."
-fi
-# Fix ownership of the extension dir for the real user
-if [ -n "$SUDO_USER" ] && [ "$SUDO_USER" != "root" ]; then
-    chown -R "$SUDO_USER":"$SUDO_USER" "$(dirname "$UBOL_DIR")" 2>/dev/null || true
-fi
+
 INNEREOF
 chmod 755 /usr/local/bin/lrp-update
 
