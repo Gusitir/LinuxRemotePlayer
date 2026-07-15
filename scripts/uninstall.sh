@@ -68,6 +68,9 @@ rm -rf "$BACKEND_DIR/.pairing_token"
 rm -rf "$BACKEND_DIR/.license_cache"
 rm -rf "$BACKEND_DIR/__pycache__"
 
+echo "[i] Restaurando opciones de suspensión (unmask)..."
+systemctl unmask sleep.target suspend.target hibernate.target hybrid-sleep.target || true
+
 echo "======================================"
 echo " Desinstalación básica completada.   "
 echo "======================================"

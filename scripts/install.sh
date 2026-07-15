@@ -53,6 +53,32 @@ else
     fi
 fi
 
+if [ -n "$LRP_NOSLEEP" ]; then
+    nosleep="$LRP_NOSLEEP"
+    echo "[i] Using LRP_NOSLEEP environment variable: $nosleep"
+else
+    if [ "$mode" = "1" ]; then
+        read -p "¿Deshabilitar suspensión/apagado de pantalla del sistema? [S/n]: " ans_sleep
+        if [ "$ans_sleep" = "n" ] || [ "$ans_sleep" = "N" ]; then
+            nosleep="0"
+        else
+            nosleep="1"
+        fi
+    else
+        read -p "¿Deshabilitar suspensión/apagado de pantalla del sistema? [s/N]: " ans_sleep
+        if [ "$ans_sleep" = "s" ] || [ "$ans_sleep" = "S" ]; then
+            nosleep="1"
+        else
+            nosleep="0"
+        fi
+    fi
+fi
+
+if [ "$nosleep" = "1" ]; then
+    echo "[i] Deshabilitando suspensión del sistema..."
+    systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target || true
+fi
+
 AUTO_LAYOUT="us"
 if command -v localectl >/dev/null 2>&1; then
     _x11=$(localectl status | grep 'X11 Layout' | awk '{print $3}' | tr -d ' ' || true)

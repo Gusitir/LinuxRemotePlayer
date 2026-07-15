@@ -50,6 +50,7 @@ por tarea con evidencia real de comandos en la bitácora de abajo. STOP al termi
 - [F-02] Erradicados chromium y uBOL de build_deb.sh. Evidencia: `grep -in "chromium\|brave\|ubol" scripts/build_deb.sh` -> 0 resultados, `bash -n scripts/build_deb.sh` OK.
 - [F-03] Añadido script KWin DBus en kiosk.py (Wayland fallback) y qdbus-qt6/5 a install.sh. Evidencia: `bash -n scripts/install.sh && python3 -m py_compile backend/kiosk.py` -> OK.
 - [F-04] Añadido pulseaudio-utils a deps de apt en install.sh/build_deb.sh y warning de pactl en main.py. Evidencia: `bash -n scripts/install.sh && bash -n scripts/build_deb.sh && python3 -m py_compile backend/main.py` -> OK.
+- [F-05] Opción para deshabilitar suspensión agregada en install.sh y revertida en uninstall.sh. Evidencia: `bash -n scripts/install.sh && bash -n scripts/uninstall.sh` -> OK.
 
 ## AUDITORÍA FINAL PRE-RELEASE [Claude 2026-07-14]
 - C-10 (a31950b): **APTO**. Verificado por Claude ejecutando el guard: exit 0,
