@@ -94,22 +94,46 @@ def close_all():
     # G-10: Best-effort cleanup of extraneous windows
     env = gui_env()
     try:
+        wmctrl_success = False
         if shutil.which("wmctrl"):
             out = subprocess.check_output(["wmctrl", "-l"], env=env, text=True, stderr=subprocess.DEVNULL)
-            for line in out.strip().split("\n"):
-                if not line:
-                    continue
-                parts = line.split(maxsplit=3)
-                if len(parts) >= 1:
-                    wid = parts[0]
-                    if len(parts) >= 4:
-                        title = parts[3].lower()
-                        # Exclude desktop shells and critical UI components
-                        if any(x in title for x in ["plasma", "krunner", "desktop"]):
-                            continue
-                    subprocess.run(["wmctrl", "-ic", wid], env=env, check=False, stderr=subprocess.DEVNULL)
-        else:
-            logger.info("wmctrl not found, skipping extraneous window cleanup.")
+            if out.strip():
+                wmctrl_success = True
+                for line in out.strip().split("\n"):
+                    if not line:
+                        continue
+                    parts = line.split(maxsplit=3)
+                    if len(parts) >= 1:
+                        wid = parts[0]
+                        if len(parts) >= 4:
+                            title = parts[3].lower()
+                            # Exclude desktop shells and critical UI components
+                            if any(x in title for x in ["plasma", "krunner", "desktop"]):
+                                continue
+                        subprocess.run(["wmctrl", "-ic", wid], env=env, check=False, stderr=subprocess.DEVNULL)
+        if not wmctrl_success:
+            logger.info("wmctrl ineffective or no X11 windows, trying KWin DBus...")
+            qdbus = shutil.which("qdbus6") or shutil.which("qdbus")
+            if qdbus:
+                import tempfile
+                script_content = "var list = (typeof workspace.windowList === 'function') ? workspace.windowList() : workspace.clientList();\nfor (var i = 0; i < list.length; i++) {\n  var c = list[i];\n  if (!c.specialWindow && !c.skipTaskbar) { c.closeWindow(); }\n}"
+                with tempfile.NamedTemporaryFile("w", delete=False, suffix=".js") as f:
+                    f.write(script_content)
+                    temp_name = f.name
+                
+                if "DBUS_SESSION_BUS_ADDRESS" not in env and "XDG_RUNTIME_DIR" in env:
+                    bus_path = os.path.join(env["XDG_RUNTIME_DIR"], "bus")
+                    if os.path.exists(bus_path):
+                        env["DBUS_SESSION_BUS_ADDRESS"] = f"unix:path={bus_path}"
+                
+                try:
+                    out = subprocess.check_output([qdbus, "org.kde.KWin", "/Scripting", "loadScript", temp_name, "lrpCloseAll"], env=env, text=True, timeout=3, stderr=subprocess.DEVNULL).strip()
+                    if out.isdigit():
+                        subprocess.run([qdbus, "org.kde.KWin", f"/Scripting/Script{out}", "run"], env=env, check=False, timeout=3, stderr=subprocess.DEVNULL)
+                except Exception as ex:
+                    logger.warning(f"KWin DBus script failed: {ex}")
+                finally:
+                    os.remove(temp_name)
     except Exception as e:
         logger.error(f"Error during window cleanup: {e}")
 

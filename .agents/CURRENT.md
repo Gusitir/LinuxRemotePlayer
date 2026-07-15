@@ -48,6 +48,7 @@ por tarea con evidencia real de comandos en la bitácora de abajo. STOP al termi
 ## BITÁCORA BACHE F-01..F-06 (Gemini anota aquí cada cierre con evidencia)
 - [F-01] Migrado kiosk a Firefox con uBlock Origin y CA vía policies.json. Evidencia: `bash -n scripts/install.sh && python3 -m py_compile backend/kiosk.py` -> exit 0.
 - [F-02] Erradicados chromium y uBOL de build_deb.sh. Evidencia: `grep -in "chromium\|brave\|ubol" scripts/build_deb.sh` -> 0 resultados, `bash -n scripts/build_deb.sh` OK.
+- [F-03] Añadido script KWin DBus en kiosk.py (Wayland fallback) y qdbus-qt6/5 a install.sh. Evidencia: `bash -n scripts/install.sh && python3 -m py_compile backend/kiosk.py` -> OK.
 
 ## AUDITORÍA FINAL PRE-RELEASE [Claude 2026-07-14]
 - C-10 (a31950b): **APTO**. Verificado por Claude ejecutando el guard: exit 0,
