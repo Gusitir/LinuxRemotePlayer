@@ -48,7 +48,9 @@ def get_installed_apps():
                 if entry.get('Hidden', 'false').lower() == 'true':
                     continue
                 cats = set((entry.get('Categories', '') or '').split(';'))
-                if cats & SKIP_CATEGORIES:
+                if 'TerminalEmulator' in cats:
+                    pass
+                elif cats & SKIP_CATEGORIES:
                     continue
 
                 app_id = filename[:-len('.desktop')]
