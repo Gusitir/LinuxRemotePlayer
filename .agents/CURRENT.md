@@ -41,8 +41,18 @@ Gemini ejecutó G-01..G-13 + 2 commits extra (fc52e44..b32101d). Veredictos:
   siendo bloqueante para vender voz.
 
 ## PRÓXIMO PASO (Gemini)
-Ejecutar FC-01, FC-02, FC-03 (correcciones de auditoría, ver PLAN_GEMINI_v1.7.md).
-Un commit por tarea. STOP -> verificación rápida de Claude -> F-07 (release v1.7.0).
+F-07 — Release v1.7.0. **AUTORIZADO por Claude [2026-07-14]**. Mismo procedimiento que
+G-14: clon fresco WSL -> .deb+.sha256 a website/downloads/ (borrar 1.6.0) ->
+latest.json con sha256 REAL -> commit [F-07] + push -> verificación EN VIVO con
+salidas pegadas (curl latest.json=1.7.0, deb 200, sha256sum match).
+
+## AUDITORÍA FC-01..FC-03 [Claude 2026-07-14] — TODAS APTO (verificación independiente)
+- FC-01 (65bf4d4): APTO — unloadScript (kiosk.py:130) ANTES de loadScript (:131) ✓.
+- FC-02 (96fb3f8): APTO — grep kill_existing en main.py = 0 (línea 24 limpia);
+  .hidden única (línea 3, la !important); README chromium|brave = 0; guard CSS exit 0.
+- FC-03 (11f3e7c): APTO — policies.json fuera del if de ca.pem (install.sh:336);
+  perfil snap ~/snap/firefox/common/lrp-kiosk (kiosk.py:214-215).
+- py_compile main/kiosk OK; bash -n install.sh OK.
 
 ## AUDITORÍA BACHE F-01..F-06 [Claude 2026-07-14]
 Verificación independiente: bash -n install/uninstall/build_deb OK; py_compile kiosk/
