@@ -111,7 +111,7 @@ https://<hostname>.local:8000/?token=<token>   or   https://<ip>:8000/?token=<to
 | Buttons do nothing | `curl -k https://127.0.0.1:8000/api/debug` | `evdev_available` must be `true`; ensure your user is in the `input` group and reboot. |
 | Service down | `systemctl --user status linuxremoteplayer` | Logs: `journalctl --user -u linuxremoteplayer -n 100`. |
 
-More detail in [TESTING.md](TESTING.md).
+More detail in the project's internal test plan (`.agents/TESTING.md`).
 
 ---
 
@@ -143,7 +143,6 @@ All backend options live in `backend/.env` (see [`backend/.env.example`](backend
 │   ├── index.html
 │   └── gracias.html
 ├── CHANGELOG.md        Semantic version release log
-├── TESTING.md          Verification guide and tests
 └── VERSION             Current release version
 ```
 

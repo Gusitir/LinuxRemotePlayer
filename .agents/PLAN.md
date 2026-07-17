@@ -119,14 +119,15 @@
 - [x] Smoke-test 7/7 funcional en HTPC limpio (Plasma Bigscreen)
 - [ ] G-15/G-16 (siguen esperando info del dispositivo del dueño)
 
-# PH14b: v1.7.0 — FIREFOX + FIXES DEL SMOKE-TEST (detalle: .agents/PLAN_GEMINI_v1.7.md)
-- [ ] F-01 Kiosk a Firefox + uBlock Origin y CA vía policies.json (decisión del dueño)
-- [ ] F-02 .deb: quitar Recommends chromium (causa del reinstall), .desktop, uBOL de lrp-update
-- [ ] F-03 Home cierra todo en Wayland/KDE (KWin Scripting DBus)
-- [ ] F-04 pulseaudio-utils (pactl ausente en Bigscreen) + warning
-- [ ] F-05 Opción lrp-setup: deshabilitar suspensión (mask sleep/suspend targets)
-- [ ] F-06 Limpieza menor (import muerto, dedupe .hidden, docs)
-- [ ] F-07 Release v1.7.0
+# PH14b: v1.7.0 — FIREFOX + FIXES — ✅ RELEASED 2026-07-14 (plan: .agents/archive/PLAN_GEMINI_v1.7.md)
+- [x] F-01..F-06 + FC-01..FC-03 (auditadas por Claude, verificación independiente)
+- [x] F-07 Release v1.7.0 publicado y verificado en vivo (sha256 4fff1722... match)
+
+# PH14c: TESTING INTENSIVO v1.7.0 (plan: .agents/TESTING.md) — EN CURSO 2026-07-17
+- [ ] Dueño ejecuta la matriz A-J (instalación, seguridad, input, kiosk, panel, PWA,
+      licencia/voz, OTA, estrés, desinstalación) y registra FALLAS
+- [ ] Claude tría las FALLAS -> tareas del plan v1.7.1/v1.8 -> Gemini corrige
+- [ ] G-15/G-16 se resuelven con los ítems F1/F2 de la matriz (icono PWA + safe-area)
 - [ ] (dueño) deploy send-feedback; Stripe LIVE; dominio + Resend
 
 # PH15: V2.0 — APK ANDROID (aprobado en evaluación; ver PLAN_GEMINI_v1.6.md FASE E)

@@ -20,6 +20,15 @@ Autonomous AI Coder for LinuxRemotePlayer. Token-optimized, fast execution. Prio
 - PLAN_GEMINI_*.md: task briefs for the external coder (Gemini executes; Claude plans+audits).
   One task = one commit = one audit checkpoint. Gemini logs out-of-scope findings in
   CURRENT.md (HALLAZGOS GEMINI) instead of fixing them.
+- TESTING.md: current intensive test plan (owner executes on HTPC+phone; failures become
+  tasks in the next plan). Replaces the old root-level TESTING.md (deleted 2026-07-17).
+- archive/: closed milestone plans and superseded reports (PLAN_GEMINI_v1.6/v1.7,
+  AUDIT_G07_G13_Report). Do not resurrect; reference only.
+
+# MODELS (updated 2026-07-17)
+- Executor: Gemini 3.5 Pro. Auditor/planner: Claude — owner switched tier from
+  "Fable5 Supercode" to "Fable5 Alto". Verification discipline stays the same:
+  every claim backed by a real command output; auditor re-runs checks independently.
 
 # ENVIRONMENT RULE (critical)
 - The bash mount (/mnt) TRUNCATES large files (~40KB): app.js real=1402 lines, mount shows ~1116.
