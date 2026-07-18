@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.1] - 2026-07-17
+
+### Added
+- **Latencia HUD**: Indicador de ping (RTT) en tiempo real en la barra de estado.
+
+### Changed
+- **Installer Robusto**: `certutil` ahora es no-interactivo para evitar bloqueos por contraseñas preexistentes de NSS. Políticas inyectadas tempranamente.
+- **Flujo PIN-first**: Los mensajes post-instalación priorizan emparejar vía red local con PIN en vez del token en URL.
+- **Nav-mode Rediseñado**: Overlay sutil con flechas direccionales e hint que desaparece.
+
+### Fixed
+- **Voz en iOS**: Solucionada condición de carrera que dejaba micrófonos abiertos; incorporado failsafe de 8s y overlay de estado prominente.
+- **Layout Adaptativo**: Corrección de desbordamiento en pantallas 16:9 cortas (iPhone 8 Plus).
+- **Favicons**: Corrección en cadena de íconos (API local, DDG, Google S2 y fallbacks).
+- **Icono PWA iOS**: Actualizado `apple-touch-icon.png` a 180x180 opaco y referenciado en todos los flujos.
+- **UFW**: Suprimidos falsos errores en sistemas sin perfiles de app (ej. OpenSSH).
+
 ## [1.7.0] - 2026-07-14
 
 ### Added
