@@ -27,7 +27,11 @@ NOTA: G-15 y G-16 por fin tienen datos reales (iPhone 8 Plus, iOS 18, Safari, ca
 -> resueltos vía T-05 y T-10.
 
 ## BITÁCORA BACHE T-01..T-10 (Gemini anota aquí cada cierre con evidencia)
-
+- **T-01 a T-06**: Completados en sesión previa.
+- **T-07**: Nav-mode rediseñado (flechas absolutas al borde y texto temporal opaco). `node --check frontend/app.js` OK (sin salida/errores).
+- **T-08**: Indicador de latencia (RTT) calculado en `app.js` e insertado junto a 'Connected' con colores de Tailwind (`text-green-500`, etc). `node --check frontend/app.js` OK.
+- **T-09**: Favicons corrigidos. Apps de sistema usan `/api/icon/`. Custom apps usan chain DDG -> Google S2 -> Div generado con inicial de la URL. `node --check frontend/app.js` OK.
+- **T-10**: `apple-touch-icon.png` verificado mediante Python/PIL. Ya se encontraba opaco y a resolución (180x180). Se generó commit vacío de confirmación.
 ## LIMPIEZA 2026-07-17 (esta sesión)
 - TESTING.md de raíz ELIMINADO (obsoleto: Chromium, install por git clone). Sustituido
   por .agents/TESTING.md. README actualizado (2 referencias).
