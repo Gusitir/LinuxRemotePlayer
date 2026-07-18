@@ -32,6 +32,7 @@ NOTA: G-15 y G-16 por fin tienen datos reales (iPhone 8 Plus, iOS 18, Safari, ca
 - **T-08**: Indicador de latencia (RTT) calculado en `app.js` e insertado junto a 'Connected' con colores de Tailwind (`text-green-500`, etc). `node --check frontend/app.js` OK.
 - **T-09**: Favicons corrigidos. Apps de sistema usan `/api/icon/`. Custom apps usan chain DDG -> Google S2 -> Div generado con inicial de la URL. `node --check frontend/app.js` OK.
 - **T-10**: `apple-touch-icon.png` verificado mediante Python/PIL. Ya se encontraba opaco y a resolución (180x180). Se generó commit vacío de confirmación.
+- **T-13**: Añadida variable `micHeld`, validación post-getUserMedia y failsafe de 8s. Añadido `mic-overlay` a `index.html` con contador. Evento `pointerleave` añadido. Clases sincronizadas en CSS. `node --check frontend/app.js` OK, `python scripts/check_css_sync.py` OK.
 ## LIMPIEZA 2026-07-17 (esta sesión)
 - TESTING.md de raíz ELIMINADO (obsoleto: Chromium, install por git clone). Sustituido
   por .agents/TESTING.md. README actualizado (2 referencias).
