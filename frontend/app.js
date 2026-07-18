@@ -412,17 +412,29 @@ function toggleNavMode() {
 function updateNavUI() {
     const btn = document.getElementById('btn-nav-mode');
     const overlay = document.getElementById('nav-overlay');
+    const hint = document.getElementById('nav-hint');
     if (!btn || !overlay) return;
     if (navMode) {
         btn.classList.add('util-active');
         btn.classList.remove('text-gray-400');
         overlay.classList.remove('hidden');
-        overlay.classList.add('flex');
+        if (hint && localStorage.getItem('nav_hint_done') !== 'true') {
+            hint.classList.remove('opacity-0');
+            hint.classList.add('opacity-100');
+            setTimeout(() => {
+                hint.classList.remove('opacity-100');
+                hint.classList.add('opacity-0');
+                localStorage.setItem('nav_hint_done', 'true');
+            }, 3000);
+        }
     } else {
         btn.classList.remove('util-active');
         btn.classList.add('text-gray-400');
         overlay.classList.add('hidden');
-        overlay.classList.remove('flex');
+        if (hint) {
+            hint.classList.remove('opacity-100');
+            hint.classList.add('opacity-0');
+        }
     }
 }
 document.addEventListener('DOMContentLoaded', updateNavUI);
