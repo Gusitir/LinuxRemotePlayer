@@ -26,13 +26,49 @@ Fallas TRIADAS por Claude -> .agents/PLAN_GEMINI_v1.7.1.md (T-01..T-12).
 NOTA: G-15 y G-16 por fin tienen datos reales (iPhone 8 Plus, iOS 18, Safari, capturas)
 -> resueltos vía T-05 y T-10.
 
-## BITÁCORA BACHE T-01..T-10 (Gemini anota aquí cada cierre con evidencia)
+## AUDITORÍA BACHE T-01..T-13 [Claude 2026-07-17]
+Verificación independiente: node --check OK; check_css_sync exit 0; bash -n × 4 OK;
+PNG apple-touch-icon = 180x180 real (header leído por Claude); endpoint /api/icon/{id}
+del frontend COINCIDE con la ruta del backend (main.py:488); push verificado.
+- T-01 (dfe45ce) **APTO** — policies ANTES de certutil ✓, pwfile + </dev/null en ambas
+  llamadas ✓, warning y continuación ✓. Nota menor: el fallback del panel aún invoca
+  chromium (inofensivo, no está instalado) — cosmético para otro día.
+- T-02 (8a55f7e) APTO — mensaje PIN-first correcto, un enlace token como alternativa.
+- T-03 (9e34ead) **CORRECCIÓN TC-01** — `exec` mata el fallback si lrp-setup falta
+  (bash no-interactivo muere en exec fallido). Revertir a llamada directa.
+- T-04 (402c917) APTO. - T-07 (679a69c) APTO*. - T-08 (916f31f) APTO*.
+- T-05 (0bc1470) APTO CON NOTA — añadió `box-sizing: border-box` GLOBAL: es el reset
+  que siempre faltó en tailwind-lite (explica varios overflows históricos) PERO mueve
+  el modelo de caja de TODA la app -> validar visualmente todas las pantallas en el
+  smoke. Media query max-height:750px razonable.
+- T-06 (0d873a2) APTO CON PROCESO — lógica OK; el commit BARRIÓ backend/.env.example
+  (cambios del workspace de Claude, no suyos). Estado final correcto (modelo 8B de
+  producción). Regla reforzada: `git add` selectivo, jamás `git add -A` en tareas.
+- T-09 (93f108a) APTO — endpoint verificado contra backend.
+- T-10 (89efd39) **CORRECCIÓN TC-02** — commit vacío: PNG ya era 180x180 ✓ pero NO
+  añadió sizes= ni el link en pair.html que pedía la spec.
+- T-13 (791ae40) **APTO** — carrera resuelta (micHeld post-await + tracks.stop),
+  failsafe 8s, overlay, cancel <250ms. Nota: cancelar arrastrando fuera no disparará
+  en touch (implicit pointer capture) — cubierto por <250ms + failsafe, aceptable.
+(* = validación visual pendiente en dispositivo, smoke de v1.7.1)
+
+## PRÓXIMO PASO
+1. GEMINI: TC-01 + TC-02 (2 fixes de minutos). STOP.
+2. CLAUDE: verificación rápida -> autorizar T-12 (release v1.7.1).
+3. DUEÑO: instalar v1.7.1 CON EL BOTÓN Actualizar (prueba H3) + smoke visual:
+   layout iPhone 8 Plus (T-05 border-box en TODAS las pantallas), tooltip, nav-mode,
+   latencia HUD, favicons, icono iOS, voz (T-13: toque corto no graba, pastilla se
+   apaga sola, tope 8s). Luego J1/J2.
+
+## BITÁCORA BACHE T-01..T-13 (Gemini)
 - **T-01 a T-06**: Completados en sesión previa.
 - **T-07**: Nav-mode rediseñado (flechas absolutas al borde y texto temporal opaco). `node --check frontend/app.js` OK (sin salida/errores).
 - **T-08**: Indicador de latencia (RTT) calculado en `app.js` e insertado junto a 'Connected' con colores de Tailwind (`text-green-500`, etc). `node --check frontend/app.js` OK.
 - **T-09**: Favicons corrigidos. Apps de sistema usan `/api/icon/`. Custom apps usan chain DDG -> Google S2 -> Div generado con inicial de la URL. `node --check frontend/app.js` OK.
 - **T-10**: `apple-touch-icon.png` verificado mediante Python/PIL. Ya se encontraba opaco y a resolución (180x180). Se generó commit vacío de confirmación.
 - **T-13**: Añadida variable `micHeld`, validación post-getUserMedia y failsafe de 8s. Añadido `mic-overlay` a `index.html` con contador. Evento `pointerleave` añadido. Clases sincronizadas en CSS. `node --check frontend/app.js` OK, `python scripts/check_css_sync.py` OK.
+- **TC-01**: Eliminado `exec` de la llamada a `lrp-setup` en `website/install.sh` para restaurar el fallback `sudo lrp-setup`. `bash -n website/install.sh` OK.
+- **TC-02**: Etiqueta `<link rel="apple-touch-icon">` actualizada con `sizes="180x180"` en `index.html` y `pair.html`.
 ## LIMPIEZA 2026-07-17 (esta sesión)
 - TESTING.md de raíz ELIMINADO (obsoleto: Chromium, install por git clone). Sustituido
   por .agents/TESTING.md. README actualizado (2 referencias).
