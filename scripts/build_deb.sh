@@ -105,6 +105,13 @@ chmod 755 /usr/local/bin/lrp-setup
 # Create lrp-update wrapper
 cat <<'INNEREOF' > /usr/local/bin/lrp-update
 #!/bin/bash
+
+if [ -z "$LRP_DETACHED" ] && command -v systemd-run >/dev/null; then
+    exec systemd-run --collect --unit=lrp-update-job --setenv=LRP_DETACHED=1 /usr/local/bin/lrp-update
+fi
+
+exec >>/tmp/lrp-update.log 2>&1
+
 set -e
 export DEBIAN_FRONTEND=noninteractive
 MANIFEST_URL="${UPDATE_MANIFEST_URL:-https://linux-remote-player.vercel.app/latest.json}"
