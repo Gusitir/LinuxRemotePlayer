@@ -18,11 +18,10 @@ y audita — toda afirmación con salida real de comando.
 
 ## PRÓXIMO PASO
 TESTING INTENSIVO EJECUTADO (2026-07-17): 28 OK, núcleo sólido (seguridad 8/8).
-Fallas TRIADAS por Claude -> .agents/PLAN_GEMINI_v1.7.1.md (T-01..T-13, TC-01..TC-02).
-1. GEMINI: release v1.7.1 EJECUTADO [T-12].
-2. CLAUDE: revisión final de la release.
-3. DUEÑO: T-11 (activar voz en el HTPC: ENABLE_VOICE + llaves en .env del HTPC — no es
-   bug); tras release, probar OTA con EL BOTÓN (H3) y luego J1/J2.
+Fallas TRIADAS por Claude -> .agents/PLAN_GEMINI_v1.7.1.md.
+1. GEMINI: ejecutado T-14 (Fix de OTA cgroup). `bash -n` del heredoc extraído: OK.
+2. CLAUDE: auditar T-14 -> autorizar T-12 (release v1.7.2).
+3. DUEÑO: validar actualización 1.7.1 -> 1.7.2 vía H3 u OTA manual.
 
 ## AUDITORÍA BACHE T-01..T-13 [Claude 2026-07-17]
 Verificación independiente: node --check OK; check_css_sync exit 0; bash -n × 4 OK;
@@ -54,7 +53,16 @@ del frontend COINCIDE con la ruta del backend (main.py:488); push verificado.
 - TC-01 (98f986a): exec retirado, fallback intacto; bash -n OK (verificado por Claude).
 - TC-02 (4874dd8): sizes="180x180" en index.html y pair.html ✓. Commits selectivos ✓.
 
-## PRÓXIMO PASO — T-12 RELEASE v1.7.1 **AUTORIZADO por Claude [2026-07-17]**
+## ⚠ H3 FALLÓ [2026-07-18] — OTA vía botón deja el servicio caído
+Causa raíz (Claude, confirmada en build_deb.sh + logs del dueño): el updater corre
+DENTRO del cgroup del servicio; el prerm del .deb detiene el servicio -> systemd mata
+el cgroup completo -> dpkg muere a mitad. -> **T-14 [CRÍTICO]** en PLAN_GEMINI_v1.7.1.md
+(re-exec vía systemd-run como unit transitoria). Release v1.7.2 tras T-14.
+Recuperación del HTPC ejecutada por el dueño: dpkg --configure -a + reinstalar deb +
+restart. OJO: 1.7.1->1.7.2 se actualiza MANUAL (updater instalado sigue buggy);
+el botón se re-valida en 1.7.2 -> siguiente.
+
+## PRÓXIMO PASO — T-12 RELEASE v1.7.1 **AUTORIZADO por Claude [2026-07-17]** (EJECUTADO)
 1. GEMINI: procedimiento estándar de release (clon fresco WSL, .deb+sha256 REAL a
    website/downloads/ borrando 1.7.0, latest.json, commit [T-12] + push, verificación
    EN VIVO con salidas pegadas). NO romper el flujo OTA: el dueño instalará esta
