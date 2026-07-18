@@ -284,6 +284,8 @@ function connect() {
     };
     ws.onclose = (event) => {
         stopHeartbeat();
+        const latencyEl = document.getElementById('latency');
+        if (latencyEl) latencyEl.classList.add('hidden');
         if (event.code === 1008) {
             statusEl.textContent = 'No autorizado';
             statusEl.className = 'text-red-500 text-xs font-bold';
@@ -312,6 +314,15 @@ function connect() {
             const res = JSON.parse(e.data);
             if (res.type === 'pong') {
                 lastPong = Date.now();
+                if (lastPingSent > 0) {
+                    const rtt = lastPong - lastPingSent;
+                    const latencyEl = document.getElementById('latency');
+                    if (latencyEl) {
+                        latencyEl.textContent = rtt + ' ms';
+                        latencyEl.className = 'text-xs font-bold ml-2 opacity-80 ' + (rtt < 60 ? 'text-green-500' : (rtt < 150 ? 'text-yellow-500' : 'text-red-500'));
+                        latencyEl.classList.remove('hidden');
+                    }
+                }
             } else if (res.status === 'processing') {
                 statusEl.textContent = res.message;
                 statusEl.className = 'text-purple-400 text-xs font-bold';
@@ -339,12 +350,14 @@ function connect() {
 let heartbeatIntervalId = null;
 let heartbeatTimeoutId = null;
 let lastPong = 0;
+let lastPingSent = 0;
 
 function startHeartbeat() {
     stopHeartbeat();
     lastPong = Date.now();
     heartbeatIntervalId = setInterval(() => {
         if (ws && ws.readyState === WebSocket.OPEN) {
+            lastPingSent = Date.now();
             wsSend({ type: 'ping' });
             heartbeatTimeoutId = setTimeout(() => {
                 if (Date.now() - lastPong > 5000) {
