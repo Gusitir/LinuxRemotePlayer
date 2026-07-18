@@ -1,7 +1,7 @@
 # ESTADO ACTUAL
 
-VERSION commiteada y PUBLICADA: 1.7.0 (Firefox). Repo PRIVADO. Licencia: Elastic 2.0.
-Fase activa: TESTING INTENSIVO v1.7.0 (matriz en .agents/TESTING.md). PH14c en PLAN.md.
+VERSION commiteada y PUBLICADA: 1.7.1. Repo PRIVADO. Licencia: Elastic 2.0.
+Fase activa: TESTING INTENSIVO v1.7.0 -> v1.7.1. PH14c en PLAN.md.
 Modelos: Gemini 3.5 Pro ejecuta; Claude (tier "Fable5 Alto" desde 2026-07-17) planifica
 y audita — toda afirmación con salida real de comando.
 
@@ -10,21 +10,19 @@ y audita — toda afirmación con salida real de comando.
   Smoke-test 7/7 funcional. Release verificado en vivo (sha256 match).
 - v1.7.0 (2026-07-14): migración a Firefox + uBlock Origin vía policies.json, CA por
   política, Home en Wayland (KWin DBus), pactl deps, opción no-suspensión, higiene .deb.
-  F-01..F-07 + FC-01..FC-03 auditados APTO. Release verificado en vivo:
-  sha256 4fff17226f3d451a64b68eabf904445b93b1e81a38941f627d8b03538a434833 == manifest.
-- Llaves reales de Together.ai viven en backend/.env (NO trackeado, verificado) con
-  ENABLE_VOICE=true — solo para pruebas del dueño.
+  F-01..F-07 + FC-01..FC-03 auditados APTO. Release verificado en vivo.
+- v1.7.1 (2026-07-17): correcciones de la matriz de testing. Instalador robusto (NSS),
+  flujo PIN-first, layout pantallas 16:9, fix de voz en iOS, HUD latencia.
+  T-01..T-10, T-13, TC-01..TC-02 auditados APTO. Release verificado en vivo:
+  sha256 e93ecdd47618b3e06989e0ed25e00c92cec8acdfc0cf59cdf6117786b8d16185 == manifest.
 
 ## PRÓXIMO PASO
 TESTING INTENSIVO EJECUTADO (2026-07-17): 28 OK, núcleo sólido (seguridad 8/8).
-Fallas TRIADAS por Claude -> .agents/PLAN_GEMINI_v1.7.1.md (T-01..T-12).
-1. GEMINI: bache T-01..T-10 (un commit por tarea + evidencia; STOP al terminar).
-   T-01 CRÍTICO: certutil colgado pidiendo password NSS = causa raíz de A3/A6/D2/D4.
-2. CLAUDE: auditar bache -> autorizar T-12 (release v1.7.1).
+Fallas TRIADAS por Claude -> .agents/PLAN_GEMINI_v1.7.1.md (T-01..T-13, TC-01..TC-02).
+1. GEMINI: release v1.7.1 EJECUTADO [T-12].
+2. CLAUDE: revisión final de la release.
 3. DUEÑO: T-11 (activar voz en el HTPC: ENABLE_VOICE + llaves en .env del HTPC — no es
    bug); tras release, probar OTA con EL BOTÓN (H3) y luego J1/J2.
-NOTA: G-15 y G-16 por fin tienen datos reales (iPhone 8 Plus, iOS 18, Safari, capturas)
--> resueltos vía T-05 y T-10.
 
 ## AUDITORÍA BACHE T-01..T-13 [Claude 2026-07-17]
 Verificación independiente: node --check OK; check_css_sync exit 0; bash -n × 4 OK;
@@ -52,13 +50,20 @@ del frontend COINCIDE con la ruta del backend (main.py:488); push verificado.
   en touch (implicit pointer capture) — cubierto por <250ms + failsafe, aceptable.
 (* = validación visual pendiente en dispositivo, smoke de v1.7.1)
 
-## PRÓXIMO PASO
-1. GEMINI: TC-01 + TC-02 (2 fixes de minutos). STOP.
-2. CLAUDE: verificación rápida -> autorizar T-12 (release v1.7.1).
-3. DUEÑO: instalar v1.7.1 CON EL BOTÓN Actualizar (prueba H3) + smoke visual:
-   layout iPhone 8 Plus (T-05 border-box en TODAS las pantallas), tooltip, nav-mode,
-   latencia HUD, favicons, icono iOS, voz (T-13: toque corto no graba, pastilla se
-   apaga sola, tope 8s). Luego J1/J2.
+## AUDITORÍA TC-01/TC-02 [Claude 2026-07-17] — APTO
+- TC-01 (98f986a): exec retirado, fallback intacto; bash -n OK (verificado por Claude).
+- TC-02 (4874dd8): sizes="180x180" en index.html y pair.html ✓. Commits selectivos ✓.
+
+## PRÓXIMO PASO — T-12 RELEASE v1.7.1 **AUTORIZADO por Claude [2026-07-17]**
+1. GEMINI: procedimiento estándar de release (clon fresco WSL, .deb+sha256 REAL a
+   website/downloads/ borrando 1.7.0, latest.json, commit [T-12] + push, verificación
+   EN VIVO con salidas pegadas). NO romper el flujo OTA: el dueño instalará esta
+   versión CON EL BOTÓN Actualizar de la app.
+2. CLAUDE: verificación en vivo independiente -> GO.
+3. DUEÑO: Ajustes -> Buscar actualización -> Actualizar (¡prueba H3 real!) + smoke
+   visual: layout iPhone 8 Plus en TODAS las pantallas (border-box global), tooltip,
+   nav-mode, latencia HUD, favicons, icono iOS, voz (toque corto no graba, pastilla
+   se apaga sola, tope 8s). Luego J1/J2 (desinstalación) cuando quiera.
 
 ## BITÁCORA BACHE T-01..T-13 (Gemini)
 - **T-01 a T-06**: Completados en sesión previa.
