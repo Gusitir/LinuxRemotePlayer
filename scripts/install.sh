@@ -316,21 +316,7 @@ for i in {1..30}; do
   sleep 1
 done
 
-# Trust the CA certificate in the system and the user's NSS db (for Brave/Chromium)
-if [ -f "$BACKEND_DIR/certs/ca.pem" ]; then
-    echo "[i] Installing LRP CA certificate to system trust..."
-    cp "$BACKEND_DIR/certs/ca.pem" /usr/local/share/ca-certificates/lrp-ca.crt
-    update-ca-certificates >/dev/null 2>&1
-    
-    echo "[i] Installing LRP CA certificate to user NSS db..."
-    USER_NSSDB="$USER_HOME/.pki/nssdb"
-    sudo -u "$TARGET_USER" mkdir -p "$USER_NSSDB"
-    sudo -u "$TARGET_USER" certutil -d sql:"$USER_NSSDB" -N --empty-password 2>/dev/null || true
-    sudo -u "$TARGET_USER" certutil -d sql:"$USER_NSSDB" -A -t "C,," -n "LRP CA" -i "$BACKEND_DIR/certs/ca.pem" || true
-else
-    echo "[!] CA certificate not generated in time. HTTPS trust may not work locally."
-fi
-
+# Write policies first so a hung certutil doesn't block them
 echo "[i] Configuring Firefox policies..."
 mkdir -p /etc/firefox/policies
 cat <<EOFJSON > /etc/firefox/policies/policies.json
@@ -353,6 +339,28 @@ cat <<EOFJSON > /etc/firefox/policies/policies.json
   }
 }
 EOFJSON
+
+# Trust the CA certificate in the system and the user's NSS db (for Brave/Chromium)
+if [ -f "$BACKEND_DIR/certs/ca.pem" ]; then
+    echo "[i] Installing LRP CA certificate to system trust..."
+    cp "$BACKEND_DIR/certs/ca.pem" /usr/local/share/ca-certificates/lrp-ca.crt
+    update-ca-certificates >/dev/null 2>&1
+    
+    echo "[i] Installing LRP CA certificate to user NSS db..."
+    USER_NSSDB="$USER_HOME/.pki/nssdb"
+    sudo -u "$TARGET_USER" mkdir -p "$USER_NSSDB"
+    
+    PWFILE=$(mktemp)
+    echo "" > "$PWFILE"
+    
+    sudo -u "$TARGET_USER" certutil -d sql:"$USER_NSSDB" -N --empty-password -f "$PWFILE" < /dev/null 2>/dev/null || true
+    if ! sudo -u "$TARGET_USER" certutil -d sql:"$USER_NSSDB" -A -t "C,," -n "LRP CA" -i "$BACKEND_DIR/certs/ca.pem" -f "$PWFILE" < /dev/null; then
+        echo "[!] Warning: Could not import CA into NSS database (maybe it has a password?). Firefox kiosk will still work via policies."
+    fi
+    rm -f "$PWFILE"
+else
+    echo "[!] CA certificate not generated in time. HTTPS trust may not work locally."
+fi
 
 echo "[i] Launching Status Panel..."
 sudo -u "$TARGET_USER" DISPLAY=:0 XDG_RUNTIME_DIR="/run/user/$(id -u "$TARGET_USER")" xdg-open "https://127.0.0.1:8000/status" 2>/dev/null || sudo -u "$TARGET_USER" DISPLAY=:0 XDG_RUNTIME_DIR="/run/user/$(id -u "$TARGET_USER")" chromium --app="https://127.0.0.1:8000/status" 2>/dev/null || true

@@ -123,17 +123,77 @@
 - [x] F-01..F-06 + FC-01..FC-03 (auditadas por Claude, verificación independiente)
 - [x] F-07 Release v1.7.0 publicado y verificado en vivo (sha256 4fff1722... match)
 
-# PH14c: TESTING INTENSIVO v1.7.0 (plan: .agents/TESTING.md) — EN CURSO 2026-07-17
-- [ ] Dueño ejecuta la matriz A-J (instalación, seguridad, input, kiosk, panel, PWA,
-      licencia/voz, OTA, estrés, desinstalación) y registra FALLAS
-- [ ] Claude tría las FALLAS -> tareas del plan v1.7.1/v1.8 -> Gemini corrige
-- [ ] G-15/G-16 se resuelven con los ítems F1/F2 de la matriz (icono PWA + safe-area)
+# PH14c: TESTING INTENSIVO v1.7.0 — ✅ EJECUTADO Y TRIADO 2026-07-17
+- [x] Matriz A-J ejecutada por el dueño: 28 OK (seguridad 8/8, input, kiosk, panel ✓)
+- [x] Claude triado con causa raíz: 1 bug crítico de installer (certutil colgado =
+      A3+A6+D2+D4), layout 16:9, tooltip, favicons, icono iOS, UX nav-mode
+- [x] G-15/G-16 por fin diagnosticados (iPhone 8 Plus iOS18 Safari + capturas)
+
+# PH14d: v1.7.1 — CORRECCIONES DEL TESTING (plan: .agents/PLAN_GEMINI_v1.7.1.md)
+- [ ] T-01 [CRÍTICO] certutil no-interactivo + policies.json antes del bloque NSS
+- [ ] T-02 flujo final del install orientado a PIN + investigar ?token=
+- [ ] T-03 bootstrap encadena lrp-setup | T-04 UFW OpenSSH fallback
+- [ ] T-05 [ALTO] layout pantallas cortas 16:9 | T-06 tooltip tour | T-07 nav-mode UX
+- [ ] T-08 latencia en HUD | T-09 favicons | T-10 apple-touch-icon 180x180
+- [ ] T-11 (dueño) activar voz en HTPC (config, no bug)
+- [ ] T-12 Release v1.7.1 -> prueba REAL del botón OTA (H3) -> luego J1/J2
 - [ ] (dueño) deploy send-feedback; Stripe LIVE; dominio + Resend
 
-# PH15: V2.0 — APK ANDROID (aprobado en evaluación; ver PLAN_GEMINI_v1.6.md FASE E)
-- [ ] Prerrequisitos: v1.6.0 estable + ai-proxy Edge Function (claves fuera del dispositivo)
+# ROADMAP COMERCIAL (decidido con el dueño 2026-07-17)
+# Monetización: UNA licencia Pro lifetime cubre TODO lo premium (voz, APK, archivos,
+# skins pro). Sin tiers. Precio puede subir al acumular features; compradores previos
+# conservan todo. Free tier (touchpad/teclado/kiosk) se mantiene genuinamente bueno.
+# Orden: v1.8 fixes testing -> v1.9 ai-proxy+Stripe LIVE+dominio (LANZAMIENTO+rebrand)
+#        -> v2.0 Skins 2.0 -> v2.1 APK premium -> v2.2 Archivos/disco virtual.
+# REBRAND: "linuxremoteplayer" se queda como nombre técnico; nombre comercial se decide
+# al comprar el dominio propio (un solo cambio de infra, no dos).
+
+# PH15: APK ANDROID **PREMIUM** [v2.1] (diseño: archive/PLAN_GEMINI_v1.6.md FASE E)
+- [ ] Prerrequisito: ai-proxy Edge Function (claves fuera del dispositivo)
 - [ ] Capacitor wrapper + NSD/mDNS + RECORD_AUDIO + volumen físico + foreground service
-- [ ] WSS con networkSecurityConfig (CA propia embebida) — NO ws:// plano
+- [ ] WSS con TOFU pinning del CA obtenido en pairing (NO ws:// plano)
+- [ ] Gate premium: el VALOR se gatea con licencia server-side (no el archivo .apk);
+      enlace de descarga en Ajustes al activar Pro
+- [ ] Share-sheet Android "Enviar a TV" (sinergia con PH16)
+
+# PH16: ARCHIVOS / DISCO VIRTUAL **PREMIUM** [v2.2] (aprobado 2026-07-17)
+Caso de uso del dueño: mandar multimedia desde PC de trabajo o teléfono al HTPC;
+guardar fotos/videos del teléfono y verlos en la TV.
+- [ ] Fase 1 — WebDAV embebido en el backend (wsgidav, puro Python): montable como
+      unidad de red en Windows/macOS/iOS Files/Android. Reusa HTTPS+CA+gate licencia.
+- [ ] Seguridad: UNA carpeta raíz configurable (~/LRP-Share o disco elegido en Ajustes),
+      guards de path-traversal, symlinks fuera del root prohibidos, credenciales
+      dedicadas (user/pass generados, visibles en panel TV), solo LAN, opción read-only
+- [ ] Fase 2 — pestaña "Archivos" en la PWA: navegar, subir fotos/videos del teléfono,
+      descargar, y botón "REPRODUCIR EN TV" (kiosk/mpv sobre el archivo local) — el
+      diferenciador vs un NAS normal
+- [ ] Marketing honesto: "comparte y reproduce en tu TV", NO "NAS"
+
+# PH18: MODO GAMEPAD **PREMIUM** [v2.3] (propuesto 2026-07-17; latencia validada por el dueño)
+Posicionamiento: "retro y multijugador casual instantáneo" — NUNCA "reemplaza tu mando BT".
+Killer feature: multijugador — cada teléfono conectado = un mando (sin hardware extra).
+- [ ] Backend: uinput con IDENTIDAD de gamepad real (EV_ABS + BTN_GAMEPAD) para que
+      RetroArch/emuladores lo detecten como mando; base ya existe (BTN_A/B/X/Y/START/
+      SELECT/DPAD en caps desde PH1)
+- [ ] Backend: UN dispositivo virtual POR cliente WS (hoy gamepad/mouse son singletons
+      globales — cambio mayor); mando 1..4 asignado por orden de conexión
+- [ ] PWA fase 1: layout landscape multitouch (D-pad + ABXY + Start/Select + L/R),
+      háptica al pulsar; SIN sticks analógicos en v1 (táctiles son mediocres)
+- [ ] Se implementa como theme pack de PH17 (reusa infraestructura de layouts)
+- [ ] APK fase 2: háptica/multitouch nativos + menor latencia -> argumento de venta
+      extra del APK premium
+- [ ] Gate: misma licencia Pro única
+
+# PH17: SKINS 2.0 **PREMIUM** [v2.0] (aprobado 2026-07-17)
+Evolución: de paletas CSS a THEME PACKS completos (paleta + layout de botonera +
+distribución de webapps + wallpaper + iconografía).
+- [ ] 4-6 temas CURADOS (no editor infinito — coste QA combinatorio): Cozy (actual),
+      Minimal (touchpad gigante), Media-first (transporte arriba), Neon/Gamer, Retro
+- [ ] Layouts = clases de grid alternativas por tema; sin build step; el guard CSS
+      (check_css_sync) cubre cada tema nuevo
+- [ ] Win barato 1: wallpaper personalizado del usuario (IndexedDB, cero servidor)
+- [ ] Win barato 2: reordenar webapps por drag & drop (persiste en localStorage)
+- [ ] Gate premium: mecanismo de skins Pro ya existente
 
 ## NOTES / MANUAL ACTIONS
 - HTTPS is automatic: run.py self-generates and self-heals the cert. The only manual

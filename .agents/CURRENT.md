@@ -16,12 +16,17 @@ y audita — toda afirmación con salida real de comando.
   ENABLE_VOICE=true — solo para pruebas del dueño.
 
 ## PRÓXIMO PASO
-1. DUEÑO: ejecutar la matriz A-J de .agents/TESTING.md en HTPC limpio + teléfono;
-   registrar [OK]/[FALLA]/[SKIP] y volcar FALLAS en la sección RESULTADOS.
-2. CLAUDE: triar FALLAS -> tareas [T-NN] del plan v1.7.1/v1.8.
-3. GEMINI: ejecutar esas tareas (mismo protocolo: un commit por tarea + evidencia).
-Los ítems F1/F2 de la matriz alimentan G-15 (safe-area) y G-16 (icono PWA) — pendientes
-desde v1.5 por falta de modelo/screenshots del teléfono.
+TESTING INTENSIVO EJECUTADO (2026-07-17): 28 OK, núcleo sólido (seguridad 8/8).
+Fallas TRIADAS por Claude -> .agents/PLAN_GEMINI_v1.7.1.md (T-01..T-12).
+1. GEMINI: bache T-01..T-10 (un commit por tarea + evidencia; STOP al terminar).
+   T-01 CRÍTICO: certutil colgado pidiendo password NSS = causa raíz de A3/A6/D2/D4.
+2. CLAUDE: auditar bache -> autorizar T-12 (release v1.7.1).
+3. DUEÑO: T-11 (activar voz en el HTPC: ENABLE_VOICE + llaves en .env del HTPC — no es
+   bug); tras release, probar OTA con EL BOTÓN (H3) y luego J1/J2.
+NOTA: G-15 y G-16 por fin tienen datos reales (iPhone 8 Plus, iOS 18, Safari, capturas)
+-> resueltos vía T-05 y T-10.
+
+## BITÁCORA BACHE T-01..T-10 (Gemini anota aquí cada cierre con evidencia)
 
 ## LIMPIEZA 2026-07-17 (esta sesión)
 - TESTING.md de raíz ELIMINADO (obsoleto: Chromium, install por git clone). Sustituido
