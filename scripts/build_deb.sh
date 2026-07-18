@@ -148,8 +148,7 @@ INNEREOF
 chmod 755 /usr/local/bin/lrp-update
 
 echo "================================================="
-echo " Instalación base completada. "
-echo " Ejecuta: sudo lrp-setup para configurar tu modo."
+echo " Paquete base instalado. "
 echo "================================================="
 EOF
 chmod 755 pkg/DEBIAN/postinst

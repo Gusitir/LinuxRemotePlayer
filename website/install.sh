@@ -36,4 +36,4 @@ apt-get install -y "./linuxremoteplayer_${VERSION}_all.deb"
 
 if [ ! -t 0 ] && [ -e /dev/tty ]; then exec < /dev/tty; fi
 echo "Package installed. Running setup..."
-/usr/local/bin/lrp-setup || echo -e "\n[!] Falló la ejecución automática. Por favor ejecuta manualmente:\n    sudo lrp-setup\n"
+exec /usr/local/bin/lrp-setup || echo -e "\n[!] Falló la ejecución automática. Por favor ejecuta manualmente:\n    sudo lrp-setup\n"
