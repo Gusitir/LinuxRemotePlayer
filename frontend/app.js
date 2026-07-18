@@ -622,24 +622,29 @@ function bumpUsage(id) { const u = getUsage(); u[id] = (u[id] || 0) + 1; localSt
 function getCustomApps() { try { return JSON.parse(localStorage.getItem('custom_apps') || '[]'); } catch(e) { return []; } }
 function getHiddenApps() { try { return JSON.parse(localStorage.getItem('hidden_apps') || '[]'); } catch(e) { return []; } }
 
-function setTileFavicon(img, domain, fallbackEl) {
-    const s2 = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+function setTileFavicon(img, domain) {
     const ddg = `https://icons.duckduckgo.com/ip3/${domain}.ico`;
-    const root = `https://${domain}/favicon.ico`;
+    const s2 = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
     
     let step = 0;
+    img.onerror = () => {
+        step++;
+        if (step === 1) {
+            img.src = s2;
+        } else {
+            const div = document.createElement('div');
+            div.className = 'w-full h-full flex items-center justify-center text-white font-bold text-xl bg-gray-700 uppercase';
+            div.textContent = domain.replace(/^www\./i, '').charAt(0);
+            img.replaceWith(div);
+        }
+    };
     img.onload = () => {
-        if (step === 0 && img.naturalWidth <= 16) {
+        if (step === 1 && img.naturalWidth <= 16) {
+            // s2 default generic icon is usually 16x16
             img.onerror();
         }
     };
-    img.onerror = () => {
-        step++;
-        if (step === 1) img.src = ddg;
-        else if (step === 2) img.src = root;
-        else img.replaceWith(fallbackEl);
-    };
-    img.src = s2;
+    img.src = ddg;
 }
 
 function createAppTile(app) {
@@ -650,9 +655,9 @@ function createAppTile(app) {
     if (app.is_native) div.dataset.native = 'true';
 
     const iconWrapper = document.createElement('div');
-    iconWrapper.className = 'w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-gray-800';
+    iconWrapper.className = 'w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-gray-800 shrink-0';
 
-    if (app.is_native) {
+    if (app.id && !app.id.startsWith('custom_')) {
         const img = document.createElement('img');
         img.src = `/api/icon/${app.id}`;
         img.className = 'w-10 h-10 object-contain';
@@ -661,20 +666,23 @@ function createAppTile(app) {
         };
         iconWrapper.appendChild(img);
     } else {
-        const iconFallback = document.createElement('img');
-        iconFallback.className = 'w-full h-full object-contain p-1';
-        iconFallback.src = './icon.svg';
         if (app.url) {
             try {
                 const domain = new URL(app.url).hostname;
                 const img = document.createElement('img');
                 img.className = 'w-full h-full object-cover';
                 iconWrapper.appendChild(img);
-                setTileFavicon(img, domain, iconFallback);
+                setTileFavicon(img, domain);
             } catch(e) {
+                const iconFallback = document.createElement('img');
+                iconFallback.className = 'w-full h-full object-contain p-1';
+                iconFallback.src = './icon.svg';
                 iconWrapper.appendChild(iconFallback);
             }
         } else {
+            const iconFallback = document.createElement('img');
+            iconFallback.className = 'w-full h-full object-contain p-1';
+            iconFallback.src = './icon.svg';
             iconWrapper.appendChild(iconFallback);
         }
     }
