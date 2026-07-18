@@ -1,6 +1,6 @@
 {
-  "version": "1.7.1",
-  "deb_url": "https://linux-remote-player.vercel.app/downloads/linuxremoteplayer_1.7.1_all.deb",
-  "sha256": "e93ecdd47618b3e06989e0ed25e00c92cec8acdfc0cf59cdf6117786b8d16185",
-  "notes": "Instalador robusto con fallback preservado; fix carrera de voz en iOS con overlay; latencia en HUD; nav-mode rediseñado; favicons correctos; icono iOS validado; layout adaptativo para pantallas 16:9."
+  "version": "1.7.2",
+  "deb_url": "https://linux-remote-player.vercel.app/downloads/linuxremoteplayer_1.7.2_all.deb",
+  "sha256": "783b8d07da8ea0c34ce49edb0b3d330b78146311a29c5d1601451f55c50a10ee",
+  "notes": "Fix crítico en el sistema de actualizaciones OTA (el proceso ahora sobrevive al reinicio del servicio); mejoras adicionales de estabilidad de la versión 1.7.1."
 }
