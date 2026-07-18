@@ -296,10 +296,17 @@ if [ -f "$TOKEN_FILE" ]; then
 fi
 
 echo "======================================"
-echo " Installation Complete!               "
-echo " Access PWA at:                       "
+echo "    LinuxRemotePlayer installed!      "
+echo "======================================"
+echo " Pasos para conectar tu teléfono:"
+echo "   1) Abre en tu teléfono:"
+echo "      https://$HOSTNAME_LOCAL:8000"
+echo "      (o https://$IP_ADDR:8000)"
+echo "   2) Acepta la advertencia de certificado (solo la primera vez)."
+echo "   3) Escribe el PIN que muestra el panel en tu TV."
+echo " "
+echo " Alternativa avanzada (enlace directo):"
 echo "   https://$HOSTNAME_LOCAL:8000/?token=$TOKEN"
-echo "   https://$IP_ADDR:8000/?token=$TOKEN"
 echo "======================================"
 
 sudo -u "$TARGET_USER" kbuildsycoca6 --noincremental 2>/dev/null || sudo -u "$TARGET_USER" kbuildsycoca5 2>/dev/null || true
