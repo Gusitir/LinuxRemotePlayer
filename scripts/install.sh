@@ -172,7 +172,7 @@ rm -f /opt/linuxremoteplayer/.deps_incomplete
 ufw allow 8000/tcp
 if [ "$mode" = "1" ]; then
     echo "[i] Enabling UFW firewall for Appliance Mode (allowing OpenSSH first)..."
-    ufw allow OpenSSH || ufw allow 22/tcp
+    ufw allow OpenSSH 2>/dev/null || ufw allow 22/tcp || true
     ufw --force enable
 else
     if ufw status | grep -q "inactive"; then
