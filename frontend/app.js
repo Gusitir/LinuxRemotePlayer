@@ -321,9 +321,14 @@ function connect() {
                 if (res.status === 'success' && res.message === 'Authenticated') {
                     const row = document.getElementById('apps-row');
                     if (row && !row.children.length) {
-                        fetchApps();
+                        fetchApps().then(() => {
+                            setTimeout(() => { requestAnimationFrame(showTour); }, 500);
+                        }).catch(() => {
+                            setTimeout(() => { requestAnimationFrame(showTour); }, 500);
+                        });
+                    } else {
+                        setTimeout(() => { requestAnimationFrame(showTour); }, 500);
                     }
-                    setTimeout(showTour, 500);
                 }
             }
         } catch (err) {}
@@ -1139,10 +1144,10 @@ function showTour() {
     overlay.className = 'fixed inset-0 z-[100] flex flex-col items-center justify-center pointer-events-auto transition-opacity duration-300';
     
     const steps = [
-        { text: "Tus apps favoritas — un toque y se abren en la TV", highlightId: "apps-row", pos: "bottom" },
-        { text: "Desliza para mover el puntero. El botón cruceta lo convierte en flechas", highlightId: "touchpad", pos: "top" },
-        { text: "Multimedia, volumen, Atrás y Home", highlightId: "control-cluster", pos: "top" },
-        { text: "Todo lo demás vive en Ajustes — incluidos los tutoriales", highlightId: "btn-settings", pos: "bottom" }
+        { text: "Tus apps favoritas — un toque y se abren en la TV", highlightId: "apps-row" },
+        { text: "Desliza para mover el puntero. El botón cruceta lo convierte en flechas", highlightId: "touchpad" },
+        { text: "Multimedia, volumen, Atrás y Home", highlightId: "control-cluster" },
+        { text: "Todo lo demás vive en Ajustes — incluidos los tutoriales", highlightId: "btn-settings" }
     ];
     
     let currentStep = 0;
@@ -1186,6 +1191,18 @@ function showTour() {
         nextBtn.textContent = currentStep === steps.length - 1 ? 'Terminar' : 'Siguiente';
         
         const target = document.getElementById(s.highlightId);
+        if (!target) {
+            currentStep++;
+            renderStep();
+            return;
+        }
+        updatePosition();
+    }
+    
+    function updatePosition() {
+        if (currentStep >= steps.length) return;
+        const s = steps[currentStep];
+        const target = document.getElementById(s.highlightId);
         if (target) {
             const rect = target.getBoundingClientRect();
             highlight.style.left = (rect.left - 4) + 'px';
@@ -1193,25 +1210,29 @@ function showTour() {
             highlight.style.width = (rect.width + 8) + 'px';
             highlight.style.height = (rect.height + 8) + 'px';
             
-            if (s.pos === 'bottom') {
+            const spaceAbove = rect.top;
+            const spaceBelow = window.innerHeight - rect.bottom;
+            
+            // Elegir el lado con más espacio disponible
+            if (spaceBelow > spaceAbove) {
                 box.style.marginTop = Math.max(0, rect.bottom + 20) + 'px';
                 box.style.marginBottom = '0';
                 overlay.style.justifyContent = 'flex-start';
-            } else if (s.pos === 'top') {
+            } else {
                 box.style.marginTop = '0';
                 box.style.marginBottom = Math.max(0, window.innerHeight - rect.top + 20) + 'px';
                 overlay.style.justifyContent = 'flex-end';
             }
-        } else {
-            // Target missing? just skip step
-            currentStep++;
-            renderStep();
         }
     }
+    
+    const ro = new ResizeObserver(() => updatePosition());
+    ro.observe(document.body);
     
     function finishTour() {
         localStorage.setItem('tour_done', 'true');
         overlay.style.opacity = '0';
+        ro.disconnect();
         setTimeout(() => overlay.remove(), 300);
     }
     
