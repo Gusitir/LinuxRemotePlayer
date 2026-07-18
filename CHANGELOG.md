@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.2] - 2026-07-18
+
+### Fixed
+- **OTA Updater**: Solucionado fallo crítico que mataba el proceso de actualización en curso (el script interno se re-ejecuta como unit transitoria aislando su `cgroup` y preservando sus logs en `/tmp/lrp-update.log`).
+
 ## [1.7.1] - 2026-07-17
 
 ### Added
