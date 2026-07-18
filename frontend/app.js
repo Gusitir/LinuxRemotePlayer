@@ -574,28 +574,76 @@ if (kbInput) {
 }
 
 // --- Voice - COR-02 pointer listeners ---
+let micHeld = false;
+let micStartMs = 0;
+let micTimerId = null;
+let micDisplayTimerId = null;
+let micDiscard = false;
+
 async function startVoice() {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { toast('Captura de audio no soportada (requiere HTTPS).'); return; }
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        if (!micHeld) {
+            // Cancelado durante la espera (ej. iOS delay)
+            stream.getTracks().forEach(t => t.stop());
+            return;
+        }
         mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
         mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
         mediaRecorder.onstop = () => {
-            const blob = new Blob(audioChunks, { type: 'audio/webm' });
-            if (ws && ws.readyState === WebSocket.OPEN) ws.send(blob);
+            if (!micDiscard && audioChunks.length > 0) {
+                const blob = new Blob(audioChunks, { type: 'audio/webm' });
+                if (ws && ws.readyState === WebSocket.OPEN) ws.send(blob);
+            }
             audioChunks = [];
             stream.getTracks().forEach((t) => t.stop());
         };
         mediaRecorder.start();
+        micDiscard = false;
+
+        const overlay = document.getElementById('mic-overlay');
+        const timerEl = document.getElementById('mic-timer');
+        if (overlay && timerEl) {
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+            let secs = 0;
+            timerEl.textContent = '00:00';
+            micDisplayTimerId = setInterval(() => {
+                secs++;
+                timerEl.textContent = '00:0' + secs;
+            }, 1000);
+        }
+
+        micTimerId = setTimeout(() => {
+            stopVoice(false);
+        }, 8000);
+
         if (navigator.vibrate) navigator.vibrate(50);
         statusEl.textContent = 'Listening...'; statusEl.className = 'text-blue-400 text-xs font-bold';
     } catch (e) { console.error('Mic denied', e); }
 }
-function stopVoice() {
+
+function stopVoice(cancel) {
+    if (micTimerId) { clearTimeout(micTimerId); micTimerId = null; }
+    if (micDisplayTimerId) { clearInterval(micDisplayTimerId); micDisplayTimerId = null; }
+    
+    const overlay = document.getElementById('mic-overlay');
+    if (overlay) {
+        overlay.classList.add('hidden');
+        overlay.classList.remove('flex');
+    }
+
     if (mediaRecorder && mediaRecorder.state === 'recording') {
+        micDiscard = cancel;
         mediaRecorder.stop();
-        if (navigator.vibrate) navigator.vibrate([40, 40]);
-        statusEl.textContent = 'Processing AI...'; statusEl.className = 'text-purple-400 text-xs font-bold';
+        if (navigator.vibrate && !cancel) navigator.vibrate([40, 40]);
+        if (!cancel) {
+            statusEl.textContent = 'Processing AI...'; statusEl.className = 'text-purple-400 text-xs font-bold';
+        } else {
+            statusEl.textContent = 'Cancelado'; statusEl.className = 'text-gray-400 text-xs font-bold';
+            setTimeout(() => { if (statusEl.textContent === 'Cancelado') statusEl.textContent = 'Connected'; }, 2000);
+        }
     }
 }
 
@@ -603,16 +651,32 @@ const micBtn = document.getElementById('mic-btn');
 if (micBtn) {
     micBtn.addEventListener('pointerdown', (e) => {
         e.preventDefault();
+        micHeld = true;
+        micStartMs = Date.now();
         if (mediaRecorder && mediaRecorder.state === 'recording') return;
         startVoice();
     });
     micBtn.addEventListener('pointerup', (e) => {
         e.preventDefault();
-        stopVoice();
+        micHeld = false;
+        const duration = Date.now() - micStartMs;
+        if (duration < 250) {
+            stopVoice(true);
+            toast('Mantén pulsado para hablar');
+        } else {
+            stopVoice(false);
+        }
     });
     micBtn.addEventListener('pointercancel', (e) => {
         e.preventDefault();
-        stopVoice();
+        micHeld = false;
+        stopVoice(true);
+    });
+    micBtn.addEventListener('pointerleave', (e) => {
+        if (micHeld) {
+            micHeld = false;
+            stopVoice(true);
+        }
     });
 }
 
