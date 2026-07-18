@@ -1,7 +1,7 @@
 # ESTADO ACTUAL
 
-VERSION commiteada y PUBLICADA: 1.7.1. Repo PRIVADO. Licencia: Elastic 2.0.
-Fase activa: TESTING INTENSIVO v1.7.0 -> v1.7.1. PH14c en PLAN.md.
+VERSION commiteada y PUBLICADA: 1.7.2. Repo PRIVADO. Licencia: Elastic 2.0.
+Fase activa: TESTING INTENSIVO finalizado. PH14c en PLAN.md.
 Modelos: Gemini 3.5 Pro ejecuta; Claude (tier "Fable5 Alto" desde 2026-07-17) planifica
 y audita — toda afirmación con salida real de comando.
 
@@ -11,17 +11,36 @@ y audita — toda afirmación con salida real de comando.
 - v1.7.0 (2026-07-14): migración a Firefox + uBlock Origin vía policies.json, CA por
   política, Home en Wayland (KWin DBus), pactl deps, opción no-suspensión, higiene .deb.
   F-01..F-07 + FC-01..FC-03 auditados APTO. Release verificado en vivo.
-- v1.7.1 (2026-07-17): correcciones de la matriz de testing. Instalador robusto (NSS),
-  flujo PIN-first, layout pantallas 16:9, fix de voz en iOS, HUD latencia.
-  T-01..T-10, T-13, TC-01..TC-02 auditados APTO. Release verificado en vivo:
-  sha256 e93ecdd47618b3e06989e0ed25e00c92cec8acdfc0cf59cdf6117786b8d16185 == manifest.
+- v1.7.1 (2026-07-17): correcciones de testing. Instalador robusto, PIN-first,
+  layout 16:9, voz iOS, HUD latencia. T-01..T-13, TC-01..TC-02 auditados APTO.
+- v1.7.2 (2026-07-18): hotfix crítico [T-14]. Updater OTA desacoplado del cgroup del
+  servicio con `systemd-run`. Release verificado en vivo:
+  sha256 783b8d07da8ea0c34ce49edb0b3d330b78146311a29c5d1601451f55c50a10ee == manifest.
 
 ## PRÓXIMO PASO
 TESTING INTENSIVO EJECUTADO (2026-07-17): 28 OK, núcleo sólido (seguridad 8/8).
-Fallas TRIADAS por Claude -> .agents/PLAN_GEMINI_v1.7.1.md.
-1. GEMINI: ejecutado T-14 (Fix de OTA cgroup). `bash -n` del heredoc extraído: OK.
-2. CLAUDE: auditar T-14 -> autorizar T-12 (release v1.7.2).
-3. DUEÑO: validar actualización 1.7.1 -> 1.7.2 vía H3 u OTA manual.
+Fallas TRIADAS por Claude -> .agents/PLAN_GEMINI_v1.7.1.md resueltas.
+1. DUEÑO: validar actualización manual en el HTPC (v1.7.1 -> v1.7.2) y probar el botón OTA recién de v1.7.2 -> futuro.
+2. DUEÑO: T-11 (activar voz en el HTPC: ENABLE_VOICE + llaves en .env del HTPC).
+
+## AUDITORÍA T-14 [Claude 2026-07-18] — **APTO**
+- T-14 (de50b03): re-exec systemd-run al TOPE del lrp-update embebido, guard
+  LRP_DETACHED + command -v, redirect de log tras el exec, set -e después (orden
+  correcto). Restart final presente (system + user). Verificación INDEPENDIENTE de
+  Claude: heredoc extraído con awk -> bash -n OK.
+- Notas no bloqueantes: (a) doble-tap del botón Actualizar -> el segundo systemd-run
+  falla por unit activa = benigno (previene apt concurrente); (b) --collect
+  garbage-colecta units fallidas.
+
+## PRÓXIMO PASO — RELEASE v1.7.2 **AUTORIZADO por Claude [2026-07-18]**
+1. GEMINI: procedimiento estándar (clon fresco WSL, .deb+sha256 REAL, borrar 1.7.1
+   de downloads, latest.json 1.7.2, commit + push, verificación EN VIVO con salidas).
+2. CLAUDE: verificación en vivo independiente -> GO.
+3. DUEÑO: actualizar 1.7.1 -> 1.7.2 con `sudo lrp-update` MANUAL desde terminal del
+   HTPC (el updater instalado aún es el buggy — huevo-gallina). El BOTÓN (H3) se
+   valida recién en la actualización 1.7.2 -> siguiente release.
+   Pendientes de smoke v1.7.1: visual completo (border-box en todas las pantallas,
+   tooltip, nav-mode, HUD latencia, favicons, icono iOS, voz T-13). Luego J1/J2.
 
 ## AUDITORÍA BACHE T-01..T-13 [Claude 2026-07-17]
 Verificación independiente: node --check OK; check_css_sync exit 0; bash -n × 4 OK;
