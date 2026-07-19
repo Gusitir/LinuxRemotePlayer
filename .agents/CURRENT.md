@@ -1,4 +1,4 @@
-﻿# ESTADO ACTUAL
+# ESTADO ACTUAL
 
 ## VOZ ROTA -> T-23 [CRITICO] (reporte DeepSeek + diagnostico Claude 2026-07-19)
 Bug A (repo, confirmado): main.py:53 usa ai_pipeline.NVIDIA_KEY (inexistente desde
@@ -33,19 +33,17 @@ CANCELADA. LECCION (2 reglas nuevas de auditoria):
     el working tree, que puede estar a medio editar.
 Resto de T-21 verificado: placeholder sw.js OK, sed OK, guard OK, docs OK.
 
-## PROXIMO PASO [vigente 2026-07-19] — T-22 RELEASE v1.7.5 **AUTORIZADO**
-1. GEMINI: T-22 procedimiento estandar (clon fresco WSL, guard del sw.js debe pasar,
-   sha256 real pegado, verificacion en vivo pegada). EVIDENCIA EXTRA: extraer del .deb
-   la linea 1 del sw.js empaquetado -> debe decir 'lrp-1.7.5'.
-2. CLAUDE: verificacion en vivo + extraccion propia del sw.js del .deb -> GO.
-3. DUENO: boton a 1.7.5 (confirmacion limpia H3) + reinstalar PWA (ultima vez) +
-   re-smoke + VOZ (DeepSeek: F:\Mi unidad\TESTING\VOICE_SETUP_DEEPSEEK.md).
-NOTA HIGIENE: CURRENT.md con encoding mixto y sobrepeso -> COMPACTAR al cerrar v1.7.5.
+## PROXIMO PASO
+1. GEMINI: Ejecutado T-24 (Release v1.7.6).
+   - Build exitoso. Guard sw.js PASADO.
+   - Sha256 real validado en vivo: `36be42b82491c932dec4eb7fb2a8a82258f3f1bf835708d87b71ccf4d0835ee5` == manifest.
+   - Extracción de sw.js desde .deb publicado validó la línea 1: `const CACHE = 'lrp-1.7.6';`
+2. CLAUDE: verificación en vivo de T-24 -> GO definitivo.
+3. DUEÑO: botón Actualizar (1.7.5->1.7.6) para cerrar el ciclo de Voz en el HTPC y app nativa.
 
-VERSION commiteada y PUBLICADA: 1.7.2. Repo PRIVADO. Licencia: Elastic 2.0.
+VERSION commiteada y PUBLICADA: 1.7.6. Repo PRIVADO. Licencia: Elastic 2.0.
 Fase activa: TESTING INTENSIVO finalizado. PH14c en PLAN.md.
-Modelos: Gemini 3.5 Pro ejecuta; Claude (tier "Fable5 Alto" desde 2026-07-17) planifica
-y audita 窶・toda afirmaciﾃｳn con salida real de comando.
+Modelos: Gemini 3.5 Pro ejecuta; Claude planifica y audita.
 
 ## RESUMEN v1.6/v1.7 (cerrados; detalle en .agents/archive/ y git log)
 - v1.6.0 (2026-07-14): bugs del HTPC + hardening. G-01..G-18 + C-01..C-10 auditados.
