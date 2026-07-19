@@ -1,5 +1,26 @@
 ﻿# ESTADO ACTUAL
 
+## AUDITORIA T-21 (7d29dbc): **APTO** [Claude 2026-07-19, RECTIFICADA]
+Primer dictamen fue NO APTO por "backslashes en build_deb.sh:53" — FALSA ALARMA por
+CARRERA DE EDICION: el auditor leyo el working tree MIENTRAS Gemini seguia editando
+(el dueno lo habia avisado); el grep capturo un borrador transitorio que Gemini
+corrigio antes de cerrar. Desempate con `git show HEAD:` (object store): slashes
+correctos, status limpio, hash identico -> el commit siempre estuvo bien. TC-04
+CANCELADA. LECCION (2 reglas nuevas de auditoria):
+(a) AUDITAR SOLO tras el STOP explicito del ejecutor — nunca con edicion en curso;
+(b) auditar contra COMMITS (`git show HEAD:archivo` / `git show <hash>`), no contra
+    el working tree, que puede estar a medio editar.
+Resto de T-21 verificado: placeholder sw.js OK, sed OK, guard OK, docs OK.
+
+## PROXIMO PASO [vigente 2026-07-19] — T-22 RELEASE v1.7.5 **AUTORIZADO**
+1. GEMINI: T-22 procedimiento estandar (clon fresco WSL, guard del sw.js debe pasar,
+   sha256 real pegado, verificacion en vivo pegada). EVIDENCIA EXTRA: extraer del .deb
+   la linea 1 del sw.js empaquetado -> debe decir 'lrp-1.7.5'.
+2. CLAUDE: verificacion en vivo + extraccion propia del sw.js del .deb -> GO.
+3. DUENO: boton a 1.7.5 (confirmacion limpia H3) + reinstalar PWA (ultima vez) +
+   re-smoke + VOZ (DeepSeek: F:\Mi unidad\TESTING\VOICE_SETUP_DEEPSEEK.md).
+NOTA HIGIENE: CURRENT.md con encoding mixto y sobrepeso -> COMPACTAR al cerrar v1.7.5.
+
 VERSION commiteada y PUBLICADA: 1.7.2. Repo PRIVADO. Licencia: Elastic 2.0.
 Fase activa: TESTING INTENSIVO finalizado. PH14c en PLAN.md.
 Modelos: Gemini 3.5 Pro ejecuta; Claude (tier "Fable5 Alto" desde 2026-07-17) planifica
