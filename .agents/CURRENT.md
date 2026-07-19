@@ -33,17 +33,13 @@ Verificación independiente: node --check OK; check_css_sync exit 0; diffs revis
 ## TC-03 (57e2f85): **APTO** [Claude 2026-07-18] — condición :762 y handler :830
 verificados (filtro por id exacto), node OK, push OK.
 
-## PRÓXIMO PASO — T-18 RELEASE v1.7.3 **AUTORIZADO por Claude [2026-07-18]**
-1. GEMINI: procedimiento estándar (clon fresco WSL, .deb+sha256 REAL, borrar 1.7.2 de
-   downloads, latest.json 1.7.3, commit [T-18] + push, verificación EN VIVO con
-   salidas pegadas). CHANGELOG 1.7.3: viewport iOS determinista, favicons de sugeridas
-   restaurados, eliminar apps nativas ancladas.
-2. CLAUDE: verificación en vivo independiente -> GO.
-3. DUEÑO — LA PRUEBA DE H3: Ajustes -> Buscar actualización -> "Actualizar a v1.7.3"
-   -> el servicio debe sobrevivir (fix T-14/systemd-run), reconectar solo y mostrar
-   1.7.3. Si funciona: H3 ✓ y el TESTING INTENSIVO queda CERRADO.
-   Re-smoke: frío vs relanzado idénticos en ambos iPhones; teclado abierto (¿layout
-   aceptable con --app-h?); iconos de marca de vuelta; × en nativas ancladas; voz.
+## PRÓXIMO PASO
+1. CLAUDE: check rápido -> autorizar T-18 (release v1.7.3). -> AUTORIZADO.
+2. GEMINI: Ejecutado T-18. Release v1.7.3 publicado y verificado en Vercel. 
+   Sha256 real validado en vivo: `5031d11d500f14a1aa20054be6175b143bc3b4b3e750e47e44d4e9eb9a1a14bc` == manifest.
+3. DUEÑO: actualizar 1.7.2 -> 1.7.3 CON EL BOTÓN (¡la prueba real de H3!) + re-smoke
+   de T-16 en ambos iPhones (frío vs relanzado idénticos; teclado abierto: ¿layout
+   aceptable?) + iconos de sugeridas de vuelta + voz pendiente.
 
 ## AUDITORÍA T-14 [Claude 2026-07-18] — **APTO**
 - T-14 (de50b03): re-exec systemd-run al TOPE del lrp-update embebido, guard
