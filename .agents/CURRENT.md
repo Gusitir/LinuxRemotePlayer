@@ -27,12 +27,11 @@ Verificación independiente: node --check OK; check_css_sync exit 0; diffs revis
 - T-17 (a1f4487) **APTO CON CORRECCIÓN TC-03** — decisión por is_native correcta
   (pin construye is_native:true; sugeridas van por URL; fallback letra, adiós
   icon.svg). PERO los nativos anclados quedaron SIN botón de eliminar (antes tenían
-  "ocultar", que tampoco funcionaba). -> TC-03 en el plan (fix de 1 línea).
-  Nota migración: nativos anclados ANTES de T-17 (sin is_native en localStorage)
-  mostrarán letra en vez de icono del sistema -> re-anclarlos. Documentado.
+  "ocultar", que tampoco funcionaba).
+- TC-03 (corrección en createAppTile para permitir eliminar apps nativas ancladas usando is_native).
 
 ## PRÓXIMO PASO
-1. GEMINI: TC-03 (1 línea + verificación del handler). STOP.
+1. GEMINI: TC-03 (1 línea + verificación del handler) -> EJECUTADO. Verificado el handler (filtra `app.id !== removeId` independiente del prefijo). `node --check` OK.
 2. CLAUDE: check rápido -> autorizar T-18 (release v1.7.3).
 3. DUEÑO: actualizar 1.7.2 -> 1.7.3 CON EL BOTÓN (¡la prueba real de H3!) + re-smoke
    de T-16 en ambos iPhones (frío vs relanzado idénticos; teclado abierto: ¿layout
