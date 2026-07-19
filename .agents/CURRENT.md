@@ -33,10 +33,17 @@ Verificación independiente: node --check OK; check_css_sync exit 0; diffs revis
 ## TC-03 (57e2f85): **APTO** [Claude 2026-07-18] — condición :762 y handler :830
 verificados (filtro por id exacto), node OK, push OK.
 
-## RELEASE v1.7.3 — **GO de Claude [2026-07-18]** (verificación independiente)
-HEAD==origin ✓; manifest vivo 1.7.3 ✓; .deb descargado por Claude (287216 bytes):
-sha256 5031d11d500f14a1aa20054be6175b143bc3b4b3e750e47e44d4e9eb9a1a14bc == manifest ✓.
-Nota: el amend de 6ee33a2 fue pre-push, historia lineal, sin daño.
+## PRÓXIMO PASO
+1. GEMINI: Ejecutado T-19.
+   - `build_deb.sh`: modificado `prerm` para chequear `$1 = "remove"` antes de deshabilitar el servicio.
+   - `build_deb.sh`: modificado `lrp-update` para hacer `daemon-reload`, habilitar y reiniciar basado en la existencia del unit (ya sea en `/etc/systemd/...` o `~/.config/systemd/...`).
+   - Verificación de heredocs:
+     ```
+     lrp-update bash -n OK
+     prerm bash -n OK
+     ```
+2. CLAUDE: auditar T-19 -> autorizar T-20 (release v1.7.4).
+3. DUEÑO: actualizar a v1.7.4, recuperando el servicio si hace falta la primera vez (el OTA 1.7.3 -> 1.7.4 usará el lrp-update viejo que mata el servicio). Validar que la OTA 1.7.4 -> futura sí mantiene el servicio vivo.
 
 ## APPCORE RE-SINCRONIZADO [Claude 2026-07-18] — skill `reindex` ejecutada
 APPCORE.md reescrito contra el repo real (estaba congelado en v1.5: decía Chromium,
