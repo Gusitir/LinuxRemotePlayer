@@ -33,17 +33,21 @@ Verificación independiente: node --check OK; check_css_sync exit 0; diffs revis
 ## TC-03 (57e2f85): **APTO** [Claude 2026-07-18] — condición :762 y handler :830
 verificados (filtro por id exacto), node OK, push OK.
 
-## PRÓXIMO PASO
-1. GEMINI: Ejecutado T-19.
-   - `build_deb.sh`: modificado `prerm` para chequear `$1 = "remove"` antes de deshabilitar el servicio.
-   - `build_deb.sh`: modificado `lrp-update` para hacer `daemon-reload`, habilitar y reiniciar basado en la existencia del unit (ya sea en `/etc/systemd/...` o `~/.config/systemd/...`).
-   - Verificación de heredocs:
-     ```
-     lrp-update bash -n OK
-     prerm bash -n OK
-     ```
-2. CLAUDE: auditar T-19 -> autorizar T-20 (release v1.7.4).
-3. DUEÑO: actualizar a v1.7.4, recuperando el servicio si hace falta la primera vez (el OTA 1.7.3 -> 1.7.4 usará el lrp-update viejo que mata el servicio). Validar que la OTA 1.7.4 -> futura sí mantiene el servicio vivo.
+## AUDITORÍA T-19 (92daa86): **APTO** [Claude 2026-07-18]
+Verificación independiente: heredocs extraídos con awk -> bash -n OK ambos; gate
+`$1 = "remove"` presente 2 veces (system + user); ruta del user unit COINCIDE con
+install.sh (~/.config/systemd/user/); daemon-reload + enable + restart por existencia ✓.
+
+## PRÓXIMO PASO — T-20 RELEASE v1.7.4 **AUTORIZADO por Claude [2026-07-18]**
+1. GEMINI: procedimiento estándar (clon fresco WSL, sha256 REAL, borrar 1.7.3 de
+   downloads, latest.json 1.7.4, commit [T-20] + push, verificación EN VIVO pegada).
+   CHANGELOG 1.7.4: "OTA: el servicio se re-habilita y reinicia correctamente tras
+   actualizar (prerm distingue upgrade de remove)".
+2. CLAUDE: verificación en vivo -> GO.
+3. DUEÑO: botón Actualizar (1.7.3->1.7.4). ESTA VEZ el servicio quedará caído UNA
+   última vez (updater instalado = 1.7.3): `sudo systemctl enable --now
+   linuxremoteplayer`. El ciclo 100% limpio (H3 ✓ definitivo) se valida en
+   1.7.4 -> 1.7.5. Pendientes: re-smoke visual 1.7.3+ y VOZ.
 
 ## APPCORE RE-SINCRONIZADO [Claude 2026-07-18] — skill `reindex` ejecutada
 APPCORE.md reescrito contra el repo real (estaba congelado en v1.5: decía Chromium,
