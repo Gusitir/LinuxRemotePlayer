@@ -1,6 +1,6 @@
 {
-  "version": "1.7.5",
-  "deb_url": "https://linux-remote-player.vercel.app/downloads/linuxremoteplayer_1.7.5_all.deb",
-  "sha256": "0dfc9fb6a41d553108f76d09304a715db1cdf63a64e3a8fa0d57eb3095e9c519",
-  "notes": "Versionado dinámico del cache del Service Worker (las PWAs instaladas ahora reciben assets frescos automáticamente). Nota iOS: reinstalar la app PWA esta vez."
+  "version": "1.7.6",
+  "deb_url": "https://linux-remote-player.vercel.app/downloads/linuxremoteplayer_1.7.6_all.deb",
+  "sha256": "36be42b82491c932dec4eb7fb2a8a82258f3f1bf835708d87b71ccf4d0835ee5",
+  "notes": "Voz reparada: crash con ENABLE_VOICE activo (variables obsoletas), soporte de micrófono en iOS (audio/mp4 dinámico), errores de micrófono visibles en la UI, log de audio recibido en el backend."
 }
