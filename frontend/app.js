@@ -721,34 +721,35 @@ function createAppTile(app) {
     const iconWrapper = document.createElement('div');
     iconWrapper.className = 'w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-gray-800 shrink-0';
 
-    if (app.id && !app.id.startsWith('custom_')) {
+    if (app.is_native && app.id) {
         const img = document.createElement('img');
         img.src = `/api/icon/${app.id}`;
         img.className = 'w-10 h-10 object-contain';
         img.onerror = () => {
-            img.src = './icon.svg';
+            const fb = document.createElement('div');
+            fb.className = 'text-gray-300 font-bold text-2xl';
+            fb.textContent = app.name ? app.name.charAt(0).toUpperCase() : '?';
+            img.replaceWith(fb);
         };
         iconWrapper.appendChild(img);
-    } else {
-        if (app.url) {
-            try {
-                const domain = new URL(app.url).hostname;
-                const img = document.createElement('img');
-                img.className = 'w-full h-full object-cover';
-                iconWrapper.appendChild(img);
-                setTileFavicon(img, domain);
-            } catch(e) {
-                const iconFallback = document.createElement('img');
-                iconFallback.className = 'w-full h-full object-contain p-1';
-                iconFallback.src = './icon.svg';
-                iconWrapper.appendChild(iconFallback);
-            }
-        } else {
-            const iconFallback = document.createElement('img');
-            iconFallback.className = 'w-full h-full object-contain p-1';
-            iconFallback.src = './icon.svg';
-            iconWrapper.appendChild(iconFallback);
+    } else if (app.url) {
+        try {
+            const domain = new URL(app.url).hostname;
+            const img = document.createElement('img');
+            img.className = 'w-full h-full object-cover';
+            iconWrapper.appendChild(img);
+            setTileFavicon(img, domain);
+        } catch(e) {
+            const fb = document.createElement('div');
+            fb.className = 'text-gray-300 font-bold text-2xl';
+            fb.textContent = app.name ? app.name.charAt(0).toUpperCase() : '?';
+            iconWrapper.appendChild(fb);
         }
+    } else {
+        const fb = document.createElement('div');
+        fb.className = 'text-gray-300 font-bold text-2xl';
+        fb.textContent = app.name ? app.name.charAt(0).toUpperCase() : '?';
+        iconWrapper.appendChild(fb);
     }
 
     const span = document.createElement('span');
