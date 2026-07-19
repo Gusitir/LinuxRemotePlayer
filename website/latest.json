@@ -1,6 +1,6 @@
 {
-  "version": "1.7.4",
-  "deb_url": "https://linux-remote-player.vercel.app/downloads/linuxremoteplayer_1.7.4_all.deb",
-  "sha256": "555271527a5c32976fdb5cf1b3fdc7978209faf235371e4228a1978b88dbf897",
-  "notes": "Fix crítico del sistema de actualizaciones OTA (el servicio se re-habilita y reinicia correctamente tras actualizar sin quedarse en estado disabled)."
+  "version": "1.7.5",
+  "deb_url": "https://linux-remote-player.vercel.app/downloads/linuxremoteplayer_1.7.5_all.deb",
+  "sha256": "0dfc9fb6a41d553108f76d09304a715db1cdf63a64e3a8fa0d57eb3095e9c519",
+  "notes": "Versionado dinámico del cache del Service Worker (las PWAs instaladas ahora reciben assets frescos automáticamente). Nota iOS: reinstalar la app PWA esta vez."
 }

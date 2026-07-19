@@ -5,9 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.7.5] - Próximamente
+## [1.7.5] - 2026-07-19
 
 ### Changed
+- **PWA**: Versionado dinámico del cache del Service Worker (sw.js auto-versionado en build). Las PWAs instaladas recibirán los assets (CSS/íconos) frescos automáticamente en cada release.
 - **PWA / iOS**: Nota de actualización: iOS hornea las metas del PWA al instalar — tras updates que toquen manifest o metas apple-*, reinstalar la app en el teléfono.
 
 ## [1.7.4] - 2026-07-18
