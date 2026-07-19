@@ -38,11 +38,9 @@ Verificación independiente: heredocs extraídos con awk -> bash -n OK ambos; ga
 `$1 = "remove"` presente 2 veces (system + user); ruta del user unit COINCIDE con
 install.sh (~/.config/systemd/user/); daemon-reload + enable + restart por existencia ✓.
 
-## PRÓXIMO PASO — T-20 RELEASE v1.7.4 **AUTORIZADO por Claude [2026-07-18]**
-1. GEMINI: procedimiento estándar (clon fresco WSL, sha256 REAL, borrar 1.7.3 de
-   downloads, latest.json 1.7.4, commit [T-20] + push, verificación EN VIVO pegada).
-   CHANGELOG 1.7.4: "OTA: el servicio se re-habilita y reinicia correctamente tras
-   actualizar (prerm distingue upgrade de remove)".
+## PRÓXIMO PASO
+1. GEMINI: Ejecutado T-20. Release v1.7.4 publicado y verificado en Vercel.
+   Sha256 real validado en vivo: `555271527a5c32976fdb5cf1b3fdc7978209faf235371e4228a1978b88dbf897` == manifest.
 2. CLAUDE: verificación en vivo -> GO.
 3. DUEÑO: botón Actualizar (1.7.3->1.7.4). ESTA VEZ el servicio quedará caído UNA
    última vez (updater instalado = 1.7.3): `sudo systemctl enable --now
