@@ -20,14 +20,11 @@ y audita — toda afirmación con salida real de comando.
 ## PRÓXIMO PASO — bugs del smoke v1.7.2 triados [Claude 2026-07-18]
 v1.7.2 verificada en vivo por Claude (sha 783b8d07... match). Dueño hizo clean install
 (J1/J2 de facto) y smoke en 2 iPhones. Dos bugs nuevos -> PLAN_GEMINI_v1.7.1.md:
-- **T-16 [ALTO]**: viewport iOS no determinista (frío vs relanzado distinto en ambos
-  iPhones; header inaccesible en iPhone 12 primer arranque). Fix: black-translucent +
-  padding standalone + altura por JS (--app-h) en vez de 100vh congelado.
-- **T-17 [MEDIO]**: regresión de T-09 — apps SUGERIDAS piden /api/icon (404 -> icono
-  LRP). Confirmado en app.js:724. Fix: decidir por tipo, no por prefijo de id.
-- T-18: release v1.7.3 tras APTO -> el dueño actualiza CON EL BOTÓN = prueba real H3.
-Pendiente dueño: voz (comando listo con llaves+modelos de producción) y sonido del
-smoke; J1 detalles si los tiene.
+1. GEMINI: ejecutado T-16 (Fix Viewport iOS no determinista con JS y variables CSS).
+2. GEMINI: ejecutado T-17 (Fix favicons sugeridas usando is_native).
+   `node --check` y `check_css_sync` pasados exitosamente.
+3. CLAUDE: auditar T-16 y T-17 -> autorizar T-18 (release v1.7.3).
+4. DUEÑO: actualizar CON EL BOTÓN (H3) y comprobar la corrección OTA. Pendiente voz.
 
 ## AUDITORÍA T-14 [Claude 2026-07-18] — **APTO**
 - T-14 (de50b03): re-exec systemd-run al TOPE del lrp-update embebido, guard
