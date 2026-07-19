@@ -759,7 +759,7 @@ function createAppTile(app) {
     div.appendChild(iconWrapper);
     div.appendChild(span);
 
-    if (app.id && app.id.startsWith('custom_')) {
+    if (app.id && (app.id.startsWith('custom_') || app.is_native)) {
         const delBtn = document.createElement('button');
         delBtn.textContent = '×';
         delBtn.className = 'absolute -top-1 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs font-bold border border-gray-900';

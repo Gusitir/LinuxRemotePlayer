@@ -17,14 +17,26 @@ y audita — toda afirmación con salida real de comando.
   servicio con `systemd-run`. Release verificado en vivo:
   sha256 783b8d07da8ea0c34ce49edb0b3d330b78146311a29c5d1601451f55c50a10ee == manifest.
 
-## PRÓXIMO PASO — bugs del smoke v1.7.2 triados [Claude 2026-07-18]
-v1.7.2 verificada en vivo por Claude (sha 783b8d07... match). Dueño hizo clean install
-(J1/J2 de facto) y smoke en 2 iPhones. Dos bugs nuevos -> PLAN_GEMINI_v1.7.1.md:
-1. GEMINI: ejecutado T-16 (Fix Viewport iOS no determinista con JS y variables CSS).
-2. GEMINI: ejecutado T-17 (Fix favicons sugeridas usando is_native).
-   `node --check` y `check_css_sync` pasados exitosamente.
-3. CLAUDE: auditar T-16 y T-17 -> autorizar T-18 (release v1.7.3).
-4. DUEÑO: actualizar CON EL BOTÓN (H3) y comprobar la corrección OTA. Pendiente voz.
+## AUDITORÍA T-16/T-17 [Claude 2026-07-18]
+Verificación independiente: node --check OK; check_css_sync exit 0; diffs revisados.
+- T-16 (3dc4523) **APTO** — black-translucent + .app-header con media standalone +
+  --app-h con listeners completos (load/resize/orientation/pageshow/visualViewport).
+  Drawers conservan su env() propio ✓. **VIGILAR en smoke**: visualViewport.height se
+  encoge cuando abre el teclado de iOS -> el layout puede comprimirse mientras se
+  escribe. Si molesta, cambiar a ignorar el resize de teclado (comparar alturas).
+- T-17 (a1f4487) **APTO CON CORRECCIÓN TC-03** — decisión por is_native correcta
+  (pin construye is_native:true; sugeridas van por URL; fallback letra, adiós
+  icon.svg). PERO los nativos anclados quedaron SIN botón de eliminar (antes tenían
+  "ocultar", que tampoco funcionaba). -> TC-03 en el plan (fix de 1 línea).
+  Nota migración: nativos anclados ANTES de T-17 (sin is_native en localStorage)
+  mostrarán letra en vez de icono del sistema -> re-anclarlos. Documentado.
+
+## PRÓXIMO PASO
+1. GEMINI: TC-03 (1 línea + verificación del handler). STOP.
+2. CLAUDE: check rápido -> autorizar T-18 (release v1.7.3).
+3. DUEÑO: actualizar 1.7.2 -> 1.7.3 CON EL BOTÓN (¡la prueba real de H3!) + re-smoke
+   de T-16 en ambos iPhones (frío vs relanzado idénticos; teclado abierto: ¿layout
+   aceptable?) + iconos de sugeridas de vuelta + voz pendiente.
 
 ## AUDITORÍA T-14 [Claude 2026-07-18] — **APTO**
 - T-14 (de50b03): re-exec systemd-run al TOPE del lrp-update embebido, guard
