@@ -48,6 +48,10 @@ EOF
 # Copy core components
 cp -r backend frontend scripts VERSION pkg/opt/linuxremoteplayer/
 
+# Inject VERSION into service worker for PWA cache invalidation
+sed -i "s/__LRP_VERSION__/${VERSION}/" pkg/opt/linuxremoteplayer/frontend/sw.js
+grep -q "lrp-${VERSION}" pkg/opt/linuxremoteplayer/frontend/sw.js || { echo "ERROR: sw.js sin versionar"; exit 1; }
+
 # Cleanup excluded items
 cd pkg/opt/linuxremoteplayer
 rm -rf backend/.venv backend/certs backend/.pairing_token backend/.env backend/__pycache__ scripts/__pycache__
