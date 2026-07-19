@@ -33,13 +33,36 @@ Verificación independiente: node --check OK; check_css_sync exit 0; diffs revis
 ## TC-03 (57e2f85): **APTO** [Claude 2026-07-18] — condición :762 y handler :830
 verificados (filtro por id exacto), node OK, push OK.
 
-## PRÓXIMO PASO
-1. CLAUDE: check rápido -> autorizar T-18 (release v1.7.3). -> AUTORIZADO.
-2. GEMINI: Ejecutado T-18. Release v1.7.3 publicado y verificado en Vercel. 
-   Sha256 real validado en vivo: `5031d11d500f14a1aa20054be6175b143bc3b4b3e750e47e44d4e9eb9a1a14bc` == manifest.
-3. DUEÑO: actualizar 1.7.2 -> 1.7.3 CON EL BOTÓN (¡la prueba real de H3!) + re-smoke
-   de T-16 en ambos iPhones (frío vs relanzado idénticos; teclado abierto: ¿layout
-   aceptable?) + iconos de sugeridas de vuelta + voz pendiente.
+## RELEASE v1.7.3 — **GO de Claude [2026-07-18]** (verificación independiente)
+HEAD==origin ✓; manifest vivo 1.7.3 ✓; .deb descargado por Claude (287216 bytes):
+sha256 5031d11d500f14a1aa20054be6175b143bc3b4b3e750e47e44d4e9eb9a1a14bc == manifest ✓.
+Nota: el amend de 6ee33a2 fue pre-push, historia lineal, sin daño.
+
+## APPCORE RE-SINCRONIZADO [Claude 2026-07-18] — skill `reindex` ejecutada
+APPCORE.md reescrito contra el repo real (estaba congelado en v1.5: decía Chromium,
+sin adblock_status/mode/is_native/systemd-run). Verificado con grep: 22 endpoints con
+sus gates, protocolo WS actual (pointer back, RTT), archivos críticos v1.7.3.
+La skill quedó redefinida como `reindex` (.agents/skills/manage_context/SKILL.md).
+
+## H3 PARCIAL [2026-07-18] — cgroup fix ✓, restart final ✗ -> T-19 [CRÍTICO]
+Botón funcionó, unit transitoria sobrevivió, dpkg completó (ii 1.7.3) — T-14 validado.
+FALLO NUEVO (journal): prerm hace stop+DISABLE sin distinguir upgrade de remove ->
+el gate `is-enabled` de lrp-update salta el restart -> rama --user -> "not found" ->
+servicio muerto+disabled. Fix T-19 en PLAN_GEMINI_v1.7.1.md (prerm con $1 +
+restart por existencia con enable). Recovery del dueño:
+`sudo systemctl enable --now linuxremoteplayer`. Release v1.7.4 tras APTO (T-20).
+OJO: 1.7.3->1.7.4 vía botón dejará el servicio caído otra vez (updater instalado =
+el de 1.7.3); recovery 1 comando; ciclo 100% limpio se valida en 1.7.4->1.7.5.
+
+## PRÓXIMO PASO (histórico) — DUEÑO: la prueba de H3
+1. Ajustes -> Buscar actualización -> "Actualizar a v1.7.3" -> el servicio debe
+   sobrevivir (systemd-run), reconectar solo y mostrar 1.7.3. H3 ✓ = testing cerrado.
+   Si falla: cat /tmp/lrp-update.log + journalctl -u lrp-update-job + status del servicio.
+2. Re-smoke: frío vs relanzado idénticos (ambos iPhones); teclado abierto (¿layout
+   aceptable? — nota visualViewport); iconos de marca de vuelta; × en nativas
+   ancladas; VOZ (pendiente desde T-13).
+3. Después: commit+push de .agents (APPCORE/SKILL/planes sin trackear) y decidir
+   siguiente frente: ai-proxy (v1.9, desbloquea venta) recomendado.
 
 ## AUDITORÍA T-14 [Claude 2026-07-18] — **APTO**
 - T-14 (de50b03): re-exec systemd-run al TOPE del lrp-update embebido, guard

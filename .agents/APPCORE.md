@@ -1,65 +1,93 @@
+# APPCORE — mapa del código (re-sincronizado por Claude 2026-07-18, base v1.7.3)
+
 # DIRECTORIES
-- /backend/: FastAPI server (Python).
-- /frontend/: PWA static files (vanilla JS, no build step). Also serves TV status panel.
-- /scripts/: bash (install, build_deb, update, uninstall, bootstrap).
-- /website/: Vercel landing + Stripe buy link + /downloads (.deb) + latest.json + install.sh.
+- /backend/: FastAPI server (Python). /frontend/: PWA estática (vanilla JS, sin build).
+- /scripts/: bash (install, build_deb, update, uninstall, bootstrap) + check_css_sync.py.
+- /website/: Vercel landing + install.sh bootstrap + /downloads (.deb) + latest.json.
 - /supabase/functions/: Edge Functions (stripe-webhook, validate-license, send-feedback).
+- /.agents/: contexto IA (AGENTS, CURRENT, PLAN, TESTING, APPCORE, archive/, AUDITS/,
+  skills/manage_context = skill `reindex`).
 
-# CRITICAL FILES
-- backend/main.py: FastAPI + WS router. REST: /api/config(version,buy_url,voice), /api/apps,
-  /api/kiosk/launch|kill, /api/app/launch, /api/debug, /api/ca, /api/license/status|activate,
-  /api/update/check(require_local_or_token)|apply, /api/system/update, /api/panel/show,
-  /api/status, /api/pairing-pin(require_local), /api/pair(LAN,no auth), /api/pairing-qr,
-  /api/pairing-token(+regenerate). PinManager (6-digit, 120s TTL, brute-force guard).
-  connected_clients counter + monitor_idle_panel() background task. SUGGESTED_KIOSKS catalog.
-  require_local / require_local_or_token / require_token deps.
-- backend/auth.py: verify_access (local PAIRING_TOKEN only). validate_license_and_increment
-  + is_license_valid_cached_or_online -> HTTPS to LICENSE_API_URL (Edge Function); 72h offline
-  grace cache (.license_cache). NO supabase secrets on device.
-- backend/audio.py: volume/mute via wpctl(PipeWire)/pactl(Pulse)/amixer(ALSA). Used for
-  KEY_VOLUMEUP/DOWN/MUTE (uinput media keys don't work without a DE daemon).
-- backend/input_emulator.py: UInput. ALLOWED_KEYS whitelist (incl KEY_LEFTMETA). COMBOS
-  (browser_back=Alt+Left, close_window=Alt+F4) via press_combo. Startup guard logs missing caps.
-- backend/kiosk.py: Chromium kiosk. close_all() kills kiosk + tracked native procs.
-  is_ubol_active(). --load-extension=<uBOL in ~/lrp-extensions/ubol> (+ /opt fallback;
-  snap Chromium canNOT read /opt). gui_env (DISPLAY/WAYLAND/XAUTHORITY).
-- backend/run.py: self-healing HTTPS. Two-tier CA (ca.pem + leaf per IP+FQDN). monitor_ip
-  self-restarts under systemd on IP change.
-- backend/ai_pipeline.py: STT+LLM (NVIDIA/OpenRouter or local). Only if ENABLE_VOICE=true.
-  NOTE: for sale, keys must move to an ai-proxy Edge Function (NOT yet done).
-- backend/.env.example: ENABLE_VOICE, LICENSE_API_URL, LICENSE_TOKEN, GITHUB_REPO, BUY_URL,
-  NVIDIA/OPENROUTER keys, PAIRING_TOKEN.
-- frontend/index.html: remote UI (apps row, touchpad+nav-overlay+scroll, mic-row, utility row
-  [keyboard/backspace/nav-mode/panel/OS-menu], control cluster). PIN pairing screen. Drawers:
-  apps + settings (categories: Licencia/Temas/Actualización/Social/Tutoriales). Reicon SVG icons.
-- frontend/app.js: WS client (auth frame, heartbeat, reconnect-on-wake). touchpad pointer +
-  nav mode. PIN pair (checkPinInput->/api/pair). license activate/status. skins (setSkin,
-  license-gated). hideable apps. coach-marks tour. update check/apply. feedback.
-- frontend/status.html: TV status panel (/status, require_local). PIN + QR + live status +
-  Mantenimiento (update button + change-mode tutorial). Auto-opens on idle (APPLIANCE_IDLE_PANEL).
-- frontend/skins.css: [data-skin] dark/day/neon(Pro)/anime(Pro). CSS vars.
-- frontend/tailwind-lite.css: hand-compiled utility subset (offline). MUST stay in sync with
-  markup — missing classes silently break layout (see .hidden / overflow bugs).
-- frontend/sw.js: service worker (CACHE lrp-v15; network-first shell, cache-first assets).
-- scripts/install.sh: interactive core (invoked by lrp-setup). TARGET_USER resolution,
-  uinput, avahi, UFW(allow SSH first), systemd (Appliance/Desktop, idempotent), uBOL, panel
-  autolaunch, KDE .desktop entry.
-- scripts/build_deb.sh: builds .deb; embeds lrp-setup + lrp-update + sudoers drop-in +
-  /usr/share/applications entry + hicolor icon.
-- scripts/update.sh: thin wrapper -> sudo /usr/local/bin/lrp-update (OTA via latest.json).
+# ENDPOINTS backend/main.py (verificado con grep 2026-07-18; gate entre paréntesis)
+- Pairing: /api/pairing-pin (local), POST /api/pair (LAN sin auth, PIN 6 dígitos un solo
+  uso TTL 120s + anti-brute-force 5/IP), /api/pairing-token (+/regenerate) (local),
+  /api/pairing-qr (local, SVG segno).
+- Estado: /api/status (local; version, mode[LRP_MODE], licensed, adblock_status, ips,
+  clientes, uinput_ok, buy_url — la latencia la mide el panel client-side),
+  /status (local, sirve status.html), /health /api/config /api/ca /api/icon/{app_id}
+  (abiertos por diseño).
+- Control: /api/apps (token; responde {"type":"discovery_sync", suggested_kiosks,
+  installed_apps}), /api/kiosk/launch|kill, /api/panel/show, /api/app/launch (token;
+  TODOS via asyncio.to_thread — C-01, no bloquear event loop), /api/debug (token).
+- Licencia: /api/license/activate|status (token; activate persiste LICENSE_TOKEN en
+  .env + os.environ).
+- OTA: /api/update/check (local_or_token; lee latest.json), /api/update/apply (token ->
+  sudo lrp-update), /api/system/update (local -> update.sh).
+- monitor_idle_panel: panel a los 45s si 0 clientes Y sin audio (pactl sink-inputs con
+  env=gui_env(); requiere pulseaudio-utils) Y sin procesos propios.
 
-# WS PROTOCOL (frontend->backend)
-- {"type":"auth","token":...} / {"type":"ping"} (->pong)
-- {"type":"input","device":"gamepad","action":"press","key":"KEY_*"} (whitelisted)
-- {"type":"combo","name":"browser_back"|"close_window"}
-- {"type":"pointer","dx","dy"|"click":"left"|"right"|"scroll":N}
-- {"type":"text","text":...} (<=500 chars)
-- {"action":"media_control","parameters":{"key":"KEY_*"}} (audio.py for vol/mute)
-- binary audio -> STT/LLM (only ENABLE_VOICE + valid license)
+# WS PROTOCOL (frontend->backend; handler en main.py ~700-880)
+- {"type":"auth","token"} (malo -> close 1008) / {"type":"ping"} -> {"type":"pong"}
+  (el cliente mide RTT y lo muestra en el HUD).
+- {"type":"input","device":"gamepad","action":"press","key":"KEY_*"} (whitelist).
+- {"type":"pointer","dx","dy"|"click":"left"|"right"|"back"(BTN_SIDE)|"scroll":N}.
+- {"type":"text","text"} (<=500 chars; teclas según KEYBOARD_LAYOUT).
+- {"type":"combo","name":"browser_back"(->BTN_SIDE, fallback Alt+Left)|"close_window"}.
+- Intents de voz (tras audio binario -> STT+LLM): launch_kiosk, media_control, search.
+
+# CRITICAL FILES (1-3 líneas c/u)
+- backend/main.py (~880 líneas): todo lo anterior + PinManager + SUGGESTED_KIOSKS.
+- backend/auth.py: verify_access (PAIRING_TOKEN); licencia vía Edge Function
+  (LICENSE_API_URL) con cache de gracia 72h. Sin secretos Supabase en dispositivo.
+- backend/input_emulator.py: UInput caps range(1,105) (incluye RIGHTALT=100).
+  CHAR_KEYS por KEYBOARD_LAYOUT us|es|latam con AltGr; "/"=KPSLASH universal.
+  Gap conocido: < > (KEY_102ND) y corchetes AltGr. VirtualMouse: BTN_LEFT/RIGHT/SIDE.
+- backend/kiosk.py: find_browser FIREFOX primero (perfil ~/.config/lrp-kiosk-ff;
+  snap: ~/snap/firefox/common/lrp-kiosk), fallback brave/chromium (--user-data-dir
+  ~/.config/lrp-kiosk). kill: SIGTERM + espera 10s -> SIGKILL. close_all: wmctrl
+  (X11) -> fallback KWin DBus (qdbus6|qdbus, unloadScript+loadScript+run,
+  DBUS addr desde XDG_RUNTIME_DIR/bus). adblock_status: shields|ubo-firefox|ubol|none.
+- backend/run.py: HTTPS self-healing, CA dos niveles (ca.pem estable + leaf por
+  IP/FQDN), monitor_ip reinicia bajo systemd al cambiar IP.
+- backend/ai_pipeline.py: STT/LLM cloud configurable por env (CLOUD_STT_URL/KEY/MODEL,
+  CLOUD_LLM_*). Producción verificada en Together: STT nemotron-3.5-asr-streaming-0.6b,
+  LLM meta-llama/Llama-3.1-8B-Instruct. Modo local Whisper+Ollama intacto.
+  PENDIENTE VENTA: ai-proxy Edge Function (claves fuera del dispositivo).
+- backend/.env(.example): ENABLE_VOICE, CLOUD_*, KEYBOARD_LAYOUT, LRP_MODE
+  (appliance|desktop, escrito por install.sh), PAIRING_TOKEN, LICENSE_*, BUY_URL.
+- frontend/index.html (~85KB): status-bar black-translucent + .app-header con
+  max(env(safe-area-inset-top)) en standalone; altura por var(--app-h). Onboarding
+  SOLO PIN (sin token manual). mic-overlay (voz). Iconos Lucide inline
+  (borrar=delete, nav=move, panel=activity). Media query max-height:750px (16:9).
+- frontend/app.js (~1500 líneas): WS client (backoff, reconnect-on-wake, RTT HUD).
+  Voz push-to-talk: micHeld anti-carrera post-getUserMedia, failsafe 8s, overlay,
+  cancel <250ms/pointerleave. createAppTile: is_native -> /api/icon/{id};
+  con url -> setTileFavicon (DDG -> Google S2 -> LETRA); × si custom_ o is_native
+  (nativos anclados viven en localStorage custom_apps con is_native:true).
+  updateAppHeight -> --app-h (load/resize/orientation/pageshow/visualViewport).
+- frontend/status.html: panel TV. /api/pairing-qr, latencia RTT client-side, modo
+  TV/Escritorio, badge adblock, buy-link clicable, meta refresh 3600, Mantenimiento.
+- frontend/sw.js: CACHE lrp-v16; network-first shell (/, index, app.js),
+  cache-first assets. BUMP del nombre al cambiar assets cache-first.
+- frontend/tailwind-lite.css: subset a mano + reset border-box GLOBAL + utilidades
+  compiladas. Guard: scripts/check_css_sync.py (IGNORE_CLASSES=4) corre en build_deb.
+- scripts/install.sh (= lrp-setup): modo 1|2 -> LRP_MODE en .env; LRP_NOSLEEP ->
+  mask sleep/suspend targets (uninstall los unmask); KEYBOARD_LAYOUT (localectl +
+  prompt); instala firefox-esr||firefox + pulseaudio-utils wmctrl qdbus libnss3-tools;
+  escribe /etc/firefox/policies/policies.json SIEMPRE (uBlock force_installed +
+  Certificates.Install ca.pem + EME); certutil NO-interactivo (pwfile + </dev/null);
+  CA a trust del sistema POST-arranque (espera ca.pem 30s); UFW OpenSSH||22 fallback;
+  mensaje final PIN-first.
+- scripts/build_deb.sh: empaqueta .deb; embebe lrp-setup, lrp-update y sudoers.
+  lrp-update: RE-EXEC vía systemd-run --unit=lrp-update-job (escapa del cgroup del
+  servicio — fix T-14; sin esto el OTA se suicida), log a /tmp/lrp-update.log,
+  restart final. Recommends: firefox-esr|firefox, pulseaudio-utils.
+- website/install.sh: bootstrap curl|bash -> baja .deb por latest.json + sha256 ->
+  apt install -> encadena lrp-setup (llamada directa, NO exec).
 
 # SALES PIPELINE
-- Client=PWA (PIN pairing, no store). Server=.deb via curl website/install.sh.
-- Stripe (TEST now) -> webhook -> license key by email (Resend) -> activate in app.
-- License validation + (future) AI all via Edge Functions; NO keys on device.
-- REMAINING FOR SALE: real Stripe live, ai-proxy Edge Function for voice, own domain +
-  Resend domain verification.
+- Cliente=PWA (PIN pairing). Servidor=.deb vía website/install.sh. OTA por latest.json.
+- Stripe TEST -> webhook -> licencia por email (Resend) -> activar en app.
+- Licencia Pro ÚNICA lifetime cubrirá todo lo premium (voz, APK, archivos, skins) —
+  ver roadmap PH15-PH18 en PLAN.md.
+- FALTA PARA VENDER: ai-proxy, Stripe LIVE, dominio propio + Resend verificado.

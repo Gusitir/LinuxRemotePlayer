@@ -138,18 +138,24 @@ echo "$SHA256 linuxremoteplayer_${VERSION}_all.deb" | sha256sum -c -
 apt-get install -y --reinstall "./linuxremoteplayer_${VERSION}_all.deb"
 
 # Restart services depending on mode
-if systemctl is-enabled linuxremoteplayer.service &>/dev/null; then
+systemctl daemon-reload || true
+if [ -f /etc/systemd/system/linuxremoteplayer.service ]; then
+    systemctl enable linuxremoteplayer.service || true
     systemctl restart linuxremoteplayer.service || true
 else
     # find user services
     for d in /run/user/*; do
         if [ -d "$d" ]; then
             uid=$(basename "$d")
-            sudo -u "#$uid" XDG_RUNTIME_DIR="$d" systemctl --user restart linuxremoteplayer.service || true
+            user_home=$(eval echo "~$(id -nu "$uid")")
+            if [ -f "$user_home/.config/systemd/user/linuxremoteplayer.service" ]; then
+                sudo -u "#$uid" XDG_RUNTIME_DIR="$d" systemctl --user daemon-reload || true
+                sudo -u "#$uid" XDG_RUNTIME_DIR="$d" systemctl --user enable linuxremoteplayer.service || true
+                sudo -u "#$uid" XDG_RUNTIME_DIR="$d" systemctl --user restart linuxremoteplayer.service || true
+            fi
         fi
     done
 fi
-
 
 INNEREOF
 chmod 755 /usr/local/bin/lrp-update
@@ -165,13 +171,17 @@ cat <<'EOF' > pkg/DEBIAN/prerm
 #!/bin/bash
 set -e
 systemctl stop linuxremoteplayer.service 2>/dev/null || true
-systemctl disable linuxremoteplayer.service 2>/dev/null || true
+if [ "$1" = "remove" ]; then
+    systemctl disable linuxremoteplayer.service 2>/dev/null || true
+fi
 
 for d in /run/user/*; do
     if [ -d "$d" ]; then
         uid=$(basename "$d")
         sudo -u "#$uid" XDG_RUNTIME_DIR="$d" systemctl --user stop linuxremoteplayer.service 2>/dev/null || true
-        sudo -u "#$uid" XDG_RUNTIME_DIR="$d" systemctl --user disable linuxremoteplayer.service 2>/dev/null || true
+        if [ "$1" = "remove" ]; then
+            sudo -u "#$uid" XDG_RUNTIME_DIR="$d" systemctl --user disable linuxremoteplayer.service 2>/dev/null || true
+        fi
     fi
 done
 
