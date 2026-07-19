@@ -1,6 +1,6 @@
 {
-  "version": "1.7.2",
-  "deb_url": "https://linux-remote-player.vercel.app/downloads/linuxremoteplayer_1.7.2_all.deb",
-  "sha256": "783b8d07da8ea0c34ce49edb0b3d330b78146311a29c5d1601451f55c50a10ee",
-  "notes": "Fix crítico en el sistema de actualizaciones OTA (el proceso ahora sobrevive al reinicio del servicio); mejoras adicionales de estabilidad de la versión 1.7.1."
+  "version": "1.7.3",
+  "deb_url": "https://linux-remote-player.vercel.app/downloads/linuxremoteplayer_1.7.3_all.deb",
+  "sha256": "5031d11d500f14a1aa20054be6175b143bc3b4b3e750e47e44d4e9eb9a1a14bc",
+  "notes": "Fix determinismo del viewport en iOS (black-translucent y altura dinámica JS), favicons de aplicaciones sugeridas restaurados (lógica basada en is_native), y botón Eliminar restaurado para aplicaciones nativas ancladas."
 }

@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.3] - 2026-07-18
+
+### Fixed
+- **Frontend/iOS**: Determinismo de viewport en iOS (black-translucent y padding gestionado por variables CSS según entorno).
+- **Frontend/Favicons**: Restaurados los favicons de las aplicaciones sugeridas (diferenciando por origen `is_native` en lugar de por prefijo de ID).
+- **Frontend/Ancladas**: Restaurado el botón de eliminar para las aplicaciones nativas ancladas.
+
 ## [1.7.2] - 2026-07-18
 
 ### Fixed
