@@ -17,11 +17,17 @@ y audita — toda afirmación con salida real de comando.
   servicio con `systemd-run`. Release verificado en vivo:
   sha256 783b8d07da8ea0c34ce49edb0b3d330b78146311a29c5d1601451f55c50a10ee == manifest.
 
-## PRÓXIMO PASO
-TESTING INTENSIVO EJECUTADO (2026-07-17): 28 OK, núcleo sólido (seguridad 8/8).
-Fallas TRIADAS por Claude -> .agents/PLAN_GEMINI_v1.7.1.md resueltas.
-1. DUEÑO: validar actualización manual en el HTPC (v1.7.1 -> v1.7.2) y probar el botón OTA recién de v1.7.2 -> futuro.
-2. DUEÑO: T-11 (activar voz en el HTPC: ENABLE_VOICE + llaves en .env del HTPC).
+## PRÓXIMO PASO — bugs del smoke v1.7.2 triados [Claude 2026-07-18]
+v1.7.2 verificada en vivo por Claude (sha 783b8d07... match). Dueño hizo clean install
+(J1/J2 de facto) y smoke en 2 iPhones. Dos bugs nuevos -> PLAN_GEMINI_v1.7.1.md:
+- **T-16 [ALTO]**: viewport iOS no determinista (frío vs relanzado distinto en ambos
+  iPhones; header inaccesible en iPhone 12 primer arranque). Fix: black-translucent +
+  padding standalone + altura por JS (--app-h) en vez de 100vh congelado.
+- **T-17 [MEDIO]**: regresión de T-09 — apps SUGERIDAS piden /api/icon (404 -> icono
+  LRP). Confirmado en app.js:724. Fix: decidir por tipo, no por prefijo de id.
+- T-18: release v1.7.3 tras APTO -> el dueño actualiza CON EL BOTÓN = prueba real H3.
+Pendiente dueño: voz (comando listo con llaves+modelos de producción) y sonido del
+smoke; J1 detalles si los tiene.
 
 ## AUDITORÍA T-14 [Claude 2026-07-18] — **APTO**
 - T-14 (de50b03): re-exec systemd-run al TOPE del lrp-update embebido, guard

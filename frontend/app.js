@@ -1486,3 +1486,16 @@ initToken().then(() => {
         }
     }
 });
+
+function updateAppHeight() {
+    const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    document.documentElement.style.setProperty('--app-h', h + 'px');
+}
+window.addEventListener('load', updateAppHeight);
+window.addEventListener('resize', updateAppHeight);
+window.addEventListener('orientationchange', updateAppHeight);
+window.addEventListener('pageshow', updateAppHeight);
+if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', updateAppHeight);
+}
+updateAppHeight();
