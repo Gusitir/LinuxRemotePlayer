@@ -54,7 +54,15 @@ def clean_json_content(content: str) -> str:
 
 
 async def transcribe_audio(audio_bytes: bytes) -> str:
-    files = {'file': ('audio.webm', audio_bytes, 'audio/webm')}
+    filename = 'audio.webm'
+    mime = 'audio/webm'
+    if audio_bytes.startswith(b'\x1a\x45\xdf\xa3'):
+        pass
+    elif len(audio_bytes) > 8 and audio_bytes[4:8] == b'ftyp':
+        filename = 'audio.m4a'
+        mime = 'audio/mp4'
+
+    files = {'file': (filename, audio_bytes, mime)}
     client = get_client()
 
     if USE_LOCAL_AI:

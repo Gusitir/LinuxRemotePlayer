@@ -589,11 +589,16 @@ async function startVoice() {
             stream.getTracks().forEach(t => t.stop());
             return;
         }
-        mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+        let mimeType = '';
+        if (MediaRecorder.isTypeSupported('audio/webm')) mimeType = 'audio/webm';
+        else if (MediaRecorder.isTypeSupported('audio/mp4')) mimeType = 'audio/mp4';
+        
+        const options = mimeType ? { mimeType } : {};
+        mediaRecorder = new MediaRecorder(stream, options);
         mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
         mediaRecorder.onstop = () => {
             if (!micDiscard && audioChunks.length > 0) {
-                const blob = new Blob(audioChunks, { type: 'audio/webm' });
+                const blob = mimeType ? new Blob(audioChunks, { type: mimeType }) : new Blob(audioChunks);
                 if (ws && ws.readyState === WebSocket.OPEN) ws.send(blob);
             }
             audioChunks = [];
@@ -621,7 +626,7 @@ async function startVoice() {
 
         if (navigator.vibrate) navigator.vibrate(50);
         statusEl.textContent = 'Listening...'; statusEl.className = 'text-blue-400 text-xs font-bold';
-    } catch (e) { console.error('Mic denied', e); }
+    } catch (e) { console.error('Mic denied', e); toast('Error de micrófono: ' + e.name); }
 }
 
 function stopVoice(cancel) {

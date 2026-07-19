@@ -50,8 +50,8 @@ if VOICE_ENABLED:
         if not ai_pipeline.LOCAL_WHISPER_URL or not ai_pipeline.LOCAL_OLLAMA_URL:
             logger.error("ENABLE_VOICE is True, but local AI Whisper/Ollama URLs are missing.")
     else:
-        if not ai_pipeline.NVIDIA_KEY or not ai_pipeline.OPENROUTER_KEY:
-            logger.error("ENABLE_VOICE is True, but Cloud NVIDIA/OpenRouter API keys are missing.")
+        if not ai_pipeline.CLOUD_STT_KEY or not ai_pipeline.CLOUD_LLM_KEY:
+            logger.error("ENABLE_VOICE is True, but Cloud STT/LLM API keys are missing.")
 
 import audio
 logger.info(f"Audio backend selected: {audio.get_audio_backend() or 'None (uinput fallback)'}")
@@ -720,6 +720,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
                     await safe_send_json({"status": "error", "message": "Voice disabled"})
                     continue
                 audio_data = message.get("bytes")
+                logger.info(f"Received binary audio message: {len(audio_data)} bytes")
                 if len(audio_data) > 5_000_000:
                     await safe_send_json({"status": "error", "message": "Audio too large"})
                     continue

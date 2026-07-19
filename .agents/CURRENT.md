@@ -1,5 +1,26 @@
 ﻿# ESTADO ACTUAL
 
+## VOZ ROTA -> T-23 [CRITICO] (reporte DeepSeek + diagnostico Claude 2026-07-19)
+Bug A (repo, confirmado): main.py:53 usa ai_pipeline.NVIDIA_KEY (inexistente desde
+b32101d) -> servicio CRASHEA con ENABLE_VOICE=true. DeepSeek lo hotfixeo SOLO en el
+HTPC; el proximo OTA lo revertiria -> portar a repo YA.
+Bug B (causa del "audio nunca llega"): app.js:581 MediaRecorder con audio/webm ->
+iOS Safari NO lo soporta -> NotSupportedError -> catch silencioso (solo console.error)
+-> sin overlay ni bytes. iOS graba audio/mp4. + ai_pipeline.py:57 hardcodea webm al
+subir a Together. Fix: deteccion isTypeSupported + toast en catch + magic bytes en
+backend. + T-23c: log INFO de binarios recibidos (observabilidad).
+-> Tareas T-23 (fixes) y T-24 (release v1.7.6) en PLAN_GEMINI_v1.7.1.md.
+## ✅✅ H3 DEFINITIVO [2026-07-19, confirmado por el dueno]
+Boton 1.7.4->1.7.5: encontro, instalo, desconecto/reconecto MUY RAPIDO, funciona,
+CERO comandos. Pipeline OTA completo validado en condiciones limpias (systemd-run +
+prerm upgrade-aware + restart por existencia). HTPC en 1.7.5, PWA fresca 1.7.5.
+La ruta siguiente sera 1.7.5 -> 1.7.6 y la PWA se auto-refrescara (T-21, primera vez).
+TESTING INTENSIVO: solo queda la VOZ (T-23 en curso con Gemini) para cierre total.
+PROXIMO: Gemini T-23 -> auditoria -> T-24 (v1.7.6) -> voz -> CIERRE + compactar CURRENT.
+NOTA PROCESO: DeepSeek edito codigo del HTPC (fuera de su guard) por emergencia
+justificada y lo documento bien; la regla sigue: hotfix de dispositivo DEBE portarse
+a repo o el OTA lo pisa — exactamente lo que estamos haciendo.
+
 ## AUDITORIA T-21 (7d29dbc): **APTO** [Claude 2026-07-19, RECTIFICADA]
 Primer dictamen fue NO APTO por "backslashes en build_deb.sh:53" — FALSA ALARMA por
 CARRERA DE EDICION: el auditor leyo el working tree MIENTRAS Gemini seguia editando
