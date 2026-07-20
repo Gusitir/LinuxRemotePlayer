@@ -180,7 +180,7 @@ async function fetchLicenseStatus() {
                 const showVoice = data.voice_enabled && isLicensed;
                 micRow.style.display = showVoice ? 'flex' : 'none';
                 if (voiceCard) {
-                    voiceCard.style.display = showVoice ? 'block' : 'none';
+                    voiceCard.classList.toggle('hidden', !showVoice);
                 }
                 
                 if (showVoice && !localStorage.getItem('lrp_voice_hint_shown')) {
