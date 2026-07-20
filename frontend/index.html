@@ -408,7 +408,22 @@
     <script src="app.js"></script>
     <script>
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(console.error));
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('sw.js').then(reg => {
+            const updateSW = () => reg.update();
+            document.addEventListener('visibilitychange', () => {
+              if (document.visibilityState === 'visible') updateSW();
+            });
+            window.addEventListener('pageshow', updateSW);
+          }).catch(console.error);
+        });
+
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!window.__swReloaded) {
+            window.__swReloaded = true;
+            location.reload();
+          }
+        });
       }
     </script>
 </body>
