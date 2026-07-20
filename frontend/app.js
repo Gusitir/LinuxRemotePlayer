@@ -185,7 +185,7 @@ async function fetchLicenseStatus() {
                 
                 if (showVoice && !localStorage.getItem('lrp_voice_hint_shown')) {
                     localStorage.setItem('lrp_voice_hint_shown', 'true');
-                    showToast("Consejo: mantén pulsado el micrófono y di 'abre youtube'");
+                    toast("Consejo: mantén pulsado el micrófono y di 'abre youtube'");
                 }
             }
 
@@ -813,10 +813,7 @@ function renderApps(kiosks) {
     sorted.forEach((app) => {
         drawer.appendChild(createAppTile(app));
     });
-    const voiceList = document.getElementById('voice-apps-list');
-    if (voiceList) {
-        voiceList.innerText = allKiosks.map(k => k.name || k.id).join(', ');
-    }
+
     
     let restoreBtn = document.getElementById('restore-hidden-apps');
     if (!restoreBtn) {
@@ -891,6 +888,10 @@ async function fetchApps() {
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
         lastSuggestedKiosks = data.suggested_kiosks || [];
+        const voiceList = document.getElementById('voice-apps-list');
+        if (voiceList) {
+            voiceList.innerText = lastSuggestedKiosks.map(k => k.name || k.id).join(', ');
+        }
         renderApps(lastSuggestedKiosks);
         renderNativeList(data.installed_apps || []);
     } catch (e) { console.error('Failed to load apps:', e); }

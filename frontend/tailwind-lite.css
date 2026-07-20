@@ -185,6 +185,8 @@ body {
 .underline { text-decoration-line: underline; }
 .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tracking-widest { letter-spacing: 0.1em; }
+.leading-relaxed { line-height: 1.625; }
+.max-w-\[280px\] { max-width: 280px; }
 
 .active\:scale-95:active { transform: scale(0.95); }
 .active\:bg-green-500:active { background-color: #22c55e; }
