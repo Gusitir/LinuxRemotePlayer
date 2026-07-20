@@ -737,16 +737,20 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
 
                 if text:
                     await safe_send_json({"status": "processing", "message": f"Intent: {text}"})
-                    intent = await parse_intent(text)
+                    valid_targets = [k["id"] for k in SUGGESTED_KIOSKS]
+                    intent = await parse_intent(text, valid_targets=valid_targets)
+                    
+                    if intent.get("action") == "error":
+                        await safe_send_json({"status": "error", "message": "Voz: error LLM"})
+                        continue
 
                     action = intent.get("action")
                     params = intent.get("parameters", {})
 
-                    # COR-01 WS Voice responses in all branches
                     if action == "launch_kiosk":
                         target = params.get("target_id")
                         if target:
-                            # SEC-04 voice target whitelist
+                            target = str(target).lower().strip()
                             target_url = SUGGESTED_KIOSKS_MAP.get(target)
                             if target_url:
                                 if target == "youtube":
@@ -758,41 +762,38 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
                                 else:
                                     await safe_send_json({"status": "error", "message": "Failed to launch app"})
                             else:
-                                await safe_send_json({"status": "error", "message": f"App no reconocida: {target}"})
+                                await safe_send_json({"status": "error", "message": f"Voz: app '{target}' no reconocida"})
                         else:
                             await safe_send_json({"status": "error", "message": "Target missing"})
                     elif action == "media_control":
                         media_key = params.get("key")
-                        if media_key in MEDIA_KEYS:
-                            import audio
-                            import kiosk
-                            if media_key == "KEY_VOLUMEUP":
-                                if not audio.set_volume(5): await gamepad.press_button(media_key)
-                            elif media_key == "KEY_VOLUMEDOWN":
-                                if not audio.set_volume(-5): await gamepad.press_button(media_key)
-                            elif media_key == "KEY_MUTE":
-                                if not audio.toggle_mute(): await gamepad.press_button(media_key)
-                            elif media_key == "KEY_PLAYPAUSE" and getattr(kiosk, "_kiosk_proc", None) is not None:
-                                await gamepad.press_button("KEY_SPACE")
+                        if media_key:
+                            media_key = str(media_key).upper().strip()
+                            if not media_key.startswith("KEY_"):
+                                media_key = f"KEY_{media_key}"
+                                
+                            if media_key in MEDIA_KEYS:
+                                import audio
+                                import kiosk
+                                if media_key == "KEY_VOLUMEUP":
+                                    if not audio.set_volume(5): await gamepad.press_button(media_key)
+                                elif media_key == "KEY_VOLUMEDOWN":
+                                    if not audio.set_volume(-5): await gamepad.press_button(media_key)
+                                elif media_key == "KEY_MUTE":
+                                    if not audio.toggle_mute(): await gamepad.press_button(media_key)
+                                elif media_key == "KEY_PLAYPAUSE" and getattr(kiosk, "_kiosk_proc", None) is not None:
+                                    await gamepad.press_button("KEY_SPACE")
+                                else:
+                                    await gamepad.press_button(media_key)
+                                await safe_send_json({"status": "success", "message": f"Media: {media_key}"})
                             else:
-                                await gamepad.press_button(media_key)
-                            await safe_send_json({"status": "success", "message": f"Media: {media_key}"})
+                                await safe_send_json({"status": "error", "message": "Invalid media key"})
                         else:
                             await safe_send_json({"status": "error", "message": "Invalid media key"})
-                    elif action == "search":
-                        query = quote_plus(params.get("search_query", ""))
-                        if query:
-                            success = await asyncio.to_thread(launch_kiosk, f"https://www.youtube.com/results?search_query={query}")
-                            if success:
-                                await safe_send_json({"status": "success", "message": f"Searching: {params.get('search_query', '')}"})
-                            else:
-                                await safe_send_json({"status": "error", "message": "Failed to search"})
-                        else:
-                            await safe_send_json({"status": "error", "message": "Empty search"})
                     else:
                         await safe_send_json({"status": "error", "message": "Unknown action"})
                 else:
-                    await safe_send_json({"status": "error", "message": "Could not understand audio"})
+                    await safe_send_json({"status": "error", "message": "Voz: error STT (400)"})
 
             elif message.get("text"):
                 data = message.get("text")

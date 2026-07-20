@@ -107,12 +107,28 @@ async def transcribe_audio(audio_bytes: bytes) -> str:
             return ""
 
 
-async def parse_intent(transcription: str) -> dict:
-    system_prompt = """
-    You are an intent parser for a TV remote. Output ONLY valid JSON.
-    Allowed actions: 'launch_kiosk', 'media_control', 'search'.
-    Example: {"action": "launch_kiosk", "parameters": {"target_id": "youtube", "search_query": "gatos"}}
-    """
+async def parse_intent(transcription: str, valid_targets: list = None) -> dict:
+    if valid_targets is None:
+        valid_targets = []
+        
+    valid_apps_str = ", ".join(valid_targets)
+    
+    system_prompt = f"""
+You are an intent parser for a TV remote. Output ONLY valid JSON.
+Allowed actions: 'launch_kiosk', 'media_control'.
+
+Valid app targets (launch_kiosk): [{valid_apps_str}]
+Valid media keys (media_control): KEY_VOLUMEUP, KEY_VOLUMEDOWN, KEY_MUTE, KEY_PLAYPAUSE, KEY_PLAY, KEY_PAUSE, KEY_STOP, KEY_NEXTSONG, KEY_PREVIOUSSONG, KEY_FASTFORWARD, KEY_REWIND
+
+NOTE: The user speaks Spanish. Map synonyms accordingly (e.g., sube/baja volumen, pausa, silencio, adelanta...).
+
+Examples:
+1. "abre netflix" -> {{"action": "launch_kiosk", "parameters": {{"target_id": "netflix"}}}}
+2. "pon youtube de gatitos" -> {{"action": "launch_kiosk", "parameters": {{"target_id": "youtube", "search_query": "gatitos"}}}}
+3. "sube el volumen" -> {{"action": "media_control", "parameters": {{"key": "KEY_VOLUMEUP"}}}}
+4. "pausa el video" -> {{"action": "media_control", "parameters": {{"key": "KEY_PLAYPAUSE"}}}}
+5. "silencio" -> {{"action": "media_control", "parameters": {{"key": "KEY_MUTE"}}}}
+"""
     client = get_client()
 
     if USE_LOCAL_AI:
