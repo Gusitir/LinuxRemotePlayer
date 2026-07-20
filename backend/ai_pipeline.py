@@ -115,7 +115,7 @@ async def parse_intent(transcription: str, valid_targets: list = None) -> dict:
     
     system_prompt = f"""
 You are an intent parser for a TV remote. Output ONLY valid JSON.
-Allowed actions: 'launch_kiosk', 'media_control'.
+Allowed actions: 'launch_kiosk', 'media_control', 'search'.
 
 Valid app targets (launch_kiosk): [{valid_apps_str}]
 Valid media keys (media_control): KEY_VOLUMEUP, KEY_VOLUMEDOWN, KEY_MUTE, KEY_PLAYPAUSE, KEY_PLAY, KEY_PAUSE, KEY_STOP, KEY_NEXTSONG, KEY_PREVIOUSSONG, KEY_FASTFORWARD, KEY_REWIND
@@ -128,6 +128,7 @@ Examples:
 3. "sube el volumen" -> {{"action": "media_control", "parameters": {{"key": "KEY_VOLUMEUP"}}}}
 4. "pausa el video" -> {{"action": "media_control", "parameters": {{"key": "KEY_PLAYPAUSE"}}}}
 5. "silencio" -> {{"action": "media_control", "parameters": {{"key": "KEY_MUTE"}}}}
+6. "busca recetas de cocina" -> {{"action": "search", "parameters": {{"search_query": "recetas de cocina"}}}}
 """
     client = get_client()
 

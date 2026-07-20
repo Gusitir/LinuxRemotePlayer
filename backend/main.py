@@ -790,6 +790,16 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
                                 await safe_send_json({"status": "error", "message": "Invalid media key"})
                         else:
                             await safe_send_json({"status": "error", "message": "Invalid media key"})
+                    elif action == "search":
+                        query = quote_plus(params.get("search_query", ""))
+                        if query:
+                            success = await asyncio.to_thread(launch_kiosk, f"https://www.youtube.com/results?search_query={query}")
+                            if success:
+                                await safe_send_json({"status": "success", "message": f"Searching: {params.get('search_query', '')}"})
+                            else:
+                                await safe_send_json({"status": "error", "message": "Failed to search"})
+                        else:
+                            await safe_send_json({"status": "error", "message": "Empty search"})
                     else:
                         await safe_send_json({"status": "error", "message": "Unknown action"})
                 else:
