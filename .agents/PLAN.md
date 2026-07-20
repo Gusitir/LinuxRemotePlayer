@@ -148,6 +148,59 @@
 # REBRAND: "linuxremoteplayer" se queda como nombre técnico; nombre comercial se decide
 # al comprar el dominio propio (un solo cambio de infra, no dos).
 
+# PH14e: PRÓXIMO CICLO MENOR [v1.7.7+] (decisiones del dueño 2026-07-19)
+- [ ] T-25 Detector de apps ABIERTO: quitar SKIP_CATEGORIES de discovery.py (el dueño
+      quiere Dolphin y apps de sistema; conviven usuarios normales y power users).
+      MANTENER los filtros NoDisplay/Hidden (esos son "oculto" por spec freedesktop).
+      La excepción TerminalEmulator queda obsoleta al quitar el filtro.
+- [ ] (+ lo que salga del retest de voz en v1.7.6)
+
+# PH-WEB: REDISEÑO DE LA PÁGINA [va con v1.9/lanzamiento + rebrand] (anotado 2026-07-19)
+- [ ] Actualizar TODA la información (versiones, Firefox, features reales)
+- [ ] Matar el diseño "IA genérico" — identidad propia (coordinar con el rebrand/dominio)
+- [ ] Tutoriales: instalación, actualización (botón OTA), reinstalación de la PWA
+- [ ] Capturas de pantalla reales (pendientes desde siempre) + VIDEO de la app en acción
+- [ ] Sección premium clara: voz IA, skins, APK (cuando exista) — qué incluye la
+      licencia Pro única lifetime
+- [ ] Precio actualizado: $5 USD
+- [ ] Revisar: FAQ, requisitos (Debian/Ubuntu+systemd), enlace de soporte/feedback
+
+# PH-LICENCIAS: ACTIVACIONES POR DISPOSITIVO [va DENTRO de v1.9/ai-proxy] (diseño 2026-07-19)
+Estado actual VERIFICADO en código: la key NO se liga a hardware; activa dispositivos
+ILIMITADOS; único freno compartido = cuota de 60 comandos de voz/día POR KEY.
+DECISIÓN DEL DUEÑO [2026-07-19]: **1 DISPOSITIVO SIMULTÁNEO** con mudanza autoservicio.
+Regla: la key funciona en UNA sola PC a la vez; se puede "mudar" cuando la anterior
+queda inactiva. Mecánica (3 piezas — el formateo NO puede avisar al servidor, por eso
+no basta la liberación explícita):
+- [ ] Tabla activations: 1 fila por key (device_id, last_seen, activated_at).
+      device_id = /etc/machine-id del HTPC.
+- [ ] Claim en /api/license/activate (+ai-proxy): si sin dueño, mismo device_id, o
+      last_seen >72h -> activa/renueva. Si activa en OTRO device -> respuesta
+      "in_use_elsewhere".
+- [ ] MUDANZA (takeover confirmado): ante "in_use_elsewhere" la app pregunta
+      "¿Mudar la key aquí? El otro dispositivo perderá el premium" -> confirmar ->
+      la nueva PC se la queda (formateo = mudanza instantánea, sin soporte).
+      El dispositivo expulsado falla su próxima validación -> premium off.
+- [ ] Liberación explícita: uninstall.sh llama /release best-effort (mudanza limpia
+      en el caso desinstalar->reinstalar).
+- [ ] Heartbeat: toda validación hace upsert de last_seen (red de seguridad).
+- [ ] EDGE CASE aceptado: la PC expulsada conserva premium hasta agotar su cache de
+      gracia offline (<=72h) — ventana breve de doble uso, tolerable; alinear la
+      gracia con el lease si se quiere apretar.
+
+ROBO/ROTACIÓN DE KEY (decidido 2026-07-19; ancla = correo de compra Stripe en licenses):
+- [ ] v1 MANUAL (lanzamiento): ticket -> el dueño RESPONDE al correo REGISTRADO en la
+      licencia (no al remitente) -> confirmación = acceso al buzón -> en Supabase:
+      active=false a la vieja + key nueva enviada al mismo correo. El ladrón muere
+      en <=72h (gracia). Documentar el procedimiento en GUIA_AGUSTIN.
+- [ ] v2 AUTOSERVICIO (post-lanzamiento): página "Recuperar mi licencia" + Edge
+      Function: busca por correo -> magic link firmado un-solo-uso (TTL 15min) vía
+      Resend al correo registrado -> clic = rotación automática. SIEMPRE respuesta
+      genérica (no confirmar si el correo es cliente) + rate limit 3/día por
+      correo/IP.
+- [ ] Fallback extremo (buzón perdido): prueba de compra contra Stripe dashboard
+      (recibo / últimos 4 dígitos), manual.
+
 # PH15: APK ANDROID **PREMIUM** [v2.1] (diseño: archive/PLAN_GEMINI_v1.6.md FASE E)
 - [ ] Prerrequisito: ai-proxy Edge Function (claves fuera del dispositivo)
 - [ ] Capacitor wrapper + NSD/mDNS + RECORD_AUDIO + volumen físico + foreground service
@@ -168,6 +221,51 @@ guardar fotos/videos del teléfono y verlos en la TV.
       descargar, y botón "REPRODUCIR EN TV" (kiosk/mpv sobre el archivo local) — el
       diferenciador vs un NAS normal
 - [ ] Marketing honesto: "comparte y reproduce en tu TV", NO "NAS"
+
+# PH19: VOZ 2.0 — ASISTENTE AMPLIADO [v2.4] (consulta del dueño 2026-07-19)
+DECISIÓN: NO app separada — misma app, motor de intents MODULAR en backend (registry
+de acciones). Latencia NO es impedimento (voz=async+nube, aislada del input desde
+C-01; validado 12ms con voz activa). Diferenciador de mercado real: nadie hace
+"asistente LLM para HTPC Linux desde el teléfono".
+- [ ] Fase 1 (robusta): intents de control local — apagar/suspender HTPC, timers
+      ("apágate en 30min"), abrir apps nativas por voz, volumen a %, Home
+- [ ] Fase 2 (robusta): keymaps por sitio vía uinput (YouTube k/f/n, Netflix s=skip
+      intro...) — "pantalla completa", "siguiente episodio" SIN tocar el DOM
+- [ ] Fase 3 (investigación): DOM control vía WebDriver BiDi (Firefox; CDP es de
+      Chromium) — frágil tipo scraping, solo si fase 1+2 saben corto
+- [ ] MONETIZACIÓN: premium única = voz básica + cap diario (seguro de costos);
+      suscripción "Voz Pro" ($1.99-2.99/mes tentativo) = asistente ampliado + cuota
+      mayor. Costo medido por comando ≈ $0.0002-0.0005 (Whisper+Qwen en Together).
+      NÚMEROS FINALES: decidir con datos reales de uso del ai-proxy (v1.9) tras beta.
+      La columna `plan` de licenses ya soporta tiers.
+PRERREQUISITO ABSOLUTO: ai-proxy (v1.9). Orden en roadmap: tras Gamepad o intercambiable
+según demanda comercial.
+
+# PH-ANTIABUSO: PROTECCIONES DEL SERVICIO DE IA [OBLIGATORIO en v1.9/ai-proxy] (2026-07-19)
+Auditoría de protecciones actuales: cuota 60/día por key ✓ (DB atómica); 10 req/min ✓
+(memoria). AGUJEROS confirmados:
+- [ ] Cap de TAMAÑO server-side real: hoy acepta 5MB/mensaje = ~40 MIN de audio Opus
+      (los 8s son solo client-side, bypasseables) -> bajar a ~512KB (~60s) en el WS
+      handler Y en el ai-proxy. Un blob de 5MB factura ~40x por request en Whisper.
+- [ ] Llaves fuera del dispositivo = el ai-proxy mismo (sin él, cualquier comprador
+      extrae las keys del .env y consume sin cuota).
+- [ ] KILL-SWITCH de gasto global en el ai-proxy: si el gasto diario en Together
+      supera $X -> voz off + alerta al dueño (seguro contra factura sorpresa).
+- [ ] Cuota por PLAN (columna plan ya existe): lifetime=30-60/día; futura sub mayor.
+- [ ] Métrica de uso por key/dispositivo en el proxy (base de datos de costos ->
+      decide precios con datos).
+
+# PH-PRICING: DECISIÓN DE MODELO [2026-07-19, consulta del dueño sobre sub-only $3/mes]
+RECOMENDACIÓN REGISTRADA (Claude): NO sub-only al lanzamiento. Razones: audiencia
+self-hoster anti-subs; solo la voz tiene costo recurrente (~$0.05-0.15/mes usuario
+real, ~$0.90/mes el peor con cap 60/día — el CAP protege, no hace falta sub); subs =
+carga operativa (dunning/cancelaciones) para fundador solo; $5 único = compra impulso
+que construye base sin reputación previa.
+PLAN SECUENCIADO: v1.9 lanza Pro único $5 lifetime (todo premium + voz con cap
+diario). La SUSCRIPCIÓN nace con Voz 2.0 [v2.4] como "Voz Pro" ~$2.99/mes (asistente
+ampliado + cuota mayor) — atada a la feature de costo recurrente, sin traicionar a
+compradores previos. Números finales de cap/precio: con datos reales del proxy.
+(Decisión final del dueño pendiente de ratificar en v1.9.)
 
 # PH18: MODO GAMEPAD **PREMIUM** [v2.3] (propuesto 2026-07-17; latencia validada por el dueño)
 Posicionamiento: "retro y multijugador casual instantáneo" — NUNCA "reemplaza tu mando BT".

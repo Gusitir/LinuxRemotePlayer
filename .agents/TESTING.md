@@ -128,8 +128,12 @@ entorno_ref: HTPC Plasma Bigscreen (Wayland, Debian-based) + teléfono del dueñ
 - [OK] H1. Ajustes -> Buscar actualización -> "estás al día" (1.7.0 == 1.7.0).
 - [SKIP: no vi necesario probar] H2. `curl -s https://linux-remote-player.vercel.app/latest.json` -> 1.7.0,
       sha256 4fff1722...4833.
-- [PENDIENTE: aun no tenemos nueva version, pendiente] H3. (Cuando exista 1.7.1+) flujo completo: Buscar -> Actualizar -> el servicio
-      se reinicia y la app reconecta sola.
+- [OK ✓ DEFINITIVO 2026-07-19: boton 1.7.4->1.7.5 limpio — encontro, instalo,
+  desconecto/reconecto "muy rapido", sin comandos. Costo 3 bugs encontrados y
+  matados en el camino: cgroup suicide (T-14), prerm disable (T-19), gate
+  is-enabled (T-19). El pipeline OTA que usara cada cliente esta VALIDADO.] H3.
+      Flujo completo: Buscar -> Actualizar -> el servicio se reinicia y la app
+      reconecta sola.
 
 ## I. ESTRÉS / RESILIENCIA
 
