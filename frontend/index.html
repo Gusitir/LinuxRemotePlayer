@@ -359,6 +359,24 @@
                     </div>
                 </details>
 
+                <!-- COMANDOS DE VOZ -->
+                <details id="voice-commands-card" class="skin-bg-panel rounded-xl border border-gray-700 group overflow-hidden max-w-full hidden">
+                    <summary class="p-3 font-semibold flex justify-between items-center cursor-pointer select-none">
+                        <span>Comandos de voz</span>
+                        <svg viewBox="0 0 24 24" fill="none" class="w-4 h-4 transition-transform group-open:rotate-180"><g transform="scale(1.33333)"><polyline points="15.25 6.5 9 12.75 2.75 6.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></polyline></g></svg>
+                    </summary>
+                    <div class="p-3 pt-0 border-t border-gray-700 mt-2">
+                        <div class="flex flex-col gap-2 pt-2 text-xs">
+                            <p class="font-bold text-gray-300">Apps (di "Abre..."):</p>
+                            <p id="voice-apps-list" class="skin-text-dim leading-relaxed"></p>
+                            <p class="font-bold text-gray-300 mt-2">Control:</p>
+                            <p class="skin-text-dim leading-relaxed">subir/bajar volumen, silencio, pausa, siguiente, anterior, adelantar, rebobinar</p>
+                            <p class="font-bold text-gray-300 mt-2">Búsqueda:</p>
+                            <p class="skin-text-dim leading-relaxed">Di "busca ..." para buscar en YouTube.</p>
+                        </div>
+                    </div>
+                </details>
+
                 <!-- TUTORIALES -->
                 <details class="skin-bg-panel rounded-xl border border-gray-700 group overflow-hidden max-w-full">
                     <summary class="p-3 font-semibold flex justify-between items-center cursor-pointer select-none">
@@ -403,6 +421,9 @@
         </div>
         <div id="mic-timer" class="text-4xl font-mono font-bold mb-2">00:00</div>
         <div class="text-gray-300 font-medium">Suelta para enviar</div>
+        <div class="text-[10px] text-gray-400 mt-4 tracking-wide font-medium text-center px-4 max-w-[280px]">
+            «Abre Netflix» · «Sube el volumen» · «Busca ...»
+        </div>
     </div>
 
     <script src="app.js"></script>

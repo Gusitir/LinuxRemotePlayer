@@ -175,8 +175,18 @@ async function fetchLicenseStatus() {
             setSkin(savedSkin);
 
             const micRow = document.getElementById('mic-row');
+            const voiceCard = document.getElementById('voice-commands-card');
             if (micRow) {
-                micRow.style.display = (data.voice_enabled && isLicensed) ? 'flex' : 'none';
+                const showVoice = data.voice_enabled && isLicensed;
+                micRow.style.display = showVoice ? 'flex' : 'none';
+                if (voiceCard) {
+                    voiceCard.style.display = showVoice ? 'block' : 'none';
+                }
+                
+                if (showVoice && !localStorage.getItem('lrp_voice_hint_shown')) {
+                    localStorage.setItem('lrp_voice_hint_shown', 'true');
+                    showToast("Consejo: mantén pulsado el micrófono y di 'abre youtube'");
+                }
             }
 
             const unlicBlock = document.getElementById('license-unlicensed');
@@ -803,6 +813,10 @@ function renderApps(kiosks) {
     sorted.forEach((app) => {
         drawer.appendChild(createAppTile(app));
     });
+    const voiceList = document.getElementById('voice-apps-list');
+    if (voiceList) {
+        voiceList.innerText = allKiosks.map(k => k.name || k.id).join(', ');
+    }
     
     let restoreBtn = document.getElementById('restore-hidden-apps');
     if (!restoreBtn) {
