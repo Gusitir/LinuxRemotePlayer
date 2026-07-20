@@ -12,8 +12,7 @@ SCAN_PATHS = [
     '/var/lib/snapd/desktop/applications',
 ]
 
-# Hide system/settings noise (e.g. "Login Window", control-panel entries).
-SKIP_CATEGORIES = {'Settings', 'System', 'Screensaver'}
+
 
 
 def get_installed_apps():
@@ -47,11 +46,7 @@ def get_installed_apps():
                     continue
                 if entry.get('Hidden', 'false').lower() == 'true':
                     continue
-                cats = set((entry.get('Categories', '') or '').split(';'))
-                if 'TerminalEmulator' in cats:
-                    pass
-                elif cats & SKIP_CATEGORIES:
-                    continue
+
 
                 app_id = filename[:-len('.desktop')]
                 apps[app_id] = {
