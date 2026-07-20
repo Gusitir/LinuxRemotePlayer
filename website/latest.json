@@ -1,6 +1,6 @@
 {
-  "version": "1.7.6",
-  "deb_url": "https://linux-remote-player.vercel.app/downloads/linuxremoteplayer_1.7.6_all.deb",
-  "sha256": "36be42b82491c932dec4eb7fb2a8a82258f3f1bf835708d87b71ccf4d0835ee5",
-  "notes": "Voz reparada: crash con ENABLE_VOICE activo (variables obsoletas), soporte de micrófono en iOS (audio/mp4 dinámico), errores de micrófono visibles en la UI, log de audio recibido en el backend."
+  "version": "1.7.7",
+  "deb_url": "https://linux-remote-player.vercel.app/downloads/linuxremoteplayer_1.7.7_all.deb",
+  "sha256": "02b2c4067bd70f249b2372a34634fdfa3b4f881fa6e3d82186923db093e8c35b",
+  "notes": "Mejoras: detector de apps abierto, voz robusta con prompt dinámico y errores claros, guía de comandos de voz, PWA auto-actualizable."
 }
