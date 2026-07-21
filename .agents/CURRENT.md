@@ -24,9 +24,11 @@ regresión en device. Progreso:
 - **T-38 frontend = no-op** (0 console.log; ya limpio). **T-39 (partir main.py) = DIFERIDO a v1.9**
   (opcional, riesgoso pre-lanzamiento). → LIMPIEZA DE CÓDIGO CERRADA.
 - **T-43/T-44 = EN CURSO:** reestructura .agents (WORKFLOW.md + README índice; consolidar).
-- **PENDIENTES:** T-40 README factual + T-41 website factual (BLOQUEADAS: faltan screenshots
-  reales del dueño). T-42 licencias + T-45 Release v1.8.0 (CHANGELOG, build WSL, latest.json,
-  OTA) — al final, ejecuta Gemini + audita Claude + regresión device.
+- **T-40 README raíz + T-41 website = HECHAS** (factual: stack IA→Together, layout real,
+  Firefox no Chromium, precio $5, email fuera de comentarios; screenshots SIGUEN pendientes).
+  Commits 4320a73, 7397f99.
+- **PENDIENTE:** T-42 licencias + T-45 Release v1.8.0 (CHANGELOG, build WSL nativo, latest.json,
+  OTA) — al final, ejecuta Gemini + audita Claude + regresión device del dueño.
 
 ## PRÓXIMO MILESTONE: v1.9 — LANZAMIENTO (especificado en PLAN.md)
 ai-proxy Edge Function (llaves fuera del device) + PH-ANTIABUSO (cap 512KB, kill-switch,
@@ -42,6 +44,11 @@ multi-distro (Arch/Fedora/etc.) + Skins 2.0 → APK → Archivos → Gamepad →
 - Latente baja prio: showInstallScreen usa `appUI.hidden=true` pero #app-ui tiene `.flex`
   (autor gana al UA `[hidden]`); showPairingScreen lo esquiva con `style.display`. Revisar.
 - bootstrap.sh (instalador por git-clone) posible legacy; se rompería con repo privado (v1.9).
+- **Email de soporte web = aeciminer02@gmail.com** (era placeholder; user-facing en index.html:870/887
+  y gracias.html:226/7). Confirmar o reemplazar por el real ANTES de vender.
+- **Precio:** la web ya muestra $5 USD (T-41) pero el link Stripe sigue TEST (9.99 EUR). v1.9:
+  crear producto $5 USD en Stripe LIVE + cambiar el link en index.html.
+- **Cuota voz:** web dice 60/día; app.js dice "100 cmds/día". Unificar app a 60 (quick fix o v1.9).
 
 ## CHECKLIST DEL DUEÑO (fuera de código)
 - [ ] **Screenshots reales** del device (app en TV + control en teléfono) → para README/website (T-40/T-41).
