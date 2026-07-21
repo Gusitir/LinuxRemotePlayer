@@ -1,8 +1,8 @@
 # ESTADO ACTUAL (2026-07-20)
 
-VERSION publicada: **1.7.8** (LIVE en Vercel; sha f89fcd19...2ac53f triple-match,
-sw.js=lrp-1.7.8, app.js 1522 líneas no truncado — auditado). Repo **PÚBLICO** (se
-privatiza en v1.9). Licencia Elastic 2.0. Flujo/roles: ver AGENTS.md.
+VERSION publicada: **1.8.0** (LIVE en Vercel; sha 2be02de9...0508 triple-match,
+sw.js=lrp-1.8.0, app.js 1522 líneas no truncado — auditado y VALIDADO en device).
+Repo **PÚBLICO** (se privatiza en v1.9). Licencia Elastic 2.0. Flujo/roles: ver AGENTS.md.
 Voz producción validada: Together (whisper-large-v3 + Qwen2.5-7B). Llaves solo en el
 .env del HTPC y del PC dev (gitignored; T-32 confirmó 0 filtraciones en el historial).
 
@@ -13,9 +13,9 @@ está abierta, pero al CERRAR/REABRIR la PWA ya toma la actualización → el du
 SUFICIENTE. (Hacer el auto-reload realmente transparente = candidato v1.9; ver HALLAZGOS.)
 Testing intensivo: cerrado a satisfacción del dueño.
 
-## FASE ACTIVA: v1.8 — LIMPIEZA/OPTIMIZACIÓN pre-lanzamiento (plan en PLAN_v1.8.md)
-Objetivo: dejar todo limpio/profesional antes de v1.9. Termina con release v1.8.0 +
-regresión en device. Progreso:
+## FASE v1.8 — CERRADA (2026-07-20): limpieza/optimización pre-lanzamiento (plan en PLAN_v1.8.md)
+Release v1.8.0 auditado, LIVE y VALIDADO en device por el dueño. App "100% lista y profesional".
+SIGUIENTE: v1.9 (lanzamiento, abajo). Resumen de lo hecho:
 - **HECHAS y auditadas APTO:** T-32 auditoría secretos (0 filtraciones, 145 commits);
   T-33 purga IA legacy (solo cloud Together; fuera local/mock/defaults NVIDIA); T-34
   eliminar pair.html (muerto); T-35 scripts one-shot → scripts/dev/ + .deb más magro;
@@ -27,8 +27,9 @@ regresión en device. Progreso:
 - **T-40 README raíz + T-41 website = HECHAS** (factual: stack IA→Together, layout real,
   Firefox no Chromium, precio $5, email fuera de comentarios; screenshots SIGUEN pendientes).
   Commits 4320a73, 7397f99.
-- **PENDIENTE:** T-42 licencias + T-45 Release v1.8.0 (CHANGELOG, build WSL nativo, latest.json,
-  OTA) — al final, ejecuta Gemini + audita Claude + regresión device del dueño.
+- **T-45 Release v1.8.0 = HECHO** (commit 9884440; .deb 281KB más magro; sha 2be02de9...0508
+  triple-match; pusheado, Vercel LIVE, regresión device OK). FASE v1.8 CERRADA.
+- Screenshots reales de README/web quedan PENDIENTES → v1.9 (con rebrand PH-WEB).
 
 ## PRÓXIMO MILESTONE: v1.9 — LANZAMIENTO (especificado en PLAN.md)
 ai-proxy Edge Function (llaves fuera del device) + PH-ANTIABUSO (cap 512KB, kill-switch,

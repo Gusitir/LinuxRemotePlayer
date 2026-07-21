@@ -16,9 +16,13 @@ one-shot -> scripts/dev/ + .deb mas magro, T-36 borrar docs/archive, T-37 limpie
 (frontend ya limpio), T-39 (partir main.py) DIFERIDO a v1.9.
 LECCION del dueño: NO borrar AGENTS.md (los agentes lo leen primero) ni CONTEXT.md (handoff);
 el README a actualizar es el de la RAIZ (GitHub), no uno en .agents.
-FALTA v1.8: T-40 README raiz + T-41 website (factual; screenshots PENDIENTES del dueño),
-T-42 licencias + T-45 Release v1.8.0 (build WSL + latest.json + OTA + regresion device).
-Ejecuta Gemini 3.5 Flash, audita Claude. Flujo completo en AGENTS.md.
+v1.8 COMPLETA (2026-07-20): T-40/T-41 (README+web factual: Firefox no Chromium, precio $5,
+stack Together) + T-45 Release v1.8.0 hechos, auditados y LIVE (sha 2be02de9...0508;
+.deb 281KB; validado en device por el dueño). FASE v1.8 CERRADA. Pendientes que van a v1.9:
+screenshots reales README/web; email soporte -> soporte@<dominio>; app.js "100 cmds/dia" ->
+60; Stripe LIVE producto $5 USD. SIGUIENTE: v1.9 (lanzamiento: ai-proxy con llaves fuera del
+device, licencia 1-dispositivo + rotacion por correo, anti-abuso IA, Stripe LIVE, dominio,
+rebrand PH-WEB, privatizar repo). Ejecuta Gemini, audita Claude. Ver AGENTS.md.
 
 SESSION: 2026-07-17..20 (Claude — ciclo v1.7.1..v1.7.7 completo, cerrada por contexto)
 Testing intensivo ejecutado y triado -> 29 tareas + 6 correcciones auditadas -> 8
