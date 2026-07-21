@@ -1,6 +1,6 @@
 {
-  "version": "1.7.8",
-  "deb_url": "https://linux-remote-player.vercel.app/downloads/linuxremoteplayer_1.7.8_all.deb",
-  "sha256": "f89fcd19c3a731be3c05081ce71125a7b0b2dac24aea2c692ef4a179972ac53f",
-  "notes": "Fix: el card de comandos de voz ahora aparece en Ajustes."
+  "version": "1.8.0",
+  "deb_url": "https://linux-remote-player.vercel.app/downloads/linuxremoteplayer_1.8.0_all.deb",
+  "sha256": "2be02de9f7c47bcbb1b5a5c3de71629f456b938557dd1fffb1310202efbe0508",
+  "notes": "Release de mantenimiento: limpieza interna, documentacion y sitio actualizados."
 }
