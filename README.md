@@ -21,7 +21,7 @@ A plug & play remote-control ecosystem for Linux HTPCs: a mobile PWA client talk
 * **Resilient connection** — ping/pong heartbeat, reconnect-on-wake, exponential backoff, and an actionable troubleshooting banner when something is wrong.
 * **Self-healing HTTPS** — local two-tier CA (`ca.pem` + leaf certs) regenerated automatically for the current IP and `hostname.local` (mDNS via avahi). Install the CA once on your phone and never see a warning again.
 * **Secure pairing** — no unauthenticated mode. A pairing token is auto-provisioned and delivered as a one-tap link at install time.
-* **Voice intent engine** *(license-gated)* — speech-to-text plus LLM intent parsing (cloud NVIDIA NIM / OpenRouter, or fully local Whisper + Ollama).
+* **Voice intent engine** *(license-gated)* — speech-to-text plus LLM intent parsing in the cloud (Together AI by default: Whisper-large-v3 + Qwen2.5-7B-Instruct; configurable to any OpenAI-compatible STT/LLM provider).
 
 ---
 
@@ -124,24 +124,21 @@ All backend options live in `backend/.env` (see [`backend/.env.example`](backend
 ## Repository layout
 
 ```
-├── backend/            FastAPI server, input emulation, kiosk launcher, AI pipeline, licensing
-│   ├── certs/          Auto-generated local HTTPS certificates
-│   ├── auth.py         Access control gates (pairing tokens, licensing checks, grace caching)
-│   ├── main.py         Websocket and HTTP controllers
+├── backend/            FastAPI server: input emulation, kiosk launcher, AI pipeline, licensing
+│   ├── main.py         WebSocket + HTTP controllers and endpoints
+│   ├── ai_pipeline.py  Cloud STT + LLM intent parsing (Together / OpenAI-compatible)
+│   ├── input_emulator.py  Virtual mouse / keyboard / gamepad via uinput
+│   ├── kiosk.py        Firefox kiosk launcher + window management
+│   ├── discovery.py    Native .desktop app discovery
+│   ├── audio.py        Volume / mute control (wpctl / pactl)
+│   ├── auth.py         Pairing tokens + license verification (grace caching)
+│   ├── run.py          HTTPS self-healing, local CA, entrypoint
 │   └── requirements.txt
-├── frontend/           PWA client (index.html, app.js, sw.js, offline CSS, icons)
-├── scripts/            Operational system scripts
-│   ├── bootstrap.sh    One-line curl bootstrap installer
-│   ├── install.sh      Main setup installer for services and devices
-│   ├── update.sh       Self-updating git release runner
-│   └── uninstall.sh    System uninstaller script
-├── supabase/           Database configuration and Edge Functions
-│   └── functions/
-│       ├── stripe-webhook/
-│       └── validate-license/
-├── website/            Stripe-integrated marketing pages deployed on Vercel
-│   ├── index.html
-│   └── gracias.html
+├── frontend/           PWA client (index.html, app.js, sw.js, status.html, CSS, icons, fonts)
+├── scripts/            Operational scripts (install / update / uninstall / bootstrap, build_deb, CSS guard)
+│   └── dev/            One-shot asset-generation tools (icons, fonts) — not shipped in the .deb
+├── supabase/functions/ Edge Functions (stripe-webhook, validate-license, send-feedback)
+├── website/            Marketing pages + install.sh + downloads/ (.deb) + latest.json — deployed on Vercel
 ├── CHANGELOG.md        Semantic version release log
 └── VERSION             Current release version
 ```
