@@ -169,15 +169,6 @@ replacements_index[23] = (
 base = r"D:\AGUSTIN\Portafolio\Proyectos\Proyecto WebApp - LinuxRemotePlayer"
 replace_in_file(os.path.join(base, "frontend", "index.html"), replacements_index)
 
-# pair.html has phone
-replacements_pair = [
-    (
-        '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>',
-        get_new("mobile.svg", "").replace('class=""', 'width="32" height="32"')
-    )
-]
-replace_in_file(os.path.join(base, "frontend", "pair.html"), replacements_pair)
-
 # status.html has phone
 replacements_status = [
     (

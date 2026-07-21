@@ -13,7 +13,6 @@ FRONTEND_DIR = os.path.join(PROJECT_ROOT, "frontend")
 USAGE_FILES = [
     os.path.join(FRONTEND_DIR, "index.html"),
     os.path.join(FRONTEND_DIR, "status.html"),
-    os.path.join(FRONTEND_DIR, "pair.html"),
     os.path.join(FRONTEND_DIR, "app.js")
 ]
 
