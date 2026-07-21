@@ -1,6 +1,6 @@
 {
-  "version": "1.7.7",
-  "deb_url": "https://linux-remote-player.vercel.app/downloads/linuxremoteplayer_1.7.7_all.deb",
-  "sha256": "02b2c4067bd70f249b2372a34634fdfa3b4f881fa6e3d82186923db093e8c35b",
-  "notes": "Mejoras: detector de apps abierto, voz robusta con prompt dinámico y errores claros, guía de comandos de voz, PWA auto-actualizable."
+  "version": "1.7.8",
+  "deb_url": "https://linux-remote-player.vercel.app/downloads/linuxremoteplayer_1.7.8_all.deb",
+  "sha256": "f89fcd19c3a731be3c05081ce71125a7b0b2dac24aea2c692ef4a179972ac53f",
+  "notes": "Fix: el card de comandos de voz ahora aparece en Ajustes."
 }
