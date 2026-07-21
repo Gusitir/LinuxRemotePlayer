@@ -52,9 +52,10 @@ cp -r backend frontend scripts VERSION pkg/opt/linuxremoteplayer/
 sed -i "s/__LRP_VERSION__/${VERSION}/" pkg/opt/linuxremoteplayer/frontend/sw.js
 grep -q "lrp-${VERSION}" pkg/opt/linuxremoteplayer/frontend/sw.js || { echo "ERROR: sw.js sin versionar"; exit 1; }
 
-# Cleanup excluded items
+# Cleanup excluded items (secrets, caches, and dev/build-only tooling not needed at runtime)
 cd pkg/opt/linuxremoteplayer
-rm -rf backend/.venv backend/certs backend/.pairing_token backend/.env backend/__pycache__ scripts/__pycache__
+rm -rf backend/.venv backend/certs backend/.pairing_token backend/.env backend/__pycache__ \
+       scripts/__pycache__ scripts/dev scripts/build_deb.sh scripts/check_css_sync.py
 cd ../../..
 
 chmod +x pkg/opt/linuxremoteplayer/scripts/*.sh
