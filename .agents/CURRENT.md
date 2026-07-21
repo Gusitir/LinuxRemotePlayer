@@ -2,7 +2,7 @@
 
 VERSION publicada: **1.7.8** (LIVE en Vercel; sha f89fcd19...2ac53f triple-match,
 sw.js=lrp-1.7.8, app.js 1522 líneas no truncado — auditado). Repo **PÚBLICO** (se
-privatiza en v1.9). Licencia Elastic 2.0. Flujo/roles: ver WORKFLOW.md.
+privatiza en v1.9). Licencia Elastic 2.0. Flujo/roles: ver AGENTS.md.
 Voz producción validada: Together (whisper-large-v3 + Qwen2.5-7B). Llaves solo en el
 .env del HTPC y del PC dev (gitignored; T-32 confirmó 0 filtraciones en el historial).
 

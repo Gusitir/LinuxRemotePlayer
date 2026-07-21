@@ -5,7 +5,7 @@
 - /scripts/: bash (install, build_deb, update, uninstall, bootstrap) + check_css_sync.py.
 - /website/: Vercel landing + install.sh bootstrap + /downloads (.deb) + latest.json.
 - /supabase/functions/: Edge Functions (stripe-webhook, validate-license, send-feedback).
-- /.agents/: contexto IA (README índice, WORKFLOW proceso, CURRENT, PLAN, PLAN_v1.8,
+- /.agents/: contexto IA (AGENTS entrada, CONTEXT handoff, CURRENT, PLAN, PLAN_v1.8,
   TESTING, APPCORE, archive/, AUDITS/, skills/manage_context = skill `reindex`).
 
 # ENDPOINTS backend/main.py (gate entre paréntesis)
