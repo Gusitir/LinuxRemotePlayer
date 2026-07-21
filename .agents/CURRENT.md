@@ -44,8 +44,9 @@ multi-distro (Arch/Fedora/etc.) + Skins 2.0 → APK → Archivos → Gamepad →
 - Latente baja prio: showInstallScreen usa `appUI.hidden=true` pero #app-ui tiene `.flex`
   (autor gana al UA `[hidden]`); showPairingScreen lo esquiva con `style.display`. Revisar.
 - bootstrap.sh (instalador por git-clone) posible legacy; se rompería con repo privado (v1.9).
-- **Email de soporte web = aeciminer02@gmail.com** (era placeholder; user-facing en index.html:870/887
-  y gracias.html:226/7). Confirmar o reemplazar por el real ANTES de vender.
+- **Email de soporte web = aeciminer02@gmail.com** (correo secundario de TEST del dueño; queda
+  funcionando; user-facing en index.html:870/887 y gracias.html:226/7). CAMBIAR a
+  soporte@<dominio> al comprar el dominio (v1.9).
 - **Precio:** la web ya muestra $5 USD (T-41) pero el link Stripe sigue TEST (9.99 EUR). v1.9:
   crear producto $5 USD en Stripe LIVE + cambiar el link en index.html.
 - **Cuota voz:** web dice 60/día; app.js dice "100 cmds/día". Unificar app a 60 (quick fix o v1.9).
