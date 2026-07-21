@@ -5,8 +5,8 @@
 - /scripts/: bash (install, build_deb, update, uninstall, bootstrap) + check_css_sync.py.
 - /website/: Vercel landing + install.sh bootstrap + /downloads (.deb) + latest.json.
 - /supabase/functions/: Edge Functions (stripe-webhook, validate-license, send-feedback).
-- /.agents/: contexto IA (AGENTS, CURRENT, PLAN, TESTING, APPCORE, archive/, AUDITS/,
-  skills/manage_context = skill `reindex`).
+- /.agents/: contexto IA (README índice, WORKFLOW proceso, CURRENT, PLAN, PLAN_v1.8,
+  TESTING, APPCORE, archive/, AUDITS/, skills/manage_context = skill `reindex`).
 
 # ENDPOINTS backend/main.py (gate entre paréntesis)
 - Pairing: /api/pairing-pin (local), POST /api/pair (LAN sin auth, PIN 6 dígitos un solo
@@ -62,7 +62,8 @@
   LLM Qwen/Qwen2.5-7B-Instruct-Turbo en Together (nemotron-streaming y Llama-3.1 dan
   400). transcribe_audio detecta formato por magic bytes (webm 0x1A45DFA3 / mp4 'ftyp'
   offset 4). parse_intent(transcription, valid_targets): system_prompt DINÁMICO (apps
-  inyectadas, jamás hardcodeadas) + keys media exactas + ejemplos ES. Modo local intacto.
+  inyectadas, jamás hardcodeadas) + keys media exactas + ejemplos ES. SOLO cloud: modo IA
+  local + MOCK + defaults NVIDIA/OpenRouter ELIMINADOS (T-33); defaults ahora = Together.
   PENDIENTE VENTA: ai-proxy Edge Function (claves fuera del dispositivo).
 - backend/.env(.example): ENABLE_VOICE, CLOUD_* (whisper+qwen), KEYBOARD_LAYOUT,
   LRP_MODE (escrito por install.sh), PAIRING_TOKEN, LICENSE_*, BUY_URL.
