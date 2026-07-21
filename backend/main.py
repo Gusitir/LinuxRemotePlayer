@@ -1,3 +1,4 @@
+"""Main FastAPI application server and endpoints for Linux Remote Player."""
 import asyncio
 import json
 import os
@@ -79,7 +80,6 @@ async def monitor_idle_panel():
     for >=45s, show the status panel with the pairing QR. NEVER interrupts running
     media — a dropped phone must not kill a movie."""
     import kiosk
-    global connected_clients, last_input_time
     while True:
         await asyncio.sleep(15)
         if os.getenv("APPLIANCE_IDLE_PANEL", "").lower() != "true":
@@ -400,7 +400,6 @@ def get_ips():
 @app.get("/api/status")
 async def get_api_status(request: Request):
     require_local(request)
-    global connected_clients, last_input_time
     import kiosk
     import input_emulator
     
@@ -459,7 +458,6 @@ def get_ca():
 @app.get("/api/debug", dependencies=[Depends(require_token)])
 def debug_info():
     import input_emulator
-    global global_dropped_fast, global_dropped_slow
     return {
         "evdev_available": input_emulator.EVDEV_AVAILABLE,
         "is_ui_created": getattr(input_emulator.gamepad, 'ui', None) is not None,

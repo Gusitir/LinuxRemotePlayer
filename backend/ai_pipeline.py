@@ -1,3 +1,4 @@
+"""AI pipeline for voice command processing and Intent recognition."""
 import os
 import httpx
 import json

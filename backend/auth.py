@@ -1,3 +1,4 @@
+"""Authentication, pairing tokens, and license verification."""
 import os
 import secrets
 import logging

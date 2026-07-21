@@ -1,3 +1,4 @@
+"""FreeDesktop application discovery scanner for Linux Remote Player."""
 import os
 import configparser
 

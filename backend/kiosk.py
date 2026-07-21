@@ -1,3 +1,4 @@
+"""Kiosk launcher and process management for Linux Remote Player."""
 import subprocess
 import os
 import shutil
@@ -81,7 +82,6 @@ def gui_env():
 
 def close_all():
     kill_existing_kiosks()
-    global _native_procs
     for proc in _native_procs:
         if proc.poll() is None:
             try:

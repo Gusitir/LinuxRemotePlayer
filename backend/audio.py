@@ -1,3 +1,4 @@
+"""Audio volume and mute control utilities using pactl/amixer."""
 import subprocess
 import shutil
 import logging

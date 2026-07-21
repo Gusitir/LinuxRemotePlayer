@@ -1,4 +1,4 @@
-# input_emulator.py
+"""Virtual input emulation via uinput/evdev for Linux Remote Player."""
 import asyncio
 import string
 import time
@@ -7,7 +7,6 @@ import logging
 logger = logging.getLogger("input_emulator")
 
 try:
-    import evdev
     from evdev import UInput, ecodes as e
     EVDEV_AVAILABLE = True
 except ImportError:
