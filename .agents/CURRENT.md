@@ -1,21 +1,25 @@
 # ESTADO ACTUAL (compactado 2026-07-20 al cierre de sesión; histórico en git + archive/)
 
-VERSION publicada: **1.7.7** (verificada en vivo: sha 02b2c406...8c35b match doble,
-sw.js del .deb = lrp-1.7.7). Repo PRIVADO. Licencia Elastic 2.0.
-Modelos: Gemini 3.5 Pro ejecuta; Claude (Fable5 Alto) planifica/audita.
+VERSION publicada: **1.7.8** (LIVE en Vercel 2026-07-20; sha f89fcd19...2ac53f
+triple-match latest.json==.deb==.sha256, sw.js=lrp-1.7.8, app.js 1522 líneas no
+truncado — auditado por Claude vía wsl al clon nativo). Repo PRIVADO. Elastic 2.0.
+Modelos (2026-07-20): **Gemini 3.5 Flash** ejecuta (chat fresco, brief completo por
+tarea); Claude (**Opus 4.8**) planifica/audita. Se agotó Fable5.
 HTPC del dueño: v1.7.5 instalada, PWA fresca 1.7.5. Voz CONFIGURADA en su .env
 (stack validado: STT openai/whisper-large-v3 + LLM Qwen/Qwen2.5-7B-Instruct-Turbo
 en Together; llaves solo en el .env del HTPC y del PC dev — gitignored, verificado).
 
-## ÚNICO PENDIENTE DEL CICLO v1.7.x — validación final del dueño
-Botón 1.7.5 -> 1.7.7, cerrar/reabrir la PWA UNA vez (última manual; T-28 activa el
-auto-reload en adelante), y 4 checks:
-1. Voz: "Abre Netflix" / "Sube el volumen" / "Pausa" / "busca recetas de cocina"
-2. Ajustes -> card "Comandos de voz" (apps dinámicas del catálogo)
-3. Drawer -> Dolphin visible (detector abierto)
-- TODO OK -> declarar TESTING INTENSIVO CERRADO (matriz completa en TESTING.md,
-  H3 OK definitivo) y arrancar v1.9.
-- ALGO FALLA -> triar con causa raíz -> nuevo PLAN_GEMINI_v1.7.8.md.
+## CICLO v1.7.8 — cerrado en código + publicado; falta PRUEBA OTA del dueño
+Validación 1.7.7 del dueño (2026-07-20): 2/4 OK. Voz funciona; Dolphin+apps sistema OK.
+Fallo real: card "Comandos de voz" NO aparecía → causa raíz: `.hidden{...!important}`
+vencía al inline `style.display` (app.js:183). Fix T-30 = `classList.toggle('hidden',...)`
+(commit b46cafd, auditado APTO). T-31 = Release v1.7.8 (commit a0b568b, auditado APTO,
+LIVE). Detalle del ciclo en PLAN_GEMINI_v1.7.8.md.
+- OTA 1.7.5→1.7.7 requería reinstalar = ESPERADO (1.7.5 shipeó antes del auto-reload).
+- **ÚNICO PENDIENTE: el dueño abre la PWA (1.7.7) SIN reinstalar y confirma:**
+  (a) auto-recarga sola a 1.7.8, (b) card "Comandos de voz" visible en Ajustes.
+  ✅ ambos → OTA VERIFICADO end-to-end + TESTING INTENSIVO CERRADO → arrancar v1.9.
+  ❌ no auto-recarga → problema REAL de OTA (no esperado) → triar causa raíz.
 
 ## CICLO v1.7.x CERRADO EN CÓDIGO (resumen; planes en .agents/archive/)
 - v1.7.1..v1.7.7: 29 tareas + 6 correcciones, todas auditadas con verificación
@@ -50,11 +54,17 @@ Voz 2.0 (PH15-PH19 en PLAN.md).
 - DeepSeek (asistente en el HTPC): solo config/diagnóstico, jamás código; sus
   hotfix de emergencia se PORTAN a repo o el OTA los pisa.
 
-## HALLAZGOS GEMINI
-(vacío — anotar aquí lo fuera de alcance, sin código)
+## HALLAZGOS / FUTURO (fuera de alcance, sin código aún)
+- Voz: falta intent "volumen al máximo" (hoy sube 1 paso). Meter al ampliar comandos
+  avanzados por app. NO es bug, es feature pendiente (reportado por el dueño 2026-07-20).
+- Latente baja prioridad (no reportado, flujo real anda): showInstallScreen usa
+  `appUI.hidden = true` pero #app-ui tiene clase `.flex` (autor) que gana al UA `[hidden]`;
+  showPairingScreen lo esquiva con `style.display`. Revisar si algún día no oculta la app UI.
 
 ## CHECKLIST DEL DUEÑO (fuera de código)
-- [ ] Validación final 1.7.7 (arriba) -> reportar a Claude.
+- [x] Validación 1.7.7 reportada (2/4 OK) -> fixes en 1.7.8 (LIVE).
+- [ ] **PRUEBA OTA:** abrir PWA (1.7.7) SIN reinstalar -> confirmar auto-reload a 1.7.8
+      + card de voz visible -> reportar a Claude (cierra testing intensivo).
 - [ ] `supabase functions deploy send-feedback --no-verify-jwt` (pendiente desde v1.5).
 - [x] Basura temporal borrada (test.sh, scratch/, .agents/logs_temp/) — 2026-07-20.
-- [ ] Commit+push de este cierre de .agents (repo limpio salvo estos .md + .env.example).
+- [ ] Commit de .agents (CURRENT + PLAN_GEMINI_v1.7.8) — repo limpio salvo estos .md.
