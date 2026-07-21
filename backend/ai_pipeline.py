@@ -9,28 +9,20 @@ logger = logging.getLogger("ai_pipeline")
 
 load_dotenv()
 
-# Cloud URLs (Configurable to support Together AI, OpenRouter, NVIDIA, etc.)
-CLOUD_STT_URL = os.getenv("CLOUD_STT_URL", "https://integrate.api.nvidia.com/v1/audio/transcriptions")
-CLOUD_LLM_URL = os.getenv("CLOUD_LLM_URL", "https://openrouter.ai/api/v1/chat/completions")
+# Cloud AI endpoints. Defaults target the validated production stack (Together AI:
+# Whisper-large-v3 for STT + Qwen2.5-7B-Instruct-Turbo for intent). Override any of
+# these via backend/.env to use another OpenAI-compatible provider.
+CLOUD_STT_URL = os.getenv("CLOUD_STT_URL", "https://api.together.xyz/v1/audio/transcriptions")
+CLOUD_STT_KEY = os.getenv("CLOUD_STT_KEY")
+CLOUD_STT_MODEL = os.getenv("CLOUD_STT_MODEL", "openai/whisper-large-v3")
 
-# Keys
-CLOUD_STT_KEY = os.getenv("CLOUD_STT_KEY", os.getenv("NVIDIA_NIM_API_KEY"))
-CLOUD_LLM_KEY = os.getenv("CLOUD_LLM_KEY", os.getenv("OPENROUTER_API_KEY"))
+CLOUD_LLM_URL = os.getenv("CLOUD_LLM_URL", "https://api.together.xyz/v1/chat/completions")
+CLOUD_LLM_KEY = os.getenv("CLOUD_LLM_KEY")
+CLOUD_LLM_MODEL = os.getenv("CLOUD_LLM_MODEL", "Qwen/Qwen2.5-7B-Instruct-Turbo")
 
-# Models
-CLOUD_STT_MODEL = os.getenv("CLOUD_STT_MODEL", os.getenv("NVIDIA_ASR_MODEL", "nvidia/nemotron-3.5-asr"))
-CLOUD_LLM_MODEL = os.getenv("CLOUD_LLM_MODEL", "meta-llama/llama-3.1-8b-instruct:free")
-
-# Local AI Config
-USE_LOCAL_AI = os.getenv("USE_LOCAL_AI", "false").lower() == "true"
-LOCAL_WHISPER_URL = os.getenv("LOCAL_WHISPER_URL")
-LOCAL_OLLAMA_URL = os.getenv("LOCAL_OLLAMA_URL")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.1:8b")
-
-MOCK_AI = os.getenv("MOCK_AI", "false").lower() == "true"
-
-# COR-07: Module-level shared httpx.AsyncClient (lazy init)
+# Module-level shared httpx.AsyncClient (lazy init) — reused across requests (COR-07).
 _client = None
+
 
 def get_client() -> httpx.AsyncClient:
     global _client
@@ -40,13 +32,10 @@ def get_client() -> httpx.AsyncClient:
 
 
 def clean_json_content(content: str) -> str:
-    """Strip markdown code block fences and extract the first JSON object block."""
+    """Strip markdown code-block fences and extract the first JSON object block."""
     content = content.strip()
-    # Strip leading ```json or ```
     content = re.sub(r"^```(?:json)?\s*", "", content)
-    # Strip trailing ```
     content = re.sub(r"\s*```$", "", content)
-    # Extract outer {...}
     m = re.search(r"(\{.*\})", content, re.DOTALL)
     if m:
         return m.group(1)
@@ -54,6 +43,12 @@ def clean_json_content(content: str) -> str:
 
 
 async def transcribe_audio(audio_bytes: bytes) -> str:
+    """Speech-to-text via the configured cloud STT endpoint.
+
+    Detects the container by magic bytes (WebM/EBML vs MP4/ftyp) so iOS (mp4) and
+    Android/desktop (webm) recordings are both sent with the right filename/mime.
+    Returns the transcription text, or "" on any error.
+    """
     filename = 'audio.webm'
     mime = 'audio/webm'
     if audio_bytes.startswith(b'\x1a\x45\xdf\xa3'):
@@ -62,57 +57,38 @@ async def transcribe_audio(audio_bytes: bytes) -> str:
         filename = 'audio.m4a'
         mime = 'audio/mp4'
 
+    if not CLOUD_STT_KEY:
+        logger.error("CLOUD_STT_KEY missing — voice STT disabled.")
+        return ""
+
     files = {'file': (filename, audio_bytes, mime)}
-    client = get_client()
-
-    if USE_LOCAL_AI:
-        if not LOCAL_WHISPER_URL:
-            logger.error("LOCAL_WHISPER_URL not configured.")
-            return ""
-
-        try:
-            response = await client.post(
-                LOCAL_WHISPER_URL,
-                files=files,
-                timeout=15.0
-            )
-            response.raise_for_status()
-            result = response.json()
-            return result.get('text', '')
-        except Exception as e:
-            logger.error(f"Local STT Error: {e}")
-            return ""
-    else:
-        if not CLOUD_STT_KEY:
-            if MOCK_AI:
-                logger.info("Cloud STT API key missing. MOCK_AI active -> mock transcription.")
-                return "launch youtube"
-            logger.error("CLOUD_STT_KEY missing and MOCK_AI disabled.")
-            return ""
-
-        try:
-            data = {'model': CLOUD_STT_MODEL}
-            response = await client.post(
-                CLOUD_STT_URL,
-                headers={"Authorization": f"Bearer {CLOUD_STT_KEY}"},
-                data=data,
-                files=files,
-                timeout=10.0
-            )
-            response.raise_for_status()
-            result = response.json()
-            return result.get('text', '')
-        except Exception as e:
-            logger.error(f"Cloud STT Error: {e}")
-            return ""
+    try:
+        response = await get_client().post(
+            CLOUD_STT_URL,
+            headers={"Authorization": f"Bearer {CLOUD_STT_KEY}"},
+            data={'model': CLOUD_STT_MODEL},
+            files=files,
+            timeout=10.0,
+        )
+        response.raise_for_status()
+        return response.json().get('text', '')
+    except Exception as e:
+        logger.error(f"Cloud STT Error: {e}")
+        return ""
 
 
 async def parse_intent(transcription: str, valid_targets: list = None) -> dict:
+    """Parse a Spanish voice command into a structured intent via the cloud LLM.
+
+    The system prompt is built dynamically from `valid_targets` (the apps actually
+    available on this device) — app ids are never hardcoded. Returns a dict whose
+    "action" is launch_kiosk | media_control | search, or {"action": "error"}.
+    """
     if valid_targets is None:
         valid_targets = []
-        
+
     valid_apps_str = ", ".join(valid_targets)
-    
+
     system_prompt = f"""
 You are an intent parser for a TV remote. Output ONLY valid JSON.
 Allowed actions: 'launch_kiosk', 'media_control', 'search'.
@@ -130,77 +106,33 @@ Examples:
 5. "silencio" -> {{"action": "media_control", "parameters": {{"key": "KEY_MUTE"}}}}
 6. "busca recetas de cocina" -> {{"action": "search", "parameters": {{"search_query": "recetas de cocina"}}}}
 """
-    client = get_client()
 
-    if USE_LOCAL_AI:
-        if not LOCAL_OLLAMA_URL:
-            logger.error("LOCAL_OLLAMA_URL not configured.")
-            return {"action": "error"}
+    if not CLOUD_LLM_KEY:
+        logger.error("CLOUD_LLM_KEY missing — voice intent disabled.")
+        return {"action": "error"}
 
-        try:
-            response = await client.post(
-                LOCAL_OLLAMA_URL,
-                json={
-                    "model": OLLAMA_MODEL,
-                    "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": transcription}
-                    ],
-                    "response_format": {"type": "json_object"}
-                },
-                timeout=20.0
-            )
-            response.raise_for_status()
-            content = response.json()['choices'][0]['message']['content']
-            cleaned = clean_json_content(content)
-            intent = json.loads(cleaned)
-            
-            # Validation
-            action = intent.get("action")
-            if action not in {"launch_kiosk", "media_control", "search"}:
-                logger.warning(f"Invalid voice intent action parsed: {action}")
-                return {"action": "error"}
-            return intent
-        except Exception as e:
-            logger.error(f"Local LLM Error: {e}")
+    try:
+        response = await get_client().post(
+            CLOUD_LLM_URL,
+            headers={"Authorization": f"Bearer {CLOUD_LLM_KEY}"},
+            json={
+                "model": CLOUD_LLM_MODEL,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": transcription},
+                ],
+                "response_format": {"type": "json_object"},
+            },
+            timeout=10.0,
+        )
+        response.raise_for_status()
+        content = response.json()['choices'][0]['message']['content']
+        intent = json.loads(clean_json_content(content))
+        action = intent.get("action")
+        if action not in {"launch_kiosk", "media_control", "search"}:
+            logger.warning(f"Invalid voice intent action parsed: {action}")
             return {"action": "error"}
-    else:
-        if not CLOUD_LLM_KEY:
-            if MOCK_AI:
-                logger.info("Cloud LLM API key missing. MOCK_AI active -> mock intent.")
-                return {"action": "launch_kiosk", "parameters": {"target_id": "youtube"}}
-            logger.error("CLOUD_LLM_KEY missing and MOCK_AI disabled.")
-            return {"action": "error"}
-
-        try:
-            response = await client.post(
-                CLOUD_LLM_URL,
-                headers={
-                    "Authorization": f"Bearer {CLOUD_LLM_KEY}",
-                    "HTTP-Referer": "http://localhost",
-                    "X-Title": "LinuxRemotePlayer"
-                },
-                json={
-                    "model": CLOUD_LLM_MODEL,
-                    "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": transcription}
-                    ],
-                    "response_format": {"type": "json_object"}
-                },
-                timeout=10.0
-            )
-            response.raise_for_status()
-            content = response.json()['choices'][0]['message']['content']
-            cleaned = clean_json_content(content)
-            intent = json.loads(cleaned)
-            
-            # Validation
-            action = intent.get("action")
-            if action not in {"launch_kiosk", "media_control", "search"}:
-                logger.warning(f"Invalid voice intent action parsed: {action}")
-                return {"action": "error"}
-            return intent
-        except Exception as e:
-            logger.error(f"Cloud LLM Error: {e}")
-            return {"action": "error"}
+        return intent
+    except Exception as e:
+        logger.error(f"Cloud LLM Error: {e}")
+        return {"action": "error"}

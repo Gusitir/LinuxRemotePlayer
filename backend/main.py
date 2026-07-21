@@ -43,15 +43,11 @@ app.add_middleware(
 
 VOICE_ENABLED = os.getenv("ENABLE_VOICE", "false").lower() == "true"
 
-# COR-07 Log startup error if ENABLE_VOICE is true but keys are missing
+# COR-07 Log startup error if ENABLE_VOICE is true but cloud keys are missing
 if VOICE_ENABLED:
     import ai_pipeline
-    if ai_pipeline.USE_LOCAL_AI:
-        if not ai_pipeline.LOCAL_WHISPER_URL or not ai_pipeline.LOCAL_OLLAMA_URL:
-            logger.error("ENABLE_VOICE is True, but local AI Whisper/Ollama URLs are missing.")
-    else:
-        if not ai_pipeline.CLOUD_STT_KEY or not ai_pipeline.CLOUD_LLM_KEY:
-            logger.error("ENABLE_VOICE is True, but Cloud STT/LLM API keys are missing.")
+    if not ai_pipeline.CLOUD_STT_KEY or not ai_pipeline.CLOUD_LLM_KEY:
+        logger.error("ENABLE_VOICE is True, but Cloud STT/LLM API keys are missing.")
 
 import audio
 logger.info(f"Audio backend selected: {audio.get_audio_backend() or 'None (uinput fallback)'}")
