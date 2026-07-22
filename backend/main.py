@@ -23,8 +23,8 @@ import auth
 from input_emulator import gamepad, mouse
 from discovery import get_installed_apps
 from kiosk import launch_kiosk, gui_env
-from ai_pipeline import transcribe_audio, parse_intent
-from auth import validate_license_and_increment, verify_access, is_license_valid_cached_or_online
+from ai_pipeline import voice_command
+from auth import verify_access, is_license_valid_cached_or_online
 
 logger = logging.getLogger("main")
 
@@ -43,12 +43,6 @@ app.add_middleware(
 )
 
 VOICE_ENABLED = os.getenv("ENABLE_VOICE", "false").lower() == "true"
-
-# COR-07 Log startup error if ENABLE_VOICE is true but cloud keys are missing
-if VOICE_ENABLED:
-    import ai_pipeline
-    if not ai_pipeline.CLOUD_STT_KEY or not ai_pipeline.CLOUD_LLM_KEY:
-        logger.error("ENABLE_VOICE is True, but Cloud STT/LLM API keys are missing.")
 
 import audio
 logger.info(f"Audio backend selected: {audio.get_audio_backend() or 'None (uinput fallback)'}")
@@ -715,25 +709,19 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
                     continue
                 audio_data = message.get("bytes")
                 logger.info(f"Received binary audio message: {len(audio_data)} bytes")
-                if len(audio_data) > 5_000_000:
+                if len(audio_data) > 512_000:
                     await safe_send_json({"status": "error", "message": "Audio too large"})
                     continue
 
-                # Query valid license from local environment / Edge Function cache
-                license_token = os.getenv("LICENSE_TOKEN", "")
-                is_valid = await asyncio.to_thread(validate_license_and_increment, license_token)
-                if not is_valid:
-                    await safe_send_json({"status": "error", "message": "Rate limit exceeded or invalid license."})
-                    continue
-
                 await safe_send_json({"status": "processing", "message": "Listening..."})
-                text = await transcribe_audio(audio_data)
+                valid_targets = [k["id"] for k in SUGGESTED_KIOSKS]
+                result = await voice_command(audio_data, valid_targets=valid_targets)
 
-                if text:
+                if result.get("ok"):
+                    text = result.get("text", "")
                     await safe_send_json({"status": "processing", "message": f"Intent: {text}"})
-                    valid_targets = [k["id"] for k in SUGGESTED_KIOSKS]
-                    intent = await parse_intent(text, valid_targets=valid_targets)
-                    
+                    intent = result.get("intent") or {"action": "error"}
+
                     if intent.get("action") == "error":
                         await safe_send_json({"status": "error", "message": "Voz: error LLM"})
                         continue
@@ -797,7 +785,21 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
                     else:
                         await safe_send_json({"status": "error", "message": "Unknown action"})
                 else:
-                    await safe_send_json({"status": "error", "message": "Voz: error STT (400)"})
+                    reason = result.get("reason", "error")
+                    voice_errors = {
+                        "no_speech": "Voz: no se entendió el audio",
+                        "quota_exceeded": "Voz: cuota diaria agotada",
+                        "in_use_elsewhere": "Licencia en uso en otro dispositivo",
+                        "invalid_license": "Voz: licencia inválida",
+                        "service_disabled": "Voz: servicio temporalmente deshabilitado",
+                        "global_cap": "Voz: servicio temporalmente deshabilitado",
+                        "audio_too_large": "Audio too large",
+                        "stt_error": "Voz: error STT",
+                        "llm_error": "Voz: error LLM",
+                        "proxy_unreachable": "Voz: sin conexión con el servicio",
+                    }
+                    await safe_send_json({"status": "error", "code": reason,
+                                          "message": voice_errors.get(reason, "Voz: error del servicio")})
 
             elif message.get("text"):
                 data = message.get("text")
