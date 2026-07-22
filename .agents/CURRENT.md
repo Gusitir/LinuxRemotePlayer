@@ -1,4 +1,4 @@
-# ESTADO ACTUAL (2026-07-20)
+# ESTADO ACTUAL (2026-07-21)
 
 VERSION publicada: **1.8.0** (LIVE en Vercel; sha 2be02de9...0508 triple-match,
 sw.js=lrp-1.8.0, app.js 1522 líneas no truncado — auditado y VALIDADO en device).
@@ -31,10 +31,13 @@ SIGUIENTE: v1.9 (lanzamiento, abajo). Resumen de lo hecho:
   triple-match; pusheado, Vercel LIVE, regresión device OK). FASE v1.8 CERRADA.
 - Screenshots reales de README/web quedan PENDIENTES → v1.9 (con rebrand PH-WEB).
 
-## PRÓXIMO MILESTONE: v1.9 — LANZAMIENTO (especificado en PLAN.md)
+## FASE ACTIVA: v1.9 — LANZAMIENTO (plan maestro: PLAN_v1.9.md, arrancada 2026-07-21)
 ai-proxy Edge Function (llaves fuera del device) + PH-ANTIABUSO (cap 512KB, kill-switch,
-cuota, métricas) + PH-LICENCIAS (1 dispositivo + rotación por correo) + Stripe LIVE +
-dominio propio + rebrand + PH-WEB (rediseño, capturas, video, precio $5) + privatizar repo.
+cuota por plan, métricas) + PH-LICENCIAS (1 dispositivo + mudanza; rotación manual
+documentada) + Stripe LIVE $5 USD + dominio propio + rebrand + PH-WEB + matar bootstrap.sh
++ release v1.9.0 + privatizar repo. Tareas T-46..T-57 (ver PLAN_v1.9.md).
+**Tarea activa: T-46 (schema v3 Supabase) — brief entregado a Gemini.**
+T-43/T-44 (reestructura .agents) quedaron colgadas de v1.8 → absorbidas en T-55.
 PH-PRICING: Pro único $5 al lanzar; suscripción recién con Voz 2.0. Roadmap post-lanzamiento:
 multi-distro (Arch/Fedora/etc.) + Skins 2.0 → APK → Archivos → Gamepad → Voz 2.0 (PLAN.md).
 
