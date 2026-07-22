@@ -111,6 +111,9 @@ create table if not exists plan_quotas (
 );
 insert into plan_quotas (plan, daily_quota) values ('lifetime', 60)
 on conflict (plan) do update set daily_quota = excluded.daily_quota;
+alter table plan_quotas enable row level security;
+create policy "plan_quotas service_role" on plan_quotas
+    for all to service_role using (true) with check (true);
 
 -- Activaciones: 1 dispositivo simultaneo por key
 create table if not exists activations (
