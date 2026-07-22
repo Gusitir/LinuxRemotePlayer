@@ -23,7 +23,7 @@ import auth
 from input_emulator import gamepad, mouse
 from discovery import get_installed_apps
 from kiosk import launch_kiosk, gui_env
-from ai_pipeline import voice_command
+from ai_pipeline import voice_command, proxy_license_action
 from auth import verify_access, is_license_valid_cached_or_online
 
 logger = logging.getLogger("main")
@@ -160,6 +160,7 @@ class AppLaunchBody(BaseModel):
 
 class ActivateBody(BaseModel):
     key: str = Field(..., min_length=1)
+    force: bool = False
 
 
 class TokenBucket:
@@ -499,6 +500,13 @@ async def activate_license(payload: ActivateBody):
     valid = await asyncio.to_thread(is_license_valid_cached_or_online, payload.key)
     if not valid:
         raise HTTPException(status_code=400, detail="Clave no válida")
+    # 1-device claim via ai-proxy. "unreachable" does NOT block: the key already
+    # validated online and the claim self-heals on the next voice command.
+    claim = await proxy_license_action("activate", payload.key, force=payload.force)
+    if claim.get("status") == "in_use_elsewhere":
+        raise HTTPException(status_code=409, detail="Licencia en uso en otro dispositivo")
+    if claim.get("status") == "invalid":
+        raise HTTPException(status_code=400, detail="Clave no válida")
     try:
         env_file = os.path.abspath(os.path.join(os.path.dirname(__file__), ".env"))
         if not os.path.exists(env_file):
@@ -514,6 +522,21 @@ async def activate_license(payload: ActivateBody):
     except Exception as e:
         logger.error(f"Failed to save license key: {e}")
         raise HTTPException(status_code=500, detail="Error interno al guardar la clave")
+
+
+@app.post("/api/license/takeover", dependencies=[Depends(require_token)])
+async def takeover_license():
+    """Force-claim: move the configured license to THIS device (user confirmed)."""
+    license_token = os.getenv("LICENSE_TOKEN", "")
+    if not license_token:
+        raise HTTPException(status_code=400, detail="Sin licencia configurada")
+    claim = await proxy_license_action("activate", license_token, force=True)
+    if claim.get("status") == "activated":
+        return {"status": "success", "takeover": bool(claim.get("takeover"))}
+    raise HTTPException(status_code=502, detail="No se pudo mudar la licencia")
+
+
+
 
 
 @app.get("/api/license/status", dependencies=[Depends(require_token)])

@@ -88,3 +88,26 @@ async def voice_command(audio_bytes: bytes, valid_targets: list = None) -> dict:
     except Exception as e:
         logger.error(f"ai-proxy unreachable: {e}")
         return {"ok": False, "reason": "proxy_unreachable"}
+
+
+async def proxy_license_action(action: str, token: str, force: bool = False) -> dict:
+    """Call the ai-proxy JSON branch: action = 'activate' | 'release'.
+
+    Returns the proxy's JSON body plus "http" (status code), or
+    {"status": "unreachable"} on network failure.
+    """
+    payload = {"action": action, "token": token, "device_id": get_device_id()}
+    if force:
+        payload["force"] = True
+    try:
+        response = await get_client().post(AI_PROXY_URL, json=payload)
+        try:
+            body = response.json()
+        except Exception:
+            body = {}
+        body.setdefault("status", "error")
+        body["http"] = response.status_code
+        return body
+    except Exception as e:
+        logger.error(f"ai-proxy unreachable for {action}: {e}")
+        return {"status": "unreachable"}

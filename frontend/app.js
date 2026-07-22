@@ -201,7 +201,7 @@ async function fetchLicenseStatus() {
                     const infoText = document.getElementById('license-info-text');
                     if (infoText) {
                         const masked = (token || '').substring(0, 4) + '••••••••' + (token || '').slice(-4);
-                        infoText.innerText = `Clave: LRP-${masked}\nPlan: Lifetime\n${data.voice_enabled ? 'Voz con IA: Activa (100 cmds/día)' : 'Voz con IA: se activará al configurar el servicio'}`;
+                        infoText.innerText = `Clave: LRP-${masked}\nPlan: Lifetime\n${data.voice_enabled ? 'Voz con IA: Activa (60 comandos/día)' : 'Voz con IA: se activará al configurar el servicio'}`;
                     }
                 } else {
                     unlicBlock.classList.remove('hidden');
@@ -339,6 +339,9 @@ function connect() {
             } else if (res.status === 'success' || res.status === 'error') {
                 statusEl.textContent = res.status === 'error' ? `Error: ${res.message}` : 'Connected';
                 statusEl.className = res.status === 'error' ? 'text-red-500 text-xs font-bold' : 'text-green-500 text-xs font-bold';
+                if (res.status === 'error' && res.code === 'in_use_elsewhere') {
+                    handleLicenseConflict();
+                }
                 if (res.status === 'success' && res.message === 'Authenticated') {
                     const row = document.getElementById('apps-row');
                     if (row && !row.children.length) {
@@ -1110,7 +1113,7 @@ function comingSoon() {
 
 
 
-async function activateLicenseKey() {
+async function activateLicenseKey(force = false) {
     const input = document.getElementById('license-input');
     if (!input) return;
     const key = input.value.trim();
@@ -1126,7 +1129,7 @@ async function activateLicenseKey() {
                 'Content-Type': 'application/json',
                 'X-Auth-Token': token
             },
-            body: JSON.stringify({ key })
+            body: JSON.stringify({ key, force })
         });
         if (res.ok) {
             toast('Licencia activada con éxito. Actualizando...');
@@ -1134,6 +1137,13 @@ async function activateLicenseKey() {
             setTimeout(() => {
                 fetchLicenseStatus();
             }, 1000);
+        } else if (res.status === 409) {
+            const move = confirm('Esta licencia está activa en otro dispositivo. ¿Mudarla aquí? El otro dispositivo perderá el premium.');
+            if (move) {
+                await activateLicenseKey(true);
+            } else {
+                toast('Activación cancelada.');
+            }
         } else {
             const err = await res.json();
             toast(`Error: ${err.detail || 'Clave inválida'}`);
@@ -1142,6 +1152,30 @@ async function activateLicenseKey() {
         console.error('Failed to activate license:', err);
         toast('Error de red al activar licencia.');
     }
+}
+
+let licenseConflictPrompted = false;
+async function handleLicenseConflict() {
+    if (licenseConflictPrompted) return;
+    licenseConflictPrompted = true;
+    const move = confirm('Tu licencia está activa en otro dispositivo. ¿Mudarla aquí? El otro dispositivo perderá el premium.');
+    if (move) {
+        try {
+            const res = await fetch(`${apiUrl}/license/takeover`, {
+                method: 'POST',
+                headers: { 'X-Auth-Token': token }
+            });
+            if (res.ok) {
+                toast('Licencia mudada a este dispositivo. Probá la voz de nuevo.');
+            } else {
+                toast('No se pudo mudar la licencia.');
+            }
+        } catch (err) {
+            console.error('Takeover failed:', err);
+            toast('Error de red al mudar la licencia.');
+        }
+    }
+    setTimeout(() => { licenseConflictPrompted = false; }, 10000);
 }
 
 async function checkUpdate() {

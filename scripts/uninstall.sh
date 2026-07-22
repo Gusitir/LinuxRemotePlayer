@@ -59,6 +59,22 @@ echo "[+] Uinput permissions reverted."
 echo "[i] Reverting firewall configuration..."
 ufw delete allow 8000/tcp || true
 
+# Release the 1-device license activation (best-effort; must NEVER block uninstall)
+BACKEND_ENV="$(cd "$(dirname "${BASH_SOURCE[0]}")/../backend" && pwd)/.env"
+if [ -f "$BACKEND_ENV" ] && [ -f /etc/machine-id ]; then
+    LIC_TOKEN=$(grep -E '^LICENSE_TOKEN=' "$BACKEND_ENV" | head -n1 | cut -d= -f2- | tr -d "'\"" || true)
+    PROXY_URL=$(grep -E '^AI_PROXY_URL=' "$BACKEND_ENV" | head -n1 | cut -d= -f2- | tr -d "'\"" || true)
+    PROXY_URL=${PROXY_URL:-https://tbijfdbtauzxbsbkujbs.functions.supabase.co/ai-proxy}
+    if [ -n "$LIC_TOKEN" ]; then
+        DEVICE_ID=$(tr -d '[:space:]' < /etc/machine-id | sha256sum | awk '{print $1}' || true)
+        echo "[i] Liberando la licencia de este dispositivo (best-effort)..."
+        curl -s -m 5 -X POST "$PROXY_URL" \
+             -H "Content-Type: application/json" \
+             -d "{\"action\":\"release\",\"token\":\"$LIC_TOKEN\",\"device_id\":\"$DEVICE_ID\"}" >/dev/null 2>&1 || true
+        echo "[+] Licencia liberada (o intento realizado)."
+    fi
+fi
+
 # Remove generated files and environments
 BACKEND_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../backend" && pwd)"
 echo "[i] Cleaning up files under $BACKEND_DIR..."
