@@ -1,0 +1,253 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentación — LinuxRemotePlayer</title>
+    <meta name="description" content="Guía completa de LinuxRemotePlayer: instalación paso a paso, certificado, emparejamiento, actualización, licencia, privacidad y solución de problemas.">
+    <link rel="icon" type="image/png" href="icon-192.png">
+    <link rel="stylesheet" href="style.css">
+    <script src="site.js"></script>
+</head>
+<body>
+
+    <header>
+        <div class="nav-inner">
+            <a href="index.html" class="brand">
+                <img src="icon-192.png" alt="Logo de LinuxRemotePlayer">
+                <span>LinuxRemotePlayer</span>
+                <span class="lrp">LRP</span>
+            </a>
+            <nav>
+                <a href="index.html#instalacion">Instalación</a>
+                <a href="index.html#precio">Precio</a>
+                <a href="index.html#faq">FAQ</a>
+                <a href="index.html#apoyo">Apoyá</a>
+                <a href="docs.html" class="active">Documentación</a>
+                <a href="changelog.html">Novedades</a>
+            </nav>
+            <a href="index.html#instalacion" class="btn btn-green">Instalar gratis</a>
+        </div>
+    </header>
+
+    <main class="page">
+        <h1>Documentación</h1>
+        <p class="lead">Todo lo que necesitás para instalar, emparejar, actualizar y mantener
+        LinuxRemotePlayer. Si algo no está acá, escribinos a
+        <a href="mailto:soporte@linuxremoteplayer.com">soporte@linuxremoteplayer.com</a>.</p>
+
+        <div class="toc">
+            <h4>Contenido</h4>
+            <ul>
+                <li><a href="#requisitos">Requisitos</a></li>
+                <li><a href="#instalacion">Instalación paso a paso</a></li>
+                <li><a href="#certificado">El certificado de seguridad</a></li>
+                <li><a href="#emparejamiento">Emparejar el teléfono</a></li>
+                <li><a href="#actualizar">Actualizar la app</a></li>
+                <li><a href="#reinstalar-pwa">Reinstalar la app del teléfono</a></li>
+                <li><a href="#licencia">Licencia Pro y mudanza</a></li>
+                <li><a href="#privacidad">Privacidad y seguridad</a></li>
+                <li><a href="#desinstalar">Desinstalar</a></li>
+                <li><a href="#problemas">Solución de problemas</a></li>
+            </ul>
+        </div>
+
+        <h2 id="requisitos">Requisitos</h2>
+        <ul>
+            <li><b>La PC de la TV:</b> Linux de la familia Debian/Ubuntu con <code>systemd</code>
+            (probado a fondo en KDE Neon con Plasma Bigscreen; ver la
+            <a href="index.html#compatibilidad">matriz de compatibilidad</a>). Firefox se usa para el modo
+            kiosk — si no está, el instalador lo instala solo.</li>
+            <li><b>El control:</b> cualquier teléfono con navegador moderno (Android con Chrome o
+            Firefox; iPhone con Safari). No se descarga nada de ninguna tienda.</li>
+            <li><b>Red:</b> la PC y el teléfono en la misma red WiFi. No hace falta abrir puertos
+            a internet — todo el control es local.</li>
+        </ul>
+
+        <h2 id="instalacion">Instalación paso a paso</h2>
+        <p>En una terminal de la PC que va a estar conectada a la TV:</p>
+        <div class="terminal" style="margin-left:0;">
+            <div class="terminal-body">
+                <span class="terminal-cmd">curl -fsSL https://linux-remote-player.vercel.app/install.sh | sudo bash</span>
+            </div>
+        </div>
+        <p>El comando descarga la última versión, <b>verifica su integridad</b> (sha256) e instala
+        el paquete. Después arranca el asistente, que te hace estas preguntas:</p>
+
+        <h3>1. «¿Qué usuario usará la TV?»</h3>
+        <p>El nombre de usuario de Linux con el que la TV inicia sesión (el de la sesión gráfica).
+        El asistente detecta el usuario actual y te lo propone entre corchetes — si es el correcto,
+        apretá Enter y listo. <b>Nunca uses <code>root</code></b>: el asistente lo rechaza por seguridad.</p>
+
+        <h3>2. «¿Esta PC está dedicada a la TV?» [S/n]</h3>
+        <ul>
+            <li><b>S (modo TV dedicada):</b> para el HTPC del salón que solo hace de TV. El servicio
+            arranca con el sistema, se activa el firewall, y se desactivan el bloqueo de pantalla y
+            el apagado del monitor.</li>
+            <li><b>n (modo escritorio):</b> para tu PC de uso general. El servicio corre solo dentro
+            de tu sesión de usuario y no toca la configuración de energía ni el firewall.</li>
+        </ul>
+
+        <h3>3. «¿Deshabilitar suspensión/apagado de pantalla?»</h3>
+        <p>Si la PC es la TV del salón, conviene que <b>sí</b> (es lo propuesto por defecto en modo
+        dedicado): evita que la pantalla se apague a mitad de una película. En modo escritorio, el
+        valor por defecto es no tocar nada.</p>
+
+        <h3>4. «Selecciona layout de teclado de esta PC» [US / ES / LATAM]</h3>
+        <p>El idioma del teclado que la app emula cuando escribís desde el teléfono. El asistente
+        detecta el layout del sistema y te lo propone — Enter para aceptarlo. Si escribís con
+        eñes y acentos, asegurate de elegir ES o LATAM según corresponda.</p>
+
+        <div class="callout"><b>Al terminar:</b> el asistente muestra en la terminal la dirección para
+        emparejar tu teléfono (algo como <code>https://tu-pc.local:8000</code>) y abre el panel de
+        estado en la TV con un PIN. Seguí en <a href="#emparejamiento">Emparejar el teléfono</a>.</div>
+
+        <div class="callout warn"><b>Reinicio necesario para el control:</b> el instalador agrega tu
+        usuario al grupo <code>input</code> (permisos de teclado/mouse virtual). Ese permiso recién
+        aplica al <b>reiniciar la PC</b> (o cerrar y volver a abrir la sesión). Si el touchpad no
+        responde justo después de instalar, es esto.</div>
+
+        <h2 id="certificado">El certificado de seguridad (la advertencia del navegador)</h2>
+        <p>La primera vez que abras la dirección en tu teléfono, el navegador te va a mostrar una
+        advertencia de seguridad. <b>Es normal y esperado.</b> ¿Por qué pasa?</p>
+        <p>La conexión entre tu teléfono y la PC va cifrada con HTTPS (necesario para que el
+        micrófono funcione). Como todo ocurre dentro de tu casa — sin servidores de por medio —
+        el certificado lo genera tu propia PC, y tu navegador no conoce a tu PC como "autoridad".
+        La advertencia solo dice eso: que el certificado es casero. La conexión sigue siendo cifrada.</p>
+        <p><b>Cómo aceptarlo (una sola vez por teléfono):</b></p>
+        <ul>
+            <li><b>Android (Chrome/Firefox):</b> tocá «Avanzado» (o «Advanced») → «Continuar a
+            [dirección]» / «Aceptar el riesgo y continuar».</li>
+            <li><b>iPhone (Safari):</b> tocá «Mostrar detalles» → «Visitar este sitio web» → confirmá.</li>
+        </ul>
+        <p>En la TV no hace falta: el instalador deja el certificado configurado en Firefox
+        automáticamente.</p>
+
+        <h2 id="emparejamiento">Emparejar el teléfono</h2>
+        <ol>
+            <li>Abrí en el navegador del teléfono la dirección que te dio el instalador:
+            <code>https://tu-pc.local:8000</code> (o la IP directa, por ejemplo
+            <code>https://192.168.1.50:8000</code>).</li>
+            <li>Aceptá el certificado (<a href="#certificado">arriba</a>).</li>
+            <li>Escribí el <b>PIN</b> que muestra el panel de estado en la pantalla de la TV.</li>
+            <li>Cuando el control cargue, <b>agregá la app a tu pantalla de inicio</b>: la propia
+            app te muestra cómo según tu teléfono (en Android: menú → «Instalar app» o «Añadir a
+            pantalla de inicio»; en iPhone: botón compartir → «Añadir a pantalla de inicio»).
+            Así se abre a pantalla completa, como una app nativa.</li>
+        </ol>
+        <div class="callout">¿Más teléfonos? Repetí estos pasos en cada uno. Todos los miembros de
+        la familia pueden tener el control instalado a la vez.</div>
+
+        <h2 id="actualizar">Actualizar la app</h2>
+        <p>Las actualizaciones llegan por la propia app — no hace falta volver a esta página:</p>
+        <ol>
+            <li>En el teléfono: <b>Ajustes → Actualización → Buscar</b>.</li>
+            <li>Si hay versión nueva, tocá el botón y la PC se actualiza sola (descarga, verifica
+            e instala el paquete).</li>
+            <li>Cerrá la app del teléfono por completo y volvé a abrirla para que tome la
+            interfaz nueva.</li>
+        </ol>
+        <p>Alternativa por terminal en la PC: <code>sudo bash /opt/linuxremoteplayer/scripts/update.sh</code></p>
+
+        <h2 id="reinstalar-pwa">Reinstalar la app del teléfono</h2>
+        <p>Si la app del teléfono queda en un estado raro (pantalla en blanco, versión vieja que no
+        se actualiza), reinstalarla es rápido y no borra nada del lado de la PC:</p>
+        <ol>
+            <li>Mantené apretado el ícono de LinuxRemotePlayer en tu pantalla de inicio →
+            eliminar/desinstalar.</li>
+            <li>Abrí de nuevo <code>https://tu-pc.local:8000</code> en el navegador del teléfono.</li>
+            <li>Emparejá con el PIN y volvé a agregarla a la pantalla de inicio.</li>
+            <li>Si tenías licencia Pro, no te preocupes: la licencia vive en la PC, no en el
+            teléfono. Se reconoce sola.</li>
+        </ol>
+
+        <h2 id="licencia">Licencia Pro y mudanza de dispositivo</h2>
+        <h3>Activar tu licencia</h3>
+        <ol>
+            <li>Al completar la compra, tu clave (formato <code>LRP-XXXX-XXXX-XXXX</code>) llega al
+            correo que usaste para pagar, en 1-2 minutos.</li>
+            <li>En la app: <b>Ajustes → Licencia</b> → pegá la clave → <b>Activar</b>.</li>
+        </ol>
+        <h3>Una PC a la vez, con mudanza autoservicio</h3>
+        <p>Tu licencia funciona en <b>una PC a la vez</b>. Si cambiás de máquina (o formateás), no
+        tenés que pedirle nada a nadie:</p>
+        <ol>
+            <li>Instalá LinuxRemotePlayer en la PC nueva y activá tu misma clave.</li>
+            <li>La app te avisa que la licencia está activa en otro dispositivo y te pregunta si
+            querés <b>mudarla</b>. Confirmá y listo: la PC nueva queda con el premium y la anterior
+            lo pierde.</li>
+        </ol>
+        <div class="callout warn"><b>¿Te robaron la clave?</b> Escribinos desde el correo con el que
+        compraste a <a href="mailto:soporte@linuxremoteplayer.com">soporte@linuxremoteplayer.com</a>:
+        anulamos la clave vieja y te emitimos una nueva al mismo correo.</div>
+
+        <h2 id="privacidad">Privacidad y seguridad</h2>
+        <ul>
+            <li><b>El control es 100% local.</b> Touchpad, teclado, apps, volumen: todo viaja
+            cifrado dentro de tu red WiFi, de tu teléfono a tu PC. Nada de eso pasa por internet.</li>
+            <li><b>Sin cuentas, sin telemetría.</b> No te pedimos registro y la app no envía
+            estadísticas de uso.</li>
+            <li><b>La voz es lo único que sale de tu casa</b> — y solo si tenés Pro y apretás el
+            botón del micrófono. Ese audio va cifrado a nuestro servicio en la nube, se usa
+            únicamente para interpretar el comando, y el servicio solo registra metadatos mínimos
+            (tamaño y resultado) para operar el límite diario.</li>
+            <li><b>Acceso protegido.</b> Nadie controla tu TV sin el PIN o el enlace de
+            emparejamiento; cada conexión se autentica con un token.</li>
+        </ul>
+
+        <h2 id="desinstalar">Desinstalar</h2>
+        <p>Un comando en la terminal de la PC:</p>
+        <div class="terminal" style="margin-left:0;">
+            <div class="terminal-body">
+                <span class="terminal-cmd">sudo apt remove linuxremoteplayer</span>
+            </div>
+        </div>
+        <p>Se retiran el servicio, las reglas de firewall que creó, los permisos de hardware y la
+        configuración de suspensión. Si tenías licencia activa, el desinstalador la libera para que
+        puedas activarla directamente en otra PC.</p>
+
+        <h2 id="problemas">Solución de problemas</h2>
+
+        <h3>El teléfono no encuentra la PC</h3>
+        <ul>
+            <li>Verificá que ambos estén en la <b>misma red WiFi</b> (ojo con redes de invitados,
+            que suelen aislar los dispositivos entre sí).</li>
+            <li>Si <code>tu-pc.local</code> no responde, probá con la IP directa que mostró el
+            instalador (<code>https://192.168.x.x:8000</code>).</li>
+        </ul>
+
+        <h3>El touchpad/teclado no responde recién instalado</h3>
+        <p>Falta el reinicio: los permisos de hardware aplican al reiniciar la PC (o cerrar y
+        reabrir la sesión). Es una sola vez.</p>
+
+        <h3>El primer comando de voz tarda</h3>
+        <p>Es esperado: si la voz no se usó por un rato, el servicio de IA «se duerme» y el primer
+        comando puede tardar unos segundos en despertarlo. Los siguientes responden al instante.</p>
+
+        <h3>Apreté el micrófono sin hablar y pasó algo raro</h3>
+        <p>Si el audio es puro silencio, el reconocedor a veces «escucha» palabras que no existen.
+        Soltá el botón solo después de decir el comando, y hablá directo al teléfono.</p>
+
+        <h3>Dice «Licencia en uso en otro dispositivo»</h3>
+        <p>Tu clave está activa en otra PC. La app te ofrece <a href="#licencia">mudarla</a> — si
+        no fuiste vos quien la activó en otro lado, <a href="mailto:soporte@linuxremoteplayer.com">escribinos</a>.</p>
+
+        <h3>La app del teléfono quedó rara tras una actualización</h3>
+        <p>Cerrala por completo y volvé a abrirla. Si persiste,
+        <a href="#reinstalar-pwa">reinstalá la app del teléfono</a> (2 minutos, no se pierde nada).</p>
+    </main>
+
+    <footer>
+        <div class="footer-legal">
+            © 2026 LinuxRemotePlayer — <a href="index.html" style="color:var(--muted);">Volver al inicio</a> ·
+            <a href="mailto:soporte@linuxremoteplayer.com" style="color:var(--muted);">soporte@linuxremoteplayer.com</a>
+        </div>
+    </footer>
+
+    <div class="theme-switch" role="group" aria-label="Cambiar tema">
+        <button type="button" data-theme-btn="cafe" title="Tema cálido (café)">☕</button>
+        <button type="button" data-theme-btn="dark" title="Tema oscuro">🌙</button>
+        <button type="button" data-theme-btn="light" title="Tema claro">☀️</button>
+    </div>
+</body>
+</html>

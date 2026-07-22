@@ -19,6 +19,7 @@
 
     <link rel="icon" type="image/png" href="icon-192.png">
     <link rel="stylesheet" href="style.css">
+    <script src="site.js"></script>
     <!-- PLACEHOLDER-PADDLE: los botones de compra se conectan al checkout de Paddle en T-51 -->
     <!-- PLACEHOLDER-KOFI: el enlace de donaciones se conecta al crear la cuenta Ko-fi -->
 </head>
@@ -26,16 +27,16 @@
 
     <header>
         <div class="nav-inner">
-            <a href="./" class="brand">
+            <a href="index.html" class="brand">
                 <img src="icon-192.png" alt="Logo de LinuxRemotePlayer">
                 <span>LinuxRemotePlayer</span>
                 <span class="lrp">LRP</span>
             </a>
             <nav>
-                <a href="#familia">La app</a>
-                <a href="#compatibilidad">Compatibilidad</a>
                 <a href="#instalacion">Instalación</a>
                 <a href="#precio">Precio</a>
+                <a href="#faq">FAQ</a>
+                <a href="#apoyo">Apoyá</a>
                 <a href="docs.html">Documentación</a>
                 <a href="changelog.html">Novedades</a>
             </nav>
@@ -89,9 +90,9 @@
         <div class="grid-3">
             <div class="card">
                 <span class="step-n">1</span>
-                <h3>Instalá el paquete en tu PC</h3>
-                <p>Descargás el <code>.deb</code>, lo instalás, y el instalador configura solo el servicio,
-                el HTTPS local y los permisos de hardware. El <a href="docs.html#instalacion" style="color:var(--green); text-decoration:none;">tutorial</a> te explica cada pregunta.</p>
+                <h3>Un comando en tu PC</h3>
+                <p>Pegás el comando de instalación en la terminal y el asistente configura solo
+                el servicio, el HTTPS local y los permisos de hardware. El <a href="docs.html#instalacion" style="color:var(--green); text-decoration:none;">tutorial</a> te explica cada pregunta.</p>
             </div>
             <div class="card">
                 <span class="step-n">2</span>
@@ -189,28 +190,34 @@
             <p class="section-sub">En tu PC con Linux (familia Debian/Ubuntu, con systemd y Firefox):</p>
         </div>
 
-        <div class="dl-box">
-            <div class="meta">
-                <b id="deb-name">linuxremoteplayer_1.8.0_all.deb</b>
-                <div>Versión <b id="deb-version">1.8.0</b> · paquete del servidor para tu PC</div>
-                <div class="sha mono" id="deb-sha">sha256: 2be02de9f7c47bcbb1b5a5c3de71629f456b938557dd1fffb1310202efbe0508</div>
-            </div>
-            <a class="btn btn-green btn-big" id="deb-link" href="downloads/linuxremoteplayer_1.8.0_all.deb">Descargar .deb</a>
-        </div>
-
         <div class="terminal">
             <div class="terminal-header">
                 <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
             </div>
             <div class="terminal-body">
-                <span class="terminal-cmd" id="cmd-text">sudo apt install ./linuxremoteplayer_1.8.0_all.deb</span>
+                <span class="terminal-cmd" id="cmd-text">curl -fsSL https://linux-remote-player.vercel.app/install.sh | sudo bash</span>
                 <button class="btn-copy" onclick="copyCommand()" id="copy-btn">Copiar</button>
             </div>
         </div>
 
-        <p class="compat-note">El instalador te hace 3 preguntas (usuario, teclado, modo TV o escritorio) y al final
-        te da el enlace de emparejamiento para el teléfono.<br>
+        <p class="compat-note" style="margin-bottom:26px;">Un solo comando: descarga la última versión, verifica su
+        integridad (sha256) y lanza el asistente. El asistente te hace 4 preguntas (usuario, modo TV o
+        escritorio, suspensión y teclado) y al final te da el enlace de emparejamiento para el teléfono.<br>
         <a href="docs.html#instalacion" style="color:var(--green); text-decoration:none;">Tutorial completo paso a paso →</a></p>
+
+        <details class="qa" style="max-width:760px; margin:0 auto;">
+            <summary>¿Preferís descargar el paquete manualmente?</summary>
+            <div class="a">
+                <div class="dl-box" style="margin:12px 0 8px; padding:18px;">
+                    <div class="meta">
+                        <b id="deb-name">linuxremoteplayer_1.8.0_all.deb</b>
+                        <div>Versión <b id="deb-version">1.8.0</b> · después: <code>sudo apt install ./&lt;archivo&gt;.deb</code></div>
+                        <div class="sha mono" id="deb-sha">sha256: 2be02de9f7c47bcbb1b5a5c3de71629f456b938557dd1fffb1310202efbe0508</div>
+                    </div>
+                    <a class="btn btn-outline" id="deb-link" href="downloads/linuxremoteplayer_1.8.0_all.deb">Descargar .deb</a>
+                </div>
+            </div>
+        </details>
     </section>
 
     <!-- PRECIO -->
@@ -377,8 +384,13 @@
             document.getElementById('deb-version').textContent = d.version;
             document.getElementById('deb-link').href = d.deb_url;
             if (d.sha256) document.getElementById('deb-sha').textContent = 'sha256: ' + d.sha256;
-            document.getElementById('cmd-text').textContent = 'sudo apt install ./' + name;
         }).catch(() => { /* los valores estáticos del HTML quedan como fallback */ });
     </script>
+
+    <div class="theme-switch" role="group" aria-label="Cambiar tema">
+        <button type="button" data-theme-btn="cafe" title="Tema cálido (café)">☕</button>
+        <button type="button" data-theme-btn="dark" title="Tema oscuro">🌙</button>
+        <button type="button" data-theme-btn="light" title="Tema claro">☀️</button>
+    </div>
 </body>
 </html>

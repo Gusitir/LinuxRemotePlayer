@@ -5,6 +5,37 @@
    ========================================================================== */
 
 :root {
+    --radius: 16px;
+    --radius-sm: 10px;
+    --maxw: 1080px;
+}
+
+/* TEMA "cafe" (por defecto): madera y cafetería — cálido y familiar */
+:root, :root[data-theme="cafe"] {
+    --bg: #261b12;
+    --bg-deep: #1a110a;
+    --panel: #33261a;
+    --panel-2: #3f2f20;
+    --border: #5c4531;
+    --border-soft: #463424;
+    --text: #f4ecdf;
+    --muted: #c9b8a3;
+    --green: #e0a35c;          /* caramelo: acción principal */
+    --green-dark: #c98b47;
+    --violet: #cd8b62;         /* cobre: acento premium */
+    --blue: #d9a566;
+    --amber: #eab308;
+    --glow-green: rgba(224, 163, 92, 0.16);
+    --glow-violet: rgba(205, 139, 98, 0.14);
+    --cta-shadow: rgba(224, 163, 92, 0.28);
+    --cta-text: #241505;
+    --header-bg: rgba(26, 17, 10, 0.85);
+    --footer-bg: #1a110a;
+    --footer-text: #c9b8a3;
+}
+
+/* TEMA "dark": el navy original de la app */
+:root[data-theme="dark"] {
     --bg: #0b1220;
     --bg-deep: #070d18;
     --panel: #121c2f;
@@ -20,9 +51,35 @@
     --amber: #eab308;
     --glow-green: rgba(34, 197, 94, 0.16);
     --glow-violet: rgba(168, 85, 247, 0.14);
-    --radius: 16px;
-    --radius-sm: 10px;
-    --maxw: 1080px;
+    --cta-shadow: rgba(34, 197, 94, 0.28);
+    --cta-text: #07120a;
+    --header-bg: rgba(7, 13, 24, 0.82);
+    --footer-bg: #070d18;
+    --footer-text: #94a3b8;
+}
+
+/* TEMA "light": claro y limpio */
+:root[data-theme="light"] {
+    --bg: #f6f2ea;
+    --bg-deep: #262f3d;
+    --panel: #ffffff;
+    --panel-2: #f0ebe0;
+    --border: #d5cec0;
+    --border-soft: #e4ded1;
+    --text: #292319;
+    --muted: #6d6557;
+    --green: #2f7d4b;
+    --green-dark: #276a3f;
+    --violet: #7c3aed;
+    --blue: #2563eb;
+    --amber: #b45309;
+    --glow-green: rgba(47, 125, 75, 0.10);
+    --glow-violet: rgba(124, 58, 237, 0.08);
+    --cta-shadow: rgba(47, 125, 75, 0.25);
+    --cta-text: #ffffff;
+    --header-bg: rgba(246, 242, 234, 0.88);
+    --footer-bg: #262f3d;
+    --footer-text: #b9c2cf;
 }
 
 @font-face {
@@ -82,7 +139,7 @@ header {
     position: sticky;
     top: 0;
     z-index: 100;
-    background: rgba(7, 13, 24, 0.82);
+    background: var(--header-bg);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border-soft);
@@ -145,10 +202,10 @@ nav a:hover, nav a.active { color: var(--text); }
 }
 .btn-green {
     background: var(--green);
-    color: #07120a;
-    box-shadow: 0 8px 24px rgba(34, 197, 94, 0.28);
+    color: var(--cta-text);
+    box-shadow: 0 8px 24px var(--cta-shadow);
 }
-.btn-green:hover { background: #34d97a; transform: translateY(-1px); }
+.btn-green:hover { filter: brightness(1.08); transform: translateY(-1px); }
 .btn-outline {
     background: transparent;
     border-color: var(--border);
@@ -295,7 +352,7 @@ section {
     width: 26px; height: 26px;
     align-items: center; justify-content: center;
     border-radius: 8px;
-    background: rgba(34, 197, 94, 0.12);
+    background: var(--glow-green);
     color: var(--green);
     font-weight: 700;
     font-size: 0.9rem;
@@ -358,7 +415,7 @@ section {
     border-radius: 999px;
     white-space: nowrap;
 }
-.badge-full { background: rgba(34, 197, 94, 0.14); color: var(--green); }
+.badge-full { background: var(--glow-green); color: var(--green); }
 .badge-partial { background: rgba(234, 179, 8, 0.13); color: var(--amber); }
 .badge-untested { background: rgba(148, 163, 184, 0.12); color: var(--muted); }
 .compat-note { text-align: center; color: var(--muted); font-size: 0.88rem; margin-top: 18px; }
@@ -373,6 +430,7 @@ section {
     margin: 0 auto 26px;
     max-width: 760px;
     box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    color: #e7edf6; /* la terminal es oscura en los 3 temas */
 }
 .terminal-header {
     display: flex; align-items: center; gap: 6px;
@@ -386,7 +444,7 @@ section {
     display: flex; align-items: center; justify-content: space-between; gap: 16px;
     overflow-x: auto; white-space: nowrap;
 }
-.terminal-cmd { font-size: 0.92rem; color: var(--text); }
+.terminal-cmd { font-size: 0.92rem; color: inherit; }
 .btn-copy {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--border);
@@ -537,8 +595,8 @@ footer {
     border-top: 1px solid var(--border-soft);
     padding: 56px 24px 36px;
     font-size: 0.9rem;
-    color: var(--muted);
-    background: var(--bg-deep);
+    color: var(--footer-text);
+    background: var(--footer-bg);
 }
 .footer-inner {
     max-width: var(--maxw);
@@ -547,11 +605,11 @@ footer {
     grid-template-columns: 1.5fr 1fr 1fr;
     gap: 40px;
 }
-.footer-inner h4 { color: var(--text); font-size: 1.05rem; margin-bottom: 10px; }
+.footer-inner h4 { color: #f5f7fa; font-size: 1.05rem; margin-bottom: 10px; }
 .footer-inner ul { list-style: none; }
 .footer-inner ul li { margin-bottom: 8px; }
-.footer-inner a { color: var(--muted); text-decoration: none; transition: color 0.2s; }
-.footer-inner a:hover { color: var(--text); }
+.footer-inner a { color: var(--footer-text); text-decoration: none; transition: color 0.2s; }
+.footer-inner a:hover { color: #ffffff; }
 .footer-legal {
     max-width: var(--maxw);
     margin: 0 auto;
@@ -624,6 +682,36 @@ footer {
 .release .ver h2 { border: none; padding: 0; margin: 0; font-size: 1.3rem; }
 .release .ver time { color: var(--muted); font-size: 0.85rem; }
 .release ul { margin-left: 20px; }
+
+/* ---------- selector de tema (esquina) ---------- */
+.theme-switch {
+    position: fixed;
+    bottom: 18px;
+    right: 18px;
+    z-index: 200;
+    display: flex;
+    gap: 4px;
+    background: var(--panel);
+    border: 1px solid var(--border-soft);
+    border-radius: 999px;
+    padding: 5px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+}
+.theme-switch button {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid transparent;
+    background: transparent;
+    cursor: pointer;
+    font-size: 1.05rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.15s, background 0.15s;
+}
+.theme-switch button:hover { background: var(--panel-2); }
+.theme-switch button.active { border-color: var(--green); background: var(--glow-green); }
 
 /* ---------- responsive ---------- */
 @media (max-width: 860px) {
