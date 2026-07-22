@@ -10,8 +10,8 @@
     --maxw: 1080px;
 }
 
-/* TEMA "cafe" (por defecto): madera y cafetería — cálido y familiar */
-:root, :root[data-theme="cafe"] {
+/* TEMA "cafe": madera y cafetería — cálido y familiar */
+:root[data-theme="cafe"] {
     --bg: #261b12;
     --bg-deep: #1a110a;
     --panel: #33261a;
@@ -58,8 +58,8 @@
     --footer-text: #94a3b8;
 }
 
-/* TEMA "light": claro y limpio */
-:root[data-theme="light"] {
+/* TEMA "light" (por defecto): claro y limpio */
+:root, :root[data-theme="light"] {
     --bg: #f6f2ea;
     --bg-deep: #262f3d;
     --panel: #ffffff;

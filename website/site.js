@@ -1,8 +1,8 @@
-// Tema del sitio: cafe (por defecto) | dark | light — persistido en localStorage.
+﻿// Tema del sitio: light (por defecto) | cafe | dark — persistido en localStorage.
 // Se carga en el <head> sin defer para aplicar el tema antes del primer render (sin parpadeo).
 (function () {
-    var theme = 'cafe';
-    try { theme = localStorage.getItem('lrp-theme') || 'cafe'; } catch (e) { /* modo privado */ }
+    var theme = 'light';
+    try { theme = localStorage.getItem('lrp-theme') || 'light'; } catch (e) { /* modo privado */ }
     document.documentElement.setAttribute('data-theme', theme);
 
     function mark(t) {
@@ -25,6 +25,6 @@
                 setTheme(this.getAttribute('data-theme-btn'));
             });
         }
-        mark(document.documentElement.getAttribute('data-theme') || 'cafe');
+        mark(document.documentElement.getAttribute('data-theme') || 'light');
     });
 })();

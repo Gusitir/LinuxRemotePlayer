@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinuxRemotePlayer — The remote control for your Linux TV</title>
+    <meta name="description" content="Turn your Linux PC into the family Smart TV. Full control from your phone: touchpad, keyboard, streaming apps and voice commands everyone in the house can use.">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="LinuxRemotePlayer — The remote control for your Linux TV">
+    <meta property="og:description" content="Turn your Linux PC into the family Smart TV. Control from your phone: touchpad, keyboard, apps and voice commands.">
+    <meta property="og:image" content="https://linux-remote-player.vercel.app/screenshots/00.jpeg">
+
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="LinuxRemotePlayer — The remote control for your Linux TV">
+    <meta property="twitter:description" content="Turn your Linux PC into the family Smart TV. Control from your phone: touchpad, keyboard, apps and voice commands.">
+    <meta property="twitter:image" content="https://linux-remote-player.vercel.app/screenshots/00.jpeg">
+
+    <link rel="alternate" hreflang="es" href="https://linux-remote-player.vercel.app/">
+    <link rel="alternate" hreflang="en" href="https://linux-remote-player.vercel.app/en/">
+    <link rel="icon" type="image/png" href="../icon-192.png">
+    <link rel="stylesheet" href="../style.css">
+    <script src="../site.js"></script>
+    <!-- PLACEHOLDER-PADDLE: purchase buttons get wired to the Paddle checkout in T-51 -->
+    <!-- PLACEHOLDER-KOFI: the donations link gets wired when the Ko-fi account exists -->
+</head>
+<body>
+
+    <header>
+        <div class="nav-inner">
+            <a href="index.html" class="brand">
+                <img src="../icon-192.png" alt="LinuxRemotePlayer logo">
+                <span>LinuxRemotePlayer</span>
+                <span class="lrp">LRP</span>
+            </a>
+            <nav>
+                <a href="#install">Install</a>
+                <a href="#pricing">Pricing</a>
+                <a href="#support-us">Support us</a>
+                <a href="#faq">FAQ</a>
+                <a href="docs.html">Docs</a>
+                <a href="changelog.html">Changelog</a>
+                <a href="../index.html" title="Versión en español">ES</a>
+            </nav>
+            <a href="#install" class="btn btn-green">Install free</a>
+        </div>
+    </header>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="glow glow-green" style="top:-80px; left:-140px; width:520px; height:520px;"></div>
+        <div>
+            <span class="kicker">For the living-room HTPC</span>
+            <h1>Your Linux PC, turned into the family TV. <span class="voz">The remote: your phone.</span></h1>
+            <p class="subtitle">Touchpad, keyboard and your streaming apps one tap away. And with voice,
+            putting on YouTube is just saying "play YouTube" — so the whole family can use the TV,
+            not only the person who set it up.</p>
+            <div class="hero-ctas">
+                <a href="#install" class="btn btn-green btn-big">Install free</a>
+                <a href="#pricing" class="btn btn-violet btn-big">See Pro — $5 once</a>
+            </div>
+            <p class="trust-line"><span><b>Runs on your local network</b></span> · <span>no accounts, no tracking</span> · <span>the basic remote is free</span></p>
+        </div>
+        <div class="visual">
+            <div class="phone">
+                <img src="../screenshots/00.jpeg" alt="The remote on a phone: app row, touchpad, voice button and media controls" loading="eager">
+            </div>
+        </div>
+    </section>
+
+    <!-- VIDEO -->
+    <section class="center" style="padding-top:0;">
+        <div class="video-slot">
+            <!-- PLACEHOLDER-VIDEO: replace with the real <video> once the TV demo is recorded -->
+            <img class="poster" src="../screenshots/00.jpeg" alt="" aria-hidden="true">
+            <div class="video-overlay">
+                <div class="play-ring">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,4 20,12 6,20"/></svg>
+                </div>
+                <p><b>Demo video coming soon</b><br>The app running on a real TV, recorded in one take.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section id="how-it-works">
+        <div class="center">
+            <span class="kicker">How it works</span>
+            <h2 class="section-title">Ready in three steps</h2>
+            <p class="section-sub">No app stores, no accounts to create, no ports opened to the internet.</p>
+        </div>
+        <div class="grid-3">
+            <div class="card">
+                <span class="step-n">1</span>
+                <h3>One command on your PC</h3>
+                <p>Paste the install command in a terminal and the wizard sets up the service, local
+                HTTPS and hardware permissions by itself. The <a href="docs.html#install" style="color:var(--green); text-decoration:none;">tutorial</a> explains every question.</p>
+            </div>
+            <div class="card">
+                <span class="step-n">2</span>
+                <h3>Pair your phone</h3>
+                <p>The installer shows you a secure link. Open it on your phone, accept the local
+                certificate once, and add the app to your home screen.</p>
+            </div>
+            <div class="card">
+                <span class="step-n">3</span>
+                <h3>Control from the couch</h3>
+                <p>Netflix, YouTube, Spotify and your native Linux apps. Touchpad, keyboard,
+                volume and playback. With Pro, also by voice.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- THE APP: FAMILY -->
+    <section id="family">
+        <div class="glow glow-green" style="top:120px; right:-160px; width:560px; height:560px;"></div>
+        <div class="duo">
+            <div class="copy">
+                <span class="kicker">For your family</span>
+                <h3>The TV your mom can use on her own</h3>
+                <p>The hard part of an HTPC isn't building it — it's that afterwards nobody else in
+                the house knows how to use it. LinuxRemotePlayer fixes that with a remote everyone
+                already knows: their own phone.</p>
+                <ul>
+                    <li><b>Their apps, one tap:</b> Netflix, YouTube, Pluto TV and any you add, each with its big icon.</li>
+                    <li><b>Voice commands (Pro):</b> "play YouTube cooking videos", "volume up", "pause" — in English and Spanish.</li>
+                    <li><b>Buttons that make sense:</b> volume, pause, back. No three-level menus.</li>
+                </ul>
+            </div>
+            <div class="visual">
+                <div class="phone small">
+                    <img src="../screenshots/01.jpeg" alt="App drawer with streaming icons: YouTube, Netflix, Disney+, Spotify and more" loading="lazy">
+                </div>
+            </div>
+        </div>
+
+        <div class="duo pro">
+            <div class="copy">
+                <span class="kicker violet">For you</span>
+                <h3>The fine-grained control a power user expects</h3>
+                <p>Under the simple surface there's full control of the system, built for the person
+                who runs the machine.</p>
+                <ul>
+                    <li><b>Native apps, auto-detected:</b> Dolphin, Konsole, Okular — whatever you have installed, launchable from your phone.</li>
+                    <li><b>Real touchpad + keyboard:</b> virtual pointer, right-click, scroll and a full keyboard through the kernel (uinput).</li>
+                    <li><b>Kiosk mode:</b> every web app opens full-screen in Firefox, no borders, no distractions.</li>
+                    <li><b>Themes (Pro):</b> Dark, Day, Neon and Anime so the remote looks the way you want.</li>
+                </ul>
+            </div>
+            <div class="visual">
+                <div class="phone small violet-glow">
+                    <img src="../screenshots/03.jpeg" alt="Auto-detected system apps: Konsole, Marble, Okular, with add and open buttons" loading="lazy">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- COMPATIBILITY -->
+    <section id="compatibility">
+        <div class="center">
+            <span class="kicker">Compatibility</span>
+            <h2 class="section-title">Actually tested, honestly stated</h2>
+            <p class="section-sub">We'd rather tell you exactly where it works than promise "any Linux".</p>
+        </div>
+        <div class="compat">
+            <div class="compat-row">
+                <div class="distro">KDE Neon — Plasma Bigscreen 6.7.0<small>The reference platform: every release is tested here end to end.</small></div>
+                <span class="badge badge-full">100% compatible</span>
+            </div>
+            <div class="compat-row">
+                <div class="distro">Linux Mint (Cinnamon)<small>The remote works; some kiosk integrations may vary.</small></div>
+                <span class="badge badge-partial">Partial</span>
+            </div>
+            <div class="compat-row">
+                <div class="distro">Debian and derivatives in general<small>Requires systemd. The installer targets the Debian/Ubuntu family.</small></div>
+                <span class="badge badge-partial">Partial</span>
+            </div>
+            <div class="compat-row">
+                <div class="distro">Arch, Fedora and others<small>Not tested yet. Multi-distro support is on the roadmap.</small></div>
+                <span class="badge badge-untested">Untested</span>
+            </div>
+        </div>
+        <p class="compat-note">Tried it on another distro? Tell us how it went from the feedback button
+        in the app — that's how this table grows.</p>
+    </section>
+
+    <!-- INSTALL -->
+    <section id="install">
+        <div class="glow glow-violet" style="top:40px; left:-180px; width:520px; height:520px;"></div>
+        <div class="center">
+            <span class="kicker">Install</span>
+            <h2 class="section-title">One command, then pair</h2>
+            <p class="section-sub">On your Linux PC (Debian/Ubuntu family, with systemd and Firefox):</p>
+        </div>
+
+        <div class="terminal">
+            <div class="terminal-header">
+                <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+            </div>
+            <div class="terminal-body">
+                <span class="terminal-cmd" id="cmd-text">curl -fsSL https://linux-remote-player.vercel.app/install.sh | sudo bash</span>
+                <button class="btn-copy" onclick="copyCommand()" id="copy-btn">Copy</button>
+            </div>
+        </div>
+
+        <p class="compat-note" style="margin-bottom:26px;">A single command: it downloads the latest
+        version, verifies its integrity (sha256) and launches the wizard. The wizard asks 4 questions
+        (user, TV or desktop mode, sleep, keyboard) and ends by giving you the pairing link for your
+        phone.<br>
+        <a href="docs.html#install" style="color:var(--green); text-decoration:none;">Full step-by-step tutorial →</a></p>
+
+        <details class="qa" style="max-width:760px; margin:0 auto;">
+            <summary>Prefer to download the package manually?</summary>
+            <div class="a">
+                <div class="dl-box" style="margin:12px 0 8px; padding:18px;">
+                    <div class="meta">
+                        <b id="deb-name">linuxremoteplayer_1.8.0_all.deb</b>
+                        <div>Version <b id="deb-version">1.8.0</b> · then: <code>sudo apt install ./&lt;file&gt;.deb</code></div>
+                        <div class="sha mono" id="deb-sha">sha256: 2be02de9f7c47bcbb1b5a5c3de71629f456b938557dd1fffb1310202efbe0508</div>
+                    </div>
+                    <a class="btn btn-outline" id="deb-link" href="../downloads/linuxremoteplayer_1.8.0_all.deb">Download .deb</a>
+                </div>
+            </div>
+        </details>
+    </section>
+
+    <!-- PRICING -->
+    <section id="pricing">
+        <div class="center">
+            <span class="kicker">Pricing</span>
+            <h2 class="section-title">Free to control. $5 once to talk to it.</h2>
+            <p class="section-sub">No subscriptions. No confusing tiers. The basic remote is free forever;
+            the Pro license is a one-time payment that unlocks everything premium, present and future.</p>
+        </div>
+        <div class="pricing">
+            <div class="price-card">
+                <div class="plan">Free</div>
+                <div class="amount">$0</div>
+                <div class="period">forever</div>
+                <ul>
+                    <li><b>Full touchpad and keyboard</b></li>
+                    <li><b>Streaming apps</b> in kiosk mode (Netflix, YouTube, and any you add)</li>
+                    <li><b>System apps</b> detected and launchable</li>
+                    <li>Volume and playback controls</li>
+                    <li>Updates from inside the app</li>
+                </ul>
+                <a href="#install" class="btn btn-outline">Install free</a>
+            </div>
+            <div class="price-card pro">
+                <div class="plan">Pro — personal license</div>
+                <div class="amount">$5 USD</div>
+                <div class="period">one-time payment, forever</div>
+                <ul>
+                    <li><b>AI voice control</b> in English and Spanish (60 commands/day)</li>
+                    <li><b>Pro themes</b>: Neon, Anime and those to come</li>
+                    <li><b>All future premium features</b> included — never pay again</li>
+                    <li>1 active PC per license, with self-service moving</li>
+                    <li>Your key arrives by email instantly</li>
+                </ul>
+                <!-- PLACEHOLDER-PADDLE: replace with the real checkout link in T-51 -->
+                <a class="btn btn-disabled" id="buy-btn" title="The store opens very soon">Purchase available very soon</a>
+                <p class="price-note">Payment will be processed by Paddle, our authorized reseller.
+                No-questions-asked refund within 14 days.</p>
+            </div>
+        </div>
+        <p class="dev-note"><b>In active development:</b> every update improves voice control and adds
+        more compatible sites. Buy once, and the app keeps growing with you.</p>
+    </section>
+
+    <!-- DONATIONS -->
+    <section id="support-us">
+        <div class="donate-box">
+            <span class="kicker">Support the project</span>
+            <h2 class="section-title" style="font-size:1.4rem;">Made by one person, not a corporation</h2>
+            <p>LinuxRemotePlayer is built by a single developer. If the app solved your living room
+            and you want to push development forward (multi-distro, more voice commands, gamepad
+            mode), a tip helps enormously.</p>
+            <!-- PLACEHOLDER-KOFI: replace href with the real Ko-fi page when created -->
+            <a class="btn btn-outline" id="kofi-btn" title="Very soon">☕ Buy me a coffee — very soon</a>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section id="faq">
+        <div class="center">
+            <span class="kicker">Questions</span>
+            <h2 class="section-title">Frequently asked questions</h2>
+        </div>
+        <div class="faq">
+            <details class="qa">
+                <summary>What do I need to use it?</summary>
+                <div class="a">A Linux PC connected to your TV (Debian/Ubuntu family with systemd and
+                Firefox) and a phone (Android or iPhone) on the same WiFi network. Nothing else: no
+                extra hardware, no accounts. Full details in <a href="docs.html#requirements">requirements</a>.</div>
+            </details>
+            <details class="qa">
+                <summary>What exactly does the free part include?</summary>
+                <div class="a">The whole remote: touchpad, keyboard, volume, playback, streaming apps
+                in kiosk mode and system apps. It's not a crippled demo — it's a complete remote
+                control. The Pro license adds AI voice, premium themes and whatever comes next.</div>
+            </details>
+            <details class="qa">
+                <summary>Do my voice and data leave my home?</summary>
+                <div class="a">The remote itself (touchpad, keyboard, apps) works 100% inside your
+                local network: nothing travels over the internet. The only thing that leaves is the
+                audio of a voice command — only when you press the microphone button, encrypted, to
+                our AI service — and it's used solely to understand the command.
+                More detail in <a href="docs.html#privacy">privacy</a>.</div>
+            </details>
+            <details class="qa">
+                <summary>How do I receive and activate my license?</summary>
+                <div class="a">After checkout, your key (format <code>LRP-XXXX-XXXX-XXXX</code>)
+                arrives by email within 1-2 minutes. In the app: Settings → License → paste the key →
+                Activate. The license works on one PC at a time and you can
+                <a href="docs.html#license">move it yourself</a> if you switch machines.</div>
+            </details>
+            <details class="qa">
+                <summary>How does it update?</summary>
+                <div class="a">From the app itself: Settings → Update → Check. The server updates
+                itself and the phone app picks up the new version when you close and reopen it.
+                <a href="docs.html#update">Update guide</a>.</div>
+            </details>
+            <details class="qa">
+                <summary>What if I want to uninstall everything?</summary>
+                <div class="a">One command: <code>sudo apt remove linuxremoteplayer</code>. It takes
+                the service, the firewall rules and the permissions it configured with it. No hidden
+                leftovers. <a href="docs.html#uninstall">Details here</a>.</div>
+            </details>
+            <details class="qa">
+                <summary>Do you offer refunds?</summary>
+                <div class="a">Yes: 14 days, no questions asked. Write to
+                <a href="mailto:soporte@linuxremoteplayer.com">soporte@linuxremoteplayer.com</a> from
+                your purchase email and we'll process it.</div>
+            </details>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-inner">
+            <div>
+                <h4>LinuxRemotePlayer</h4>
+                <p>The remote control for your Linux TV. Made for the living room,
+                with love for the HTPC ecosystem.</p>
+            </div>
+            <div>
+                <h4>Product</h4>
+                <ul>
+                    <li><a href="docs.html">Documentation</a></li>
+                    <li><a href="changelog.html">Changelog</a></li>
+                    <li><a href="#pricing">Pricing</a></li>
+                    <li><a href="#support-us">Support the project</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4>Support</h4>
+                <ul>
+                    <li><a href="mailto:soporte@linuxremoteplayer.com">soporte@linuxremoteplayer.com</a></li>
+                    <li><a href="#faq">FAQ</a></li>
+                    <li><a href="docs.html#troubleshooting">Troubleshooting</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-legal">
+            © 2026 LinuxRemotePlayer — made by Gusitir · Netflix, YouTube, Spotify and other brands
+            belong to their respective owners; this product is not affiliated with or endorsed by them.
+        </div>
+    </footer>
+
+    <div class="theme-switch" role="group" aria-label="Switch theme">
+        <button type="button" data-theme-btn="light" title="Light theme">☀️</button>
+        <button type="button" data-theme-btn="cafe" title="Warm theme (coffee)">☕</button>
+        <button type="button" data-theme-btn="dark" title="Dark theme">🌙</button>
+    </div>
+
+    <script>
+        function copyCommand() {
+            const text = document.getElementById('cmd-text').textContent;
+            const btn = document.getElementById('copy-btn');
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    btn.textContent = 'Copied!';
+                    setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+                }).catch(() => { alert('Could not copy automatically.'); });
+            } else {
+                alert('Clipboard not supported. Please copy the command manually.');
+            }
+        }
+
+        // The download block reads latest.json: a single source of truth per release.
+        fetch('../latest.json').then(r => r.json()).then(d => {
+            if (!d || !d.version || !d.deb_url) return;
+            const name = d.deb_url.split('/').pop();
+            document.getElementById('deb-name').textContent = name;
+            document.getElementById('deb-version').textContent = d.version;
+            document.getElementById('deb-link').href = d.deb_url;
+            if (d.sha256) document.getElementById('deb-sha').textContent = 'sha256: ' + d.sha256;
+        }).catch(() => { /* the static HTML values remain as fallback */ });
+    </script>
+</body>
+</html>

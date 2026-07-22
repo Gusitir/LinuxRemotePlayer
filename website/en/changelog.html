@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Changelog — LinuxRemotePlayer</title>
+    <meta name="description" content="What's new in each LinuxRemotePlayer version: improvements, fixes and new features.">
+    <link rel="alternate" hreflang="es" href="https://linux-remote-player.vercel.app/changelog.html">
+    <link rel="alternate" hreflang="en" href="https://linux-remote-player.vercel.app/en/changelog.html">
+    <link rel="icon" type="image/png" href="../icon-192.png">
+    <link rel="stylesheet" href="../style.css">
+    <script src="../site.js"></script>
+</head>
+<body>
+
+    <header>
+        <div class="nav-inner">
+            <a href="index.html" class="brand">
+                <img src="../icon-192.png" alt="LinuxRemotePlayer logo">
+                <span>LinuxRemotePlayer</span>
+                <span class="lrp">LRP</span>
+            </a>
+            <nav>
+                <a href="index.html#install">Install</a>
+                <a href="index.html#pricing">Pricing</a>
+                <a href="index.html#support-us">Support us</a>
+                <a href="index.html#faq">FAQ</a>
+                <a href="docs.html">Docs</a>
+                <a href="changelog.html" class="active">Changelog</a>
+                <a href="../changelog.html" title="Versión en español">ES</a>
+            </nav>
+            <a href="index.html#install" class="btn btn-green">Install free</a>
+        </div>
+    </header>
+
+    <main class="page">
+        <h1>Changelog</h1>
+        <p class="lead">What each version brings. The app updates itself from
+        <b>Settings → Update</b> — here you can see what you'll get.</p>
+
+        <!-- TEMPLATE per release (copy to the top for each new version):
+        <article class="release">
+            <div class="ver"><h2>vX.Y.Z</h2><time>YYYY-MM-DD</time></div>
+            <ul>
+                <li>...</li>
+            </ul>
+        </article>
+        -->
+
+        <article class="release">
+            <div class="ver"><h2>v1.8.0</h2><time>July 20, 2026</time></div>
+            <ul>
+                <li><b>Big internal cleanup</b> ahead of launch: lighter install package and a
+                simpler, more reliable voice engine.</li>
+                <li>Documentation and website corrected and brought up to date.</li>
+            </ul>
+        </article>
+
+        <article class="release">
+            <div class="ver"><h2>v1.7.8</h2><time>July 20, 2026</time></div>
+            <ul>
+                <li><b>Fixed:</b> the "Voice commands" guide in Settings didn't appear in some
+                cases; it now always shows.</li>
+            </ul>
+        </article>
+
+        <article class="release">
+            <div class="ver"><h2>v1.7.5 – v1.7.7</h2><time>July 18-19, 2026</time></div>
+            <ul>
+                <li><b>More robust voice:</b> fixed the microphone on iPhone, voice errors now
+                visible on screen, and a command guide available in Settings.</li>
+                <li><b>More system apps:</b> the detector now also finds apps like the file manager
+                or the terminal, so you can launch them from your phone.</li>
+                <li>The phone app now picks up updates automatically on every release.</li>
+            </ul>
+        </article>
+
+        <article class="release">
+            <div class="ver"><h2>v1.7.0 – v1.7.4</h2><time>July 14-18, 2026</time></div>
+            <ul>
+                <li><b>Firefox as the TV browser:</b> more compatible, with ad blocking
+                (uBlock Origin) included automatically.</li>
+                <li><b>Real-time latency indicator</b> in the status bar.</li>
+                <li>More robust installation (no certificate hangs) and a fail-safe auto-updater.</li>
+                <li>New installer option to keep the TV screen from turning off on its own.</li>
+                <li>Design fixes for iPhone (16:9 screens, icons, notch).</li>
+            </ul>
+        </article>
+
+        <article class="release">
+            <div class="ver"><h2>v1.6.0</h2><time>July 15, 2026</time></div>
+            <ul>
+                <li><b>Spanish keyboards:</b> support for ES and LATAM layouts (ñ, accents and
+                AltGr symbols).</li>
+                <li>The Home button now truly leaves a clean desktop, and "back" navigates without
+                rewinding the video.</li>
+                <li>Fewer latency spikes in the remote.</li>
+            </ul>
+        </article>
+
+        <article class="release">
+            <div class="ver"><h2>v1.5.0 and earlier</h2><time>July 2026</time></div>
+            <ul>
+                <li>"Cozy Media", the app's design language, is born.</li>
+                <li>6-digit PIN pairing, TV status panel, welcome tour, built-in feedback form and
+                the theme system.</li>
+                <li>Dedicated support for KDE Plasma Bigscreen.</li>
+            </ul>
+        </article>
+    </main>
+
+    <footer>
+        <div class="footer-legal">
+            © 2026 LinuxRemotePlayer — <a href="index.html" style="color:var(--footer-text);">Back to home</a> ·
+            <a href="mailto:soporte@linuxremoteplayer.com" style="color:var(--footer-text);">soporte@linuxremoteplayer.com</a>
+        </div>
+    </footer>
+
+    <div class="theme-switch" role="group" aria-label="Switch theme">
+        <button type="button" data-theme-btn="light" title="Light theme">☀️</button>
+        <button type="button" data-theme-btn="cafe" title="Warm theme (coffee)">☕</button>
+        <button type="button" data-theme-btn="dark" title="Dark theme">🌙</button>
+    </div>
+</body>
+</html>

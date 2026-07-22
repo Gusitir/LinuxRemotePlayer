@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation — LinuxRemotePlayer</title>
+    <meta name="description" content="Complete LinuxRemotePlayer guide: step-by-step install, certificate, pairing, updates, license, privacy and troubleshooting.">
+    <link rel="alternate" hreflang="es" href="https://linux-remote-player.vercel.app/docs.html">
+    <link rel="alternate" hreflang="en" href="https://linux-remote-player.vercel.app/en/docs.html">
+    <link rel="icon" type="image/png" href="../icon-192.png">
+    <link rel="stylesheet" href="../style.css">
+    <script src="../site.js"></script>
+</head>
+<body>
+
+    <header>
+        <div class="nav-inner">
+            <a href="index.html" class="brand">
+                <img src="../icon-192.png" alt="LinuxRemotePlayer logo">
+                <span>LinuxRemotePlayer</span>
+                <span class="lrp">LRP</span>
+            </a>
+            <nav>
+                <a href="index.html#install">Install</a>
+                <a href="index.html#pricing">Pricing</a>
+                <a href="index.html#support-us">Support us</a>
+                <a href="index.html#faq">FAQ</a>
+                <a href="docs.html" class="active">Docs</a>
+                <a href="changelog.html">Changelog</a>
+                <a href="../docs.html" title="Versión en español">ES</a>
+            </nav>
+            <a href="index.html#install" class="btn btn-green">Install free</a>
+        </div>
+    </header>
+
+    <main class="page">
+        <h1>Documentation</h1>
+        <p class="lead">Everything you need to install, pair, update and maintain
+        LinuxRemotePlayer. If something isn't here, write to
+        <a href="mailto:soporte@linuxremoteplayer.com">soporte@linuxremoteplayer.com</a>.</p>
+
+        <div class="toc">
+            <h4>Contents</h4>
+            <ul>
+                <li><a href="#requirements">Requirements</a></li>
+                <li><a href="#install">Step-by-step install</a></li>
+                <li><a href="#certificate">The security certificate</a></li>
+                <li><a href="#pairing">Pairing your phone</a></li>
+                <li><a href="#update">Updating the app</a></li>
+                <li><a href="#reinstall-pwa">Reinstalling the phone app</a></li>
+                <li><a href="#license">Pro license and moving it</a></li>
+                <li><a href="#privacy">Privacy and security</a></li>
+                <li><a href="#uninstall">Uninstalling</a></li>
+                <li><a href="#troubleshooting">Troubleshooting</a></li>
+            </ul>
+        </div>
+
+        <h2 id="requirements">Requirements</h2>
+        <ul>
+            <li><b>The TV PC:</b> a Debian/Ubuntu-family Linux with <code>systemd</code>
+            (thoroughly tested on KDE Neon with Plasma Bigscreen; see the
+            <a href="index.html#compatibility">compatibility matrix</a>). Firefox is used for kiosk
+            mode — if it's missing, the installer installs it for you.</li>
+            <li><b>The remote:</b> any phone with a modern browser (Android with Chrome or Firefox;
+            iPhone with Safari). Nothing to download from any app store.</li>
+            <li><b>Network:</b> the PC and the phone on the same WiFi network. No ports need to be
+            opened to the internet — all control is local.</li>
+        </ul>
+
+        <h2 id="install">Step-by-step install</h2>
+        <p>In a terminal on the PC that will be connected to the TV:</p>
+        <div class="terminal" style="margin-left:0;">
+            <div class="terminal-body">
+                <span class="terminal-cmd">curl -fsSL https://linux-remote-player.vercel.app/install.sh | sudo bash</span>
+            </div>
+        </div>
+        <p>The command downloads the latest version, <b>verifies its integrity</b> (sha256) and
+        installs the package. Then the wizard starts and asks these questions
+        (the wizard's prompts are currently in Spanish; here's what each one means):</p>
+
+        <h3>1. "¿Qué usuario usará la TV?" — which user will use the TV?</h3>
+        <p>The Linux username the TV logs in with (the one running the graphical session). The
+        wizard detects the current user and proposes it in brackets — if it's right, just press
+        Enter. <b>Never use <code>root</code></b>: the wizard rejects it for safety.</p>
+
+        <h3>2. "¿Esta PC está dedicada a la TV?" — is this PC dedicated to the TV? [S/n]</h3>
+        <ul>
+            <li><b>S (dedicated TV mode):</b> for the living-room HTPC that only acts as a TV. The
+            service starts with the system, the firewall is enabled, and screen locking/blanking
+            are disabled.</li>
+            <li><b>n (desktop mode):</b> for your general-purpose PC. The service runs only inside
+            your user session and doesn't touch power settings or the firewall.</li>
+        </ul>
+
+        <h3>3. "¿Deshabilitar suspensión/apagado de pantalla?" — disable system sleep?</h3>
+        <p>If the PC is the living-room TV, you want <b>yes</b> (the default in dedicated mode): it
+        keeps the screen from turning off mid-movie. In desktop mode the default is to touch
+        nothing.</p>
+
+        <h3>4. "Selecciona layout de teclado" — keyboard layout [US / ES / LATAM]</h3>
+        <p>The keyboard language the app emulates when you type from your phone. The wizard detects
+        the system layout and proposes it — Enter to accept. If you type with ñ and accents, pick
+        ES or LATAM accordingly.</p>
+
+        <div class="callout"><b>When it finishes:</b> the wizard prints the address to pair your
+        phone (something like <code>https://your-pc.local:8000</code>) and opens the status panel
+        on the TV with a PIN. Continue in <a href="#pairing">Pairing your phone</a>.</div>
+
+        <div class="callout warn"><b>A reboot is needed for the remote:</b> the installer adds your
+        user to the <code>input</code> group (virtual keyboard/mouse permissions). That permission
+        only applies after <b>rebooting the PC</b> (or logging out and back in). If the touchpad
+        doesn't respond right after installing, this is why.</div>
+
+        <h2 id="certificate">The security certificate (the browser warning)</h2>
+        <p>The first time you open the address on your phone, the browser shows a security warning.
+        <b>This is normal and expected.</b> Why does it happen?</p>
+        <p>The connection between your phone and your PC is encrypted with HTTPS (required for the
+        microphone to work). Since everything happens inside your home — no servers in between —
+        the certificate is generated by your own PC, and your browser doesn't know your PC as an
+        "authority". The warning says only that: the certificate is homemade. The connection is
+        still encrypted.</p>
+        <p><b>How to accept it (once per phone):</b></p>
+        <ul>
+            <li><b>Android (Chrome/Firefox):</b> tap "Advanced" → "Proceed to [address]" /
+            "Accept the risk and continue".</li>
+            <li><b>iPhone (Safari):</b> tap "Show details" → "Visit this website" → confirm.</li>
+        </ul>
+        <p>On the TV itself there's nothing to do: the installer configures the certificate in
+        Firefox automatically.</p>
+
+        <h2 id="pairing">Pairing your phone</h2>
+        <ol>
+            <li>Open the address the installer gave you in your phone's browser:
+            <code>https://your-pc.local:8000</code> (or the direct IP, e.g.
+            <code>https://192.168.1.50:8000</code>).</li>
+            <li>Accept the certificate (<a href="#certificate">above</a>).</li>
+            <li>Type the <b>PIN</b> shown by the status panel on the TV screen.</li>
+            <li>Once the remote loads, <b>add the app to your home screen</b>: the app itself shows
+            you how for your phone (Android: menu → "Install app" or "Add to home screen"; iPhone:
+            share button → "Add to Home Screen"). It then opens full-screen, like a native app.</li>
+        </ol>
+        <div class="callout">More phones? Repeat these steps on each one. Every member of the family
+        can have the remote installed at the same time.</div>
+
+        <h2 id="update">Updating the app</h2>
+        <p>Updates arrive through the app itself — no need to come back to this page:</p>
+        <ol>
+            <li>On the phone: <b>Settings → Update → Check</b>.</li>
+            <li>If there's a new version, tap the button and the PC updates itself (downloads,
+            verifies and installs the package).</li>
+            <li>Fully close the phone app and reopen it to pick up the new interface.</li>
+        </ol>
+        <p>Terminal alternative on the PC: <code>sudo bash /opt/linuxremoteplayer/scripts/update.sh</code></p>
+
+        <h2 id="reinstall-pwa">Reinstalling the phone app</h2>
+        <p>If the phone app gets into a weird state (blank screen, old version that won't update),
+        reinstalling is quick and erases nothing on the PC side:</p>
+        <ol>
+            <li>Long-press the LinuxRemotePlayer icon on your home screen → remove/uninstall.</li>
+            <li>Open <code>https://your-pc.local:8000</code> again in the phone browser.</li>
+            <li>Pair with the PIN and add it to the home screen again.</li>
+            <li>If you had a Pro license, don't worry: the license lives on the PC, not the phone.
+            It's recognized automatically.</li>
+        </ol>
+
+        <h2 id="license">Pro license and moving it between PCs</h2>
+        <h3>Activating your license</h3>
+        <ol>
+            <li>After checkout, your key (format <code>LRP-XXXX-XXXX-XXXX</code>) arrives at the
+            email you paid with, within 1-2 minutes.</li>
+            <li>In the app: <b>Settings → License</b> → paste the key → <b>Activate</b>.</li>
+        </ol>
+        <h3>One PC at a time, with self-service moving</h3>
+        <p>Your license works on <b>one PC at a time</b>. If you switch machines (or reformat), you
+        don't need to ask anyone:</p>
+        <ol>
+            <li>Install LinuxRemotePlayer on the new PC and activate your same key.</li>
+            <li>The app tells you the license is active on another device and asks if you want to
+            <b>move it</b>. Confirm and done: the new PC gets premium and the previous one loses it.</li>
+        </ol>
+        <div class="callout warn"><b>Key stolen?</b> Write to us from your purchase email at
+        <a href="mailto:soporte@linuxremoteplayer.com">soporte@linuxremoteplayer.com</a>: we revoke
+        the old key and issue a new one to that same email.</div>
+
+        <h2 id="privacy">Privacy and security</h2>
+        <ul>
+            <li><b>The remote is 100% local.</b> Touchpad, keyboard, apps, volume: everything
+            travels encrypted inside your WiFi network, from your phone to your PC. None of it goes
+            over the internet.</li>
+            <li><b>No accounts, no telemetry.</b> We don't ask you to register and the app doesn't
+            send usage statistics.</li>
+            <li><b>Voice is the only thing that leaves your home</b> — and only if you have Pro and
+            press the microphone button. That audio goes encrypted to our cloud service, is used
+            solely to interpret the command, and the service logs only minimal metadata (size and
+            outcome) to run the daily limit.</li>
+            <li><b>Protected access.</b> Nobody controls your TV without the PIN or the pairing
+            link; every connection authenticates with a token.</li>
+        </ul>
+
+        <h2 id="uninstall">Uninstalling</h2>
+        <p>One command in the PC terminal:</p>
+        <div class="terminal" style="margin-left:0;">
+            <div class="terminal-body">
+                <span class="terminal-cmd">sudo apt remove linuxremoteplayer</span>
+            </div>
+        </div>
+        <p>It removes the service, the firewall rules it created, the hardware permissions and the
+        sleep configuration. If you had an active license, the uninstaller releases it so you can
+        activate it directly on another PC.</p>
+
+        <h2 id="troubleshooting">Troubleshooting</h2>
+
+        <h3>The phone can't find the PC</h3>
+        <ul>
+            <li>Check that both are on the <b>same WiFi network</b> (beware of guest networks,
+            which often isolate devices from each other).</li>
+            <li>If <code>your-pc.local</code> doesn't respond, try the direct IP the installer
+            showed (<code>https://192.168.x.x:8000</code>).</li>
+        </ul>
+
+        <h3>Touchpad/keyboard not responding right after install</h3>
+        <p>The reboot is missing: hardware permissions apply after restarting the PC (or logging
+        out and back in). One time only.</p>
+
+        <h3>The first voice command is slow</h3>
+        <p>Expected: if voice hasn't been used in a while, the AI service "goes to sleep" and the
+        first command may take a few seconds to wake it. The following ones respond instantly.</p>
+
+        <h3>I pressed the mic without speaking and something weird happened</h3>
+        <p>With pure silence, the recognizer sometimes "hears" words that aren't there. Release the
+        button only after saying the command, and speak directly into the phone.</p>
+
+        <h3>It says the license is in use on another device</h3>
+        <p>Your key is active on another PC. The app offers to <a href="#license">move it</a> — if
+        it wasn't you who activated it elsewhere,
+        <a href="mailto:soporte@linuxremoteplayer.com">write to us</a>.</p>
+
+        <h3>The phone app acts weird after an update</h3>
+        <p>Fully close it and reopen it. If it persists,
+        <a href="#reinstall-pwa">reinstall the phone app</a> (2 minutes, nothing is lost).</p>
+    </main>
+
+    <footer>
+        <div class="footer-legal">
+            © 2026 LinuxRemotePlayer — <a href="index.html" style="color:var(--footer-text);">Back to home</a> ·
+            <a href="mailto:soporte@linuxremoteplayer.com" style="color:var(--footer-text);">soporte@linuxremoteplayer.com</a>
+        </div>
+    </footer>
+
+    <div class="theme-switch" role="group" aria-label="Switch theme">
+        <button type="button" data-theme-btn="light" title="Light theme">☀️</button>
+        <button type="button" data-theme-btn="cafe" title="Warm theme (coffee)">☕</button>
+        <button type="button" data-theme-btn="dark" title="Dark theme">🌙</button>
+    </div>
+</body>
+</html>
