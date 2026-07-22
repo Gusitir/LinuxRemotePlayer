@@ -52,7 +52,13 @@ validado en device.
   costos para decidir precios de Voz 2.0.
 
 ### Web / monetización
-- Stripe LIVE: producto único **$5 USD lifetime** (hoy el link es TEST 9.99 EUR).
+- **Paddle** (decidido 2026-07-21): Stripe NO opera para vendedores en Ecuador →
+  Merchant of Record. Paddle soporta Ecuador, es el vendedor legal (impuestos = suyos),
+  liquida USD. Producto único **$5 USD lifetime**. Manual por dashboard (sin plugin,
+  sin sandbox); validación = compra REAL de $5 + refund. PayPal = plan B si Paddle
+  rechaza. Patreon/Creem descartados. El link Stripe TEST (9.99 EUR) muere.
+- Paddle REVISA el sitio antes de aprobar → orden del bloque C: dominio (T-52) →
+  web (T-53) → alta Paddle (T-51).
 - Dominio propio + rebrand (nombre comercial lo decide el dueño AL COMPRAR el dominio —
   un solo cambio de infra). Email soporte → soporte@<dominio> (hoy correo test).
 - PH-WEB: rediseño completo con identidad propia + capturas reales + video + tutoriales.
@@ -153,28 +159,33 @@ avanza al bloque C.
 
 ## BLOQUE C — MONETIZACIÓN + WEB  [dependencias del dueño marcadas]
 
-### T-51 — Stripe LIVE $5 USD  [BLOCKED: dueño crea producto]
-- Dueño: producto "LinuxRemotePlayer Pro" $5 USD pago único en Stripe LIVE + payment
-  link + webhook LIVE apuntando a `stripe-webhook` + secrets LIVE en Supabase
-  (`STRIPE_WEBHOOK_SECRET`, key). Prueba de compra real (refund después).
-- Gemini: `website/index.html` link de checkout TEST→LIVE; revisar `stripe-webhook/index.ts`
-  (que emita licencia con el evento LIVE; ajustes si hacen falta); precio coherente en toda la web.
-**Verificación:** compra de prueba → licencia emitida en Supabase → email recibido.
+### T-51 — Paddle LIVE $5 USD  [va DESPUÉS de T-52/T-53: Paddle revisa el sitio]
+- Dueño: alta de cuenta Paddle (Ecuador) + producto "Pro" $5 USD pago único + checkout
+  + webhook apuntando a nueva Edge Function `paddle-webhook` + secret de firma en
+  Supabase. Todo manual por dashboard; SIN sandbox.
+- Gemini: `supabase/functions/paddle-webhook/` (adaptación de stripe-webhook al formato
+  de eventos Paddle: verificación de firma + emitir licencia + email vía Resend);
+  link de checkout en la web; borrar secrets Stripe muertos (dueño).
+**Verificación:** compra REAL de $5 con tarjeta del dueño → licencia emitida en
+Supabase → email recibido → refund desde el dashboard.
 
-### T-52 — Dominio + rebrand + email  [BLOCKED: dueño compra dominio y decide nombre]
-- Dueño: decide nombre comercial + compra dominio + lo conecta a Vercel + crea
-  soporte@<dominio> (o forwarding) + Resend con el dominio (para emails de licencia).
+### T-52 — Dominio + email  [BLOCKED: dueño compra dominio — tarjeta a arreglar]
+REBRAND CANCELADO (2026-07-22): nombre comercial = LinuxRemotePlayer, marca corta "LRP".
+- Dueño: compra dominio (linuxremoteplayer.com opción natural) + conectar a Vercel +
+  soporte@<dominio> (o forwarding) + Resend con el dominio (emails de licencia).
 - Gemini: reemplazar aeciminer02@gmail.com (index.html:870/887, gracias.html:226/7) por
-  soporte@<dominio>; nombre comercial en web/README/PWA donde aplique ("linuxremoteplayer"
-  queda como nombre técnico); URLs latest.json/downloads si cambia el host del OTA
+  soporte@<dominio>; URLs latest.json/downloads si cambia el host del OTA
   (¡OJO: la PWA vieja consulta la URL vieja — mantener la URL Vercel vieja respondiendo
   o redirect, si no los 1.8.0 no ven más OTA!).
 
-### T-53 — PH-WEB: rediseño completo  [necesita T-52 (identidad) + capturas del dueño]
-Matar el diseño "IA genérico": identidad propia, capturas REALES device (TV+teléfono),
+### T-53 — PH-WEB: rediseño completo  [DESBLOQUEADA: identidad = LinuxRemotePlayer/LRP;
+solo faltan capturas/video del dueño; el dominio se enchufa después en T-52]
+Matar el diseño "IA genérico": identidad propia (LRP), capturas REALES device (TV+teléfono),
 video de la app en acción, tutoriales (instalar / actualizar OTA / reinstalar PWA),
 sección premium clara (qué incluye la Pro lifetime: voz IA con 60/día, skins, futuro APK),
 precio $5, FAQ, requisitos (Debian/Ubuntu+systemd), soporte. Puede partirse en 2-3 commits.
+Incluye sección "Apoyá el proyecto": Ko-fi como placeholder de donaciones (+ cripto
+opcional). Paddle NO permite donaciones (ToS solo productos).
 
 ### T-54 — Instalación sin repo público  [RE-TEST DEVICE leve]
 `bootstrap.sh` clona el repo → MUERE con repo privado. Matar/reescribir: instalación
@@ -213,7 +224,7 @@ regresión COMPLETA TESTING.md en device + OTA 1.8.0→1.9.0 + voz vía proxy.
 - [ ] Cap 512KB server-side (proxy Y device); kill-switch + cap global operativos.
 - [ ] Licencia = 1 dispositivo con mudanza autoservicio validada; release en uninstall.
 - [ ] Cuota 60/día por plan (tabla), unificada en app+web; métricas registrándose.
-- [ ] Stripe LIVE $5 USD con compra de prueba real → licencia emitida.
+- [ ] Paddle LIVE $5 USD con compra de prueba real → licencia emitida.
 - [ ] Dominio propio + soporte@dominio + rebrand aplicado; web rediseñada con capturas/video.
 - [ ] Instalación 100% por .deb (bootstrap.sh muerto); docs sin git-clone.
 - [ ] Rotación manual de keys documentada; .agents con WORKFLOW.md.
@@ -224,7 +235,7 @@ regresión COMPLETA TESTING.md en device + OTA 1.8.0→1.9.0 + voz vía proxy.
 - [ ] Aplicar SQL v3 en Supabase (T-46) y pegar resultado.
 - [ ] Deploy ai-proxy + send-feedback (pendiente v1.5) + secret TOGETHER_API_KEY (T-47).
 - [ ] E2E device (T-50) + borrar llaves Together del `.env` del HTPC al validar.
-- [ ] Stripe LIVE: producto $5, webhook, compra de prueba (T-51).
+- [ ] Alta Paddle + producto $5 + webhook + compra de prueba real con refund (T-51).
 - [ ] Decidir nombre comercial + comprar dominio + email soporte + Resend (T-52).
 - [ ] Screenshots reales (TV + teléfono) + video (T-53) — pendiente desde v1.8.
 - [ ] Regresión TESTING.md + OTA tras release (T-56). Privatizar repo (T-57).

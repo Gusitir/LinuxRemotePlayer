@@ -34,12 +34,40 @@ SIGUIENTE: v1.9 (lanzamiento, abajo). Resumen de lo hecho:
 ## FASE ACTIVA: v1.9 — LANZAMIENTO (plan maestro: PLAN_v1.9.md, arrancada 2026-07-21)
 ai-proxy Edge Function (llaves fuera del device) + PH-ANTIABUSO (cap 512KB, kill-switch,
 cuota por plan, métricas) + PH-LICENCIAS (1 dispositivo + mudanza; rotación manual
-documentada) + Stripe LIVE $5 USD + dominio propio + rebrand + PH-WEB + matar bootstrap.sh
-+ release v1.9.0 + privatizar repo. Tareas T-46..T-57 (ver PLAN_v1.9.md).
-**Tarea activa: T-46 (schema v3 Supabase) — brief entregado a Gemini.**
+documentada) + **Paddle** LIVE $5 USD + dominio propio + rebrand + PH-WEB + matar
+bootstrap.sh + release v1.9.0 + privatizar repo. Tareas T-46..T-57 (ver PLAN_v1.9.md).
+**BLOQUES A+B CERRADOS (2026-07-22):** T-46 schema v3 aplicado ✓, T-47 ai-proxy
+deployado + smoke 6/6 ✓, T-48 backend→proxy ✓, T-49 mudanza PWA + cuota 60 ✓,
+T-50 E2E device VALIDADO (voz vía proxy, 1cmd=1consumo, takeover, kill-switch;
+keys Together viejas REVOCADAS — el device ya no tiene llaves de IA).
+Commits: 6fe6001, c9d3f52, ad615e9, ab7d794. Build de prueba 1.8.9 (no publicado).
+**PAGOS (decidido 2026-07-21): Stripe NO opera en Ecuador → PADDLE** (MoR, Ecuador OK,
+manual por dashboard, sin plugin, sin sandbox; validación = compra real $5 + refund).
+PayPal plan B. Patreon/Creem descartados. Donaciones: sección "Apoyá el proyecto" en
+la web (T-53) con Ko-fi como placeholder (+cripto opcional); rail de retiro se decide después.
+**REBRAND CANCELADO (dueño, 2026-07-22): el nombre comercial ES LinuxRemotePlayer**
+(descriptivo=SEO, equity acumulado), con "LRP" como marca corta (logo/favicon; ya vive
+en las keys LRP-). T-52 queda solo dominio+email (linuxremoteplayer.com como opción
+natural; compra pendiente — la tarjeta del dueño dio error en el registrador, lo arregla).
+Ko-fi CONFIRMADO para donaciones (acumular en PayPal, retirar >$50 que es donde renta).
+**Siguiente: T-50b (fix cards settings + docs) → T-53 web (DESBLOQUEADA: identidad
+decidida, dominio se enchufa después) → T-52 dominio → T-51 Paddle (revisa el sitio,
+por eso web ANTES del alta de pagos).**
 T-43/T-44 (reestructura .agents) quedaron colgadas de v1.8 → absorbidas en T-55.
 PH-PRICING: Pro único $5 al lanzar; suscripción recién con Voz 2.0. Roadmap post-lanzamiento:
 multi-distro (Arch/Fedora/etc.) + Skins 2.0 → APK → Archivos → Gamepad → Voz 2.0 (PLAN.md).
+
+## HALLAZGOS v1.9 (anotados 2026-07-22, no bloquean lanzamiento)
+- **Cold-start de voz:** tras inactividad, el 1er comando tarda varios segundos
+  (Edge Function dormida + Whisper frío en Together); después vuela. Mitigación
+  posible: keep-alive/warmer. Evaluar post-lanzamiento con datos reales.
+- **Whisper alucina con silencio:** mic apretado sin hablar → texto fantasma →
+  acción rara (busca/pausa). NO es regresión (pre-proxy igual). Mitigación barata:
+  descartar audios <~1s (client o proxy) antes de facturar. Pulir en v1.9 si da el
+  tiempo, si no post-lanzamiento.
+- Smoke test T-47 registró 2 consumos donde se esperaba 1 → RESUELTO en T-50:
+  contabilidad exacta en device real (6 mic = 6 usage_log = 6 commands_today);
+  fue doble ejecución del curl S5.
 
 ## HALLAZGOS / FUTURO (fuera de alcance de v1.8)
 - **OTA auto-reload no es transparente:** hoy actualiza al cerrar/reabrir la PWA, no sola
