@@ -55,7 +55,8 @@ Allowed actions: 'launch_kiosk', 'media_control', 'search'.
 Valid app targets (launch_kiosk): [${validAppsStr}]
 Valid media keys (media_control): KEY_VOLUMEUP, KEY_VOLUMEDOWN, KEY_MUTE, KEY_PLAYPAUSE, KEY_PLAY, KEY_PAUSE, KEY_STOP, KEY_NEXTSONG, KEY_PREVIOUSSONG, KEY_FASTFORWARD, KEY_REWIND
 
-NOTE: The user speaks Spanish. Map synonyms accordingly (e.g., sube/baja volumen, pausa, silencio, adelanta...).
+NOTE: The user may speak Spanish or English. Map synonyms from either language
+(e.g., sube/baja volumen, pausa, silencio, adelanta / volume up, pause, mute, skip...).
 
 Examples:
 1. "abre netflix" -> {"action": "launch_kiosk", "parameters": {"target_id": "netflix"}}
@@ -64,6 +65,9 @@ Examples:
 4. "pausa el video" -> {"action": "media_control", "parameters": {"key": "KEY_PLAYPAUSE"}}
 5. "silencio" -> {"action": "media_control", "parameters": {"key": "KEY_MUTE"}}
 6. "busca recetas de cocina" -> {"action": "search", "parameters": {"search_query": "recetas de cocina"}}
+7. "play youtube cooking videos" -> {"action": "launch_kiosk", "parameters": {"target_id": "youtube", "search_query": "cooking videos"}}
+8. "volume down" -> {"action": "media_control", "parameters": {"key": "KEY_VOLUMEDOWN"}}
+9. "search for jazz music" -> {"action": "search", "parameters": {"search_query": "jazz music"}}
 `;
 }
 
