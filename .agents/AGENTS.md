@@ -8,8 +8,12 @@ entrada canónico: describe cómo trabajamos. Es estable — si el proceso cambi
 2. **CONTEXT.md** — resumen compactado de dónde quedó el AGENTE ANTERIOR (handoff entre
    sesiones/modelos; si te cambian de agente, acá está el estado del chat previo).
 3. **CURRENT.md** — estado ACTUAL: versión publicada, fase/tarea activa, pendientes.
-Con eso ya sabés todo. Después, según necesites: PLAN.md (roadmap), PLAN_v1.8.md (fase
-activa), APPCORE.md (mapa del código), TESTING.md (matriz de test del device).
+4. **APPCORE.md** — mapa del código: qué vive dónde. Leerlo ANTES de grepear; ahorra
+   media hora de exploración a ciegas.
+Con eso ya sabés todo. Después, según necesites: PLAN.md (roadmap + fases futuras
+PH-NN), **PLAN_v1.9.md (plan de la fase ACTIVA)**, TESTING.md (matriz de test del device).
+> El puntero a la fase activa se actualiza al abrir cada fase nueva. Si acá dice una
+> versión que ya salió, está rancio: creele a CURRENT.md, no a esta línea.
 
 ## ROLES
 - **Ejecutor = Gemini 3.5 Flash.** Hace TODO lo operativo: editar código, correr comandos,
@@ -46,7 +50,14 @@ activa), APPCORE.md (mapa del código), TESTING.md (matriz de test del device).
 - `py_compile` / `node --check` / `pyflakes` con python/node de **Windows** (nativo) = OK.
 - **Builds del `.deb` SOLO en clon WSL NATIVO** (clonado desde origin dentro de `~`, no `/mnt`).
 - Guard CSS (`scripts/check_css_sync.py`) corre en `build_deb.sh` y ABORTA si hay clase CSS
-  usada sin definir (cazó deriva real en T-29).
+  usada sin definir (cazó deriva real en T-29). Solo detecta usada-sin-definir, NO al revés:
+  el CSS muerto no lo caza nadie.
+- **Trampa al grepear todo el repo:** `backend/.venv/` tiene site-packages y ahoga
+  cualquier búsqueda (una búsqueda de "skin|icon|theme" devolvió 161KB de ruido). `pkg/`
+  y `dist/` son build output gitignoreado. Para buscar en el repo REAL:
+  `git ls-files <dir> | xargs grep -n <patrón>` en vez de `grep -rn`.
+- **Versión del OTA:** `is_newer_version` (backend/main.py) compara TUPLAS DE ENTEROS
+  (`1.8.9 < 1.9.0` ✓). No soporta sufijos tipo `-rc`: usar solo `X.Y.Z` numérico.
 
 ## PROCESO DE RELEASE  (el brief de cada release lo detalla)
 1. Repo Windows: `git push origin main`. 2. Clon fresco WSL nativo `git clone <origin> ~/lrp-release`.
