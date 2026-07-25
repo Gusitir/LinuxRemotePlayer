@@ -27,6 +27,11 @@ A plug & play remote-control ecosystem for Linux HTPCs: a mobile PWA client talk
 
 ## Architecture
 
+> **Evaluating this codebase?** [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) is the
+> engineer-facing document: component responsibilities and boundaries, data flow,
+> dependencies and their failure modes, the reasoning behind the non-obvious decisions,
+> known limitations, and an honest ledger of what is verified and what isn't.
+
 ```
               +---------------------------+
               |    Mobile PWA client      |
