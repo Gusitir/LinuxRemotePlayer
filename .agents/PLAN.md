@@ -282,16 +282,135 @@ Killer feature: multijugador — cada teléfono conectado = un mando (sin hardwa
       extra del APK premium
 - [ ] Gate: misma licencia Pro única
 
-# PH17: SKINS 2.0 **PREMIUM** [v2.0] (aprobado 2026-07-17)
-Evolución: de paletas CSS a THEME PACKS completos (paleta + layout de botonera +
-distribución de webapps + wallpaper + iconografía).
-- [ ] 4-6 temas CURADOS (no editor infinito — coste QA combinatorio): Cozy (actual),
-      Minimal (touchpad gigante), Media-first (transporte arriba), Neon/Gamer, Retro
-- [ ] Layouts = clases de grid alternativas por tema; sin build step; el guard CSS
-      (check_css_sync) cubre cada tema nuevo
-- [ ] Win barato 1: wallpaper personalizado del usuario (IndexedDB, cero servidor)
-- [ ] Win barato 2: reordenar webapps por drag & drop (persiste en localStorage)
-- [ ] Gate premium: mecanismo de skins Pro ya existente
+# PH17: THEME PACKS / SKINS 2.0 [v1.9.1] (4 propuestas del dueño, 2026-07-24)
+Evolución: de paletas CSS a THEME PACKS = paleta + **layout de botonera** + **set de
+botones** + wallpaper. Mockups guardados en `.agents/design/skins2/`:
+`alt1-radial.webp`, `alt2-cyber-anime.webp`, `alt3-senior-gatos.webp`,
+`alt4-senior-perros.webp`. (Las rutas originales eran temporales de Gemini; se
+convirtieron a WebP: 2.6 MB → 335 KB.)
+
+## POR QUÉ ESTO NO ES "UNA SKIN MÁS"
+Tras T-58 una skin es SOLO custom properties: `data-skin` en `<html>` + variables de
+color. Estas propuestas mueven tres ejes que las variables NO alcanzan:
+1. **Posición** de los botones (radial vs filas).
+2. **Qué botones existen** (senior recorta 7 de 17).
+3. **Etiquetas de texto** ("SUBIR VOL."), que hoy no están en el DOM — los botones son
+   solo icono + `title=`. Eso es marcado, no CSS.
+
+Inventario real de controles hoy (`frontend/index.html`, para dimensionar):
+- Fila utilitaria (`grid-cols-5`): Teclado, Borrar, **D-Pad** (`#btn-nav-mode`),
+  Panel TV, Menú OS (`KEY_LEFTMETA`).
+- `#control-cluster` en 3 columnas: [Home `killKiosk()`, Atrás, X `#btn-close-app`] ·
+  [◀◀ `KEY_LEFT`, ▶‖ `KEY_SPACE`, ▶▶ `KEY_RIGHT`] · [Vol+, Vol−, Mute `#btn-mute`].
+- Aparte: `#mic-row`/`#mic-btn`, `#apps-row` + `#more-btn`, touchpad + `#scroll-strip`,
+  header (`#btn-settings`, título, `#status`, `#latency`).
+
+## ARQUITECTURA: separar PALETA de LAYOUT (decisión de diseño clave)
+Añadir un segundo atributo independiente: `data-layout="classic|radial|senior"` en
+`<html>`, junto al `data-skin` que ya existe. Cada skin declara UN layout; el usuario
+NO combina libremente. Por qué importa:
+- alt3 y alt4 son **el mismo layout** con otra ilustración → 1 layout, 2 skins.
+- alt1 y alt2 comparten la idea radial → 1 layout (ver crítica C1), 2 skins.
+- Fijar skin→layout mantiene la matriz de QA en N (una por skin) en vez de
+  layouts × skins. Sin esto el coste de test explota.
+`setSkin()` pasa a aplicar los DOS atributos desde una tabla `SKIN_LAYOUT`.
+
+## LAYOUT "radial" (alt 1 y 2) — el caro
+- Técnica recomendada: **posicionado polar por transform**, NO SVG.
+  `position:absolute; left:50%; top:50%; transform: rotate(θ) translateY(-R) rotate(-θ)`
+  por botón. Conserva el marcado y TODOS los `onclick` existentes; el riesgo del radial
+  está en re-cablear handlers, no en dibujar. Cuñas de arco reales (SVG `path` +
+  `foreignObject`) solo si el dueño exige los segmentos exactos del mockup: obliga a
+  rehacer áreas táctiles, foco e iconos, y tira a la basura `.util-btn`/`.ctrl-round`.
+- **RIESGO PRINCIPAL — presupuesto vertical.** El cluster radial es mucho más alto que
+  las 2 filas actuales. El touchpad es `flex-1 min-h-0`: absorbe el déficit y puede
+  colapsar a cero en teléfonos chicos. Necesita `min-height` de piso en el touchpad +
+  tope/escalado del disco. Probar con `--app-h` en el teléfono más chico soportado; no
+  regresar el trabajo de "viewport iOS determinista" de v1.7.x.
+- **Bloqueador de código a resolver ANTES:** `app.js` hace
+  `micRow.style.display = showVoice ? 'flex' : 'none'`. Si el mic se mete al centro del
+  disco, ese `style.display='flex'` inline rompe el layout. Convertir a toggle de clase
+  primero (cambio behavior-neutral, va en el sub-paso de infra).
+- alt2 reutiliza plomería que YA existe: `--bg-image` + `--panel-backdrop: blur()` es
+  exactamente lo que hace la skin `anime` → el fondo ilustrado con panel translúcido
+  sale casi gratis.
+- Paleta amarillo/verde ácido de alt2: el amarillo exige `--accent-contrast` OSCURO
+  (blanco sobre amarillo no pasa contraste). El sistema de T-58 ya lo soporta.
+
+## LAYOUT "senior" (alt 3 y 4) — el barato y el de más valor
+- Recorte de botones = `display:none` por CSS. **Cero cambios de JS.** Se ocultan 7:
+  Borrar, D-Pad, Panel TV, Menú OS, X, ◀◀, ▶▶. Quedan 7 + mic: ▶‖, Vol+, Vol−, Mute,
+  Inicio, Volver, Teclado.
+- Botones grandes = CSS (objetivo ~64-72 px de alto; el mínimo iOS de 44 px ya se supera).
+- **Etiquetas**: agregar `<span class="btn-label">` PERMANENTE a cada botón de control,
+  visible solo en `senior` y `sr-only` en el resto. Beneficio extra: hoy los botones son
+  icono + `title=`, que es débil para lectores de pantalla — esto arregla un hueco real
+  de accesibilidad en TODAS las skins.
+- El touchpad sin textura de puntos del mockup = `--touchpad-dot` casi transparente. Gratis.
+
+## CRÍTICAS DE DISEÑO A RESOLVER ANTES DE CODIFICAR
+- **C1 — alt1 y alt2 NO son el mismo layout.** alt1 = semiarco + fila utilitaria plana
+  encima. alt2 = anillo doble completo. Recomiendo unificar en el **semiarco de alt1**:
+  el anillo completo pone la mitad de los botones ARRIBA del cluster, más lejos del pulgar
+  que una fila plana, o sea contradice el objetivo ergonómico declarado; y desperdicia el
+  interior del anillo. Si el dueño quiere las dos, son 2 layouts y 2 veces el QA.
+- **C2 — en senior, quitar el D-Pad va probablemente al revés.** `toggleNavMode()` +
+  `#nav-overlay` dan navegación por flechas. Para alguien que no controla bien un puntero,
+  un D-Pad es MÁS fácil que un cursor libre: los mockups conservan el touchpad de puntero
+  y eliminan justo la ayuda. Propuesta: en `senior`, modo navegación ENCENDIDO por
+  defecto, y si hay que sacrificar algo, sacrificar el puntero libre, no el D-Pad.
+- **C3 — "INICIO" es peligroso tal cual.** El botón Home es `killKiosk()`, titulado
+  "Home (cierra app)": MATA la app en curso. Etiquetarlo "INICIO" para una persona mayor
+  invita a cerrar la película sin querer. Hay que relabelarlo ("Cerrar app"), o remapear
+  el Home de senior a algo no destructivo, o pedir confirmación.
+- **C4 — vía de escape.** El mockup de gatos no muestra el engranaje de Ajustes. Si se
+  oculta, el usuario NO puede volver a Ajustes para salir del modo senior: queda atrapado.
+  El acceso a Ajustes tiene que seguir alcanzable (engranaje visible o long-press).
+- **C5 — legal, "Edgerunners".** Es marca de CD Projekt / Trigger y el personaje del
+  mockup se lee como Lucy. No se puede publicar con ese nombre ni con arte parecido en un
+  producto DE PAGO. Renombrar (p. ej. "Neon") y usar ilustración original o licenciada.
+- **C6 — gating.** Las skins senior son un modo de ACCESIBILIDAD. Cobrarlas como Pro se
+  ve mal y probablemente vende peor: son justo el relato de "que la tele la use toda la
+  familia" que ya vende el sitio. Recomiendo senior GRATIS; radial/cyber sí Pro.
+  **Decisión del dueño.**
+
+## PRESUPUESTO DE ASSETS (el .deb hoy pesa 281 KB; `anime-bg.webp` solo, 172 KB)
+- Gatos y perros son **patrones sin costura** → NO mandar un pantallazo full-screen:
+  mandar el **TILE** (p. ej. 400×400) y repetirlo. El sistema de skins ya tiene
+  `--bg-repeat`, `--bg-size` y `--bg-position`, así que tilear no cuesta código. Un tile
+  así ronda ~30 KB en vez de ~170 KB.
+- La ilustración cyberpunk NO es tileable (personaje único a sangre) → sí necesita el
+  archivo grande. Techo sugerido: ≤120 KB en WebP.
+- alt1 no lleva imagen de fondo → 0 KB.
+- Objetivo total: .deb ≤ 600 KB. Si se pasa, la alternativa es servir los wallpapers
+  desde la web y cachearlos en el SW al elegir la skin (mantiene el .deb magro, pero mete
+  dependencia de red en un cambio de tema).
+- **Todo asset nuevo va agregado a `ASSETS` en `frontend/sw.js`** o la skin no funciona
+  offline y el OTA no la precachea.
+
+## TROCEADO SUGERIDO (no meter todo en una tarea)
+- **v1.9.1a — infra, sin cambio visible:** `data-layout` + tabla `SKIN_LAYOUT` en
+  `setSkin()`, `<span class="btn-label">` en todos los controles (ocultas), `#mic-row`
+  a toggle de clase. Behavior-neutral y auditable por separado.
+- **v1.9.1b — layout `senior` + skins gatos y perros.** Barato, riesgo bajo, abre un
+  mercado nuevo. Resolver C2/C3/C4/C6 antes.
+- **v1.9.2 — layout `radial` + skin neon/cyber.** Es un motor de layout con el riesgo
+  del presupuesto vertical; no debe compartir release con senior.
+
+## VERIFICACIÓN OBLIGATORIA POR SKIN NUEVA
+- `scripts/check_css_sync.py` (toda clase nueva definida) + `node --check`.
+- Auditoría de contraste con el arnés de T-58 (recorre el texto visible y marca <3.0:1)
+  para CADA combinación skin+layout. Pastel sobre crema y amarillo sobre oscuro son los
+  casos peligrosos.
+- Filas nuevas en `TESTING.md` por layout (el touchpad y el D-Pad cambian de tamaño y
+  posición: hay que re-probar arrastre, scroll y long-press del botón X donde exista).
+
+## PENDIENTE DEL DUEÑO
+- [ ] Wallpapers definitivos: alt2 ilustración a sangre; alt3/alt4 **el tile**, no el
+      pantallazo; alt1 sin fondo.
+- [ ] Decidir C1 (¿semiarco, anillo, o los dos?), C6 (gating de senior) y el nombre de alt2.
+- [ ] Wins baratos que sobreviven del PH17 viejo: wallpaper propio del usuario
+      (IndexedDB, cero servidor) y reordenar webapps por drag & drop (localStorage).
 
 ## NOTES / MANUAL ACTIONS
 - HTTPS is automatic: run.py self-generates and self-heals the cert. The only manual

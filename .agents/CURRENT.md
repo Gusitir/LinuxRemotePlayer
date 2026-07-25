@@ -82,6 +82,18 @@ duplicado en apps detectadas; verificar en T-56 que `apt remove` invoque el rele
 licencia (la doc ya lo afirma).
 PH-PRICING: Pro único $5 al lanzar; suscripción recién con Voz 2.0. Roadmap post-lanzamiento:
 multi-distro (Arch/Fedora/etc.) + Skins 2.0 → APK → Archivos → Gamepad → Voz 2.0 (PLAN.md).
+**SKINS 2.0 ESPECIFICADA (2026-07-24) → PH17 en PLAN.md, movida a v1.9.1.** El dueño trajo
+4 propuestas (mockups en `.agents/design/skins2/`): 2 radiales (una con ilustración cyberpunk)
+y 2 "senior" accesibles (gatos / perros) con botonera recortada a lo esencial y botones
+grandes. NO son paletas: cambian posición de botones, QUÉ botones existen y agregan
+etiquetas de texto (que hoy no están en el DOM). Diseño propuesto: segundo atributo
+`data-layout` independiente de `data-skin`, con cada skin fijada a un layout para que la
+matriz de QA no explote. Troceado: infra → senior (barato, mercado nuevo) → radial (motor
+de layout, riesgo de presupuesto vertical). 6 críticas abiertas en PH17, las importantes:
+quitar el D-Pad en senior va al revés (un D-Pad es más fácil que un cursor libre para ese
+usuario); "INICIO" hoy es `killKiosk()` y MATA la app en curso; el nombre "Edgerunners" es
+marca de CD Projekt/Trigger y no puede ir en un producto de pago. Faltan los wallpapers
+definitivos (para gatos/perros pedir el TILE, no el pantallazo — son patrones sin costura).
 
 ## HALLAZGOS v1.9 (anotados 2026-07-22, no bloquean lanzamiento)
 - **Cold-start de voz:** tras inactividad, el 1er comando tarda varios segundos
