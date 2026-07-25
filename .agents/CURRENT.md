@@ -78,6 +78,18 @@ historia:            CONTEXT.md + git log
 
 ## H — HALLAZGOS ABIERTOS (no bloquean)
 
+- **H9 · la doc automatica de FastAPI esta expuesta.** `backend/main.py:34` crea
+  `FastAPI(title=...)` sin pasar `docs_url=None` / `redoc_url=None` / `openapi_url=None`,
+  asi que `/docs`, `/redoc` y `/openapi.json` responden **sin gate** a cualquiera en la LAN.
+  Los endpoints en si siguen protegidos (no es una brecha), pero enumera toda la superficie
+  de la API y un revisor de seguridad lo va a marcar en un producto de pago.
+  Dos salidas de 1 linea: (a) apagarla cuando `LRP_MODE=appliance` y dejarla en dev, o
+  (b) dejarla a proposito y documentarla como la referencia de API en `docs/ARCHITECTURE.md`.
+  De paso: esa doc generada YA cubre la referencia de endpoints que hoy no existe escrita.
+- **H10 · falta guia de extension** ("como se modifica"): como agregar un intent de voz, una
+  app soportada o un layout de teclado; convenciones; como probar un cambio. Es la seccion
+  mas consultada de la doc de cualquier proyecto grande. El protocolo WS —el contrato mas
+  importante del producto— solo vive comprimido en APPCORE, que esta escrito para agentes.
 - **H1** cold-start de voz: 1er comando tras inactividad tarda segundos (Edge Function
   dormida + Whisper frio). Mitigacion: keep-alive. Medir en TESTING C3 antes de decidir.
 - **H2** Whisper alucina con silencio → texto fantasma → accion rara. No es regresion.
