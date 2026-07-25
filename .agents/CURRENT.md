@@ -10,6 +10,7 @@ repo:                publico; se privatiza en T-57
 licencia:            Elastic 2.0
 ultima_sesion:       2026-07-24
 pruebas_device:      TESTING.md (matriz ciclo 1.8.9; 9 items ⛔)
+docs_humanos:        docs/ARCHITECTURE.md (la forma) + docs/DEVELOPING.md (como trabajar)
 historia:            CONTEXT.md + git log
 ```
 
@@ -83,9 +84,11 @@ historia:            CONTEXT.md + git log
   asi que `/docs`, `/redoc` y `/openapi.json` responden **sin gate** a cualquiera en la LAN.
   Los endpoints en si siguen protegidos (no es una brecha), pero enumera toda la superficie
   de la API y un revisor de seguridad lo va a marcar en un producto de pago.
-  Dos salidas de 1 linea: (a) apagarla cuando `LRP_MODE=appliance` y dejarla en dev, o
-  (b) dejarla a proposito y documentarla como la referencia de API en `docs/ARCHITECTURE.md`.
-  De paso: esa doc generada YA cubre la referencia de endpoints que hoy no existe escrita.
+  **DECIDIDO (dueño, 2026-07-24): OCULTARLA.** Razon: expone el mapa completo de la API en
+  la LAN y eso es puerta libre para clonar el producto. Fix: pasar `docs_url=None`,
+  `redoc_url=None`, `openapi_url=None` cuando `LRP_MODE=appliance`, y dejarla activa en dev
+  (donde sigue siendo la referencia de endpoints para un colaborador, ver docs/DEVELOPING §6).
+  Tarea pendiente, va antes de T-56.
 - **H10 · falta guia de extension** ("como se modifica"): como agregar un intent de voz, una
   app soportada o un layout de teclado; convenciones; como probar un cambio. Es la seccion
   mas consultada de la doc de cualquier proyecto grande. El protocolo WS —el contrato mas

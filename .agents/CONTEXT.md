@@ -4,6 +4,36 @@
      decisiones vigentes y lecciones de proceso. Lo operativo del dia vive en CURRENT.md;
      el detalle esta en git log. Techo del archivo: ~8KB. -->
 
+## 2026-07-24 (b) · Claude Opus 5 — documentacion humana + skill como paquete
+
+Nacen `docs/ARCHITECTURE.md` (la forma del sistema: componentes y sus limites, flujo de
+control y de voz, dependencias con su modo de falla, decisiones con la alternativa
+descartada, limitaciones, y un registro de que esta verificado) y `docs/DEVELOPING.md`
+(dia uno, las trampas con cicatriz, como se hace y se acepta un cambio, y los puntos de
+extension con archivo y linea). Verificados contra el codigo: modulos, tamaños,
+dependencias reales, gates que corren de verdad, y los 12 enlaces internos.
+
+**Leccion:** `APPCORE.md` es un indice para agentes y vive donde ningun humano mira, asi
+que un colaborador contratado no tenia nada. Y pesa mas aca que en un proyecto normal:
+cuando la mayoria del codigo lo escribio una IA, NADIE tiene el diseño en la cabeza —
+si no esta escrito, no existe. Un colaborador humano resulta ser un TERCER ROL que corre
+bajo el mismo contrato que los agentes; las reglas hechas para desconfiar de una IA son
+justo lo que necesita alguien que no sabe donde estan las minas.
+
+**Hallazgos:** H9 (doc automatica de FastAPI expuesta sin gate en la LAN) — el dueño
+decide OCULTARLA, expone el mapa de la API y facilita clonar el producto. H10 (faltaba
+guia de extension) — resuelto con DEVELOPING.md.
+
+**Formato:** se decidio seguir en Markdown y no migrar a HTML. GitHub no renderiza .html
+del repo (lo muestra como fuente, justo lo que rompe el doc que lee un revisor), las
+etiquetas son impuesto de tokens en cada lectura, los diffs se vuelven ruido y todo el
+ecosistema de agentes espera Markdown. Los grafos ya se resuelven con Mermaid dentro del
+.md. HTML solo para artefactos publicados (el website), generado desde el .md si hace falta.
+
+**Skill aparte** (`markdawnproyectstructure`, repo propio): se le portaron las mejoras y
+quedo en 2 commits. La skill LIVE NO se toca — el flujo es LIVE -> repo, nunca al reves,
+y correr install.sh sobrescribiria la LIVE.
+
 ## 2026-07-24 · Claude Opus 5 — identidad visual, release 1.8.9, spec Skins 2.0
 
 **T-58** skins de la app alineadas 1:1 con la paleta del sitio: day (clara) por defecto y
