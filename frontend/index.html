@@ -1,16 +1,19 @@
 <!DOCTYPE html>
-<html lang="en" data-skin="dark">
+<html lang="en" data-skin="day">
 <head>
     <meta charset="UTF-8">
     <!-- HYG-01 rationale: remote-control UI requires disabling user-zoom so that double-taps on buttons and dragging on touchpad does not accidentally scale the browser layout. -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Remote Linux Player</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#1f2937">
+    <!-- Coincide con la skin 'day' (por defecto); app.js lo actualiza al cambiar de skin. -->
+    <meta name="theme-color" content="#f6f2ea">
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <!-- 'default' y no 'black-translucent': con la skin clara por defecto, el texto
+         blanco de la barra de estado quedaba invisible sobre el fondo crema. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Remote Linux Player">
     <link rel="stylesheet" href="tailwind-lite.css">
     <link rel="stylesheet" href="skins.css">
@@ -27,7 +30,7 @@
       .icon-lg { width: 1.9rem; height: 1.9rem; display: block; }
       .util-btn { background:var(--bg-btn); border-radius:0.6rem; padding:0.55rem 0; display:flex; align-items:center; justify-content:center; color:var(--text-main); transition: background .15s, color .15s, box-shadow .15s; }
       .util-btn:active { background:var(--bg-btn-active); }
-      .util-btn.util-active { background:var(--accent); color:#fff; box-shadow:0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent); }
+      .util-btn.util-active { background:var(--accent); color:var(--accent-contrast); box-shadow:0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent); }
       .ctrl-round { width:3rem; height:3rem; border-radius:9999px; background:var(--bg-btn); display:flex; align-items:center; justify-content:center; color:var(--text-main); }
       .ctrl-round:active { background:var(--bg-btn-active); }
       #touchpad { background-image: radial-gradient(var(--touchpad-dot) 1px, transparent 1px); background-size: 12px 12px; touch-action: none; }
@@ -55,7 +58,7 @@
         <img src="icon.svg" alt="" class="w-24 h-24 rounded-2xl">
         <h1 class="text-2xl font-bold text-blue-400">Instala Remote Linux Player</h1>
         <p class="text-gray-300 max-w-sm">Para usar el control, añádela a tu pantalla de inicio. Se abrirá como una app, sin la barra del navegador.</p>
-        <button id="install-btn" style="display:none" class="bg-green-600 px-6 py-3 rounded-full font-bold active:bg-green-400">Instalar app</button>
+        <button id="install-btn" style="display:none" class="bg-green-600 skin-text-on-green px-6 py-3 rounded-full font-bold active:bg-green-400">Instalar app</button>
         <div id="steps-ios" hidden class="text-left bg-gray-800 rounded-xl p-4 max-w-sm w-full">
             <p class="font-bold mb-2 text-blue-300">iPhone / iPad (Safari)</p>
             <ol class="list-decimal list-inside space-y-1 text-sm text-gray-300">
@@ -221,10 +224,10 @@
     <div id="kb-bar" hidden class="fixed bottom-0 left-0 right-0 skin-bg-panel p-2 flex gap-2 items-center z-50 border-t border-gray-700">
         <input id="kb-input" type="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false"
             class="flex-1 skin-bg-btn rounded px-3 py-2 skin-text-main outline-none" placeholder="Escribe... se envía a la TV">
-        <button onclick="sendKey('KEY_ENTER')" class="skin-accent px-3 py-2 rounded font-bold flex items-center skin-text-main" title="Buscar / Enter">
+        <button onclick="sendKey('KEY_ENTER')" class="skin-accent px-3 py-2 rounded font-bold flex items-center skin-text-on-accent" title="Buscar / Enter">
             <svg viewBox="0 0 24 24" fill="none" class="icon"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.5 2.25C14.7051 2.25 13.25 3.70507 13.25 5.5C13.25 5.69591 13.2673 5.88776 13.3006 6.07412L8.56991 9.38558C8.54587 9.4024 8.52312 9.42038 8.50168 9.43939C7.94993 9.00747 7.25503 8.75 6.5 8.75C4.70507 8.75 3.25 10.2051 3.25 12C3.25 13.7949 4.70507 15.25 6.5 15.25C7.25503 15.25 7.94993 14.9925 8.50168 14.5606C8.52312 14.5796 8.54587 14.5976 8.56991 14.6144L13.3006 17.9259C13.2673 18.1122 13.25 18.3041 13.25 18.5C13.25 20.2949 14.7051 21.75 16.5 21.75C18.2949 21.75 19.75 20.2949 19.75 18.5C19.75 16.7051 18.2949 15.25 16.5 15.25C15.4472 15.25 14.5113 15.7506 13.9174 16.5267L9.43806 13.3911C9.63809 12.9694 9.75 12.4978 9.75 12C9.75 11.5022 9.63809 11.0306 9.43806 10.6089L13.9174 7.4733C14.5113 8.24942 15.4472 8.75 16.5 8.75C18.2949 8.75 19.75 7.29493 19.75 5.5C19.75 3.70507 18.2949 2.25 16.5 2.25ZM14.75 5.5C14.75 4.5335 15.5335 3.75 16.5 3.75C17.4665 3.75 18.25 4.5335 18.25 5.5C18.25 6.4665 17.4665 7.25 16.5 7.25C15.5335 7.25 14.75 6.4665 14.75 5.5ZM6.5 10.25C5.5335 10.25 4.75 11.0335 4.75 12C4.75 12.9665 5.5335 13.75 6.5 13.75C7.4665 13.75 8.25 12.9665 8.25 12C8.25 11.0335 7.4665 10.25 6.5 10.25ZM16.5 16.75C15.5335 16.75 14.75 17.5335 14.75 18.5C14.75 19.4665 15.5335 20.25 16.5 20.25C17.4665 20.25 18.25 19.4665 18.25 18.5C18.25 17.5335 17.4665 16.75 16.5 16.75Z" fill="currentColor"/></svg>
         </button>
-        <button onclick="closeKeyboard()" class="skin-accent-green skin-text-main px-4 py-2 rounded font-bold">Done</button>
+        <button onclick="closeKeyboard()" class="skin-accent-green skin-text-on-green px-4 py-2 rounded font-bold">Done</button>
     </div>
 
     <!-- App drawer (slide-up). -->
@@ -243,7 +246,7 @@
                 <div class="flex flex-col gap-2 mb-4">
                     <input id="new-app-name" type="text" placeholder="Nombre (ej. Stremio)" class="skin-bg-btn rounded px-3 py-2 outline-none skin-text-main">
                     <input id="new-app-url" type="text" inputmode="url" placeholder="https://web.stremio.com" class="skin-bg-btn rounded px-3 py-2 outline-none skin-text-main">
-                    <button onclick="addCustomApp()" class="skin-accent-green skin-text-main rounded py-2 font-bold opacity-90 hover:opacity-100">Añadir</button>
+                    <button onclick="addCustomApp()" class="skin-accent-green skin-text-on-green rounded py-2 font-bold opacity-90 hover:opacity-100">Añadir</button>
                 </div>
                 <p class="font-bold skin-text-accent mb-2">Apps del sistema (detectadas)</p>
                 <div id="native-list" class="flex flex-col gap-1 max-h-60 overflow-y-auto"></div>
@@ -272,7 +275,7 @@
                         <div id="license-unlicensed" class="flex flex-col gap-2 pt-2">
                             <div class="flex gap-2">
                                 <input id="license-input" type="text" class="flex-1 min-w-0 skin-bg-btn border border-gray-700 rounded px-2 py-1 text-sm outline-none font-mono skin-text-main" placeholder="LRP-XXXX-XXXX-XXXX">
-                                <button onclick="activateLicenseKey()" class="shrink-0 skin-accent-green skin-text-main px-3 py-1 rounded text-sm font-bold opacity-90 hover:opacity-100">Activar</button>
+                                <button onclick="activateLicenseKey()" class="shrink-0 skin-accent-green skin-text-on-green px-3 py-1 rounded text-sm font-bold opacity-90 hover:opacity-100">Activar</button>
                             </div>
                             <p id="license-status-text" class="text-xs skin-text-dim">Sin licencia</p>
                             <button id="buy-license-btn" onclick="buyLicense()" class="bg-amber-500/20 text-amber-300 font-bold px-3 py-2 rounded text-sm mt-1">Comprar licencia (Voz IA)</button>
@@ -294,26 +297,29 @@
                         <svg viewBox="0 0 24 24" fill="none" class="w-4 h-4 transition-transform group-open:rotate-180"><g transform="scale(1.33333)"><polyline points="15.25 6.5 9 12.75 2.75 6.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></polyline></g></svg>
                     </summary>
                     <div class="p-3 pt-0 border-t border-gray-700 mt-2">
+                        <!-- Icono de candado reutilizado por las 3 skins Pro. Se oculta con
+                             position/overflow y NO con display:none: WebKit rompe <use> cuando
+                             el <symbol> cuelga de un ancestro con display:none. -->
+                        <svg width="0" height="0" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden"><symbol id="ico-lock" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M5.25 9.30277V8C5.25 4.27208 8.27208 1.25 12 1.25C15.7279 1.25 18.75 4.27208 18.75 8V9.30277C18.9768 9.31872 19.1906 9.33948 19.3918 9.36652C20.2919 9.48754 21.0497 9.74643 21.6517 10.3483C22.2536 10.9503 22.5125 11.7081 22.6335 12.6082C22.75 13.4752 22.75 14.5775 22.75 15.9451V16.0549C22.75 17.4225 22.75 18.5248 22.6335 19.3918C22.5125 20.2919 22.2536 21.0497 21.6517 21.6516C21.0497 22.2536 20.2919 22.5125 19.3918 22.6335C18.5248 22.75 17.4225 22.75 16.0549 22.75H7.94513C6.57754 22.75 5.47522 22.75 4.60825 22.6335C3.70814 22.5125 2.95027 22.2536 2.34835 21.6516C1.74643 21.0497 1.48754 20.2919 1.36652 19.3918C1.24996 18.5248 1.24998 17.4225 1.25 16.0549V15.9451C1.24998 14.5775 1.24996 13.4752 1.36652 12.6082C1.48754 11.7081 1.74643 10.9503 2.34835 10.3483C2.95027 9.74643 3.70814 9.48754 4.60825 9.36652C4.80938 9.33948 5.02317 9.31872 5.25 9.30277ZM6.75 8C6.75 5.10051 9.10051 2.75 12 2.75C14.8995 2.75 17.25 5.10051 17.25 8V9.25344C16.8765 9.24999 16.4784 9.24999 16.0549 9.25H7.94513C7.52161 9.24999 7.12353 9.24999 6.75 9.25344V8ZM3.40901 11.409C3.68577 11.1322 4.07435 10.9518 4.80812 10.8531C5.56347 10.7516 6.56459 10.75 8 10.75H16C17.4354 10.75 18.4365 10.7516 19.1919 10.8531C19.9257 10.9518 20.3142 11.1322 20.591 11.409C20.8678 11.6858 21.0482 12.0743 21.1469 12.8081C21.2484 13.5635 21.25 14.5646 21.25 16C21.25 17.4354 21.2484 18.4365 21.1469 19.1919C21.0482 19.9257 20.8678 20.3142 20.591 20.591C20.3142 20.8678 19.9257 21.0482 19.1919 21.1469C18.4365 21.2484 17.4354 21.25 16 21.25H8C6.56459 21.25 5.56347 21.2484 4.80812 21.1469C4.07435 21.0482 3.68577 20.8678 3.40901 20.591C3.13225 20.3142 2.9518 19.9257 2.85315 19.1919C2.75159 18.4365 2.75 17.4354 2.75 16C2.75 14.5646 2.75159 13.5635 2.85315 12.8081C2.9518 12.0743 3.13225 11.6858 3.40901 11.409Z" fill="currentColor"/></symbol></svg>
                         <div class="grid grid-cols-2 gap-2 pt-2">
-                            <button onclick="setSkin('dark')" class="h-16 rounded-xl flex flex-col items-center justify-center gap-1 border-2 border-gray-600 bg-gray-900 hover:border-gray-400 active:scale-95 transition-all w-full">
-                                <div class="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center"><div class="w-3 h-3 rounded-full bg-blue-500"></div></div>
-                                <span class="text-[10px] font-bold text-gray-300">Dark</span>
+                            <button onclick="setSkin('day')" class="skin-swatch" style="background:#f6f2ea;border-color:#d5cec0" title="Day — claro (gratis)">
+                                <span class="skin-swatch-dot" style="background:rgba(37,99,235,0.18)"><i style="background:#2563eb"></i></span>
+                                <span class="skin-swatch-label" style="color:#292319">Day</span>
                             </button>
-                            <button onclick="setSkin('day')" class="h-16 rounded-xl flex flex-col items-center justify-center gap-1 border-2 border-gray-300 bg-slate-100 hover:border-blue-400 active:scale-95 transition-all w-full">
-                                <div class="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center"><div class="w-3 h-3 rounded-full bg-blue-600"></div></div>
-                                <span class="text-[10px] font-bold text-slate-700">Day</span>
+                            <button onclick="setSkin('night')" class="skin-swatch" style="background:#0b1220;border-color:#263650" title="Night — navy (Pro)">
+                                <span class="skin-swatch-dot" style="background:rgba(59,130,246,0.20)"><i style="background:#3b82f6"></i></span>
+                                <span class="skin-swatch-label" style="color:#e7edf6">Night (Pro)</span>
+                                <div class="pro-lock absolute inset-0 bg-black/60 z-20 flex items-center justify-center hidden"><svg viewBox="0 0 24 24" fill="none" class="w-5 h-5"><use href="#ico-lock"/></svg></div>
                             </button>
-                            <button onclick="setSkin('neon')" class="h-16 rounded-xl flex flex-col items-center justify-center gap-1 border-2 border-cyan-800 bg-black hover:border-cyan-400 active:scale-95 transition-all relative overflow-hidden group w-full">
-                                <div class="absolute inset-0 bg-gradient-to-tr from-cyan-900/40 to-transparent"></div>
-                                <div class="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center z-10"><div class="w-3 h-3 rounded-full bg-cyan-400 shadow-[0_0_10px_#22d3ee]"></div></div>
-                                <span class="text-[10px] font-bold text-cyan-400 z-10">Neon (Pro)</span>
-                                <div class="pro-lock absolute inset-0 bg-black/60 z-20 flex items-center justify-center hidden"><svg viewBox="0 0 24 24" fill="none" class="w-5 h-5"><path fill-rule="evenodd" clip-rule="evenodd" d="M5.25 9.30277V8C5.25 4.27208 8.27208 1.25 12 1.25C15.7279 1.25 18.75 4.27208 18.75 8V9.30277C18.9768 9.31872 19.1906 9.33948 19.3918 9.36652C20.2919 9.48754 21.0497 9.74643 21.6517 10.3483C22.2536 10.9503 22.5125 11.7081 22.6335 12.6082C22.75 13.4752 22.75 14.5775 22.75 15.9451V16.0549C22.75 17.4225 22.75 18.5248 22.6335 19.3918C22.5125 20.2919 22.2536 21.0497 21.6517 21.6516C21.0497 22.2536 20.2919 22.5125 19.3918 22.6335C18.5248 22.75 17.4225 22.75 16.0549 22.75H7.94513C6.57754 22.75 5.47522 22.75 4.60825 22.6335C3.70814 22.5125 2.95027 22.2536 2.34835 21.6516C1.74643 21.0497 1.48754 20.2919 1.36652 19.3918C1.24996 18.5248 1.24998 17.4225 1.25 16.0549V15.9451C1.24998 14.5775 1.24996 13.4752 1.36652 12.6082C1.48754 11.7081 1.74643 10.9503 2.34835 10.3483C2.95027 9.74643 3.70814 9.48754 4.60825 9.36652C4.80938 9.33948 5.02317 9.31872 5.25 9.30277ZM6.75 8C6.75 5.10051 9.10051 2.75 12 2.75C14.8995 2.75 17.25 5.10051 17.25 8V9.25344C16.8765 9.24999 16.4784 9.24999 16.0549 9.25H7.94513C7.52161 9.24999 7.12353 9.24999 6.75 9.25344V8ZM3.40901 11.409C3.68577 11.1322 4.07435 10.9518 4.80812 10.8531C5.56347 10.7516 6.56459 10.75 8 10.75H16C17.4354 10.75 18.4365 10.7516 19.1919 10.8531C19.9257 10.9518 20.3142 11.1322 20.591 11.409C20.8678 11.6858 21.0482 12.0743 21.1469 12.8081C21.2484 13.5635 21.25 14.5646 21.25 16C21.25 17.4354 21.2484 18.4365 21.1469 19.1919C21.0482 19.9257 20.8678 20.3142 20.591 20.591C20.3142 20.8678 19.9257 21.0482 19.1919 21.1469C18.4365 21.2484 17.4354 21.25 16 21.25H8C6.56459 21.25 5.56347 21.2484 4.80812 21.1469C4.07435 21.0482 3.68577 20.8678 3.40901 20.591C3.13225 20.3142 2.9518 19.9257 2.85315 19.1919C2.75159 18.4365 2.75 17.4354 2.75 16C2.75 14.5646 2.75159 13.5635 2.85315 12.8081C2.9518 12.0743 3.13225 11.6858 3.40901 11.409Z" fill="currentColor"/></svg></div>
+                            <button onclick="setSkin('cafe')" class="skin-swatch" style="background:#261b12;border-color:#5c4531" title="Café — madera (Pro)">
+                                <span class="skin-swatch-dot" style="background:rgba(224,163,92,0.20)"><i style="background:#e0a35c"></i></span>
+                                <span class="skin-swatch-label" style="color:#f4ecdf">Café (Pro)</span>
+                                <div class="pro-lock absolute inset-0 bg-black/60 z-20 flex items-center justify-center hidden"><svg viewBox="0 0 24 24" fill="none" class="w-5 h-5"><use href="#ico-lock"/></svg></div>
                             </button>
-                            <button onclick="setSkin('anime')" class="h-16 rounded-xl flex flex-col items-center justify-center gap-1 border-2 border-fuchsia-800 bg-fuchsia-950 hover:border-fuchsia-400 active:scale-95 transition-all relative overflow-hidden group w-full">
-                                <div class="absolute inset-0 bg-gradient-to-tr from-fuchsia-600/40 to-orange-500/20"></div>
-                                <div class="w-6 h-6 rounded-full bg-fuchsia-500/20 flex items-center justify-center z-10"><div class="w-3 h-3 rounded-full bg-fuchsia-400 shadow-[0_0_10px_#e879f9]"></div></div>
-                                <span class="text-[10px] font-bold text-fuchsia-300 z-10">Anime (Pro)</span>
-                                <div class="pro-lock absolute inset-0 bg-black/60 z-20 flex items-center justify-center hidden"><svg viewBox="0 0 24 24" fill="none" class="w-5 h-5"><path fill-rule="evenodd" clip-rule="evenodd" d="M5.25 9.30277V8C5.25 4.27208 8.27208 1.25 12 1.25C15.7279 1.25 18.75 4.27208 18.75 8V9.30277C18.9768 9.31872 19.1906 9.33948 19.3918 9.36652C20.2919 9.48754 21.0497 9.74643 21.6517 10.3483C22.2536 10.9503 22.5125 11.7081 22.6335 12.6082C22.75 13.4752 22.75 14.5775 22.75 15.9451V16.0549C22.75 17.4225 22.75 18.5248 22.6335 19.3918C22.5125 20.2919 22.2536 21.0497 21.6517 21.6516C21.0497 22.2536 20.2919 22.5125 19.3918 22.6335C18.5248 22.75 17.4225 22.75 16.0549 22.75H7.94513C6.57754 22.75 5.47522 22.75 4.60825 22.6335C3.70814 22.5125 2.95027 22.2536 2.34835 21.6516C1.74643 21.0497 1.48754 20.2919 1.36652 19.3918C1.24996 18.5248 1.24998 17.4225 1.25 16.0549V15.9451C1.24998 14.5775 1.24996 13.4752 1.36652 12.6082C1.48754 11.7081 1.74643 10.9503 2.34835 10.3483C2.95027 9.74643 3.70814 9.48754 4.60825 9.36652C4.80938 9.33948 5.02317 9.31872 5.25 9.30277ZM6.75 8C6.75 5.10051 9.10051 2.75 12 2.75C14.8995 2.75 17.25 5.10051 17.25 8V9.25344C16.8765 9.24999 16.4784 9.24999 16.0549 9.25H7.94513C7.52161 9.24999 7.12353 9.24999 6.75 9.25344V8ZM3.40901 11.409C3.68577 11.1322 4.07435 10.9518 4.80812 10.8531C5.56347 10.7516 6.56459 10.75 8 10.75H16C17.4354 10.75 18.4365 10.7516 19.1919 10.8531C19.9257 10.9518 20.3142 11.1322 20.591 11.409C20.8678 11.6858 21.0482 12.0743 21.1469 12.8081C21.2484 13.5635 21.25 14.5646 21.25 16C21.25 17.4354 21.2484 18.4365 21.1469 19.1919C21.0482 19.9257 20.8678 20.3142 20.591 20.591C20.3142 20.8678 19.9257 21.0482 19.1919 21.1469C18.4365 21.2484 17.4354 21.25 16 21.25H8C6.56459 21.25 5.56347 21.2484 4.80812 21.1469C4.07435 21.0482 3.68577 20.8678 3.40901 20.591C3.13225 20.3142 2.9518 19.9257 2.85315 19.1919C2.75159 18.4365 2.75 17.4354 2.75 16C2.75 14.5646 2.75159 13.5635 2.85315 12.8081C2.9518 12.0743 3.13225 11.6858 3.40901 11.409Z" fill="currentColor"/></svg></div>
+                            <button onclick="setSkin('anime')" class="skin-swatch" style="background:linear-gradient(to top right,#3b0764,#111827 60%);border-color:#86198f" title="Anime — fondo ilustrado (Pro)">
+                                <span class="skin-swatch-dot" style="background:rgba(217,70,239,0.22)"><i style="background:#e879f9"></i></span>
+                                <span class="skin-swatch-label" style="color:#f5d0fe">Anime (Pro)</span>
+                                <div class="pro-lock absolute inset-0 bg-black/60 z-20 flex items-center justify-center hidden"><svg viewBox="0 0 24 24" fill="none" class="w-5 h-5"><use href="#ico-lock"/></svg></div>
                             </button>
                         </div>
                     </div>
@@ -332,7 +338,7 @@
                                 <button id="update-btn" onclick="checkUpdate()" class="bg-blue-600 px-3 py-1 rounded text-xs font-bold active:bg-blue-500">Buscar</button>
                             </div>
                             <div id="update-notes" class="text-xs text-gray-300 hidden p-2 bg-black/30 rounded border border-gray-700 whitespace-pre-wrap"></div>
-                            <a id="ca-download-link" href="/api/ca" download class="bg-gray-800 hover:bg-gray-700 px-3 py-2 rounded text-xs font-bold text-center block w-full mt-1">Descargar Certificado CA</a>
+                            <a id="ca-download-link" href="/api/ca" download class="skin-text-main bg-gray-800 hover:bg-gray-700 px-3 py-2 rounded text-xs font-bold text-center block w-full mt-1">Descargar Certificado CA</a>
                         </div>
                     </div>
                 </details>
@@ -353,7 +359,7 @@
                                 <span class="text-xs font-bold skin-text-dim">Enviar sugerencia</span>
                                 <textarea id="feedback-msg" class="w-full skin-bg-btn border border-gray-700 rounded p-2 text-xs outline-none skin-text-main resize-none h-20" placeholder="¿Qué mejorarías? (max 500)"></textarea>
                                 <input id="feedback-email" type="email" class="w-full skin-bg-btn border border-gray-700 rounded px-2 py-1 text-xs outline-none skin-text-main" placeholder="Email (opcional)">
-                                <button onclick="sendFeedback()" class="bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded text-xs font-bold w-full">Enviar feedback</button>
+                                <button onclick="sendFeedback()" class="skin-text-main bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded text-xs font-bold w-full">Enviar feedback</button>
                             </div>
                         </div>
                     </div>

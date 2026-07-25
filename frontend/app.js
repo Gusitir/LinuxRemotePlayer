@@ -149,16 +149,34 @@ let connectAttempts = 0;
 let retryTimeoutId = null; // HYG-02: prevent storm reconnects
 let hostname = '';
 
+// Skins v1.9: la paleta es la misma del sitio web. 'day' (clara) es la skin por
+// defecto y la única gratuita; night/cafe/anime son Pro.
+const FREE_SKIN = 'day';
+const SKINS = ['day', 'night', 'cafe', 'anime'];
+// Ids anteriores a v1.9 -> equivalente en la paleta nueva ('dark' se resuelve
+// abajo según licencia, para no molestar con un toast a quien no es Pro).
+const LEGACY_SKINS = { neon: 'night' };
+const SKIN_THEME_COLOR = {
+    day: '#f6f2ea',
+    night: '#0b1220',
+    cafe: '#261b12',
+    anime: '#111827'
+};
+
 function setSkin(skin) {
-    if (skin !== 'dark' && skin !== 'day' && skin !== 'neon' && skin !== 'anime') {
-        skin = 'dark';
+    if (skin === 'dark') skin = isLicensed ? 'night' : FREE_SKIN;
+    if (LEGACY_SKINS[skin]) skin = LEGACY_SKINS[skin];
+    if (SKINS.indexOf(skin) === -1) {
+        skin = FREE_SKIN;
     }
-    if (skin !== 'dark' && !isLicensed) {
+    if (skin !== FREE_SKIN && !isLicensed) {
         toast('Este tema (skin) requiere una licencia pro.');
-        skin = 'dark';
+        skin = FREE_SKIN;
     }
     document.documentElement.setAttribute('data-skin', skin);
     localStorage.setItem('lrp_skin', skin);
+    const themeMeta = document.querySelector('meta[name="theme-color"]');
+    if (themeMeta) themeMeta.setAttribute('content', SKIN_THEME_COLOR[skin]);
 }
 
 async function fetchLicenseStatus() {
@@ -171,7 +189,7 @@ async function fetchLicenseStatus() {
             isLicensed = data.licensed;
 
             // Apply saved skin after checking license
-            const savedSkin = localStorage.getItem('lrp_skin') || 'dark';
+            const savedSkin = localStorage.getItem('lrp_skin') || FREE_SKIN;
             setSkin(savedSkin);
 
             const micRow = document.getElementById('mic-row');
@@ -715,7 +733,7 @@ function setTileFavicon(img, domain) {
             img.src = s2;
         } else {
             const div = document.createElement('div');
-            div.className = 'w-full h-full flex items-center justify-center text-white font-bold text-xl bg-gray-700 uppercase';
+            div.className = 'w-full h-full flex items-center justify-center skin-text-on-accent font-bold text-xl skin-accent uppercase';
             div.textContent = domain.replace(/^www\./i, '').charAt(0);
             img.replaceWith(div);
         }
@@ -1021,7 +1039,7 @@ function renderNativeList(apps) {
         };
 
         const btn = document.createElement('button');
-        btn.className = 'skin-accent px-3 py-1 rounded text-xs font-bold text-white shadow-sm';
+        btn.className = 'skin-accent px-3 py-1 rounded text-xs font-bold skin-text-on-accent shadow-sm';
         btn.textContent = 'Abrir';
         btn.dataset.id = app.id;
 
@@ -1305,7 +1323,7 @@ function showTour() {
     let currentStep = 0;
     
     const box = document.createElement('div');
-    box.className = 'bg-gray-800 text-white rounded-xl p-4 m-4 max-w-sm w-[90%] shadow-2xl border border-gray-600 relative z-10 transition-all';
+    box.className = 'skin-bg-panel skin-text-main rounded-xl p-4 m-4 max-w-sm w-[90%] shadow-2xl border border-gray-600 relative z-10 transition-all';
     
     const textEl = document.createElement('p');
     textEl.className = 'text-sm font-bold mb-4';
@@ -1318,7 +1336,7 @@ function showTour() {
     skipBtn.className = 'text-gray-400 text-xs font-bold px-2 py-1';
     
     const nextBtn = document.createElement('button');
-    nextBtn.className = 'bg-blue-600 hover:bg-blue-500 px-4 py-1.5 rounded-lg text-sm font-bold text-white';
+    nextBtn.className = 'bg-blue-600 hover:bg-blue-500 px-4 py-1.5 rounded-lg text-sm font-bold skin-text-on-accent';
     
     flexBtn.appendChild(skipBtn);
     flexBtn.appendChild(nextBtn);

@@ -1,48 +1,106 @@
+"""Genera los PNG del logo (app + web) a partir de la geometria de frontend/icon.svg.
+
+Por que no rasterizamos el SVG: no hay cairosvg / inkscape / imagemagick en el
+entorno de desarrollo, y PIL no lee SVG. Asi que la forma esta reimplementada
+aca con primitivas de PIL. **Si tocas frontend/icon.svg hay que replicar el
+cambio aca (y al reves).** La verificacion es comparar pixeles del PNG contra
+el render nativo del SVG en un navegador.
+
+Uso:  python scripts/dev/generate_png_icons.py
+"""
 import os
-from PIL import Image, ImageDraw
 
-# Root directory of the project
-ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-FRONTEND_DIR = os.path.join(ROOT_DIR, "frontend")
+from PIL import Image, ImageChops, ImageDraw
 
-def draw_icon(size):
-    # Canvas
-    image = Image.new("RGBA", (512, 512), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(image)
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-    # Background rect: fill #111827, rx=96
-    draw.rounded_rectangle([0, 0, 512, 512], radius=96, fill="#111827")
+# --- paleta: la misma del sitio web (website/style.css, tema light) ---
+CREAM = (246, 242, 234)   # --bg
+INK = (41, 35, 25)        # --text
+GREEN = (62, 158, 99)     # verde de marca aclarado para leerse sobre la tinta
+# Punto del grid = crema al 20% sobre tinta, precalculado.
+DOT = tuple(round(0.20 * c + 0.80 * i) for c, i in zip(CREAM, INK))
 
-    # Remote body rect: fill #1f2937, stroke #3b82f6, width 12, rx=56
-    # x="176" y="80" width="160" height="352"
-    draw.rounded_rectangle([176, 80, 336, 432], radius=56, fill="#1f2937", outline="#3b82f6", width=12)
+VB = 512   # viewBox del SVG
+S = 4      # supersampling (se reduce con LANCZOS al final)
+N = VB * S
 
-    # Green circle: cx=256, cy=156, r=30, fill #22c55e
-    draw.ellipse([256-30, 156-30, 256+30, 156+30], fill="#22c55e")
+TILE_R = 114                          # squircle del tile
+PAD_XY, PAD_WH, PAD_R = 92, 328, 78   # el touchpad
+DOT_STEP, DOT_R = 41, 5
+TRI = [(323, 256), (205, 186), (205, 326)]   # triangulo de play
+TRI_STROKE = 30                       # = stroke-width del SVG (centrado sobre el borde)
 
-    # Blue circles: r=18, fill #3b82f6
-    blue_centers = [
-        (212, 248), (256, 248), (300, 248),
-        (212, 304), (256, 304), (300, 304)
-    ]
-    for cx, cy in blue_centers:
-        draw.ellipse([cx-18, cy-18, cx+18, cy+18], fill="#3b82f6")
 
-    # Red rect: x="228" y="356" width="56" height="40" rx=12, fill #ef4444
-    draw.rounded_rectangle([228, 356, 284, 396], radius=12, fill="#ef4444")
+def build(rounded=True):
+    """rounded=False -> tile cuadrado a sangre, para apple-touch-icon (iOS
+    aplica su propia mascara y no quiere transparencia)."""
+    base = Image.new("RGBA", (N, N), (0, 0, 0, 0))
+    d = ImageDraw.Draw(base)
 
-    # Resize to target size if needed
-    if size != 512:
-        image = image.resize((size, size), Image.Resampling.LANCZOS)
-    return image
+    tile = [0, 0, N - 1, N - 1]
+    if rounded:
+        d.rounded_rectangle(tile, radius=TILE_R * S, fill=CREAM + (255,))
+    else:
+        d.rectangle(tile, fill=CREAM + (255,))
+
+    pad = [PAD_XY * S, PAD_XY * S,
+           (PAD_XY + PAD_WH) * S - 1, (PAD_XY + PAD_WH) * S - 1]
+    d.rounded_rectangle(pad, radius=PAD_R * S, fill=INK + (255,))
+
+    # Grid de puntos recortado a la forma del pad: las esquinas redondeadas
+    # dejarian escapar puntos sobre el crema.
+    dots = Image.new("RGBA", (N, N), (0, 0, 0, 0))
+    dd = ImageDraw.Draw(dots)
+    step, r = DOT_STEP * S, DOT_R * S
+    n_cells = PAD_WH // DOT_STEP       # 328 / 41 = 8 exacto -> grid simetrico
+    for row in range(n_cells):
+        for col in range(n_cells):
+            cx = PAD_XY * S + col * step + step // 2
+            cy = PAD_XY * S + row * step + step // 2
+            dd.ellipse([cx - r, cy - r, cx + r, cy + r], fill=DOT + (255,))
+    pad_mask = Image.new("L", (N, N), 0)
+    ImageDraw.Draw(pad_mask).rounded_rectangle(pad, radius=PAD_R * S, fill=255)
+    dots.putalpha(ImageChops.multiply(dots.getchannel("A"), pad_mask))
+    base = Image.alpha_composite(base, dots)
+
+    # Triangulo con esquinas redondeadas = suma de Minkowski del triangulo con
+    # un disco de radio stroke/2: relleno + una banda por arista + un disco por
+    # vertice. (joint="curve" de PIL muerde el vertice agudo y deja un escalon.)
+    d = ImageDraw.Draw(base)
+    pts = [(x * S, y * S) for x, y in TRI]
+    w = TRI_STROKE * S
+    r = w // 2
+    d.polygon(pts, fill=GREEN + (255,))
+    for i in range(len(pts)):
+        d.line([pts[i], pts[(i + 1) % len(pts)]], fill=GREEN + (255,), width=w)
+    for x, y in pts:
+        d.ellipse([x - r, y - r, x + r, y + r], fill=GREEN + (255,))
+    return base
+
+
+# (ruta relativa al repo, tamano, tile redondeado, modo)
+TARGETS = [
+    ("frontend/icon-192.png", 192, True, "RGBA"),
+    ("frontend/icon-512.png", 512, True, "RGBA"),   # tambien el icono .desktop (build_deb.sh)
+    ("frontend/apple-touch-icon.png", 180, False, "RGB"),
+    ("website/icon-192.png", 192, True, "RGBA"),     # favicon + logo del header del sitio
+    ("website/icon-512.png", 512, True, "RGBA"),
+    ("website/favicon-32.png", 32, True, "RGBA"),
+]
+
 
 if __name__ == "__main__":
-    os.makedirs(FRONTEND_DIR, exist_ok=True)
-    
-    icon_512 = draw_icon(512)
-    icon_512.save(os.path.join(FRONTEND_DIR, "icon-512.png"))
-    print("Generated icon-512.png")
-
-    icon_192 = draw_icon(192)
-    icon_192.save(os.path.join(FRONTEND_DIR, "icon-192.png"))
-    print("Generated icon-192.png")
+    cache = {}
+    for rel, size, rounded, mode in TARGETS:
+        if rounded not in cache:
+            cache[rounded] = build(rounded=rounded)
+        out = cache[rounded].resize((size, size), Image.LANCZOS)
+        if mode == "RGB":
+            flat = Image.new("RGB", (size, size), CREAM)
+            flat.paste(out, (0, 0), out)
+            out = flat
+        path = os.path.join(ROOT_DIR, rel.replace("/", os.sep))
+        out.save(path, "PNG", optimize=True)
+        print("%-32s %3dx%-3d %-4s %6d bytes"
+              % (rel, size, size, mode, os.path.getsize(path)))
