@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.9] - 2026-07-24
+
+### Added
+- **Voz con IA vía servidor propio (ai-proxy)**: las llaves de los modelos ya no
+  viven en el PC. El comando de voz se procesa server-side, con límite de tamaño
+  de audio, cuota diaria por licencia y corte de emergencia global.
+- **Licencia de 1 dispositivo con mudanza autoservicio**: si activás la clave en
+  otra PC, la app te pregunta y hace el traspaso; la anterior pierde el premium.
+  Desinstalar libera la activación.
+- **Temas nuevos, la misma identidad que el sitio**: Day (claro, incluido) más
+  los Pro Night, Café y Anime. Day pasa a ser el tema por defecto.
+- **Logo nuevo** en la app, el instalador y el sitio.
+
+### Changed
+- Cuota de voz unificada en 60 comandos/día (la app decía 100).
+- Los temas viejos (Dark, Neon) se migran solos al equivalente nuevo.
+
+### Fixed
+- Contraste ilegible en el enlace del certificado CA y en el botón de feedback.
+
 ## [1.8.0] - 2026-07-20
 
 ### Changed

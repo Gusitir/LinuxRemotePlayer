@@ -1,6 +1,6 @@
 {
-  "version": "1.8.0",
-  "deb_url": "https://linux-remote-player.vercel.app/downloads/linuxremoteplayer_1.8.0_all.deb",
-  "sha256": "2be02de9f7c47bcbb1b5a5c3de71629f456b938557dd1fffb1310202efbe0508",
-  "notes": "Release de mantenimiento: limpieza interna, documentacion y sitio actualizados."
+  "version": "1.8.9",
+  "deb_url": "https://linux-remote-player.vercel.app/downloads/linuxremoteplayer_1.8.9_all.deb",
+  "sha256": "890211c8d65742d81415356195c8601c42316a6d8f53710c51780e2d072bf87c",
+  "notes": "Voz con IA por servidor propio, licencia de 1 dispositivo con mudanza, temas nuevos (Day por defecto) y logo nuevo."
 }
