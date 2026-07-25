@@ -222,7 +222,24 @@ guardar fotos/videos del teléfono y verlos en la TV.
       diferenciador vs un NAS normal
 - [ ] Marketing honesto: "comparte y reproduce en tu TV", NO "NAS"
 
-# PH19: VOZ 2.0 — ASISTENTE AMPLIADO [v2.4] (consulta del dueño 2026-07-19)
+# PH19: VOZ 2.0 — ASISTENTE AMPLIADO [v2.0] (consulta del dueño 2026-07-19;
+#       REPRIORIZADA a v2.0 por el dueño 2026-07-24, junto con el paquete de skins Pro)
+## Objetivo concreto que puso el dueño: que "pon video de gatos" REPRODUZCA
+Hoy ese comando termina en la página de RESULTADOS de búsqueda y el usuario tiene que
+elegir a mano. La meta de v2.0 es que arranque el primer resultado solo.
+**El "equivalente a las DevTools" que preguntaba el dueño es `WebDriver BiDi`**, servido
+por el Remote Agent de Firefox (`--remote-debugging-port`); el protocolo viejo
+equivalente es `Marionette`. CDP es de Chromium y NO aplica: el kiosk es Firefox.
+Ya estaba anotado abajo como Fase 3 — se mantiene el orden 1→2→3 por dos razones:
+- **Fase 2 (keymaps) resuelve gran parte sin DOM.** En YouTube, `/` enfoca la búsqueda
+  y una secuencia de teclas reproduce el primer resultado: eso es uinput, que ya
+  funciona, cero dependencias nuevas, y no se rompe cuando el sitio cambia el HTML.
+- **SEGURIDAD (evaluar antes de la Fase 3):** abrir un puerto de depuración en el
+  Firefox del HTPC deja que CUALQUIER proceso local maneje el navegador con la sesión
+  del usuario (sesiones de Netflix, correo, lo que haya). El proyecto hoy cuida esto
+  (token, HTTPS, llaves fuera del device). Si se activa: bind SOLO a 127.0.0.1, y
+  encenderlo/apagarlo por comando en vez de dejarlo abierto siempre.
+
 DECISIÓN: NO app separada — misma app, motor de intents MODULAR en backend (registry
 de acciones). Latencia NO es impedimento (voz=async+nube, aislada del input desde
 C-01; validado 12ms con voz activa). Diferenciador de mercado real: nadie hace
@@ -369,10 +386,61 @@ NO combina libremente. Por qué importa:
 - **C5 — legal, "Edgerunners".** Es marca de CD Projekt / Trigger y el personaje del
   mockup se lee como Lucy. No se puede publicar con ese nombre ni con arte parecido en un
   producto DE PAGO. Renombrar (p. ej. "Neon") y usar ilustración original o licenciada.
-- **C6 — gating.** Las skins senior son un modo de ACCESIBILIDAD. Cobrarlas como Pro se
-  ve mal y probablemente vende peor: son justo el relato de "que la tele la use toda la
-  familia" que ya vende el sitio. Recomiendo senior GRATIS; radial/cyber sí Pro.
-  **Decisión del dueño.**
+- **C6 — gating. RESUELTA (dueño, 2026-07-24): TODAS estas skins van GRATIS.** Son el
+  gancho; el Pro se vende con MÁS skins más adelante (v2.0). Ver roster abajo.
+
+## DECISIONES DEL DUEÑO (2026-07-24) — todas las críticas aceptadas
+Roster final de skins, **las 7 gratuitas**:
+| skin | layout | etiqueta | notas |
+|---|---|---|---|
+| **Day** | classic | — | por defecto (ya existe, T-58) |
+| **Night** | classic | — | ya existe (T-58) |
+| **Cafe** | classic | — | ya existe (T-58) |
+| **Cozy** | classic | — | **RENOMBRAR desde `anime`** (ver abajo) |
+| **Cyberpunk** | radial | — | sin NINGUNA referencia a Edgerunners (C5) |
+| **Gato** | senior | Accesibilidad | |
+| **Perro** | senior | Accesibilidad | |
+- El Pro pasa a venderse por skins ADICIONALES (v2.0), no por estas.
+- **Etiqueta "Accesibilidad"** visible en el selector de Temas para Gato/Perro, para que
+  se entienda que recortan botones a propósito y no que están "incompletas".
+- Arte de Cyberpunk: ilustraciones IA de personaje cyberpunk genérico, sin nombrar ni
+  aludir a la serie ni al personaje. (Zanja C5 en lo comercial; el arte igual debe ser
+  original y no una copia reconocible.)
+
+### Coste de código de estas decisiones (ojo, no son gratis)
+- **Renombrar `anime` → `cozy`** toca 4 sitios: id en `SKINS`, entrada
+  `LEGACY_SKINS = { anime: 'cozy' }` en `setSkin()` (o los usuarios actuales pierden su
+  skin), el asset `frontend/skins/anime-bg.webp` (renombrar + la URL dentro de
+  `--bg-image`), y la lista `ASSETS` de `frontend/sw.js`. Es una migración, no un
+  find&replace.
+- **Todo gratis** simplifica: `FREE_SKIN` (constante única) pasa a ser un CONJUNTO de
+  skins libres, y el gate Pro de skins queda inactivo pero NO se borra — v2.0 lo
+  reactiva con el roster ampliado. Los `.pro-lock` del selector quedan sin uso por ahora.
+
+## SET DE BOTONES DEL LAYOUT "senior" (recomendación pedida por el dueño)
+De los 17 controles actuales, **quedan 8 + micrófono**; se ocultan 7.
+
+**QUEDAN (8):** ▶‖ Play/Pausa · Vol+ · Vol− · Silenciar · Atrás · Teclado ·
+**D-Pad** (`#btn-nav-mode`) · el micrófono, agrandado y protagonista.
+- El **D-Pad se queda y va ENCENDIDO por defecto** (crítica C2): para quien no controla
+  bien un puntero, navegar con flechas es más fácil que arrastrar un cursor.
+- **Teclado se queda**: es el plan B cuando la voz falla; sin él no puede escribir nada.
+- **Atrás se queda**: es el "deshacer" del usuario perdido, y no es destructivo.
+
+**SE OCULTAN (7):** Borrar · Panel TV · Menú OS · X (cerrar app) · ◀◀ · ▶▶ · Inicio.
+- **Borrar**: solo sirve tecleando; que viva dentro del cajón del teclado.
+- **Panel TV** y **Menú OS**: diagnóstico y escritorio del sistema. Puro riesgo de
+  confusión, cero uso diario.
+- **X**: es long-press (mala interacción para este usuario) Y destructivo.
+- **◀◀ / ▶▶**: son `KEY_LEFT`/`KEY_RIGHT`, redundantes con el D-Pad encendido.
+- **Inicio**: es `killKiosk()`, MATA la app en curso (crítica C3). Se saca del layout.
+  **VERIFICAR ANTES DE IMPLEMENTAR:** que lanzar una app desde `#apps-row` REEMPLACE
+  el kiosk en curso. Si no lo hace, el usuario queda sin forma de salir de una app y
+  el layout senior necesita UN botón seguro "Volver al inicio" con confirmación.
+- Ocultar también `#latency` (ruido) y redactar `#status` en palabras, no en jerga
+  ("Disconnected" no le dice nada a este usuario).
+- El engranaje de Ajustes **se queda visible** (crítica C4: sin él no hay forma de salir
+  del modo accesible).
 
 ## PRESUPUESTO DE ASSETS (el .deb hoy pesa 281 KB; `anime-bg.webp` solo, 172 KB)
 - Gatos y perros son **patrones sin costura** → NO mandar un pantallazo full-screen:

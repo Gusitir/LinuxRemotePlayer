@@ -67,7 +67,8 @@
   PENDIENTE VENTA: ai-proxy Edge Function (claves fuera del dispositivo).
 - backend/.env(.example): ENABLE_VOICE, CLOUD_* (whisper+qwen), KEYBOARD_LAYOUT,
   LRP_MODE (escrito por install.sh), PAIRING_TOKEN, LICENSE_*, BUY_URL.
-- frontend/index.html (~85KB): status-bar black-translucent + .app-header con
+- frontend/index.html (~85KB): status-bar `default` (T-58: con la skin clara por
+  defecto, `black-translucent` dejaba el texto de la barra iOS invisible) + .app-header con
   max(env(safe-area-inset-top)) en standalone; altura por var(--app-h). Onboarding
   SOLO PIN. mic-overlay + ejemplos de comandos. Card "Comandos de voz" en Ajustes.
   Registro SW con reg.update() en visibilitychange/pageshow + controllerchange->reload
@@ -86,6 +87,18 @@
 - frontend/tailwind-lite.css: subset a mano + reset border-box GLOBAL + utilidades.
   Guard: scripts/check_css_sync.py (IGNORE_CLASSES~4) corre en build_deb (ABORTA si
   hay clase usada sin definir; ya cazó deriva real en T-29).
+- frontend/skins.css (T-58): 4 skins vía `data-skin` en <html> — day (clara, POR
+  DEFECTO y única gratis), night, cafe, anime; paleta IDÉNTICA a website/style.css.
+  Bloque PUENTE al final: reasigna utilidades neutras y de marca de tailwind-lite
+  (border-gray-700, text-gray-300, bg-blue-600, text-amber-300…) a variables de skin.
+  SIN ese puente la skin clara rompe el marcado histórico, que asume fondo oscuro →
+  toda clase neutra nueva en el HTML hay que puentearla acá. Vars de contraste:
+  --accent-contrast (texto sobre --accent) y --green-contrast (sobre --accent-green;
+  el verde brillante pide texto OSCURO). Migración de ids viejos en app.js setSkin().
+- frontend/icon.svg + icon-192/512, apple-touch-icon, website/icon-*, favicon-32:
+  logo "Touchpad" (T-58). Los PNG se generan con scripts/dev/generate_png_icons.py,
+  que REIMPLEMENTA la geometría del SVG con PIL (no hay rasterizador SVG en el entorno)
+  → si se toca icon.svg hay que replicar el cambio en ese script, y viceversa.
 - scripts/install.sh (= lrp-setup): modo 1|2 -> LRP_MODE en .env; LRP_NOSLEEP -> mask
   sleep/suspend (uninstall unmask); KEYBOARD_LAYOUT; instala firefox-esr||firefox +
   pulseaudio-utils wmctrl qdbus libnss3-tools; escribe /etc/firefox/policies/policies.json

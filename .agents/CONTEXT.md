@@ -1,3 +1,38 @@
+SESSION: 2026-07-24 (Claude Opus 5 — identidad visual, release 1.8.9, spec de Skins 2.0)
+T-58: skins de la app alineadas 1:1 con la paleta del sitio — day (clara) POR DEFECTO y
+gratis, night, cafe, anime; ids viejos migran en setSkin() (free dark->day SIN toast, Pro
+dark/neon->night). Logo rehecho ("Touchpad": pad de puntos en tinta sobre crema con play
+verde), icon.svg + 6 PNG de app y web; scripts/dev/generate_png_icons.py reescrito (y su
+ROOT_DIR arreglado, roto desde T-35). LECCIÓN TÉCNICA: el marcado histórico asume fondo
+OSCURO, así que la skin clara lo rompía; se resolvió con un bloque PUENTE en skins.css que
+reasigna las utilidades neutras de tailwind-lite a variables de skin — toda clase neutra
+nueva hay que puentearla. La auditoría DE REFERENCIAS (no solo de comportamiento) encontró
+que la web publicitaba los temas viejos "Dark, Day, Neon" en ES y EN: corregido. También
+se cazó un riesgo propio: el <symbol> del candado bajo display:none rompe <use> en WebKit
+(la PWA corre en Safari iOS) -> se oculta con position/overflow.
+T-59 Release 1.8.9 (Gemini ejecutó, Claude auditó APTO contra el .deb REAL vía WSL):
+cuádruple match de sha256, contenido del paquete idéntico al árbol del commit, app.js
+1574 líneas, sw.js lrp-1.8.9. COMMITEADA EN EL CLON WSL Y SIN PUSHEAR — es lo primero de
+la próxima sesión. Nota: el 1.8.0 publicado tiene la voz muerta para instalaciones nuevas
+(las llaves de Together se revocaron en T-50), así que publicar 1.8.9 es lo que vuelve
+vendible la voz.
+DECISIONES DEL DUEÑO: las 7 skins planeadas van GRATIS como gancho (el Pro se venderá con
+skins adicionales en v2.0); roster Day/Night/Cafe/Cozy(ex-anime)/Cyberpunk/Gato/Perro, con
+etiqueta "Accesibilidad" en las dos últimas; Voz 2.0 repriorizada a v2.0. Dominio APLAZADO
+a la próxima sesión.
+HALLAZGO NUEVO (apareció al podar CURRENT): la web LIVE anuncia soporte@linuxremoteplayer.com
+en 16 lugares y ese dominio todavía no está comprado -> los correos de soporte rebotan hoy.
+PH17 (Theme Packs / Skins 2.0) especificada para v1.9.1 con los 4 mockups del dueño fijados
+en .agents/design/skins2/. Lo importante: NO son paletas — cambian posición de botones, qué
+botones existen y agregan etiquetas de texto que no están en el DOM. Diseño: atributo
+data-layout independiente de data-skin, cada skin fijada a un layout para que la matriz de
+QA quede en N. Críticas aceptadas por el dueño: el D-Pad se QUEDA en el layout accesible
+(para quien no controla un puntero es más fácil que un cursor libre); "INICIO" se saca
+porque es killKiosk() y mata la app en curso; el engranaje de Ajustes se queda (sin él el
+usuario queda atrapado en el modo accesible); "Edgerunners" no se usa (marca de CD Projekt/
+Trigger). CURRENT.md compactado 10.2KB -> ~5KB; APPCORE re-sincronizado (entrada de
+skins.css + generador de iconos; status-bar ya no es black-translucent).
+
 INIT: 2026-06-24
 Project started. Repo initialized.
 Target: Local Linux PC controlled by mobile PWA via WS. Heavy AI offloaded to cloud. No local inference.
