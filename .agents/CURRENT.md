@@ -63,7 +63,21 @@ privatizar. Tareas T-46..T-59.
   DOM (WebDriver BiDi, el equivalente Firefox de las DevTools) al final y con la nota de
   seguridad del puerto de depuración.
 
-## HALLAZGOS ABIERTOS (no bloquean)
+## HALLAZGOS ABIERTOS
+- **`apt remove` NO hace lo que promete la doc — CONFIRMADO EN CÓDIGO (2026-07-24),
+  necesita tarea antes del lanzamiento.** El `prerm` que embebe `build_deb.sh` solo para
+  y deshabilita el servicio. NO libera la licencia, NO borra la regla de UFW (8000/tcp),
+  NO borra `/etc/udev/rules.d/99-uinput.rules` y NO desenmascara `sleep.target`. Las
+  cuatro cosas SÍ las hace `scripts/uninstall.sh`, pero `apt remove` nunca lo ejecuta, y
+  ese script ni siquiera va dentro del .deb. Mientras tanto `website/docs.html` (ES **y**
+  EN) manda al usuario a `sudo apt remove linuxremoteplayer` y le promete las cuatro.
+  Consecuencia práctica: quien desinstale sigue ocupando su slot de dispositivo y al
+  reinstalar en otra PC tiene que pasar por la mudanza (o esperar las 72h de auto-takeover),
+  además de quedarse con la suspensión enmascarada y una regla de firewall huérfana.
+  Fix candidato: que el `prerm` invoque la lógica de `uninstall.sh` (o empaquetar el
+  script y llamarlo desde el `prerm`), cuidando que un fallo NUNCA bloquee el `apt remove`.
+
+## HALLAZGOS ABIERTOS (menores, no bloquean)
 - **Cold-start de voz:** tras inactividad el 1er comando tarda segundos (Edge Function
   dormida + Whisper frío). Mitigación: keep-alive. Evaluar con datos reales post-lanzamiento.
 - **Whisper alucina con silencio:** mic apretado sin hablar → texto fantasma → acción rara.
@@ -80,13 +94,18 @@ privatizar. Tareas T-46..T-59.
   en apps detectadas; verificar en T-56 que `apt remove` libere la licencia.
 - T-43/T-44 (reestructura .agents) siguen absorbidas en T-55.
 
-## CHECKLIST DEL DUEÑO (fuera de código)
-- [ ] **Push de 1.8.9** (paso 1 de arriba) y probar el OTA en device.
-- [ ] **Notch en iPhone** tras el cambio de status-bar (T-58).
-- [ ] **Comprar el dominio** + correo empresarial (desbloquea T-52 y el rebote de soporte).
-- [ ] **Wallpapers definitivos** de las skins nuevas (tiles para Gato/Perro).
-- [ ] Confirmar que el ai-proxy quedó redeployado con el prompt bilingüe (T-53d) y probar
-      un comando en inglés.
-- [ ] Screenshots del sitio: siguen mostrando la skin anime, ya no el look por defecto (T-56).
+## CHECKLIST DEL DUEÑO (operativo — fuera de código Y fuera del device)
+> **Las pruebas EN EL DEVICE ya no viven acá: están en `TESTING.md`**, que es la matriz
+> del ciclo 1.8.9 con prioridades (⛔ bloquea lanzamiento / ⚠️ importante). Acá quedan
+> solo las tareas operativas, para que no haya dos listas que se contradigan.
+- [ ] **Push de 1.8.9** (paso 1 de PRÓXIMOS PASOS) — desbloquea TODA la matriz de TESTING.
+- [ ] **Comprar el dominio** + correo empresarial (desbloquea T-52 y frena el rebote de
+      los correos de soporte que la web ya publica).
+- [ ] **Wallpapers definitivos** de las skins nuevas (para Gato/Perro el TILE, no el
+      pantallazo — son patrones sin costura).
+- [ ] Redeployar el ai-proxy con el prompt bilingüe si no se hizo (T-53d). Se verifica en
+      TESTING C2, y es ⛔ porque la web ya vende la voz en inglés.
+- [ ] Screenshots nuevas del sitio: las actuales muestran la skin anime, que ya no es el
+      look por defecto (T-56).
 - [ ] `supabase functions deploy send-feedback --no-verify-jwt` (pendiente desde v1.5).
 - [ ] Privatizar el repo al lanzar (T-57).
