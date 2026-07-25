@@ -1,4 +1,27 @@
 # LinuxRemotePlayer — Development Plan
+<!-- Archivo GRANDE (~33KB). NO leerlo entero: usá el indice y saltá con `grep -n "^# PH17"`.
+     Estado vivo -> CURRENT.md. Tareas de la fase activa -> PLAN_v1.9.md. -->
+
+## INDICE (fase · estado · dónde)
+
+| Fase | Qué es | Estado |
+|---|---|---|
+| PH1..PH9 | scaffold, kiosk, IA cloud, installer, seguridad, HTTPS+PWA, rediseño UI, licencias backend | ✅ DONE — **saltar** |
+| PH10 | monetización (Stripe) | ⚠️ obsoleta: se migró a **Paddle**, ver CURRENT §D1 |
+| PH11..PH13 | polish, distribución, anti-clon | parcial / vigente |
+| PH14..PH14e | ciclos v1.6/v1.7 y su testing | ✅ DONE — **saltar** |
+| PH-WEB | rediseño del sitio | ✅ hecho en T-53 (v1.9) |
+| PH-LICENCIAS | activación por dispositivo | ✅ hecho en T-46..T-49 |
+| PH-ANTIABUSO | cap 512KB, kill-switch, cuota | ✅ hecho en T-46..T-48 |
+| PH-PRICING | modelo de precio | decidido, ver CURRENT §D3 |
+| **PH17** | **Theme Packs / Skins 2.0** | **v1.9.1 — especificada, sin código** |
+| PH19 | Voz 2.0 (asistente ampliado) | v2.0 — diseñada |
+| PH15 | APK Android | v2.1 |
+| PH16 | Archivos / disco virtual | v2.2 |
+| PH18 | Modo gamepad | v2.3 |
+
+Orden comercial vigente: **v1.9 lanzamiento → v1.9.1 skins → v2.0 skins Pro + Voz 2.0
+→ v2.1 APK → v2.2 archivos → v2.3 gamepad**.
 
 ## ✅ COMPLETED
 

@@ -15,6 +15,30 @@ PH-NN), **PLAN_v1.9.md (plan de la fase ACTIVA)**, TESTING.md (matriz de test de
 > El puntero a la fase activa se actualiza al abrir cada fase nueva. Si acá dice una
 > versión que ya salió, está rancio: creele a CURRENT.md, no a esta línea.
 
+## FORMATO DE LOS ARCHIVOS .agents/ (los escribe una IA para que los lea otra IA)
+El ÚNICO archivo que lee y escribe el humano es **TESTING.md** (él marca los resultados).
+Los demás son de máquina: optimizalos para que otro agente encuentre rápido y gaste poco
+contexto. "Optimizado para IA" NO es telegráfico ni abreviado — la ambigüedad obliga a
+releer y sale más cara que las palabras que ahorra.
+
+- **Un dato, un archivo.** Si algo está en dos, uno se va a quedar viejo y se van a
+  contradecir. Referenciá con anclas (`CURRENT §B2`, `PLAN.md §PH17`), no copiando texto.
+- **Conservá el PORQUÉ, borrá el QUÉ-PASÓ.** La historia está en git. La causa
+  ("el puente de skins.css existe porque el marcado asume fondo oscuro") es lo único
+  que el próximo agente no puede re-derivar barato, y sin ella rompe cosas.
+- **IDs estables** por ítem (B1, D4, H7, T-58) para citarlos desde otros archivos.
+- **Cabecera YAML** en los archivos de estado: los hechos duros arriba, en un bloque que
+  se parsea de un vistazo, antes de la prosa.
+- **Techos de tamaño.** CURRENT ≤8KB, CONTEXT ≤8KB, APPCORE ≤10KB. Al pasarse: compactar
+  YA. Un archivo grande (PLAN.md, ~33KB) lleva ÍNDICE arriba y se navega con
+  `grep -n "^# PH17"`, no se lee entero.
+- **Rotación.** Fase cerrada → `archive/`. En CONTEXT solo la última sesión va completa;
+  las anteriores se comprimen a ≤4 líneas dejando decisiones vigentes y lecciones.
+- **Al compactar, VERIFICÁ cada ítem contra el código** antes de copiarlo. Compactar es
+  la oportunidad de matar hallazgos ya resueltos, no de arrastrarlos otra vez.
+- **Declará lo no verificable.** Lo que no se puede comprobar sin hardware (device, iOS,
+  otro navegador) NO se da por bueno: se escribe como ítem en TESTING.md.
+
 ## ROLES
 - **Ejecutor = Gemini 3.5 Flash.** Hace TODO lo operativo: editar código, correr comandos,
   commits, push, builds, releases, deploy. Chat FRESCO por tarea → necesita brief COMPLETO
@@ -34,7 +58,15 @@ PH-NN), **PLAN_v1.9.md (plan de la fase ACTIVA)**, TESTING.md (matriz de test de
    (JAMÁS `git add .`), commitea, pushea, y termina con **"STOP — T-NN listo para auditoría"**.
 3. **Claude** RE-EJECUTA los checks contra el repo/commit real (NO confía en el paste — ya
    pasó 3 veces que se reportó evidencia que nunca corrió) y dictamina **APTO** o **NO APTO
-   con causa raíz**. Recién con APTO se avanza.
+   con causa raíz**. Recién con APTO se avanza. La auditoría incluye SIEMPRE:
+   - **Qué archivos toca el commit** (`git show --stat`), no solo que el commit exista.
+   - **Auditoría de REFERENCIAS, no solo de comportamiento.** Si la tarea renombró un id,
+     una ruta o un asset, grepear TODO el repo por referencias viejas — incluida la web,
+     el README y la doc de usuario. (En T-58 el código estaba perfecto y la web seguía
+     publicitando los temas viejos.)
+   - **Doc vs código.** Lo que la doc de usuario promete tiene que hacerlo el código.
+     (Así apareció que `apt remove` incumple 4 de las 5 promesas de `docs.html`.)
+   - En un release, auditar el **artefacto** (`dpkg-deb -x` del .deb real), no el commit.
 
 ## REGLAS DE ORO
 - Evidencia = salida literal pegada. Si no lo corriste, no lo reportes. El auditor re-corre.
