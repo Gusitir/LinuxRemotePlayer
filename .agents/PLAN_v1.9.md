@@ -195,6 +195,24 @@ Revisar README/website/TESTING.md para que NINGUNA instrucción dependa de git c
 
 ## BLOQUE D — CIERRE
 
+### T-58 — Skins de la app = paleta de la web + logo nuevo  [HECHA 2026-07-24, RE-TEST DEVICE]
+Pedido del dueño: unificar identidad app↔web. Skins viejas (dark/day/neon) reemplazadas
+por las 3 del sitio — **day** (clara, POR DEFECTO y única gratis), **night** (navy),
+**cafe** (madera); **anime** intacta. Migración de ids en `setSkin()`: free con `dark`→`day`
+sin toast, Pro con `dark`/`neon`→`night`. Logo rehecho ("Touchpad": pad de puntos en tinta
+sobre crema con play verde) en `frontend/icon.svg` + 6 PNG; `scripts/dev/generate_png_icons.py`
+reescrito (también arregla su `ROOT_DIR`, roto desde T-35).
+Clave del cambio: el marcado asumía fondo oscuro (`border-gray-700`, `text-gray-300`…), así
+que `skins.css` lleva un bloque PUENTE que reasigna esas utilidades de tailwind-lite a
+variables de skin. Si se agregan clases neutras nuevas al HTML, hay que puentearlas también.
+**Verificado:** check_css_sync + node --check + manifest JSON; auditoría de contraste de
+todo el texto visible en las 4 skins (0 casos <3.0:1); matriz de 12 casos de `setSkin`;
+píxeles del PNG contra el render nativo del SVG.
+**Pendiente device:** el `apple-mobile-web-app-status-bar-style` pasó de `black-translucent`
+a `default` (con fondo crema el texto blanco de la barra iOS era invisible) → cambia el
+layout bajo el notch en standalone. Probar en iPhone.
+**Arrastra a T-56:** capturas del sitio siguen mostrando la skin anime, ya no el look default.
+
 ### T-55 — Docs operativas + .agents  [sin runtime]
 - GUIA_AGUSTIN (o doc nuevo): procedimiento MANUAL de rotación de key robada (responder
   SOLO al correo registrado en la licencia → active=false a la vieja + key nueva por

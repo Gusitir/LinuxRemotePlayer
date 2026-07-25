@@ -1,4 +1,4 @@
-# ESTADO ACTUAL (2026-07-21)
+# ESTADO ACTUAL (2026-07-22, cierre de sesión)
 
 VERSION publicada: **1.8.0** (LIVE en Vercel; sha 2be02de9...0508 triple-match,
 sw.js=lrp-1.8.0, app.js 1522 líneas no truncado — auditado y VALIDADO en device).
@@ -50,10 +50,36 @@ la web (T-53) con Ko-fi como placeholder (+cripto opcional); rail de retiro se d
 en las keys LRP-). T-52 queda solo dominio+email (linuxremoteplayer.com como opción
 natural; compra pendiente — la tarjeta del dueño dio error en el registrador, lo arregla).
 Ko-fi CONFIRMADO para donaciones (acumular en PayPal, retirar >$50 que es donde renta).
-**Siguiente: T-50b (fix cards settings + docs) → T-53 web (DESBLOQUEADA: identidad
-decidida, dominio se enchufa después) → T-52 dominio → T-51 Paddle (revisa el sitio,
-por eso web ANTES del alta de pagos).**
+**T-50b HECHA** (fix cards items-start, 8d51ae6). **T-53 CASI COMPLETA y LIVE en Vercel**
+(commits 3196fa3, eb01d18, a886ebb, 05edc7d — auditados APTO, dueño validó "perfecto"):
+rediseño total ES+EN (landing/docs/changelog), 3 temas (claro DEFAULT/café/navy, selector
+esquina + localStorage), instalación 1-comando (website/install.sh ya era .deb-based, NO
+git — sobrevive repo privado = T-54 casi resuelta), capturas reales en phone-frames,
+matriz compat honesta, pricing Free/Pro $5, donaciones Ko-fi placeholder, FAQ→docs,
+hreflang. Voz BILINGÜE (prompt ai-proxy ES+EN, T-53d) — **dueño debía redeployar ai-proxy
+en dashboard y probar comando en inglés: CONFIRMAR al retomar.**
+Pendientes T-53: video demo (placeholder en hero listo), gracias.html (se rehace en T-51
+con flujo Paddle). Placeholders marcados: PLACEHOLDER-PADDLE / -KOFI / -VIDEO.
+**PRÓXIMA SESIÓN: el dueño viene con DOMINIO (linuxremoteplayer.com) + correo empresarial
+→ T-52 (dominio en Vercel, email soporte ya escrito en la web, Resend; OJO: mantener URL
+vercel.app viva o redirect — las PWA 1.8.0 leen latest.json ahí) → T-51 Paddle (alta,
+producto $5, paddle-webhook, compra real + refund) → T-55 docs → T-56 release v1.9.0 →
+T-57 privatizar.**
+**T-58 HECHA (2026-07-24, sin publicar aún): identidad app↔web unificada.** Skins de la
+app = las 3 del sitio: **day (clara) POR DEFECTO y única gratis**, night (navy) y cafe
+(madera) Pro, anime Pro intacta. Ids viejos migran en `setSkin()` (free `dark`→`day` sin
+toast; Pro `dark`/`neon`→`night`). Logo rehecho ("Touchpad") en icon.svg + 6 PNG (app y
+web); `scripts/dev/generate_png_icons.py` reescrito y con su `ROOT_DIR` arreglado (roto
+desde T-35). `skins.css` lleva un bloque PUENTE que reasigna las utilidades neutras de
+tailwind-lite (`border-gray-700`, `text-gray-300`, …) a variables de skin — sin eso la
+skin clara rompe el marcado histórico; clases neutras nuevas hay que puentearlas.
+Auditoría de referencias encontró y corrigió: la web publicitaba "Temas (Pro): Dark, Day,
+Neon" (ES+EN, index.html:148 y :254) → ahora Day incluido + Night/Café/Anime Pro.
+OJO device: `apple-mobile-web-app-status-bar-style` pasó a `default` → probar notch en iPhone.
 T-43/T-44 (reestructura .agents) quedaron colgadas de v1.8 → absorbidas en T-55.
+Backlog app anotado: header PWA dice "Remote Linux Player" (orden invertido); "Okular"
+duplicado en apps detectadas; verificar en T-56 que `apt remove` invoque el release de
+licencia (la doc ya lo afirma).
 PH-PRICING: Pro único $5 al lanzar; suscripción recién con Voz 2.0. Roadmap post-lanzamiento:
 multi-distro (Arch/Fedora/etc.) + Skins 2.0 → APK → Archivos → Gamepad → Voz 2.0 (PLAN.md).
 
