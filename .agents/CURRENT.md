@@ -32,9 +32,13 @@ privatizar. Tareas T-46..T-59.
   exactamente 6 archivos. **Falta: push + validación en device.**
 
 ## PRÓXIMOS PASOS (en orden)
-1. **Push de T-59** desde el clon WSL (`cd ~/lrp-release && git push origin main`) →
-   Vercel deploya → `git pull` en el repo Windows. Después el dueño prueba el OTA
-   1.8.0→1.8.9 en device.
+1. **Push de T-59 — OJO, los dos clones DIVERGIERON.** Ambos cuelgan de `107a8ce`: el
+   clon WSL tiene `cefe4d5` (el release) y el repo Windows tiene 3 commits de docs
+   (`6676d80`, `3ed50ae`, `34011b3`). El orden importa:
+   a. Primero WSL:  `cd ~/lrp-release && git push origin main`
+   b. Después Windows: `git pull --rebase origin main` y recién ahí `git push origin main`
+   c. Verificar que Vercel deployó y que `latest.json` sirve 1.8.9 con el sha `890211c8…`
+   Después el dueño prueba el OTA 1.8.0→1.8.9 en device.
 2. **Validación device de T-58**: el `apple-mobile-web-app-status-bar-style` pasó de
    `black-translucent` a `default` → **mirar el notch en iPhone en standalone**. Es el
    único cambio de T-58 que no pude verificar sin hardware.
