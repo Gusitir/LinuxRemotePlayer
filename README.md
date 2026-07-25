@@ -27,10 +27,12 @@ A plug & play remote-control ecosystem for Linux HTPCs: a mobile PWA client talk
 
 ## Architecture
 
-> **Evaluating this codebase?** [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) is the
-> engineer-facing document: component responsibilities and boundaries, data flow,
-> dependencies and their failure modes, the reasoning behind the non-obvious decisions,
-> known limitations, and an honest ledger of what is verified and what isn't.
+> **Joining the project?** Two documents, in this order:
+> [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — the shape of the system: component
+> responsibilities and boundaries, data flow, dependencies and their failure modes, why the
+> non-obvious decisions were made, known limitations, and an honest ledger of what is
+> verified and what isn't. Then [`docs/DEVELOPING.md`](docs/DEVELOPING.md) — how to get it
+> running, how to make a change safely, and the traps that have cost people time.
 
 ```
               +---------------------------+

@@ -1,10 +1,13 @@
 # LinuxRemotePlayer — architecture
 
-> **This document is for a human engineer**: a technical reviewer, a contractor, or
-> someone deciding whether this codebase is worth buying or maintaining. It is not
-> end-user documentation (that lives at `website/docs.html`, ES and EN) and it is not the
-> agent index (`.agents/APPCORE.md`, which says *where* things are; this says *what for
-> and why*).
+> **This document is for a developer joining the project** — someone who needs to
+> understand how the system is put together before touching it. If you're here to make a
+> change, read this for the shape of the system, then go to
+> [`DEVELOPING.md`](DEVELOPING.md) for how to actually work on it.
+>
+> It is not end-user documentation (that lives at `website/docs.html`, ES and EN) and it is
+> not the agent index (`.agents/APPCORE.md`, which says *where* things are; this says
+> *what for and why*).
 >
 > Maintained by the auditor role. Refreshed after each release and whenever a change moves
 > a boundary, adds a dependency, or reverses a decision. Nothing here is written that was
