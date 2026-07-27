@@ -96,19 +96,10 @@ historia:            CONTEXT.md + git log
   negocian: etiqueta de SIMULACION visible, y CERO red (un endpoint de IA abierto desde el
   sitio publico seria gratis para cualquiera). Va despues de PH17 o en la misma tanda, o
   hereda la deuda de los layouts nuevos. **No bloquea Paddle** (esa va con capturas, C5).
-- **D7 · `Techlm77/LinuxPlay` NO es competencia: es otra categoria** (GPL-2.0, 622 estrellas,
-  ultimo push 2025-11-10 → dormido; revisado 2026-07-26). Ellos hacen streaming de
-  escritorio (FFmpeg + UDP → cliente Qt en otra PC); LRP no transmite video, la TV ya ES la
-  pantalla. Se tocan solo en inyectar input y en el handshake por PIN.
-  - **NO se rebrandea** (D2 sigue, el dominio ya esta comprado). La colision de nombre es
-    real —ellos tienen SEO, nosotros nos privatizamos— y se mitiga apoyandose en el dominio
-    propio y en "LRP", y hablando del problema del sillon/HTPC, no de "remote player".
-  - **Diferenciador factual para la web:** su README avisa que NO cifra el trafico y manda a
-    tunelizar por WireGuard/SSH; LRP hace HTTPS con CA propia + PIN desde el minuto uno.
-    Decirlo SIN nombrarlos (comparar de frente es ruido legal inutil).
-  - Su codigo NO entra acá ni en el contexto de ningun agente: **AGENTS.md §CODIGO DE
-    TERCEROS**. Unico dato aprovechable de su README: usan UDP y no TCP para input y
-    gamepad → tenerlo en cuenta al medir latencia en PH18.
+- **D7 · `Techlm77/LinuxPlay` NO es competencia: es otra categoria** (GPL-2.0; ellos hacen
+  streaming de escritorio, LRP no transmite video). **NO se rebrandea.** Analisis, mitigacion
+  de la colision de nombre y el diferenciador de cifrado usable en la web:
+  **PLAN.md §MERCADO**. Su codigo no entra acá: **AGENTS.md §CODIGO DE TERCEROS**.
 
 ## H — HALLAZGOS ABIERTOS (no bloquean)
 

@@ -20,6 +20,7 @@
 | PH15 | APK Android | v2.1 |
 | PH16 | Archivos / disco virtual | v2.2 |
 | PH18 | Modo gamepad | v2.3 |
+| MERCADO | proyectos vecinos (LinuxPlay) + colision de nombre | contexto, decision en CURRENT §D7 |
 
 Orden comercial vigente: **v1.9 lanzamiento → v1.9.1 skins + demo web → v2.0 skins Pro +
 Voz 2.0 → v2.1 APK → v2.2 archivos → v2.3 gamepad**.
@@ -323,6 +324,40 @@ Killer feature: multijugador — cada teléfono conectado = un mando (sin hardwa
 - [ ] APK fase 2: háptica/multitouch nativos + menor latencia -> argumento de venta
       extra del APK premium
 - [ ] Gate: misma licencia Pro única
+
+# MERCADO: PROYECTOS VECINOS (revisado 2026-07-26) — decision viva en CURRENT §D7
+
+## Techlm77/LinuxPlay — GPL-2.0, 622 estrellas, 12 forks, ultimo push 2025-11-10
+**No es competencia: es otra categoria de producto.** Capturan la pantalla del host con
+FFmpeg, la codifican H.264/H.265 y la mandan por UDP a un cliente Qt en OTRA PC — familia
+Moonlight/Sunshine/Parsec. Resuelven "quiero ver y usar mi PC Linux desde otra computadora".
+LRP no transmite video: el HTPC ya esta enchufado a la TV, la TV ES la pantalla y el
+telefono es el mando. Resolvemos "estoy en el sillon y necesito un control remoto".
+Se tocan en un solo punto: ambos inyectan input en un host Linux y hacen handshake por PIN.
+
+**Lectura de traccion:** 622 estrellas con 12 forks (2%), 10 watchers y 1 issue abierto es
+el patron "le di estrella, nunca lo instale". Dormido hace 8 meses, un solo mantenedor, y el
+propio README dice que no es un producto pulido. Conclusion: hay demanda de herramientas de
+control remoto en Linux, y nadie ocupo el nicho del sillon. Eso juega a favor.
+
+**Riesgo real #1 — licencia.** GPL-2.0 contra nuestro Elastic 2.0 comercial. La regla dura
+y el POR QUE (codigo mayoritariamente escrito por IA = imposible probar no-derivacion
+despues) viven en **AGENTS.md §CODIGO DE TERCEROS**. Su codigo no se lee ni se pega en el
+contexto de ningun agente que toque LRP.
+
+**Riesgo real #2 — colision de nombre.** "LinuxPlay" vs "LinuxRemotePlayer". Su repo es de
+feb-2025 con SEO acumulado; el nuestro se privatiza en T-57 y arranca de cero. NO se
+rebrandea (D2 cerrado, dominio ya comprado, reabrirlo cuesta mas de lo que rinde). Se
+mitiga: apoyarse en el dominio propio y en "LRP", y que la web hable del problema del
+sillon/HTPC y no de "remote player" generico — ahi no competimos por la misma busqueda.
+
+**Diferenciador factual usable en la web:** su README avisa que NO cifra el trafico de media
+ni de control, y manda a tunelizar por WireGuard/OpenVPN/SSH en redes no confiables. LRP
+hace HTTPS con CA propia y pairing por PIN desde el minuto uno. Decirlo SIN nombrarlos:
+comparar de frente con un proyecto ajeno es ruido legal que no compra nada.
+
+**Lo unico aprovechable de su diseño** (del README, no del codigo): usan UDP y no TCP para
+input y gamepad. Dato a tener en cuenta al medir latencia en PH18.
 
 # PH20: DEMO INTERACTIVA EN LA WEB ("live test") [v1.9.1] (pedido del dueño 2026-07-26)
 Un minijuego en el sitio: el visitante usa un control remoto SIMULADO y ve, al lado, una
