@@ -29,18 +29,24 @@ releer y sale más cara que las palabras que ahorra.
 - **IDs estables** por ítem (B1, D4, H7, T-58) para citarlos desde otros archivos.
 - **Cabecera YAML** en los archivos de estado: los hechos duros arriba, en un bloque que
   se parsea de un vistazo, antes de la prosa.
-- **Techos de tamaño.** CURRENT ≤8KB, CONTEXT ≤8KB, APPCORE ≤10KB. Al pasarse: compactar
-  YA. Un archivo grande (PLAN.md, ~33KB) lleva ÍNDICE arriba y se navega con
-  `grep -n "^# PH17"`, no se lee entero.
+- **Techos de tamaño.** CURRENT ≤8KB, CONTEXT ≤8KB, APPCORE ≤10KB, AGENTS ≤12KB. Al
+  pasarse: compactar YA — y si no se puede sin perder porqués, anotar el número REAL en la
+  cabecera del archivo (mentirle al techo es peor que pasarlo). Un archivo grande
+  (PLAN.md, ~41KB) lleva ÍNDICE arriba y se navega con `grep -n "^# PH17"`, no se lee entero.
 - **Rotación.** Fase cerrada → `archive/`. En CONTEXT solo la última sesión va completa;
   las anteriores se comprimen a ≤4 líneas dejando decisiones vigentes y lecciones.
 - **Al compactar, VERIFICÁ cada ítem contra el código** antes de copiarlo. Compactar es
   la oportunidad de matar hallazgos ya resueltos, no de arrastrarlos otra vez.
-- **Los números y las rutas de un brief salen de un comando corrido, no de la memoria ni
-  de un .md.** Pasó tres veces el 2026-07-27: un conteo de ocurrencias mal (`isLicensed`
-  eran 4, no 3), un `grep "set -e"` que matcheaba el propio comentario del archivo y habría
-  reprobado código correcto, y B2 afirmando que `uninstall.sh` no iba en el `.deb` cuando sí
-  va. Los números de línea además se mueven con cada tarea: re-grepear siempre.
+- **Todo número afirmado se mide con un comando INMEDIATAMENTE antes de escribirlo** — en
+  briefs, en estos .md y en los mensajes de commit. Falló CINCO veces el 2026-07-27: dos
+  conteos de brief, un grep que matcheaba su propio comentario, un dato inventado en B2, y
+  dos mensajes de commit que declaraban un techo cumplido sin medirlo. Los números de
+  línea se mueven con cada tarea: re-grepear siempre.
+- **Destino antes de escribir.** Análisis, specs y contexto de mercado nacen en PLAN o en
+  un anexo; CURRENT recibe SOLO el puntero. Escribir "provisorio" en CURRENT y mudarlo
+  después costó dos commits extra en un solo día (caso D7→§MERCADO).
+- **Los commits de `.agents/` van por CHECKPOINT** (un dictamen de auditoría, un cierre de
+  sesión), no por retoque: el 2026-07-27 hubo ~12 commits de docs y 3 se corregían entre sí.
 - **Declará lo no verificable.** Lo que no se puede comprobar sin hardware (device, iOS,
   otro navegador) NO se da por bueno: se escribe como ítem en TESTING.md.
 
@@ -48,9 +54,15 @@ releer y sale más cara que las palabras que ahorra.
 - **Ejecutor = Gemini 3.5 Flash.** Hace TODO lo operativo: editar código, correr comandos,
   commits, push, builds, releases, deploy. Chat FRESCO por tarea → necesita brief COMPLETO
   y spoon-fed (modelo chico, sin contexto previo → cero ambigüedad).
-- **Planificador/Auditor = Claude Opus 4.8.** Diseña el plan, escribe los briefs para Gemini,
-  AUDITA cada entrega contra el repo real. Casi no ejecuta (solo correcciones muy chicas, por
-  tokens). Se agotó Fable5 (antes auditaba).
+- **Planificador/Auditor = Claude Opus 5.** Diseña el plan, escribe los briefs para Gemini,
+  AUDITA cada entrega contra el repo real. Ejecuta solo correcciones muy chicas y los
+  commits de `.agents/`+docs; el código es de Gemini.
+- **Supervisor de flujo = Claude Fable 5** (rol creado por el dueño 2026-07-27). NO ejecuta
+  tareas ni escribe briefs: revisa que el flujo cumpla este contrato, caza derivas y datos
+  rancios entre archivos, y es el ÚNICO que promueve lecciones a reglas en este archivo.
+  Se lo invoca al cerrar sesión o cuando el dueño siente que el flujo se desvía.
+- **Al cambiar el modelo de un rol, esta sección se actualiza EN EL MOMENTO.** (Decía
+  "Opus 4.8" mientras Opus 5 llevaba sesiones enteras trabajando.)
 - **DeepSeek (en el HTPC del dueño).** Solo config/diagnóstico, JAMÁS código; sus hotfixes se
   PORTAN al repo o el próximo OTA los pisa.
 - **Dueño (Agustín).** Relaya briefs a Gemini y pega evidencia a Claude. Hace lo que ningún
@@ -61,11 +73,9 @@ releer y sale más cara que las palabras que ahorra.
    verificación, mensaje de commit, y "PARÁ ante error/duda y reportá".
 2. **Gemini** ejecuta, verifica con **evidencia REAL pegada**, hace `git add` SELECTIVO
    (JAMÁS `git add .`), commitea, pushea, y termina con **"STOP — T-NN listo para auditoría"**.
-   > **Un push sin ese bloque NO es una entrega.** En T-64 (2026-07-27) se commiteó y pusheó
-   > el cambio más riesgoso de la sesión sin una sola línea de evidencia; se descubrió solo
-   > porque el push de la tarea siguiente arrancaba en un hash desconocido. **Por eso el
-   > auditor empieza SIEMPRE por `git log <ultimo-hash-auditado>..origin/main`**, nunca por
-   > lo que dice el reporte: si hay commits que nadie reportó, aparecen ahí.
+   > **Un push sin ese bloque NO es una entrega** (T-64 llegó a main sin evidencia; se
+   > detectó solo por un hash desconocido). **El auditor empieza SIEMPRE por
+   > `git log <ultimo-hash-auditado>..origin/main`**, nunca por lo que dice el reporte.
 3. **Claude** RE-EJECUTA los checks contra el repo/commit real (NO confía en el paste — ya
    pasó 3 veces que se reportó evidencia que nunca corrió) y dictamina **APTO** o **NO APTO
    con causa raíz**. Recién con APTO se avanza. La auditoría incluye SIEMPRE:
@@ -77,6 +87,13 @@ releer y sale más cara que las palabras que ahorra.
    - **Doc vs código.** Lo que la doc de usuario promete tiene que hacerlo el código.
      (Así apareció que `apt remove` incumple 4 de las 5 promesas de `docs.html`.)
    - En un release, auditar el **artefacto** (`dpkg-deb -x` del .deb real), no el commit.
+4. **Cerrar ≠ haber editado.** Un B/H/C se cierra recién cuando el EFECTO queda verificado
+   de punta a punta; si falta un paso del dueño (device, DNS, buzón), el ítem queda EN
+   CURSO con puntero al checklist. (B1 se marcó "cerrada" con la web corregida mientras el
+   buzón de soporte seguía sin existir.)
+5. **Una T-NN nacida fuera del plan de fase se registra en ese plan AL CREARLA** (una línea
+   con puntero a CURRENT basta). T-60..T-65 fueron invisibles para PLAN_v1.9.md durante
+   una sesión entera: quien leyera el plan maestro no sabía que existieron.
 
 ## REGLAS DE ORO
 - Evidencia = salida literal pegada. Si no lo corriste, no lo reportes. El auditor re-corre.
@@ -104,10 +121,16 @@ que no hubo derivación — no hay un humano que pueda declarar qué tenía en l
   escribirlo tuviste que mirar su código, parás.
 - Antes de traer una dependencia nueva, mirá su licencia. MIT/BSD/Apache-2.0: OK.
   GPL/AGPL/LGPL: parás y preguntás al dueño.
-- Caso concreto registrado (2026-07-26): `github.com/Techlm77/LinuxPlay`, GPL-2.0, mismo
-  vecindario (control remoto de Linux) pero otro producto — ellos hacen streaming de
-  escritorio con FFmpeg, nosotros no transmitimos video. Contexto de mercado en
-  CURRENT §D7. **Su código no entra acá.**
+- Caso registrado: `Techlm77/LinuxPlay` (GPL-2.0) — **su código no entra acá**. Análisis
+  en PLAN.md §MERCADO, decisión en CURRENT §D7.
+
+## GOBIERNO DE ESTE ARCHIVO (supervisor de flujo, 2026-07-27)
+Este archivo es el CONTRATO, no el diario: cada KB de acá lo paga TODA sesión futura.
+- Las lecciones del día se escriben en **CONTEXT.md**; solo el supervisor las promueve acá,
+  y solo si cambian conducta. Una regla que no cambia lo que alguien haría no es regla.
+- Los incidentes se citan en UNA línea con su ID; el detalle vive en CONTEXT o en git.
+- Techo propio: **≤12KB**. Si una regla nueva no entra, se compacta una vieja — sin perder
+  el porqué, que es lo único irreemplazable.
 
 ## ENTORNO (crítico — romper esto = builds/edits corruptos)
 - **El mount WSL `/mnt/...` TRUNCA archivos grandes (~40KB):** app.js (~1500 líneas) y main.py
