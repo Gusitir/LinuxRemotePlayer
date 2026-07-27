@@ -1,14 +1,19 @@
-# APPCORE — mapa del código (re-sincronizado por Claude 2026-07-20, base v1.7.7)
+# APPCORE — mapa del código (re-sync 2026-07-20 base v1.7.7; parches puntuales 2026-07-27
+# por T-62/63/64/65 — REINDEX COMPLETO PENDIENTE tras el release v1.9.0)
 
 # DIRECTORIES
 - /backend/: FastAPI server (Python). /frontend/: PWA estática (vanilla JS, sin build).
-- /scripts/: bash (install, build_deb, update, uninstall, bootstrap) + check_css_sync.py.
+- /scripts/: bash (install, build_deb, update, uninstall, bootstrap, lrp-cleanup [T-64:
+  limpieza NO interactiva compartida por prerm y uninstall]) + check_css_sync.py.
 - /website/: Vercel landing + install.sh bootstrap + /downloads (.deb) + latest.json.
 - /supabase/functions/: Edge Functions (stripe-webhook, validate-license, send-feedback).
 - /.agents/: contexto IA (AGENTS entrada, CONTEXT handoff, CURRENT, PLAN, PLAN_v1.8,
   TESTING, APPCORE, archive/, AUDITS/, skills/manage_context = skill `reindex`).
 
 # ENDPOINTS backend/main.py (gate entre paréntesis)
+- Doc automática (/docs /redoc /openapi.json): APAGADA por defecto (T-63/H9); solo
+  existe con LRP_DEV=true en .env. No usar LRP_MODE para esto: desktop es modo de
+  usuario final, no de desarrollo.
 - Pairing: /api/pairing-pin (local), POST /api/pair (LAN sin auth, PIN 6 dígitos un solo
   uso TTL 120s + anti-brute-force 5/IP), /api/pairing-token (+/regenerate) (local),
   /api/pairing-qr (local, SVG segno).
@@ -66,7 +71,8 @@
   local + MOCK + defaults NVIDIA/OpenRouter ELIMINADOS (T-33); defaults ahora = Together.
   PENDIENTE VENTA: ai-proxy Edge Function (claves fuera del dispositivo).
 - backend/.env(.example): ENABLE_VOICE, CLOUD_* (whisper+qwen), KEYBOARD_LAYOUT,
-  LRP_MODE (escrito por install.sh), PAIRING_TOKEN, LICENSE_*, BUY_URL.
+  LRP_MODE (escrito por install.sh), PAIRING_TOKEN, LICENSE_*, BUY_URL (ojo H11:
+  el example trae Stripe TEST), LRP_DEV (T-63, default false).
 - frontend/index.html (~85KB): status-bar `default` (T-58: con la skin clara por
   defecto, `black-translucent` dejaba el texto de la barra iOS invisible) + .app-header con
   max(env(safe-area-inset-top)) en standalone; altura por var(--app-h). Onboarding
@@ -88,7 +94,9 @@
   Guard: scripts/check_css_sync.py (IGNORE_CLASSES~4) corre en build_deb (ABORTA si
   hay clase usada sin definir; ya cazó deriva real en T-29).
 - frontend/skins.css (T-58): 4 skins vía `data-skin` en <html> — day (clara, POR
-  DEFECTO y única gratis), night, cafe, anime; paleta IDÉNTICA a website/style.css.
+  DEFECTO), night, cafe, anime; paleta IDÉNTICA a website/style.css. **TODAS GRATIS
+  desde T-62** (setSkin ya no consulta isLicensed; FREE_SKIN→DEFAULT_SKIN; la VOZ
+  sigue Pro). La web aún las vende como Pro a propósito hasta v1.9.0 (CURRENT §N2).
   Bloque PUENTE al final: reasigna utilidades neutras y de marca de tailwind-lite
   (border-gray-700, text-gray-300, bg-blue-600, text-amber-300…) a variables de skin.
   SIN ese puente la skin clara rompe el marcado histórico, que asume fondo oscuro →
@@ -109,7 +117,9 @@
   lrp-setup, lrp-update, sudoers, prerm. lrp-update: RE-EXEC vía systemd-run
   --unit=lrp-update-job (escapa del cgroup del servicio — fix T-14) + restart por
   EXISTENCIA del unit (T-19, no is-enabled). prerm: stop+disable SOLO en "remove"
-  (T-19, upgrade solo stop). Recommends: firefox-esr|firefox, pulseaudio-utils.
+  (T-19, upgrade solo stop) + llama lrp-cleanup.sh SOLO en "remove" (T-64: licencia/
+  udev/ufw/sleep; si corriera en upgrade, cada OTA limpiaría el sistema — TESTING E1).
+  Recommends: firefox-esr|firefox, pulseaudio-utils.
 - website/install.sh: bootstrap curl|bash -> baja .deb por latest.json + sha256 ->
   apt install -> encadena lrp-setup (llamada directa, NO exec).
 

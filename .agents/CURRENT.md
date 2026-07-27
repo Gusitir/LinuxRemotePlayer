@@ -8,7 +8,7 @@ version_publicada:   1.8.9    # LIVE desde 2026-07-26 (T-60). sha 890211c8…bf8
 dominio:             https://www.linuxremoteplayer.com  # comprado y sirviendo desde Vercel
 alias_vercel:        linux-remote-player.vercel.app     # VIVO a proposito: es el canal OTA
 correo_soporte:      support@linuxremoteplayer.com      # el viejo soporte@ NO existia
-fase_activa:         v1.9 -> PLAN_v1.9.md   # tareas T-46..T-63
+fase_activa:         v1.9 -> PLAN_v1.9.md   # ejecutadas T-46..T-65; faltan T-51/T-55/T-56/T-57
 repo:                publico; se privatiza en T-57
 licencia:            Elastic 2.0
 ultima_sesion:       2026-07-27

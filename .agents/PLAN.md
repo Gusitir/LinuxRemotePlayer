@@ -1,5 +1,5 @@
 # LinuxRemotePlayer — Development Plan
-<!-- Archivo GRANDE (~33KB). NO leerlo entero: usá el indice y saltá con `grep -n "^# PH17"`.
+<!-- Archivo GRANDE (~41KB). NO leerlo entero: usá el indice y saltá con `grep -n "^# PH17"`.
      Estado vivo -> CURRENT.md. Tareas de la fase activa -> PLAN_v1.9.md. -->
 
 ## INDICE (fase · estado · dónde)

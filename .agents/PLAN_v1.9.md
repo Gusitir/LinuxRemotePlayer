@@ -3,6 +3,12 @@
 > Documento MAESTRO de fase (mapa completo). Cada tarea T-NN recibe su brief
 > spoon-fed para Gemini al ejecutarla, auditada por Claude entre medio.
 > Planifica/audita: Claude (Fable 5). Ejecuta TODO: Gemini. Flujo: AGENTS.md.
+>
+> **NOTA 2026-07-27: T-60..T-65 se ejecutaron y auditaron SIN pasar por este archivo**
+> (surgieron de la operatoria: publicar 1.8.9, dominio, skins gratis, H9, B2, URLs).
+> Estado y hashes en CURRENT §HECHO; detalle en git log. Este plan sigue siendo el mapa
+> de lo que FALTA: T-51 pagos (era "Stripe LIVE", hoy es PADDLE — ver CURRENT §D1),
+> T-55 docs, T-56 release, T-57 privatizar.
 
 ## OBJETIVO
 Lanzar comercialmente: llaves de IA fuera del device (ai-proxy), anti-abuso real,
