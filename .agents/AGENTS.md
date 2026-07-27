@@ -36,6 +36,11 @@ releer y sale más cara que las palabras que ahorra.
   las anteriores se comprimen a ≤4 líneas dejando decisiones vigentes y lecciones.
 - **Al compactar, VERIFICÁ cada ítem contra el código** antes de copiarlo. Compactar es
   la oportunidad de matar hallazgos ya resueltos, no de arrastrarlos otra vez.
+- **Los números y las rutas de un brief salen de un comando corrido, no de la memoria ni
+  de un .md.** Pasó tres veces el 2026-07-27: un conteo de ocurrencias mal (`isLicensed`
+  eran 4, no 3), un `grep "set -e"` que matcheaba el propio comentario del archivo y habría
+  reprobado código correcto, y B2 afirmando que `uninstall.sh` no iba en el `.deb` cuando sí
+  va. Los números de línea además se mueven con cada tarea: re-grepear siempre.
 - **Declará lo no verificable.** Lo que no se puede comprobar sin hardware (device, iOS,
   otro navegador) NO se da por bueno: se escribe como ítem en TESTING.md.
 
@@ -56,6 +61,11 @@ releer y sale más cara que las palabras que ahorra.
    verificación, mensaje de commit, y "PARÁ ante error/duda y reportá".
 2. **Gemini** ejecuta, verifica con **evidencia REAL pegada**, hace `git add` SELECTIVO
    (JAMÁS `git add .`), commitea, pushea, y termina con **"STOP — T-NN listo para auditoría"**.
+   > **Un push sin ese bloque NO es una entrega.** En T-64 (2026-07-27) se commiteó y pusheó
+   > el cambio más riesgoso de la sesión sin una sola línea de evidencia; se descubrió solo
+   > porque el push de la tarea siguiente arrancaba en un hash desconocido. **Por eso el
+   > auditor empieza SIEMPRE por `git log <ultimo-hash-auditado>..origin/main`**, nunca por
+   > lo que dice el reporte: si hay commits que nadie reportó, aparecen ahí.
 3. **Claude** RE-EJECUTA los checks contra el repo/commit real (NO confía en el paste — ya
    pasó 3 veces que se reportó evidencia que nunca corrió) y dictamina **APTO** o **NO APTO
    con causa raíz**. Recién con APTO se avanza. La auditoría incluye SIEMPRE:

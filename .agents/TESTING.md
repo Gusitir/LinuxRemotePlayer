@@ -29,8 +29,13 @@ prioridad: ⛔ bloquea el lanzamiento v1.9.0 · ⚠️ importante · (sin marca)
 - [ ] ⛔ **A2.** Tras el OTA, **cerrar y reabrir la PWA**: tiene que aparecer el logo
       nuevo y el tema claro. Si seguís viendo el logo viejo (el control remoto azul), el
       service worker no invalidó la caché → FALLA grave, anotarlo.
-- [ ] **A3.** `curl -s https://linux-remote-player.vercel.app/latest.json`
-      → `"version": "1.8.9"` y sha `890211c8...bf87c`.
+- [ ] **A3.** `latest.json` responde igual en los DOS hosts y con el mismo sha:
+      `curl -s https://www.linuxremoteplayer.com/latest.json`
+      `curl -s https://linux-remote-player.vercel.app/latest.json`
+      *Por qué los dos*: T-65 migró el canal al dominio propio, pero los equipos con 1.8.x
+      tienen la URL de `vercel.app` grabada en su código y la van a consultar para siempre.
+      Ese alias no se apaga nunca; si alguna vez deja de responder, el OTA de todo el parque
+      instalado muere.
 - [ ] **A4.** El panel de la TV muestra la versión **1.8.9**.
 - [ ] **A5.** `systemctl status linuxremoteplayer` → activo tras el update. Reboot →
       arranca solo.
@@ -46,11 +51,12 @@ prioridad: ⛔ bloquea el lanzamiento v1.9.0 · ⚠️ importante · (sin marca)
 - [ ] ⛔ **B2. Icono en la pantalla de inicio** = logo nuevo (cuadro oscuro con puntitos
       y triángulo verde). Si aparece una "R" o el control viejo: borrar la PWA,
       reinstalarla y volver a mirar. Anotar modelo + SO + navegador.
-- [ ] ⚠️ **B3. Migración de tema.** Tras el OTA el tema debe quedar en **Day** (claro)
-      **sin** que salte el aviso "requiere licencia pro". Con licencia Pro activa, el
-      tema oscuro que tenías debe pasar a **Night** (navy), no a claro.
+- [ ] ⚠️ **B3. Migración de tema.** Tras el OTA el tema debe quedar en **Day** (claro).
+      Con 1.8.9: si NO tenés Pro y elegís otro tema, salta "requiere licencia pro" — es lo
+      esperado en esa versión. **Con 1.9.0 ese aviso NO debe existir más** (T-62 liberó las
+      4 skins); si aparece, es una falla.
 - [ ] **B4.** Cambiar entre Day / Night / Café / Anime → aplica al instante y **persiste**
-      tras cerrar y reabrir la app.
+      tras cerrar y reabrir la app. **En 1.9.0, las 4 sin candado y sin licencia.**
 - [ ] ⚠️ **B5. Probar de noche, con la luz apagada.** Usar la app 2 minutos con el tema
       Day mientras mirás algo en la TV. Esto es un mando a distancia: se usa a oscuras, y
       una pantalla crema a pantalla completa puede encandilar. Si molesta, decilo — se
@@ -91,21 +97,40 @@ prioridad: ⛔ bloquea el lanzamiento v1.9.0 · ⚠️ importante · (sin marca)
 - [ ] **D3.** Gracia offline: cortar internet del HTPC (no la LAN) → el estado Pro
       aguanta (cache 72h). La voz NO (necesita nube, es esperado).
 
-## E. DESINSTALACIÓN — ⚠️ HAY UN BUG YA CONFIRMADO EN CÓDIGO
+## E. DESINSTALACIÓN — el fix ya está en código (T-64), FALTA PROBARLO
 
-**No hace falta probar para saberlo** (verificado leyendo el `prerm` del .deb el
-2026-07-24): `sudo apt remove linuxremoteplayer` **solo para y deshabilita el servicio**.
-NO libera la licencia, NO borra la regla de UFW, NO borra la regla de udev y NO
-desenmascara la suspensión. Las cuatro cosas sí las hace `scripts/uninstall.sh`, que
-`apt remove` nunca ejecuta — y `website/docs.html` (ES y EN) promete las cuatro.
-→ Ya está anotado como hallazgo en CURRENT.md; necesita tarea antes del lanzamiento.
+El bug de B2 se arregló el 2026-07-27: nació `scripts/lrp-cleanup.sh` (no interactivo) y el
+`prerm` lo llama. **Nada de esto se pudo probar sin un Debian real: es la verificación más
+importante del ciclo.** Requiere un `.deb` de **1.9.0**; con el 1.8.9 instalado no aplica.
 
-- [ ] **E1.** *(Cuando esté el fix)* `sudo apt remove linuxremoteplayer` y después:
-      `systemctl is-enabled sleep.target` → no masked ·
-      `ufw status | grep 8000` → vacío ·
+> **E1 ES EL ÍTEM MÁS PELIGROSO DE TODA LA MATRIZ.** Si sale mal, el daño no es "no limpia":
+> es que **cada actualización futura borre las reglas del sistema y libere la licencia de
+> todos los dispositivos**. Hacelo ANTES que E2, y si falla, parás y avisás.
+
+- [ ] ⛔ **E1. Que un OTA NO limpie nada.** Con 1.9.0 instalado y funcionando, disparar una
+      actualización (o reinstalar el mismo `.deb` con `apt install --reinstall`). Después:
+      `ls /etc/udev/rules.d/99-uinput.rules` → **TIENE que seguir existiendo** ·
+      `ufw status | grep 8000` → **la regla sigue** ·
+      `systemctl is-enabled sleep.target` → **sigue masked** (si instalaste con LRP_NOSLEEP) ·
+      y el estado **Pro sigue activo** en la app (la licencia NO se liberó).
+      *Por qué*: dpkg corre el `prerm` también al actualizar, con `$1="upgrade"`. El fix trae
+      un guard `if [ "$1" = "remove" ]` justo para esto. Es la trampa de T-19 otra vez.
+- [ ] ⛔ **E2. Que `apt remove` SÍ limpie.** `sudo apt remove linuxremoteplayer` y después:
       `ls /etc/udev/rules.d/99-uinput.rules` → no existe ·
-      y la key queda libre para activar en otra PC sin pasar por la mudanza.
-- [ ] **E2.** Reinstalar tras desinstalar → todo vuelve a funcionar.
+      `ufw status | grep 8000` → vacío ·
+      `systemctl is-enabled sleep.target` → **no** masked ·
+      y la key queda libre para activar en otra PC **sin** pasar por la pantalla de mudanza.
+- [ ] ⛔ **E3. Que `apt remove` termine bien pase lo que pase.** Repetir E2 **con el HTPC sin
+      internet** (la liberación de licencia es una llamada de red con timeout de 5s).
+      El `apt remove` tiene que **completar igual**, sin colgarse ni dejar el paquete en
+      estado roto. Comprobar con `dpkg -l | grep linuxremoteplayer` → no debe quedar en `iF`
+      ni `iU`. *Por qué*: un fallo de la limpieza JAMÁS puede abortar una desinstalación.
+- [ ] **E4.** El desinstalador manual: `sudo /opt/linuxremoteplayer/scripts/uninstall.sh`
+      → hace las mismas 4 cosas y NO imprime "se omite la limpieza de sistema".
+      *Por qué está acá*: en la auditoría de T-64 el script nuevo se había commiteado sin
+      permiso de ejecución y este camino quedaba silenciosamente sin hacer nada. Se corrigió,
+      pero es exactamente la clase de fallo que solo se ve corriéndolo.
+- [ ] **E5.** Reinstalar tras desinstalar → todo vuelve a funcionar.
 
 ## F. REGRESIÓN DEL NÚCLEO (1.8.9 tocó TODO el frontend + la voz del backend)
 

@@ -1,9 +1,7 @@
 # CURRENT — estado vivo
 <!-- Formato: AGENTS.md §FORMATO. IDs (B/N/D/H/C) son anclas: citalos, no copies el texto.
-     Tamaño ~11KB, POR ENCIMA del techo de 8KB. Se compacto a 8.9KB el 2026-07-27 y volvio a
-     crecer el mismo dia al reabrirse B1 y entrar H12 — que son bloqueantes vivos y no se
-     podan. El espacio se recupera CERRANDO items (B1, B2, H11, H12), no borrando el porque.
-     El detalle de cada auditoria esta en git log, no aca. -->
+     Ronda el techo de 8KB y a veces lo pasa. El espacio se recupera CERRANDO items
+     (B1, B2, H11, H12), no borrando el porque. El detalle de cada auditoria esta en git. -->
 
 ```yaml
 version_publicada:   1.8.9    # LIVE desde 2026-07-26 (T-60). sha 890211c8…bf87c
@@ -30,24 +28,15 @@ historia:            CONTEXT.md + git log
 - **B1b · `website/gracias.html:226` publica el gmail PERSONAL del dueño**
   (`aeciminer02@gmail.com`). La pagina de "gracias por comprar" es de las que MIRA un
   procesador de pagos: un gmail personal ahi resta credibilidad. Se rehace en T-51.
-- **B2 · `apt remove` incumple la doc.** El `prerm` (build_deb.sh:175-195) SOLO para y
-  deshabilita servicios. NO libera la licencia, NO borra la regla UFW 8000/tcp, NO borra
-  `/etc/udev/rules.d/99-uinput.rules`, NO desenmascara `sleep.target`. Las 4 SI estan en
-  `scripts/uninstall.sh`, y `website/docs.html` (ES+EN) manda a `sudo apt remove` y las
-  promete. *Efecto:* el que desinstala sigue ocupando su slot de dispositivo.
-  **CORRECCION 2026-07-27:** este item decia que uninstall.sh "ni va dentro del .deb" —
-  **es FALSO**. build_deb.sh:49 copia `scripts/` entero y el pruning de la linea 57-58 solo
-  saca `dev/`, `build_deb.sh` y `check_css_sync.py`. Verificado tambien contra el build de
-  1.8.9: el script viaja en `/opt/linuxremoteplayer/scripts/uninstall.sh`.
-  *Por que igual no sirve llamarlo desde el prerm:* tiene `read -p` interactivo (bajo apt
-  lee EOF → cancela y no hace nada) y `set -e` (cualquier fallo abortaria el `apt remove`),
-  ademas de rehacer el manejo de servicios y depender de `$SUDO_USER`, que apt no define.
-  *Fix:* extraer las 4 acciones a un `scripts/lrp-cleanup.sh` NO interactivo, llamarlo desde
-  el prerm y desde uninstall.sh (una sola fuente de verdad).
-  **RIESGO PRINCIPAL: solo debe correr en `remove`/`purge`, JAMAS en `upgrade`** — cada OTA
-  invoca el prerm con `upgrade`, y si la limpieza corriera ahi, cada actualizacion borraria
-  las reglas udev y liberaria la licencia de todos los devices. Es T-19 otra vez.
-  Verificacion en TESTING §E.
+- **B2 · `apt remove` incumple la doc — ARREGLADO EN CODIGO (T-64), SIN PROBAR EN DEVICE.**
+  Sigue listado como bloqueante porque el fix **no esta verificado**: toca un script de
+  mantenedor y eso no se puede probar sin un Debian real. Se cierra recien con **TESTING §E**.
+  *Que hace el fix:* nace `scripts/lrp-cleanup.sh` (no interactivo, sin `set -e`, siempre
+  `exit 0`) con las 4 acciones que la doc promete; lo llaman el `prerm` y `uninstall.sh`.
+  **El riesgo que domina esto: la limpieza solo corre con `$1 = "remove"`.** dpkg invoca el
+  prerm TAMBIEN en cada actualizacion con `upgrade`; sin ese guard, cada OTA borraria las
+  reglas udev y liberaria la licencia de todos los dispositivos. Es T-19 otra vez, y es lo
+  que prueba **TESTING E1**.
 
 ## N — SIGUIENTE (orden estricto)
 
@@ -56,34 +45,31 @@ historia:            CONTEXT.md + git log
    temas como Pro y T-62 ya los libero en el codigo: hasta que el `.deb` nuevo este
    publicado, cambiarlas haria mentir a la web al reves para todo el que tenga 1.8.9.
    Lineas: `website/index.html:148,254,299` + `website/en/index.html:148,256,301`.
-3. **N3 · migrar las URLs de maquina al dominio propio, DENTRO del release v1.9.0** (para
-   que el cambio de canal OTA viaje en un `.deb` auditado, no en un hotfix del sitio).
-   T-61 cambio solo lo que ve un humano; el resto sigue en `vercel.app` a proposito —
-   lista exacta de archivos y lineas: `git grep -n "linux-remote-player.vercel.app"`.
-   **Regla que no cambia: el alias `vercel.app` NO se apaga nunca** — las PWA 1.8.x leen
-   `latest.json` ahi y matarlo mata el OTA de todo lo ya instalado.
+3. **N3 · T-56, armar el release v1.9.0.** El CODIGO YA ESTA COMPLETO (T-62 skins libres,
+   T-63 doc FastAPI, T-64 apt remove, T-65 dominio). El brief de T-56 tiene que absorber N2
+   y seguir §PROCESO DE RELEASE de AGENTS.md. **Ojo: el .deb se construye en el clon WSL
+   nativo, que hoy esta desactualizado** — hay que traer todos los commits de T-62..T-65.
 4. **N4** → T-51 Paddle (alta, producto $5, webhook, compra real + refund; arrastra B1b y
-   H11) → T-55 docs (absorbe T-43/T-44) → T-56 release v1.9.0 → T-57 privatizar.
+   H11) → T-55 docs (absorbe T-43/T-44) → T-57 privatizar.
 
 ## HECHO (fase v1.9 — todas auditadas APTO; la evidencia esta en git log)
 
-- **T-46..T-50** ai-proxy + anti-abuso + licencia 1-dispositivo. Validado E2E en device
-  2026-07-22 pero **sobre un build de prueba, no sobre un .deb publicado** → revalidar
-  en TESTING §C/§D. El device ya no tiene llaves de IA.
-- **T-50b, T-53a..d** sitio ES+EN completo y LIVE. Falta de T-53: video demo y
-  `gracias.html`. Placeholders vivos: PADDLE / KOFI / VIDEO.
-- **T-58** identidad app↔web (`ae27a31`). Detalle tecnico: APPCORE §skins.css.
-- **T-59 + T-60** release 1.8.9 construido y PUBLICADO. sha
-  `890211c8d65742d81415356195c8601c42316a6d8f53710c51780e2d072bf87c`, cuadruple match,
-  identico en el dominio y en el alias vercel.
-- **T-61** (`014269f`) dominio propio + `support@` en la web. Solo `website/`.
-- **T-62** (`4c52165`) **skins liberadas** (implementa D4): `setSkin()` ya no consulta
-  `isLicensed`, y se fueron los candados y las etiquetas `(Pro)`. La VOZ sigue siendo Pro.
-  **Todavia NO llega al device: necesita el release v1.9.0.**
-- **T-63** (`03581cc`) **doc de FastAPI oculta** (cierra H9), verificado en runtime.
-  **Se uso `LRP_DEV` y NO `LRP_MODE`** porque `LRP_MODE=desktop` es un modo de usuario final
-  real, no de desarrollo, y su default (`appliance`) habria apagado la doc tambien en la PC
-  del desarrollador.
+**T-46..T-50** ai-proxy + anti-abuso + licencia 1-dispositivo · **T-50b, T-53a..d** sitio
+ES+EN LIVE · **T-58** identidad app↔web (`ae27a31`) · **T-59+T-60** release 1.8.9 construido
+y PUBLICADO · **T-61** (`014269f`) dominio + `support@` en la web · **T-62** (`4c52165`)
+skins liberadas · **T-63** (`03581cc`) doc de FastAPI oculta · **T-64** (`21e7d09`+`82a84c9`)
+apt remove limpia · **T-65** (`4f35c0d`) URLs de maquina al dominio.
+
+Lo unico de ahi que el proximo agente no puede re-derivar de git:
+- **T-46..T-50 se validaron sobre un build de prueba, NO sobre un .deb publicado** →
+  revalidar en TESTING §C/§D. Falta de T-53: video demo y `gracias.html`.
+  Placeholders vivos en la web: PADDLE / KOFI / VIDEO.
+- **T-62 y T-64 todavia NO llegan a ningun device**: necesitan el release v1.9.0.
+- **T-64 se entrego SIN reporte** y traia un defecto que ninguna verificacion de sintaxis
+  caza: `lrp-cleanup.sh` commiteado en modo `100644`. En el `.deb` no se veia porque
+  `build_deb.sh:61` le hace `chmod +x`, pero en un clon de git el guard `[ -x ]` de
+  `uninstall.sh` daba falso y el desinstalador manual dejaba de hacer las 4 acciones **en
+  silencio**. Corregido. La leccion esta en AGENTS.md §CICLO.
 
 ## D — DECISIONES VIGENTES (no re-litigar)
 
@@ -107,23 +93,17 @@ historia:            CONTEXT.md + git log
 - **D7 · `Techlm77/LinuxPlay` NO es competencia: es otra categoria** (GPL-2.0; ellos hacen
   streaming de escritorio, LRP no transmite video). **NO se rebrandea.** Analisis, mitigacion
   de la colision de nombre y el diferenciador de cifrado usable en la web:
-  **PLAN.md §MERCADO**. Su codigo no entra acá: **AGENTS.md §CODIGO DE TERCEROS**.
+  **PLAN.md §MERCADO**. Su codigo no entra acá: **AGENTS.md §CÓDIGO DE TERCEROS**.
 
 ## H — HALLAZGOS ABIERTOS (no bloquean)
 
-- **H12 · el numero de version que muestra la app NO describe la interfaz que corre.**
-  Sale en vivo de `/api/status` (del BACKEND), mientras el HTML/JS los sirve el service
-  worker desde su cache: pueden discrepar sin que nada avise.
-  *Origen:* el device del dueño reportaba 1.8.9 con `dark` por defecto y las skins viejas
-  (`dark/day/neon/anime`) = 1.8.0. **Causa probable, dicha por el dueño: ese 1.8.9 era un
-  BUILD DE PRUEBA de una sesion anterior que nunca se anoto** — no una instalacion normal.
-  Por eso NO se investiga mas (decision del dueño 2026-07-27) y baja a hallazgo de fondo.
-  *Lo que igual queda en pie:* el mecanismo es real y cualquier cliente podria reportar
-  "actualice y no cambio nada" con el numero de version dandole la razon. Suma a H3.
-  *Fix candidato si algun dia molesta:* que el frontend exponga SU version (la que build_deb
-  inyecta en `sw.js`) y el panel avise cuando no coincide con la del backend.
-  *Leccion de proceso:* un build de prueba que no se escribe en .agents reaparece meses
-  despues como un bug fantasma. Si se toca el device, se anota.
+- **H12 · el numero de version que muestra la app NO describe la interfaz que corre.** Sale
+  de `/api/status` (BACKEND) mientras el HTML/JS los sirve el service worker desde su cache:
+  pueden discrepar sin que nada avise, y un cliente diria "actualice y no cambio nada" con
+  el propio producto dandole la razon. Suma a H3. **Bajado de prioridad** (dueño 2026-07-27):
+  el caso que lo destapo era un build de prueba nunca anotado, no una instalacion normal.
+  *Fix si algun dia molesta:* que el frontend exponga SU version (la que `build_deb` inyecta
+  en `sw.js`) y el panel avise cuando no coincide.
 - **H11** `backend/.env.example:20` trae `BUY_URL=https://buy.stripe.com/test_5kQ3...`:
   Stripe en modo TEST cuando los pagos ya son Paddle (D1). Ese archivo es la plantilla del
   `.env` real → el boton "comprar" de un device instalado apunta a un checkout de prueba de
