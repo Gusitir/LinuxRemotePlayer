@@ -1,6 +1,9 @@
 # CURRENT — estado vivo
-<!-- Formato: AGENTS.md §FORMATO. IDs (B/N/D/H/C) son anclas estables: citalos, no copies el texto.
-     Compactado 2026-07-27 (12.8KB -> techo 8KB): el detalle de cada auditoria esta en git log. -->
+<!-- Formato: AGENTS.md §FORMATO. IDs (B/N/D/H/C) son anclas: citalos, no copies el texto.
+     Compactado 2026-07-27: 12.8KB -> 8.6KB. Queda ~0.6KB POR ENCIMA del techo de 8KB: lo
+     que sobra es el porque de B2, D4-D7 y H11, y podarlo mas costaba informacion real. Si
+     entra un bloqueante nuevo, cerrar B2 o H11 primero y recuperar el espacio ahi.
+     El detalle de cada auditoria esta en git log. -->
 
 ```yaml
 version_publicada:   1.8.9    # LIVE desde 2026-07-26 (T-60). sha 890211c8…bf87c
@@ -116,15 +119,14 @@ historia:            CONTEXT.md + git log
 ## C — CHECKLIST DEL DUEÑO (operativo; lo del device esta en TESTING.md)
 
 - [x] **C1** push de 1.8.9 (T-60). · [x] **C2** dominio + `support@` publicados (T-61).
-- [ ] **C8** mandarte un correo de prueba a `support@linuxremoteplayer.com` y confirmar que
-      LLEGA. La web ya lo publica en 14 lugares: si el buzon no existe, B1 sigue viva
-      disfrazada. Un minuto, y es prerrequisito de Paddle.
-- [ ] **C3** wallpapers definitivos de las skins nuevas. Para Gato/Perro mandar **el TILE**
-      (~400x400), no el pantallazo: son patrones sin costura y tilear ya esta soportado
-      (`--bg-repeat`/`--bg-size`). Un tile pesa ~30KB vs ~170KB del full-screen.
-- [ ] **C4** redeployar ai-proxy con el prompt bilingue si no se hizo (T-53d). Se verifica
-      en TESTING C2 y es ⛔ porque **la web ya vende la voz en ingles**.
-- [ ] **C5** screenshots nuevas del sitio: las actuales muestran la skin anime, que ya no
-      es el look por defecto (T-56).
-- [ ] **C6** `supabase functions deploy send-feedback --no-verify-jwt` (pendiente desde v1.5).
+- [ ] **C8** correo de prueba a `support@linuxremoteplayer.com` y confirmar que LLEGA. La
+      web ya lo publica en 14 lugares: si el buzon no existe, B1 sigue viva disfrazada.
+- [ ] **C3** wallpapers de las skins nuevas. Para Gato/Perro mandar **el TILE** (~400x400),
+      no el pantallazo: son patrones sin costura, tilear ya esta soportado
+      (`--bg-repeat`/`--bg-size`) y un tile pesa ~30KB vs ~170KB del full-screen.
+- [ ] **C4** redeployar ai-proxy con el prompt bilingue si no se hizo (T-53d). ⛔ en
+      TESTING C2 porque **la web ya vende la voz en ingles**.
+- [ ] **C5** screenshots nuevas del sitio: las actuales son de la skin anime, que ya no es
+      el look por defecto (T-56). Son tambien las que ve Paddle.
+- [ ] **C6** `supabase functions deploy send-feedback --no-verify-jwt` (desde v1.5).
 - [ ] **C7** privatizar el repo al lanzar (T-57).
