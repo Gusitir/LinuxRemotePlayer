@@ -148,5 +148,5 @@ serve stale assets forever. The build aborts if the stamp is missing.
 | Current state: shipped, next, known broken | [`.agents/CURRENT.md`](../.agents/CURRENT.md) |
 | The rules of working here | [`.agents/AGENTS.md`](../.agents/AGENTS.md) |
 | What gets tested on real hardware | [`.agents/TESTING.md`](../.agents/TESTING.md) |
-| Endpoint reference | the running server's `/docs` (FastAPI generates it) |
+| Endpoint reference | the running server's `/docs` — only with `LRP_DEV=true` in `backend/.env`; it is off by default so installations do not publish their API surface on the LAN |
 | Why a past decision was made | `ARCHITECTURE.md` §7, then `.agents/CONTEXT.md` |

@@ -31,7 +31,18 @@ logger = logging.getLogger("main")
 global_dropped_fast = 0
 global_dropped_slow = 0
 
-app = FastAPI(title="LinuxRemotePlayer API")
+# H9: /docs, /redoc y /openapi.json responden SIN gate a cualquiera en la LAN y enumeran
+# toda la superficie de la API. Se apagan por defecto. El default es CERRADO a proposito:
+# un .env sin LRP_DEV, o de un usuario en modo escritorio, tiene que quedar cerrado igual.
+# En una maquina de desarrollo se enciende poniendo LRP_DEV=true a mano en backend/.env.
+_DEV_DOCS = os.getenv("LRP_DEV", "false").lower() == "true"
+
+app = FastAPI(
+    title="LinuxRemotePlayer API",
+    docs_url="/docs" if _DEV_DOCS else None,
+    redoc_url="/redoc" if _DEV_DOCS else None,
+    openapi_url="/openapi.json" if _DEV_DOCS else None,
+)
 
 # SEC-01 CORS allow_origins=[] (rely on same-origin only)
 app.add_middleware(
