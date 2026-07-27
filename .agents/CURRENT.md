@@ -24,10 +24,10 @@ historia:            CONTEXT.md + git log
   revision de Paddle. Se rehace en T-51. (B1 original — el `soporte@` que rebotaba — cerrada
   en T-61.)
 - **B2 · `apt remove` incumple la doc.** El `prerm` del .deb SOLO para+deshabilita el
-  servicio. NO libera licencia, NO borra regla UFW 8000/tcp, NO borra
-  `/etc/udev/rules.d/99-uinput.rules`, NO desenmascara `sleep.target`. Las 4 SI estan en
-  `scripts/uninstall.sh`, que `apt remove` nunca ejecuta y que ni va dentro del .deb.
-  `website/docs.html` (ES+EN) manda a `sudo apt remove` y promete las 4.
+  servicio. NO libera licencia, NO borra la regla UFW 8000/tcp, NO borra
+  `/etc/udev/rules.d/99-uinput.rules`, NO desenmascara `sleep.target` — las 4 SI estan en
+  `scripts/uninstall.sh`, que `apt remove` nunca ejecuta y que ni siquiera va dentro del
+  .deb, mientras `website/docs.html` (ES+EN) manda a `sudo apt remove` y promete las 4.
   *Efecto:* el que desinstala sigue ocupando su slot de dispositivo.
   *Fix candidato:* empaquetar uninstall.sh y llamarlo desde el prerm; un fallo suyo
   JAMAS debe bloquear el `apt remove`. Verificacion en TESTING §E.
@@ -41,16 +41,14 @@ historia:            CONTEXT.md + git log
    Lineas: `website/index.html:148,254,299` + `website/en/index.html:148,256,301`.
 3. **N3 · migrar las URLs de maquina al dominio propio, DENTRO del release v1.9.0** (para
    que el cambio de canal OTA viaje en un `.deb` auditado, no en un hotfix del sitio).
-   T-61 cambio solo lo que ve un humano; siguen en `vercel.app` a proposito:
-   `website/latest.json` (deb_url), `website/install.sh` (MANIFEST_URL),
-   `backend/main.py:416` (buy_url) y `:555` (UPDATE_MANIFEST_URL),
-   `scripts/build_deb.sh:122`, `frontend/app.js:61,249,1255`, `README.md`.
+   T-61 cambio solo lo que ve un humano; el resto sigue en `vercel.app` a proposito —
+   lista exacta de archivos y lineas: `git grep -n "linux-remote-player.vercel.app"`.
    **Regla que no cambia: el alias `vercel.app` NO se apaga nunca** — las PWA 1.8.x leen
    `latest.json` ahi y matarlo mata el OTA de todo lo ya instalado.
 4. **N4** → T-51 Paddle (alta, producto $5, webhook, compra real + refund; arrastra B1b y
    H11) → T-55 docs (absorbe T-43/T-44) → T-56 release v1.9.0 → T-57 privatizar.
 
-## HECHO (fase v1.9 — detalle de cada auditoria en git log)
+## HECHO (fase v1.9 — todas auditadas APTO; la evidencia esta en git log)
 
 - **T-46..T-50** ai-proxy + anti-abuso + licencia 1-dispositivo. Validado E2E en device
   2026-07-22 pero **sobre un build de prueba, no sobre un .deb publicado** → revalidar
@@ -58,21 +56,17 @@ historia:            CONTEXT.md + git log
 - **T-50b, T-53a..d** sitio ES+EN completo y LIVE. Falta de T-53: video demo y
   `gracias.html`. Placeholders vivos: PADDLE / KOFI / VIDEO.
 - **T-58** identidad app↔web (`ae27a31`). Detalle tecnico: APPCORE §skins.css.
-- **T-59 + T-60** release 1.8.9 construido, auditado y PUBLICADO. sha
-  `890211c8d65742d81415356195c8601c42316a6d8f53710c51780e2d072bf87c` con cuadruple match
-  (latest.json == .deb == .sha256 == copia en downloads), identico en el dominio y en el
-  alias vercel, y el .deb servido pesa exactamente lo que el blob del commit (309912 B).
+- **T-59 + T-60** release 1.8.9 construido y PUBLICADO. sha
+  `890211c8d65742d81415356195c8601c42316a6d8f53710c51780e2d072bf87c`, cuadruple match,
+  identico en el dominio y en el alias vercel.
 - **T-61** (`014269f`) dominio propio + `support@` en la web. Solo `website/`.
-- **T-62** (`4c52165`) **skins liberadas** — implementa D4. `setSkin()` ya no consulta
-  `isLicensed`; `FREE_SKIN` → `DEFAULT_SKIN`; `dark`/`neon` resueltos en `LEGACY_SKINS`;
-  candados `.pro-lock`, `<symbol id="ico-lock">` y etiquetas `(Pro)` eliminados.
-  La VOZ sigue siendo Pro (`isLicensed` sobrevive en 4 puntos, a proposito).
+- **T-62** (`4c52165`) **skins liberadas** (implementa D4): `setSkin()` ya no consulta
+  `isLicensed`, y se fueron los candados y las etiquetas `(Pro)`. La VOZ sigue siendo Pro.
   **Todavia NO llega al device: necesita el release v1.9.0.**
-- **T-63** (`03581cc`) **doc de FastAPI oculta** — cierra H9. Verificado en RUNTIME (no por
-  inspeccion): `/docs`, `/redoc`, `/openapi.json` y `/docs/oauth2-redirect` no existen sin
-  `LRP_DEV`, y aparecen con `true`/`TRUE`. **Se uso `LRP_DEV` y NO `LRP_MODE`** porque
-  `LRP_MODE=desktop` es un modo de usuario final real, no de desarrollo, y su default
-  (`appliance`) habria apagado la doc tambien en la PC del desarrollador.
+- **T-63** (`03581cc`) **doc de FastAPI oculta** (cierra H9), verificado en runtime.
+  **Se uso `LRP_DEV` y NO `LRP_MODE`** porque `LRP_MODE=desktop` es un modo de usuario final
+  real, no de desarrollo, y su default (`appliance`) habria apagado la doc tambien en la PC
+  del desarrollador.
 
 ## D — DECISIONES VIGENTES (no re-litigar)
 
@@ -82,20 +76,17 @@ historia:            CONTEXT.md + git log
 - **D2 · nombre comercial: LinuxRemotePlayer** (rebrand cancelado); "LRP" marca corta.
 - **D3 · precio:** Pro unico $5 lifetime al lanzar. Suscripcion recien con Voz 2.0.
 - **D4 · skins: las 7 planeadas van GRATIS**, son el gancho; el Pro se vendera con skins
-  ADICIONALES en v2.0. Roster: Day (default), Night, Cafe, Cozy (**renombrar** desde
-  `anime`), Cyberpunk, Gato y Perro (etiqueta "Accesibilidad", botonera recortada).
-  Spec, set de botones y criticas: **PLAN.md §PH17** (v1.9.1). Mockups:
-  `.agents/design/skins2/`. Falta del dueño: wallpapers (C3).
-  **Codigo: las 4 primeras ya existen y ya estan libres (T-62); las otras 3 son PH17.**
+  ADICIONALES en v2.0. Roster, spec, set de botones y criticas: **PLAN.md §PH17** (v1.9.1);
+  mockups en `.agents/design/skins2/`. Falta del dueño: wallpapers (C3).
+  **Codigo: las 4 que existen ya estan libres (T-62); las otras 3 son PH17.**
 - **D5 · Voz 2.0 repriorizada a v2.0** (PLAN.md §PH19). Meta: que "pon video de gatos"
   REPRODUZCA, no que se quede en la busqueda. Orden 1→2→3: keymaps por sitio primero;
   control del DOM (WebDriver BiDi, el equivalente Firefox de las DevTools) al final, con
   la nota de seguridad del puerto de depuracion.
 - **D6 · demo interactiva en la web** (2026-07-26): minijuego con control simulado + "TV"
   que reacciona, con las 4 skins. Spec: **PLAN.md §PH20** (v1.9.1). Dos reglas que NO se
-  negocian: etiqueta de SIMULACION visible, y CERO red (un endpoint de IA abierto desde el
-  sitio publico seria gratis para cualquiera). Va despues de PH17 o en la misma tanda, o
-  hereda la deuda de los layouts nuevos. **No bloquea Paddle** (esa va con capturas, C5).
+  negocian: etiqueta de SIMULACION visible, y CERO red. Va con PH17 o despues, nunca antes.
+  **No bloquea Paddle** (esa va con capturas, C5).
 - **D7 · `Techlm77/LinuxPlay` NO es competencia: es otra categoria** (GPL-2.0; ellos hacen
   streaming de escritorio, LRP no transmite video). **NO se rebrandea.** Analisis, mitigacion
   de la colision de nombre y el diferenciador de cifrado usable en la web:
