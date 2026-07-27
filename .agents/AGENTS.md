@@ -75,11 +75,41 @@ releer y sale más cara que las palabras que ahorra.
 - Al cerrar una sesión (o antes de quedarte sin tokens): actualizá **CONTEXT.md** con un
   resumen compactado, para que el próximo agente sepa dónde quedó todo.
 
+## CÓDIGO DE TERCEROS — CONTAMINACIÓN DE LICENCIA (regla dura)
+LinuxRemotePlayer se publica bajo **Elastic 2.0 y se vende**. El código copyleft
+(GPL/AGPL/LGPL en sus variantes) es **incompatible**: derivar de él obligaría a liberar
+todo el producto bajo esa licencia. No es un tecnicismo, mata el modelo de negocio.
+
+**Acá el riesgo es peor que en un proyecto normal, y por eso la regla es más estricta:
+la mayoría de este código lo escribió una IA.** Si un agente lee un repo copyleft y
+después produce código parecido en esa misma área, NO existe forma de demostrar después
+que no hubo derivación — no hay un humano que pueda declarar qué tenía en la cabeza.
+
+- **NUNCA metas código copyleft en el contexto de un agente que va a tocar código de LRP.**
+  Ni pegado en el chat, ni clonado en el repo, ni leído con una herramienta.
+- Leer el **README** de un proyecto ajeno para entender el panorama: permitido. Leer sus
+  archivos de código y después implementar una feature en esa área: **prohibido**.
+- Las ideas de alto nivel y los hechos no se pueden licenciar (que UDP conviene sobre TCP
+  para input, qué puertos usa alguien). La EXPRESIÓN sí. La línea práctica: si para
+  escribirlo tuviste que mirar su código, parás.
+- Antes de traer una dependencia nueva, mirá su licencia. MIT/BSD/Apache-2.0: OK.
+  GPL/AGPL/LGPL: parás y preguntás al dueño.
+- Caso concreto registrado (2026-07-26): `github.com/Techlm77/LinuxPlay`, GPL-2.0, mismo
+  vecindario (control remoto de Linux) pero otro producto — ellos hacen streaming de
+  escritorio con FFmpeg, nosotros no transmitimos video. Contexto de mercado en
+  CURRENT §D7. **Su código no entra acá.**
+
 ## ENTORNO (crítico — romper esto = builds/edits corruptos)
 - **El mount WSL `/mnt/...` TRUNCA archivos grandes (~40KB):** app.js (~1500 líneas) y main.py
   salen CORTADOS si se leen/editan por `/mnt` → falsos errores, `git status` engañoso, .deb
   ROTO. Editar/leer archivos grandes con herramientas NATIVAS (harness / Windows), nunca `/mnt`.
 - `py_compile` / `node --check` / `pyflakes` con python/node de **Windows** (nativo) = OK.
+- **Para EJECUTAR el backend, el python de Windows NO sirve** (le faltan fastapi, segno…):
+  las dependencias viven en `backend/.venv/Scripts/python.exe`. Con ese intérprete
+  `backend/main.py` SE PUEDE importar en Windows — avisa "evdev not found" y sigue, así que
+  se puede inspeccionar la app FastAPI (rutas, middlewares) sin device. En T-63 se reportó
+  "no verificable" solo por haber usado el python equivocado. Los briefs que pidan correr
+  algo del backend deben nombrar la ruta del venv.
 - **Builds del `.deb` SOLO en clon WSL NATIVO** (clonado desde origin dentro de `~`, no `/mnt`).
 - Guard CSS (`scripts/check_css_sync.py`) corre en `build_deb.sh` y ABORTA si hay clase CSS
   usada sin definir (cazó deriva real en T-29). Solo detecta usada-sin-definir, NO al revés:
