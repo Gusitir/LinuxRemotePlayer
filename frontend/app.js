@@ -149,13 +149,14 @@ let connectAttempts = 0;
 let retryTimeoutId = null; // HYG-02: prevent storm reconnects
 let hostname = '';
 
-// Skins v1.9: la paleta es la misma del sitio web. 'day' (clara) es la skin por
-// defecto y la única gratuita; night/cafe/anime son Pro.
-const FREE_SKIN = 'day';
+// Skins v1.9: la paleta es la misma del sitio web. TODAS son gratuitas (D4, decision
+// del dueño 2026-07-26): son el gancho de entrada, y el Pro se vendera con las skins
+// ADICIONALES de v2.0. 'day' (clara) sigue siendo la de por defecto.
+const DEFAULT_SKIN = 'day';
 const SKINS = ['day', 'night', 'cafe', 'anime'];
-// Ids anteriores a v1.9 -> equivalente en la paleta nueva ('dark' se resuelve
-// abajo según licencia, para no molestar con un toast a quien no es Pro).
-const LEGACY_SKINS = { neon: 'night' };
+// Ids anteriores a v1.9 -> equivalente en la paleta nueva. 'dark' ya no depende de la
+// licencia: era el tema oscuro viejo, ahora simplemente es 'night'.
+const LEGACY_SKINS = { neon: 'night', dark: 'night' };
 const SKIN_THEME_COLOR = {
     day: '#f6f2ea',
     night: '#0b1220',
@@ -164,14 +165,9 @@ const SKIN_THEME_COLOR = {
 };
 
 function setSkin(skin) {
-    if (skin === 'dark') skin = isLicensed ? 'night' : FREE_SKIN;
     if (LEGACY_SKINS[skin]) skin = LEGACY_SKINS[skin];
     if (SKINS.indexOf(skin) === -1) {
-        skin = FREE_SKIN;
-    }
-    if (skin !== FREE_SKIN && !isLicensed) {
-        toast('Este tema (skin) requiere una licencia pro.');
-        skin = FREE_SKIN;
+        skin = DEFAULT_SKIN;
     }
     document.documentElement.setAttribute('data-skin', skin);
     localStorage.setItem('lrp_skin', skin);
@@ -189,7 +185,7 @@ async function fetchLicenseStatus() {
             isLicensed = data.licensed;
 
             // Apply saved skin after checking license
-            const savedSkin = localStorage.getItem('lrp_skin') || FREE_SKIN;
+            const savedSkin = localStorage.getItem('lrp_skin') || DEFAULT_SKIN;
             setSkin(savedSkin);
 
             const micRow = document.getElementById('mic-row');
@@ -228,12 +224,6 @@ async function fetchLicenseStatus() {
                     licBlock.classList.remove('flex');
                 }
             }
-            
-            const locks = document.querySelectorAll('.pro-lock');
-            locks.forEach(lock => {
-                if (isLicensed) lock.classList.add('hidden');
-                else lock.classList.remove('hidden');
-            });
         }
     } catch (err) {
         console.error('Failed to get license status:', err);
