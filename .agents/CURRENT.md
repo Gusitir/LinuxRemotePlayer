@@ -21,28 +21,33 @@ historia:            CONTEXT.md + git log
 
 ## B — BLOQUEANTES (rotos AHORA, en produccion)
 
-- **B1 · REABIERTA 2026-07-27: `support@linuxremoteplayer.com` NO recibe.** T-61 arreglo el
-  string en la web (14 lugares) pero el buzon no existe: la prueba de C8 rebota con
-  `554 5.7.1 Relay access denied`. **El DNS esta bien** — MX a `eforward1..5.
-  registrar-servers.com` (reenvio gratuito de Namecheap) + SPF puesto. El 554 de ESOS
-  servidores significa que el alias `support` no esta dado de alta en el panel: comprar el
-  dominio no crea buzones. *Fix inmediato:* Namecheap → Domain List → Manage → Redirect
-  Email → alias `support` → destino gmail.
-  **Ojo, eso NO alcanza para vender:** el reenvio de Namecheap es SOLO de recepcion, y las
-  respuestas saldrian desde el gmail personal — el mismo problema de credibilidad que B1b.
-  Antes de cerrar T-51 hace falta un buzon que pueda ENVIAR como support@ (Namecheap Private
-  Email ~$10-14/año sin tocar DNS, o Zoho gratis cambiando los MX).
+- **B1 · EN CURSO 2026-07-27: `support@linuxremoteplayer.com` todavia no recibe.** T-61
+  arreglo el string en la web (14 lugares) pero el buzon no existia: la prueba de C8 reboto
+  con `554 5.7.1 Relay access denied` (el DNS estaba bien; faltaba dar de alta la cuenta —
+  comprar el dominio no crea buzones). El dueño ya agrego los DNS records del Webmail;
+  **queda esperar la propagacion (~4h) y REPETIR la prueba de C8** antes de darlo por bueno.
+  *Leccion:* que la web publique una direccion no prueba que exista un buzon detras.
 - **B1b · `website/gracias.html:226` publica el gmail PERSONAL del dueño**
   (`aeciminer02@gmail.com`). La pagina de "gracias por comprar" es de las que MIRA un
   procesador de pagos: un gmail personal ahi resta credibilidad. Se rehace en T-51.
-- **B2 · `apt remove` incumple la doc.** El `prerm` del .deb SOLO para+deshabilita el
-  servicio. NO libera licencia, NO borra la regla UFW 8000/tcp, NO borra
-  `/etc/udev/rules.d/99-uinput.rules`, NO desenmascara `sleep.target` — las 4 SI estan en
-  `scripts/uninstall.sh`, que `apt remove` nunca ejecuta y que ni siquiera va dentro del
-  .deb, mientras `website/docs.html` (ES+EN) manda a `sudo apt remove` y promete las 4.
-  *Efecto:* el que desinstala sigue ocupando su slot de dispositivo.
-  *Fix candidato:* empaquetar uninstall.sh y llamarlo desde el prerm; un fallo suyo
-  JAMAS debe bloquear el `apt remove`. Verificacion en TESTING §E.
+- **B2 · `apt remove` incumple la doc.** El `prerm` (build_deb.sh:175-195) SOLO para y
+  deshabilita servicios. NO libera la licencia, NO borra la regla UFW 8000/tcp, NO borra
+  `/etc/udev/rules.d/99-uinput.rules`, NO desenmascara `sleep.target`. Las 4 SI estan en
+  `scripts/uninstall.sh`, y `website/docs.html` (ES+EN) manda a `sudo apt remove` y las
+  promete. *Efecto:* el que desinstala sigue ocupando su slot de dispositivo.
+  **CORRECCION 2026-07-27:** este item decia que uninstall.sh "ni va dentro del .deb" —
+  **es FALSO**. build_deb.sh:49 copia `scripts/` entero y el pruning de la linea 57-58 solo
+  saca `dev/`, `build_deb.sh` y `check_css_sync.py`. Verificado tambien contra el build de
+  1.8.9: el script viaja en `/opt/linuxremoteplayer/scripts/uninstall.sh`.
+  *Por que igual no sirve llamarlo desde el prerm:* tiene `read -p` interactivo (bajo apt
+  lee EOF → cancela y no hace nada) y `set -e` (cualquier fallo abortaria el `apt remove`),
+  ademas de rehacer el manejo de servicios y depender de `$SUDO_USER`, que apt no define.
+  *Fix:* extraer las 4 acciones a un `scripts/lrp-cleanup.sh` NO interactivo, llamarlo desde
+  el prerm y desde uninstall.sh (una sola fuente de verdad).
+  **RIESGO PRINCIPAL: solo debe correr en `remove`/`purge`, JAMAS en `upgrade`** — cada OTA
+  invoca el prerm con `upgrade`, y si la limpieza corriera ahi, cada actualizacion borraria
+  las reglas udev y liberaria la licencia de todos los devices. Es T-19 otra vez.
+  Verificacion en TESTING §E.
 
 ## N — SIGUIENTE (orden estricto)
 
@@ -106,19 +111,19 @@ historia:            CONTEXT.md + git log
 
 ## H — HALLAZGOS ABIERTOS (no bloquean)
 
-- **H12 · el numero de version que muestra la app NO describe la interfaz que estas usando.**
-  Sale en vivo de `/api/status` (o sea del BACKEND), mientras el HTML/JS los sirve el service
-  worker desde su cache. Si la cache no rota, la app dice "1.8.9" mientras muestra la UI de
-  1.8.0. Detectado 2026-07-27 en el device del dueño: reportaba 1.8.9 con `dark` por defecto
-  y las skins viejas (`dark/day/neon/anime`), que es exactamente 1.8.0 — el 1.8.9 trae `day`
-  por defecto y `day/night/cafe/anime`.
-  *Por que importa mas alla de este caso:* cualquier cliente que actualice puede reportar
-  "actualice y no cambio nada", y el numero de version le da la razon. Suma a H3.
-  *Candidato a fix:* que el frontend exponga SU propia version (la que inyecta build_deb en
-  `sw.js`) y que el panel muestre las dos, o avise cuando no coinciden.
-  Diagnostico pendiente del dueño: si el HTPC tiene los archivos 1.8.9 en
-  `/opt/linuxremoteplayer/frontend/`, el problema es la cache del telefono; si no, no se
-  aplico el .deb.
+- **H12 · el numero de version que muestra la app NO describe la interfaz que corre.**
+  Sale en vivo de `/api/status` (del BACKEND), mientras el HTML/JS los sirve el service
+  worker desde su cache: pueden discrepar sin que nada avise.
+  *Origen:* el device del dueño reportaba 1.8.9 con `dark` por defecto y las skins viejas
+  (`dark/day/neon/anime`) = 1.8.0. **Causa probable, dicha por el dueño: ese 1.8.9 era un
+  BUILD DE PRUEBA de una sesion anterior que nunca se anoto** — no una instalacion normal.
+  Por eso NO se investiga mas (decision del dueño 2026-07-27) y baja a hallazgo de fondo.
+  *Lo que igual queda en pie:* el mecanismo es real y cualquier cliente podria reportar
+  "actualice y no cambio nada" con el numero de version dandole la razon. Suma a H3.
+  *Fix candidato si algun dia molesta:* que el frontend exponga SU version (la que build_deb
+  inyecta en `sw.js`) y el panel avise cuando no coincide con la del backend.
+  *Leccion de proceso:* un build de prueba que no se escribe en .agents reaparece meses
+  despues como un bug fantasma. Si se toca el device, se anota.
 - **H11** `backend/.env.example:20` trae `BUY_URL=https://buy.stripe.com/test_5kQ3...`:
   Stripe en modo TEST cuando los pagos ya son Paddle (D1). Ese archivo es la plantilla del
   `.env` real → el boton "comprar" de un device instalado apunta a un checkout de prueba de
@@ -141,12 +146,9 @@ historia:            CONTEXT.md + git log
 ## C — CHECKLIST DEL DUEÑO (operativo; lo del device esta en TESTING.md)
 
 - [x] **C1** push de 1.8.9 (T-60). · [x] **C2** dominio comprado + `support@` en la web (T-61).
-- [!] **C8 · FALLO 2026-07-27.** El correo de prueba rebota: el alias no existe. Dar de alta
-      el reenvio en Namecheap (ver B1) y REPETIR la prueba. Prerrequisito de Paddle.
-- [ ] **C9** diagnostico del device (ver H12): correr en el HTPC
-      `cat /opt/linuxremoteplayer/VERSION` y
-      `grep -o 'data-skin="[a-z]*"' /opt/linuxremoteplayer/frontend/index.html`.
-      Si dice `day` → la cache del telefono esta vieja. Si dice `dark` → el .deb no se aplico.
+- [ ] **C8** repetir el correo de prueba a `support@linuxremoteplayer.com` cuando propaguen
+      los DNS del Webmail (~4h desde 2026-07-27). Fallo la primera vez; cierra B1 y es
+      prerrequisito de Paddle.
 - [ ] **C3** wallpapers de las skins nuevas. Para Gato/Perro mandar **el TILE** (~400x400),
       no el pantallazo: son patrones sin costura, tilear ya esta soportado
       (`--bg-repeat`/`--bg-size`) y un tile pesa ~30KB vs ~170KB del full-screen.
