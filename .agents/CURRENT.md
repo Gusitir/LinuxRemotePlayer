@@ -2,24 +2,27 @@
 <!-- Formato: AGENTS.md §FORMATO. IDs (B/N/D/H/C) son anclas estables: citalos, no copies el texto. -->
 
 ```yaml
-version_publicada:   1.8.0
-version_construida:  1.8.9    # AUDITADA APTO, commit cefe4d5, SIN PUBLICAR
-donde_vive:          clon WSL ~/lrp-release (fuera de este repo, invisible al leer git)
-fase_activa:         v1.9 -> PLAN_v1.9.md   # tareas T-46..T-59
+version_publicada:   1.8.9    # LIVE desde 2026-07-26 (T-60). sha 890211c8…bf87c
+dominio:             https://www.linuxremoteplayer.com  # comprado y sirviendo desde Vercel
+alias_vercel:        linux-remote-player.vercel.app     # VIVO a proposito: es el canal OTA
+correo_soporte:      support@linuxremoteplayer.com      # el viejo soporte@ NO existia
+fase_activa:         v1.9 -> PLAN_v1.9.md   # tareas T-46..T-61
 repo:                publico; se privatiza en T-57
 licencia:            Elastic 2.0
-ultima_sesion:       2026-07-24
-pruebas_device:      TESTING.md (matriz ciclo 1.8.9; 9 items ⛔)
+ultima_sesion:       2026-07-26
+pruebas_device:      TESTING.md (matriz ciclo 1.8.9; DESBLOQUEADA por T-60)
 docs_humanos:        docs/ARCHITECTURE.md (la forma) + docs/DEVELOPING.md (como trabajar)
 historia:            CONTEXT.md + git log
 ```
 
 ## B — BLOQUEANTES (rotos AHORA, en produccion)
 
-- **B1 · correo de soporte rebota.** La web LIVE publica `soporte@linuxremoteplayer.com`
-  en 16 sitios (index/docs/changelog, ES+EN) y **el dominio no esta comprado**. Se cierra
-  con C2. Si C2 se demora, revertir a un correo que exista.
-  Aparte `website/gracias.html:226` quedo con el correo viejo (se rehace en T-51).
+- ~~**B1 · correo de soporte rebota.**~~ **CERRADA en T-61** (2026-07-26): dominio comprado
+  y las 14 ocurrencias de `soporte@` en `website/` pasaron a `support@`. Verificado en vivo.
+  **Queda el resto B1b:** `website/gracias.html:226` publica el gmail PERSONAL del dueño
+  (`aeciminer02@gmail.com`), no un correo de empresa. La pagina de "gracias por comprar" es
+  de las que MIRA un procesador de pagos — un gmail personal ahi resta credibilidad en la
+  revision de Paddle. Se rehace en T-51.
 - **B2 · `apt remove` incumple la doc.** El `prerm` del .deb SOLO para+deshabilita el
   servicio. NO libera licencia, NO borra regla UFW 8000/tcp, NO borra
   `/etc/udev/rules.d/99-uinput.rules`, NO desenmascara `sleep.target`. Las 4 SI estan en
@@ -28,22 +31,25 @@ historia:            CONTEXT.md + git log
   *Efecto:* el que desinstala sigue ocupando su slot de dispositivo.
   *Fix candidato:* empaquetar uninstall.sh y llamarlo desde el prerm; un fallo suyo
   JAMAS debe bloquear el `apt remove`. Verificacion en TESTING §E.
-- **B3 · voz muerta en lo publicado.** El 1.8.0 que esta en la web llama a Together
-  directo con llaves revocadas en T-50 → instalacion nueva = voz rota. **Publicar 1.8.9
-  es lo que vuelve vendible la voz.** Se cierra con N1.
+- ~~**B3 · voz muerta en lo publicado.**~~ **CERRADA en T-60** (2026-07-26): 1.8.9 esta LIVE,
+  las instalaciones nuevas van por ai-proxy. La voz vuelve a ser vendible.
 
 ## N — SIGUIENTE (orden estricto)
 
-1. **N1 · push de 1.8.9. LOS DOS CLONES DIVERGIERON** (ambos cuelgan de `107a8ce`):
-   WSL tiene el release `cefe4d5`; Windows tiene los commits de docs. Orden obligatorio:
-   `cd ~/lrp-release && git push origin main` → luego en Windows
-   `git pull --rebase origin main && git push origin main` → verificar que `latest.json`
-   sirve 1.8.9 con sha `890211c8…bf87c`. Desbloquea TODA la matriz de TESTING.
-2. **N2 · el dueño ejecuta TESTING.md** (empezar por los ⛔).
-3. **N3 · T-52 dominio** (bloqueado por C2). En Vercel: **mantener viva la URL
-   `vercel.app` o redirigir** — las PWA 1.8.x leen `latest.json` ahi; matarla mata el OTA
-   de todo lo instalado.
-4. **N4** → T-51 Paddle (alta, producto $5, webhook, compra real + refund) → T-55 docs
+1. **N1 · el dueño ejecuta TESTING.md** (empezar por los ⛔). Ya no hay nada que lo bloquee.
+2. **N2 · T-62 liberar las skins** (implementa D4). Hoy `app.js` §setSkin gatea todo lo que
+   no sea `day` tras `isLicensed` → el dueño en su propio device solo ve `day`. Va DENTRO
+   del release v1.9.0 (T-56), no en un release aparte: decidido 2026-07-26.
+3. **N3 · T-63 ocultar la doc de FastAPI** (implementa H9). Va antes de T-56.
+4. **N4 · migrar las URLs de maquina al dominio propio.** T-61 cambio solo lo que ve un
+   humano. Siguen en `vercel.app` a proposito: `website/latest.json` (deb_url),
+   `website/install.sh` (MANIFEST_URL), `backend/main.py:416` (buy_url) y `:555`
+   (UPDATE_MANIFEST_URL), `scripts/build_deb.sh:122`, `frontend/app.js:61,249,1255`,
+   `README.md`. **Se migran DENTRO del release v1.9.0** para que el cambio de canal OTA
+   viaje en un `.deb` auditado, no en un hotfix del sitio.
+   **Regla que no cambia: el alias `vercel.app` NO se apaga nunca** — las PWA 1.8.x leen
+   `latest.json` ahi y matarlo mata el OTA de todo lo ya instalado.
+5. **N5** → T-51 Paddle (alta, producto $5, webhook, compra real + refund) → T-55 docs
    (absorbe T-43/T-44) → T-56 release v1.9.0 → T-57 privatizar.
 
 ## HECHO (fase v1.9)
@@ -55,6 +61,18 @@ historia:            CONTEXT.md + git log
   instalacion 1-comando por .deb → T-54 casi resuelta, pricing, Ko-fi, voz bilingue).
   Falta de T-53: video demo y `gracias.html`. Placeholders: PADDLE / KOFI / VIDEO.
 - **T-58** identidad app↔web (commit `ae27a31`). Detalle tecnico: APPCORE §skins.css.
+- **T-60** push del release **AUDITADO APTO** (2026-07-26). Los dos clones divergidos
+  reunidos en `origin/main`; `cefe4d5` es ancestro; HEAD `50acd92` tras el rebase (0
+  conflictos). Verificado EN VIVO: `latest.json` = 1.8.9 con sha
+  `890211c8d65742d81415356195c8601c42316a6d8f53710c51780e2d072bf87c` **identico en el
+  dominio y en el alias vercel**, y el `.deb` responde 200 con 309912 bytes = exactamente
+  el tamaño del blob del commit.
+- **T-61** dominio + correo en la web **AUDITADO APTO** (2026-07-26, commit `014269f`,
+  6 archivos, todos bajo `website/`). 0 ocurrencias de `soporte@` en `website/`; las 14 de
+  `support@` con el reparto exacto esperado; `vercel.app` sobrevive SOLO en `latest.json` e
+  `install.sh` (las dos exclusiones pedidas) y el commit no toca ninguno de los dos.
+  Verificado que `copyCommand()` lee `#cmd-text.textContent` → no hay URL duplicada en el
+  JS de copiar, lo copiado siempre coincide con lo mostrado.
 - **T-59** release 1.8.9 **AUDITADO APTO**: sha `890211c8…bf87c` con cuadruple match
   (latest.json == .deb == .sha256 == copia en downloads); contenido del .deb identico
   archivo por archivo al arbol del commit; app.js 1574 lineas; sw.js `lrp-1.8.9`;
@@ -72,6 +90,15 @@ historia:            CONTEXT.md + git log
   `anime`), Cyberpunk, Gato y Perro (etiqueta "Accesibilidad", botonera recortada).
   Spec completa, set de botones y criticas: **PLAN.md §PH17** (v1.9.1).
   Mockups: `.agents/design/skins2/`. Falta del dueño: wallpapers (ver C3).
+  **Estado del codigo (verificado 2026-07-26):** las 4 primeras YA EXISTEN en
+  `frontend/skins.css`, pero `app.js` §setSkin todavia las gatea tras `isLicensed` — o sea
+  D4 esta DECIDIDA pero NO implementada. Liberarla = tarea T-62, dentro de v1.9.0 (N2).
+- **D6 · demo interactiva en la web** (pedido 2026-07-26): minijuego con control simulado +
+  "TV" que reacciona, corriendo con las 4 skins. Spec: **PLAN.md §PH20** (v1.9.1). Dos
+  reglas que NO se negocian: va etiquetada como SIMULACION visible, y NO hace red (un
+  endpoint de IA abierto desde el sitio publico seria gratis para cualquiera). Va DESPUES
+  de PH17 o en la misma tanda, o hereda la deuda de los layouts nuevos.
+  **No bloquea la revision de Paddle**: esa se hace con capturas de la skin Day (C5).
 - **D5 · Voz 2.0 repriorizada a v2.0** (PLAN.md §PH19). Meta: que "pon video de gatos"
   REPRODUZCA, no que se quede en la busqueda. Orden 1→2→3: keymaps por sitio primero;
   control del DOM (WebDriver BiDi, el equivalente Firefox de las DevTools) al final, con
@@ -109,8 +136,12 @@ historia:            CONTEXT.md + git log
 
 ## C — CHECKLIST DEL DUEÑO (operativo; lo del device esta en TESTING.md)
 
-- [ ] **C1** push de 1.8.9 (= N1).
-- [ ] **C2** comprar dominio + correo empresarial. Desbloquea N3 y cierra B1.
+- [x] **C1** push de 1.8.9 — HECHO 2026-07-26 (T-60, auditado APTO).
+- [x] **C2** dominio `linuxremoteplayer.com` comprado + `support@` publicado (T-61).
+      Falta solo confirmar que el buzon RECIBE de verdad (ver C8).
+- [ ] **C8** mandarte un correo de prueba a `support@linuxremoteplayer.com` y confirmar que
+      llega. El sitio ya lo publica en 14 lugares: si el buzon no existe todavia, seguimos
+      con B1 pero disfrazada. Es un minuto y es prerrequisito de Paddle.
 - [ ] **C3** wallpapers definitivos de las skins nuevas. Para Gato/Perro mandar **el TILE**
       (~400x400), no el pantallazo: son patrones sin costura y tilear ya esta soportado
       (`--bg-repeat`/`--bg-size`). Un tile pesa ~30KB vs ~170KB del full-screen.

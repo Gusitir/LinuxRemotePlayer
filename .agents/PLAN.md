@@ -15,13 +15,15 @@
 | PH-ANTIABUSO | cap 512KB, kill-switch, cuota | ✅ hecho en T-46..T-48 |
 | PH-PRICING | modelo de precio | decidido, ver CURRENT §D3 |
 | **PH17** | **Theme Packs / Skins 2.0** | **v1.9.1 — especificada, sin código** |
+| **PH20** | **Demo interactiva en la web (minijuego)** | **v1.9.1 — especificada, sin código** |
 | PH19 | Voz 2.0 (asistente ampliado) | v2.0 — diseñada |
 | PH15 | APK Android | v2.1 |
 | PH16 | Archivos / disco virtual | v2.2 |
 | PH18 | Modo gamepad | v2.3 |
 
-Orden comercial vigente: **v1.9 lanzamiento → v1.9.1 skins → v2.0 skins Pro + Voz 2.0
-→ v2.1 APK → v2.2 archivos → v2.3 gamepad**.
+Orden comercial vigente: **v1.9 lanzamiento → v1.9.1 skins + demo web → v2.0 skins Pro +
+Voz 2.0 → v2.1 APK → v2.2 archivos → v2.3 gamepad**.
+PH20 depende de PH17 (ver PH20 §DEPENDENCIA): si la demo sale primero, hereda la deuda.
 
 ## ✅ COMPLETED
 
@@ -321,6 +323,67 @@ Killer feature: multijugador — cada teléfono conectado = un mando (sin hardwa
 - [ ] APK fase 2: háptica/multitouch nativos + menor latencia -> argumento de venta
       extra del APK premium
 - [ ] Gate: misma licencia Pro única
+
+# PH20: DEMO INTERACTIVA EN LA WEB ("live test") [v1.9.1] (pedido del dueño 2026-07-26)
+Un minijuego en el sitio: el visitante usa un control remoto SIMULADO y ve, al lado, una
+"pantalla de TV" que reacciona al comando. Objetivo comercial: que se entienda el producto
+sin instalar nada. Corre con las 4 skins actuales (day/night/cafe/anime).
+
+## POR QUÉ ES MÁS CARO DE LO QUE PARECE
+Es una SEGUNDA implementación de la botonera. El día que PH17 cambie layouts o renombre
+`anime`→`Cozy`, la demo queda mintiendo y NADIE se va a acordar de tocarla — el sitio y la
+app viven en carpetas distintas y no comparten build. Ese es el riesgo real, no el juego.
+
+## DECISIÓN DE ARQUITECTURA A TOMAR ANTES DE CODIFICAR (bloquea el troceado)
+- **Opción A — reusar los assets reales.** La demo importa `frontend/skins.css` (copiado a
+  `website/` por un script) y reusa el marcado real de la botonera. Un guard tipo
+  `scripts/check_css_sync.py` aborta si la copia divergió del original. Caro de montar,
+  barato de mantener, y la demo nunca miente.
+- **Opción B — maqueta a mano.** HTML/CSS propios del sitio, sin relación con la app.
+  Rápido ahora, deriva garantizada después.
+- Recomendación: **A**. El precedente ya existe (el guard CSS cazó deriva real en T-29) y
+  PH17 va a mover justo estas piezas.
+- La lista de skins de la demo se DERIVA de una sola fuente (misma const que `SKINS` en
+  app.js), nunca se escribe dos veces. Si no, PH17 la rompe en silencio.
+
+## ALCANCE FUNCIONAL v1 (sin backend; todo client-side, cero red)
+- [ ] Touchpad: arrastrar mueve un cursor en la "TV". Tap = clic.
+- [ ] D-pad + OK: navega una grilla falsa de apps (Netflix/YouTube/Spotify ficticios).
+- [ ] Teclas de media: play/pausa/siguiente cambian el estado visible de la TV.
+- [ ] Lanzar kiosko: elegir una app "abre" una pantalla falsa dentro de la TV.
+- [ ] Selector de skin visible: las 4 skins aplicadas EN VIVO (es el argumento visual).
+- [ ] Objetivo de juego (lo que lo vuelve "minijuego"): una tarea corta y guiada
+      —"poné a reproducir el video"— con un tick al completarla. Sin puntaje ni timer:
+      la meta es que entienda el producto, no que juegue 10 minutos.
+
+## REGLAS NO NEGOCIABLES
+- **Etiquetarla como SIMULACIÓN, visible, no en letra chica.** Un visitante (o un revisor
+  de Paddle) tiene que entender que no está controlando una máquina real. Una demo que
+  parece real y no lo es, es publicidad engañosa y es exactamente lo que hunde una cuenta
+  de pagos.
+- **NO simular la voz como si funcionara.** La voz real necesita el ai-proxy y cuesta
+  dinero por request. Si se muestra voz, va con guion enlatado y cartel de "ejemplo
+  grabado". Alternativa preferida: para la voz, un video (ya pendiente en T-53).
+- **Sin red.** Cero llamadas a la API real desde el sitio público: sería un endpoint
+  abierto y gratis para cualquiera.
+- **Móvil primero, pero el desktop no puede quedar roto.** Un tercio de las visitas de un
+  producto de PC llegan desde una PC: el touchpad necesita fallback de mouse (mousedown/
+  mousemove), no solo eventos touch.
+- Presupuesto: la demo NO puede engordar el `.deb`. Vive SOLO en `website/`, nunca en
+  `frontend/` (que sí se empaqueta). Ver PH17 §PRESUPUESTO DE ASSETS.
+
+## TROCEADO SUGERIDO
+1. Decidir A vs B + montar la fuente única de skins y el guard (si es A).
+2. Maqueta estática: control + TV + selector de skins, sin lógica.
+3. Lógica de interacción (touchpad, d-pad, media) + estados de la TV.
+4. La tarea guiada + el tick + los textos ES/EN.
+5. Instrumentar: cuántos la usan y cuántos de esos van a comprar (si no se mide, no se
+   sabe si valió la pena).
+
+## DEPENDENCIA CON PH17
+Si PH17 sale primero, la demo nace ya con los layouts nuevos y se ahorra una reescritura.
+Si sale la demo primero, PH17 hereda la deuda de actualizarla. **Recomendación: PH17 antes
+que PH20**, o los dos en la misma tanda con la Opción A de arriba.
 
 # PH17: THEME PACKS / SKINS 2.0 [v1.9.1] (4 propuestas del dueño, 2026-07-24)
 Evolución: de paletas CSS a THEME PACKS = paleta + **layout de botonera** + **set de
