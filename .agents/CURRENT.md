@@ -1,6 +1,6 @@
 # CURRENT — estado vivo
 <!-- Formato: AGENTS.md §FORMATO. IDs (B/N/D/H/C) son anclas: citalos, no copies el texto.
-     Compactado 2026-07-27: 12.8KB -> 8.6KB. Queda ~0.6KB POR ENCIMA del techo de 8KB: lo
+     Compactado 2026-07-27: 12.8KB -> ~8.9KB. Queda ~0.9KB POR ENCIMA del techo de 8KB: lo
      que sobra es el porque de B2, D4-D7 y H11, y podarlo mas costaba informacion real. Si
      entra un bloqueante nuevo, cerrar B2 o H11 primero y recuperar el espacio ahi.
      El detalle de cada auditoria esta en git log. -->
