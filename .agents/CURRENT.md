@@ -1,9 +1,9 @@
 # CURRENT — estado vivo
 <!-- Formato: AGENTS.md §FORMATO. IDs (B/N/D/H/C) son anclas: citalos, no copies el texto.
-     Compactado 2026-07-27: 12.8KB -> ~8.9KB. Queda ~0.9KB POR ENCIMA del techo de 8KB: lo
-     que sobra es el porque de B2, D4-D7 y H11, y podarlo mas costaba informacion real. Si
-     entra un bloqueante nuevo, cerrar B2 o H11 primero y recuperar el espacio ahi.
-     El detalle de cada auditoria esta en git log. -->
+     Tamaño ~11KB, POR ENCIMA del techo de 8KB. Se compacto a 8.9KB el 2026-07-27 y volvio a
+     crecer el mismo dia al reabrirse B1 y entrar H12 — que son bloqueantes vivos y no se
+     podan. El espacio se recupera CERRANDO items (B1, B2, H11, H12), no borrando el porque.
+     El detalle de cada auditoria esta en git log, no aca. -->
 
 ```yaml
 version_publicada:   1.8.9    # LIVE desde 2026-07-26 (T-60). sha 890211c8…bf87c
@@ -21,11 +21,20 @@ historia:            CONTEXT.md + git log
 
 ## B — BLOQUEANTES (rotos AHORA, en produccion)
 
+- **B1 · REABIERTA 2026-07-27: `support@linuxremoteplayer.com` NO recibe.** T-61 arreglo el
+  string en la web (14 lugares) pero el buzon no existe: la prueba de C8 rebota con
+  `554 5.7.1 Relay access denied`. **El DNS esta bien** — MX a `eforward1..5.
+  registrar-servers.com` (reenvio gratuito de Namecheap) + SPF puesto. El 554 de ESOS
+  servidores significa que el alias `support` no esta dado de alta en el panel: comprar el
+  dominio no crea buzones. *Fix inmediato:* Namecheap → Domain List → Manage → Redirect
+  Email → alias `support` → destino gmail.
+  **Ojo, eso NO alcanza para vender:** el reenvio de Namecheap es SOLO de recepcion, y las
+  respuestas saldrian desde el gmail personal — el mismo problema de credibilidad que B1b.
+  Antes de cerrar T-51 hace falta un buzon que pueda ENVIAR como support@ (Namecheap Private
+  Email ~$10-14/año sin tocar DNS, o Zoho gratis cambiando los MX).
 - **B1b · `website/gracias.html:226` publica el gmail PERSONAL del dueño**
-  (`aeciminer02@gmail.com`), no un correo de empresa. La pagina de "gracias por comprar" es
-  de las que MIRA un procesador de pagos: un gmail personal ahi resta credibilidad en la
-  revision de Paddle. Se rehace en T-51. (B1 original — el `soporte@` que rebotaba — cerrada
-  en T-61.)
+  (`aeciminer02@gmail.com`). La pagina de "gracias por comprar" es de las que MIRA un
+  procesador de pagos: un gmail personal ahi resta credibilidad. Se rehace en T-51.
 - **B2 · `apt remove` incumple la doc.** El `prerm` del .deb SOLO para+deshabilita el
   servicio. NO libera licencia, NO borra la regla UFW 8000/tcp, NO borra
   `/etc/udev/rules.d/99-uinput.rules`, NO desenmascara `sleep.target` — las 4 SI estan en
@@ -97,6 +106,19 @@ historia:            CONTEXT.md + git log
 
 ## H — HALLAZGOS ABIERTOS (no bloquean)
 
+- **H12 · el numero de version que muestra la app NO describe la interfaz que estas usando.**
+  Sale en vivo de `/api/status` (o sea del BACKEND), mientras el HTML/JS los sirve el service
+  worker desde su cache. Si la cache no rota, la app dice "1.8.9" mientras muestra la UI de
+  1.8.0. Detectado 2026-07-27 en el device del dueño: reportaba 1.8.9 con `dark` por defecto
+  y las skins viejas (`dark/day/neon/anime`), que es exactamente 1.8.0 — el 1.8.9 trae `day`
+  por defecto y `day/night/cafe/anime`.
+  *Por que importa mas alla de este caso:* cualquier cliente que actualice puede reportar
+  "actualice y no cambio nada", y el numero de version le da la razon. Suma a H3.
+  *Candidato a fix:* que el frontend exponga SU propia version (la que inyecta build_deb en
+  `sw.js`) y que el panel muestre las dos, o avise cuando no coinciden.
+  Diagnostico pendiente del dueño: si el HTPC tiene los archivos 1.8.9 en
+  `/opt/linuxremoteplayer/frontend/`, el problema es la cache del telefono; si no, no se
+  aplico el .deb.
 - **H11** `backend/.env.example:20` trae `BUY_URL=https://buy.stripe.com/test_5kQ3...`:
   Stripe en modo TEST cuando los pagos ya son Paddle (D1). Ese archivo es la plantilla del
   `.env` real → el boton "comprar" de un device instalado apunta a un checkout de prueba de
@@ -118,9 +140,13 @@ historia:            CONTEXT.md + git log
 
 ## C — CHECKLIST DEL DUEÑO (operativo; lo del device esta en TESTING.md)
 
-- [x] **C1** push de 1.8.9 (T-60). · [x] **C2** dominio + `support@` publicados (T-61).
-- [ ] **C8** correo de prueba a `support@linuxremoteplayer.com` y confirmar que LLEGA. La
-      web ya lo publica en 14 lugares: si el buzon no existe, B1 sigue viva disfrazada.
+- [x] **C1** push de 1.8.9 (T-60). · [x] **C2** dominio comprado + `support@` en la web (T-61).
+- [!] **C8 · FALLO 2026-07-27.** El correo de prueba rebota: el alias no existe. Dar de alta
+      el reenvio en Namecheap (ver B1) y REPETIR la prueba. Prerrequisito de Paddle.
+- [ ] **C9** diagnostico del device (ver H12): correr en el HTPC
+      `cat /opt/linuxremoteplayer/VERSION` y
+      `grep -o 'data-skin="[a-z]*"' /opt/linuxremoteplayer/frontend/index.html`.
+      Si dice `day` → la cache del telefono esta vieja. Si dice `dark` → el .deb no se aplico.
 - [ ] **C3** wallpapers de las skins nuevas. Para Gato/Perro mandar **el TILE** (~400x400),
       no el pantallazo: son patrones sin costura, tilear ya esta soportado
       (`--bg-repeat`/`--bg-size`) y un tile pesa ~30KB vs ~170KB del full-screen.
