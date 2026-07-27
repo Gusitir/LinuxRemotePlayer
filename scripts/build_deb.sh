@@ -190,6 +190,15 @@ for d in /run/user/*; do
     fi
 done
 
+# Limpieza de sistema SOLO al desinstalar de verdad. dpkg tambien corre el prerm
+# en cada actualizacion con $1="upgrade": si esto se ejecutara ahi, cada OTA
+# borraria las reglas udev y liberaria la licencia del dispositivo. Ver T-19.
+if [ "$1" = "remove" ]; then
+    if [ -x /opt/linuxremoteplayer/scripts/lrp-cleanup.sh ]; then
+        /opt/linuxremoteplayer/scripts/lrp-cleanup.sh || true
+    fi
+fi
+
 update-desktop-database /usr/share/applications 2>/dev/null || true
 gtk-update-icon-cache /usr/share/icons/hicolor 2>/dev/null || true
 EOF
