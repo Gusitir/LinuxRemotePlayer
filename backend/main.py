@@ -424,7 +424,7 @@ async def get_api_status(request: Request):
         "voice_enabled": VOICE_ENABLED,
         "kiosk_active": getattr(kiosk, "_kiosk_proc", None) is not None,
         "adblock_status": kiosk.adblock_status(),
-        "buy_url": "https://linux-remote-player.vercel.app/"
+        "buy_url": "https://www.linuxremoteplayer.com/"
     }
 
 
@@ -563,7 +563,7 @@ async def get_license_status():
 
 @app.get("/api/update/check", dependencies=[Depends(require_local_or_token)])
 async def check_update():
-    manifest_url = os.getenv("UPDATE_MANIFEST_URL", "https://linux-remote-player.vercel.app/latest.json")
+    manifest_url = os.getenv("UPDATE_MANIFEST_URL", "https://www.linuxremoteplayer.com/latest.json")
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
             res = await client.get(manifest_url)

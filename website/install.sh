@@ -2,7 +2,7 @@
 set -e
 
 if [ "$EUID" -ne 0 ]; then
-  echo "Please run as root (curl -fsSL https://linux-remote-player.vercel.app/install.sh | sudo bash)"
+  echo "Please run as root (curl -fsSL https://www.linuxremoteplayer.com/install.sh | sudo bash)"
   exit 1
 fi
 
@@ -10,7 +10,7 @@ echo "======================================"
 echo " LinuxRemotePlayer Initial Installer  "
 echo "======================================"
 
-MANIFEST_URL="https://linux-remote-player.vercel.app/latest.json"
+MANIFEST_URL="https://www.linuxremoteplayer.com/latest.json"
 echo "Fetching latest version from $MANIFEST_URL..."
 LATEST_JSON=$(curl -fsSL "$MANIFEST_URL")
 VERSION=$(echo "$LATEST_JSON" | grep -o '"version"\s*:\s*"[^"]*"' | cut -d'"' -f4)

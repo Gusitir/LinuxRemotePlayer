@@ -4,7 +4,7 @@
 
 A plug & play remote-control ecosystem for Linux HTPCs: a mobile PWA client talking to a local FastAPI backend over secure WebSockets.
 
-🌐 **Website:** [linux-remote-player.vercel.app](https://linux-remote-player.vercel.app/)
+🌐 **Website:** [www.linuxremoteplayer.com](https://www.linuxremoteplayer.com)
 
 ---
 
@@ -60,7 +60,7 @@ A plug & play remote-control ecosystem for Linux HTPCs: a mobile PWA client talk
 On the Linux PC connected to your TV (Debian/Ubuntu and derivatives, systemd required), install everything with a single command:
 
 ```bash
-curl -fsSL https://linux-remote-player.vercel.app/install.sh | sudo bash
+curl -fsSL https://www.linuxremoteplayer.com/install.sh | sudo bash
 ```
 
 Run the setup script. When asked "¿Esta PC está dedicada a la TV?", answer **S** (Yes) to install as a system service (Appliance mode), or **n** (No) for a user service (Desktop mode). The installer sets up dependencies, `uinput` permissions, Firefox, mDNS, the firewall rule and the systemd service. Reboot or re-login once after the first install.
@@ -71,7 +71,7 @@ Run the setup script. When asked "¿Esta PC está dedicada a la TV?", answer **S
 
 While basic touchpad and keyboard control are 100% free and open-source, the **Voice Intent Engine** requires a personal license key.
 
-1. Buy a license from the [Official Website](https://linux-remote-player.vercel.app/).
+1. Buy a license from the [Official Website](https://www.linuxremoteplayer.com/).
 2. You will receive a code `LRP-XXXX-XXXX-XXXX` instantly in your email.
 3. Open the app on your mobile device, navigate to **Ajustes** (gear icon), paste the code under **Clave de licencia**, and tap **Activar**.
 4. The microphone row will automatically appear in your app remote!

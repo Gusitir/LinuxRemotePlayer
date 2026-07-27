@@ -119,7 +119,7 @@ exec >>/tmp/lrp-update.log 2>&1
 
 set -e
 export DEBIAN_FRONTEND=noninteractive
-MANIFEST_URL="${UPDATE_MANIFEST_URL:-https://linux-remote-player.vercel.app/latest.json}"
+MANIFEST_URL="${UPDATE_MANIFEST_URL:-https://www.linuxremoteplayer.com/latest.json}"
 echo "Checking $MANIFEST_URL for updates..."
 LATEST_JSON=$(curl -fsSL "$MANIFEST_URL")
 VERSION=$(echo "$LATEST_JSON" | grep -o '"version"\s*:\s*"[^"]*"' | cut -d'"' -f4)

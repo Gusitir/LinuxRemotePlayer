@@ -58,7 +58,7 @@ const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
 
 let token = 'guest';
 let lastSuggestedKiosks = [];
-let buyUrl = 'https://linux-remote-player.vercel.app/';
+let buyUrl = 'https://www.linuxremoteplayer.com/';
 let isLicensed = false;
 let latestUpdateVersion = null;
 
@@ -236,7 +236,7 @@ async function fetchConfig() {
         if (res.ok) {
             const data = await res.json();
             hostname = data.hostname || '';
-            buyUrl = data.buy_url || 'https://linux-remote-player.vercel.app/';
+            buyUrl = data.buy_url || 'https://www.linuxremoteplayer.com/';
 
             const verText = document.getElementById('version-text');
             if (verText) verText.textContent = `Versión ${data.version || '1.0.0'}`;
@@ -1242,7 +1242,7 @@ function buyLicense() {
     window.open(buyUrl, '_blank');
 }
 
-const WEBSITE_URL = 'https://linux-remote-player.vercel.app/';
+const WEBSITE_URL = 'https://www.linuxremoteplayer.com/';
 
 function shareApp() {
     const shareData = {
