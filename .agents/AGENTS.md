@@ -38,13 +38,11 @@ releer y sale más cara que las palabras que ahorra.
 - **Al compactar, VERIFICÁ cada ítem contra el código** antes de copiarlo. Compactar es
   la oportunidad de matar hallazgos ya resueltos, no de arrastrarlos otra vez.
 - **Todo número afirmado se mide con un comando INMEDIATAMENTE antes de escribirlo** — en
-  briefs, en estos .md y en los mensajes de commit. Falló CINCO veces el 2026-07-27: dos
-  conteos de brief, un grep que matcheaba su propio comentario, un dato inventado en B2, y
-  dos mensajes de commit que declaraban un techo cumplido sin medirlo. Los números de
-  línea se mueven con cada tarea: re-grepear siempre.
-- **Destino antes de escribir.** Análisis, specs y contexto de mercado nacen en PLAN o en
-  un anexo; CURRENT recibe SOLO el puntero. Escribir "provisorio" en CURRENT y mudarlo
-  después costó dos commits extra en un solo día (caso D7→§MERCADO).
+  briefs, en estos .md y en los mensajes de commit. Falló 5 veces en un solo día
+  (2026-07-27): conteos de brief, un grep que matcheaba su propio comentario, y commits
+  declarando un techo cumplido sin medirlo. Los números de línea se mueven: re-grepear.
+- **Destino antes de escribir.** Análisis, specs y mercado nacen en PLAN o un anexo;
+  CURRENT recibe SOLO el puntero (caso D7→§MERCADO: dos commits de mudanza).
 - **Los commits de `.agents/` van por CHECKPOINT** (un dictamen de auditoría, un cierre de
   sesión), no por retoque: el 2026-07-27 hubo ~12 commits de docs y 3 se corregían entre sí.
 - **Declará lo no verificable.** Lo que no se puede comprobar sin hardware (device, iOS,
@@ -61,8 +59,8 @@ releer y sale más cara que las palabras que ahorra.
   tareas ni escribe briefs: revisa que el flujo cumpla este contrato, caza derivas y datos
   rancios entre archivos, y es el ÚNICO que promueve lecciones a reglas en este archivo.
   Se lo invoca al cerrar sesión o cuando el dueño siente que el flujo se desvía.
-- **Al cambiar el modelo de un rol, esta sección se actualiza EN EL MOMENTO.** (Decía
-  "Opus 4.8" mientras Opus 5 llevaba sesiones enteras trabajando.)
+- **Al cambiar el modelo de un rol, esta sección se actualiza EN EL MOMENTO** (quedó
+  "Opus 4.8" escrito durante sesiones enteras de Opus 5).
 - **DeepSeek (en el HTPC del dueño).** Solo config/diagnóstico, JAMÁS código; sus hotfixes se
   PORTAN al repo o el próximo OTA los pisa.
 - **Dueño (Agustín).** Relaya briefs a Gemini y pega evidencia a Claude. Hace lo que ningún
@@ -92,8 +90,7 @@ releer y sale más cara que las palabras que ahorra.
    CURSO con puntero al checklist. (B1 se marcó "cerrada" con la web corregida mientras el
    buzón de soporte seguía sin existir.)
 5. **Una T-NN nacida fuera del plan de fase se registra en ese plan AL CREARLA** (una línea
-   con puntero a CURRENT basta). T-60..T-65 fueron invisibles para PLAN_v1.9.md durante
-   una sesión entera: quien leyera el plan maestro no sabía que existieron.
+   con puntero a CURRENT basta). T-60..T-65 fueron invisibles para PLAN_v1.9.md una sesión.
 
 ## REGLAS DE ORO
 - Evidencia = salida literal pegada. Si no lo corriste, no lo reportes. El auditor re-corre.
@@ -103,24 +100,18 @@ releer y sale más cara que las palabras que ahorra.
   resumen compactado, para que el próximo agente sepa dónde quedó todo.
 
 ## CÓDIGO DE TERCEROS — CONTAMINACIÓN DE LICENCIA (regla dura)
-LinuxRemotePlayer se publica bajo **Elastic 2.0 y se vende**. El código copyleft
-(GPL/AGPL/LGPL en sus variantes) es **incompatible**: derivar de él obligaría a liberar
-todo el producto bajo esa licencia. No es un tecnicismo, mata el modelo de negocio.
+LRP se publica bajo **Elastic 2.0 y se vende**; el copyleft (GPL/AGPL/LGPL) es
+incompatible — derivar obliga a liberar todo, mata el modelo de negocio. **Y acá el riesgo
+es peor que en un proyecto normal: casi todo el código lo escribió una IA.** Si un agente
+lee un repo copyleft y después produce código parecido en esa área, no queda NADIE que
+pueda declarar que no hubo derivación.
 
-**Acá el riesgo es peor que en un proyecto normal, y por eso la regla es más estricta:
-la mayoría de este código lo escribió una IA.** Si un agente lee un repo copyleft y
-después produce código parecido en esa misma área, NO existe forma de demostrar después
-que no hubo derivación — no hay un humano que pueda declarar qué tenía en la cabeza.
-
-- **NUNCA metas código copyleft en el contexto de un agente que va a tocar código de LRP.**
-  Ni pegado en el chat, ni clonado en el repo, ni leído con una herramienta.
-- Leer el **README** de un proyecto ajeno para entender el panorama: permitido. Leer sus
-  archivos de código y después implementar una feature en esa área: **prohibido**.
-- Las ideas de alto nivel y los hechos no se pueden licenciar (que UDP conviene sobre TCP
-  para input, qué puertos usa alguien). La EXPRESIÓN sí. La línea práctica: si para
-  escribirlo tuviste que mirar su código, parás.
-- Antes de traer una dependencia nueva, mirá su licencia. MIT/BSD/Apache-2.0: OK.
-  GPL/AGPL/LGPL: parás y preguntás al dueño.
+- **NUNCA metas código copyleft en el contexto de un agente que toca código de LRP** — ni
+  pegado en el chat, ni clonado, ni leído con una herramienta.
+- README ajeno para entender el panorama: permitido. Leer sus archivos de código y después
+  implementar en esa área: **prohibido**. Las ideas y los hechos no se licencian; la
+  EXPRESIÓN sí. Línea práctica: si para escribirlo tuviste que mirar su código, parás.
+- Dependencia nueva: MIT/BSD/Apache-2.0 OK; GPL/AGPL/LGPL → parás y preguntás al dueño.
 - Caso registrado: `Techlm77/LinuxPlay` (GPL-2.0) — **su código no entra acá**. Análisis
   en PLAN.md §MERCADO, decisión en CURRENT §D7.
 
@@ -129,28 +120,25 @@ Este archivo es el CONTRATO, no el diario: cada KB de acá lo paga TODA sesión 
 - Las lecciones del día se escriben en **CONTEXT.md**; solo el supervisor las promueve acá,
   y solo si cambian conducta. Una regla que no cambia lo que alguien haría no es regla.
 - Los incidentes se citan en UNA línea con su ID; el detalle vive en CONTEXT o en git.
-- Techo propio: **≤12KB**. Si una regla nueva no entra, se compacta una vieja — sin perder
-  el porqué, que es lo único irreemplazable.
+- Techo propio: el de §FORMATO (≤12KB). Regla nueva que no entra → se compacta una vieja,
+  sin perder el porqué, que es lo único irreemplazable.
 
 ## ENTORNO (crítico — romper esto = builds/edits corruptos)
 - **El mount WSL `/mnt/...` TRUNCA archivos grandes (~40KB):** app.js (~1500 líneas) y main.py
   salen CORTADOS si se leen/editan por `/mnt` → falsos errores, `git status` engañoso, .deb
   ROTO. Editar/leer archivos grandes con herramientas NATIVAS (harness / Windows), nunca `/mnt`.
 - `py_compile` / `node --check` / `pyflakes` con python/node de **Windows** (nativo) = OK.
-- **Para EJECUTAR el backend, el python de Windows NO sirve** (le faltan fastapi, segno…):
-  las dependencias viven en `backend/.venv/Scripts/python.exe`. Con ese intérprete
-  `backend/main.py` SE PUEDE importar en Windows — avisa "evdev not found" y sigue, así que
-  se puede inspeccionar la app FastAPI (rutas, middlewares) sin device. En T-63 se reportó
-  "no verificable" solo por haber usado el python equivocado. Los briefs que pidan correr
-  algo del backend deben nombrar la ruta del venv.
+- **Backend en Windows: usar `backend/.venv/Scripts/python.exe`** (el python pelado no
+  tiene fastapi/segno). Con el venv, `main.py` SE IMPORTA en Windows ("evdev not found" y
+  sigue) → se puede inspeccionar rutas/middlewares sin device. Los briefs que corran
+  backend nombran esa ruta (en T-63 se reportó "no verificable" por usar el equivocado).
 - **Builds del `.deb` SOLO en clon WSL NATIVO** (clonado desde origin dentro de `~`, no `/mnt`).
 - Guard CSS (`scripts/check_css_sync.py`) corre en `build_deb.sh` y ABORTA si hay clase CSS
   usada sin definir (cazó deriva real en T-29). Solo detecta usada-sin-definir, NO al revés:
   el CSS muerto no lo caza nadie.
-- **Trampa al grepear todo el repo:** `backend/.venv/` tiene site-packages y ahoga
-  cualquier búsqueda (una búsqueda de "skin|icon|theme" devolvió 161KB de ruido). `pkg/`
-  y `dist/` son build output gitignoreado. Para buscar en el repo REAL:
-  `git ls-files <dir> | xargs grep -n <patrón>` en vez de `grep -rn`.
+- **Grepear el repo: `git ls-files <dir> | xargs grep -n <patrón>`, nunca `grep -rn`** —
+  `backend/.venv/` (site-packages) ahoga cualquier búsqueda y `pkg/`/`dist/` son build
+  output gitignoreado.
 - **Versión del OTA:** `is_newer_version` (backend/main.py) compara TUPLAS DE ENTEROS
   (`1.8.9 < 1.9.0` ✓). No soporta sufijos tipo `-rc`: usar solo `X.Y.Z` numérico.
 
