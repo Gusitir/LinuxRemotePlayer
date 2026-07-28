@@ -30,9 +30,8 @@ historia:            CONTEXT.md + git log
   manda las claves de licencia por correo y la correspondencia con Paddle va por ahi.
   Fix (ver C9). *Leccion:* que la web publique una direccion no prueba que exista un buzon,
   y que el buzon exista no prueba que lo que mande llegue.
-- **B1b · `website/gracias.html:226` publica el gmail PERSONAL del dueño**
-  (`aeciminer02@gmail.com`). La pagina de "gracias por comprar" es de las que MIRA un
-  procesador de pagos: un gmail personal ahi resta credibilidad. Se rehace en T-51.
+- ~~**B1b · gmail personal en `gracias.html`.**~~ **CERRADA en T-66**: ahora publica
+  `support@linuxremoteplayer.com`, que ya recibe.
 - **B2 · `apt remove` incumple la doc — ARREGLADO EN CODIGO (T-64), SIN PROBAR EN DEVICE.**
   Sigue listado como bloqueante porque el fix **no esta verificado**: toca un script de
   mantenedor y eso no se puede probar sin un Debian real. Se cierra recien con **TESTING §E**.
@@ -63,7 +62,9 @@ historia:            CONTEXT.md + git log
 ES+EN LIVE · **T-58** identidad app↔web (`ae27a31`) · **T-59+T-60** release 1.8.9 construido
 y PUBLICADO · **T-61** (`014269f`) dominio + `support@` en la web · **T-62** (`4c52165`)
 skins liberadas · **T-63** (`03581cc`) doc de FastAPI oculta · **T-64** (`21e7d09`+`82a84c9`)
-apt remove limpia · **T-65** (`4f35c0d`) URLs de maquina al dominio.
+apt remove limpia · **T-65** (`4f35c0d`) URLs de maquina al dominio · **T-66** (`e1ef501`)
+pulido pre-Paddle: nombre del producto en 8 lugares, `support@` en gracias.html, 13 reglas
+CSS muertas (cierra H7, H8a y B1b).
 
 Lo unico de ahi que el proximo agente no puede re-derivar de git:
 - **T-46..T-50 se validaron sobre un build de prueba, NO sobre un .deb publicado** →
@@ -122,11 +123,17 @@ Lo unico de ahi que el proximo agente no puede re-derivar de git:
 - **H5** `showInstallScreen` usa `appUI.hidden=true` pero `#app-ui` tiene `.flex` (el autor
   gana al `[hidden]` del UA); `showPairingScreen` lo esquiva con `style.display`. Unificar.
 - **H6** `bootstrap.sh` (instala por git-clone) es legacy y muere con el repo privado (T-54).
-- **H7** CSS muerto en `tailwind-lite.css`: utilidades cyan/fuchsia de los swatches viejos
-  (~12 lineas), sin uso desde T-58. El guard no lo caza (solo detecta usada-sin-definir).
-- **H8** backlog visual: el header dice "Remote Linux Player" (orden invertido); "Okular"
-  duplicado en apps detectadas.
-- Cerradas: **H9** (T-63), **H10** (docs/DEVELOPING.md).
+- **H8b · "Okular" aparece DUPLICADO** en las apps detectadas. Unico resto del backlog visual
+  (el nombre invertido se cerro en T-66). Vive en `backend/discovery.py`, que escanea
+  `.desktop`: la causa probable es el mismo id presente en dos rutas (`/usr/share/applications`
+  y `~/.local/share/applications`) y que no se deduplica. **No se puede reproducir sin el
+  HTPC** → diagnosticar en device antes de tocar codigo, no a ciegas.
+- **DECISION PENDIENTE del dueño · `manifest.json` `short_name`.** Quedo en `"RemoteLinux"`,
+  una TERCERA variante del nombre (T-66 arreglo las otras 8; esta no estaba en su alcance).
+  En Android es el rotulo bajo el icono, y `short_name` existe para ser CORTO:
+  "LinuxRemotePlayer" (17 chars) no sirve ahi. Segun D2 la marca corta es **"LRP"**.
+  Se decide y se aplica con el release v1.9.0.
+- Cerradas: **H7** y **H8a** (T-66) · **H9** (T-63) · **H10** (docs/DEVELOPING.md).
 
 ## C — CHECKLIST DEL DUEÑO (operativo; lo del device esta en TESTING.md)
 
