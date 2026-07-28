@@ -10,16 +10,14 @@ entrada canónico: describe cómo trabajamos. Es estable — si el proceso cambi
 3. **CURRENT.md** — estado ACTUAL: versión publicada, fase/tarea activa, pendientes.
 4. **APPCORE.md** — mapa del código: qué vive dónde. Leerlo ANTES de grepear; ahorra
    media hora de exploración a ciegas.
-Con eso ya sabés todo. Después, según necesites: PLAN.md (roadmap + fases futuras
-PH-NN), **PLAN_v1.9.md (plan de la fase ACTIVA)**, TESTING.md (matriz de test del device).
-> El puntero a la fase activa se actualiza al abrir cada fase nueva. Si acá dice una
-> versión que ya salió, está rancio: creele a CURRENT.md, no a esta línea.
+Después, según necesites: PLAN.md (roadmap PH-NN), **PLAN_v1.9.md (fase ACTIVA)**,
+TESTING.md (matriz del device).
+> Si este puntero de fase nombra una versión ya publicada, está rancio: creele a CURRENT.
 
 ## FORMATO DE LOS ARCHIVOS .agents/ (los escribe una IA para que los lea otra IA)
-El ÚNICO archivo que lee y escribe el humano es **TESTING.md** (él marca los resultados).
-Los demás son de máquina: optimizalos para que otro agente encuentre rápido y gaste poco
-contexto. "Optimizado para IA" NO es telegráfico ni abreviado — la ambigüedad obliga a
-releer y sale más cara que las palabras que ahorra.
+El ÚNICO archivo del humano es **TESTING.md** (él marca resultados). Los demás son de
+máquina: que otro agente encuentre rápido y gaste poco contexto. "Optimizado para IA" NO
+es telegráfico — la ambigüedad obliga a releer y sale más cara que lo que ahorra.
 
 - **Un dato, un archivo.** Si algo está en dos, uno se va a quedar viejo y se van a
   contradecir. Referenciá con anclas (`CURRENT §B2`, `PLAN.md §PH17`), no copiando texto.
@@ -59,12 +57,12 @@ releer y sale más cara que las palabras que ahorra.
   tareas ni escribe briefs: revisa que el flujo cumpla este contrato, caza derivas y datos
   rancios entre archivos, y es el ÚNICO que promueve lecciones a reglas en este archivo.
   Se lo invoca al cerrar sesión o cuando el dueño siente que el flujo se desvía.
-- **Al cambiar el modelo de un rol, esta sección se actualiza EN EL MOMENTO** (quedó
-  "Opus 4.8" escrito durante sesiones enteras de Opus 5).
 - **DeepSeek (en el HTPC del dueño).** Solo config/diagnóstico, JAMÁS código; sus hotfixes se
   PORTAN al repo o el próximo OTA los pisa.
 - **Dueño (Agustín).** Relaya briefs a Gemini y pega evidencia a Claude. Hace lo que ningún
   modelo puede: probar en el device real, screenshots, rotar llaves, aprobar releases.
+- **Al cambiar el modelo de un rol, esta sección se actualiza EN EL MOMENTO** (quedó
+  "Opus 4.8" escrito durante sesiones enteras de Opus 5).
 
 ## CICLO POR TAREA  (una tarea [T-NN] = un commit = un checkpoint de auditoría)
 1. **Claude** escribe el brief: objetivo, archivos, cambios EXACTOS (old→new), comandos de
@@ -96,8 +94,8 @@ releer y sale más cara que las palabras que ahorra.
 - Evidencia = salida literal pegada. Si no lo corriste, no lo reportes. El auditor re-corre.
 - `git add` selectivo. Un commit por tarea `[T-NN]`. Gemini PARA ante duda/error y reporta;
   NO improvisa en código que corre en el device. Nada se cierra hasta que Claude audita.
-- Al cerrar una sesión (o antes de quedarte sin tokens): actualizá **CONTEXT.md** con un
-  resumen compactado, para que el próximo agente sepa dónde quedó todo.
+- Al cerrar sesión (o antes de quedarte sin tokens): actualizá **CONTEXT.md** — el
+  próximo agente arranca de ahí.
 
 ## CÓDIGO DE TERCEROS — CONTAMINACIÓN DE LICENCIA (regla dura)
 LRP se publica bajo **Elastic 2.0 y se vende**; el copyleft (GPL/AGPL/LGPL) es
