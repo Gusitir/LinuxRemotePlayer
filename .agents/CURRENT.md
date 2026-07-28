@@ -141,17 +141,22 @@ Lo unico de ahi que el proximo agente no puede re-derivar de git:
 - [ ] **C8** correo de prueba a `support@linuxremoteplayer.com` desde una cuenta de fuera
       (gmail) y confirmar que LLEGA al buzon. Los MX ya apuntan a Private Email. Cierra
       la mitad de B1 y es prerrequisito de Paddle.
-- [ ] **C9** cargar los TXT que faltan en el DNS (hoy el dominio no tiene NINGUNO):
-      SPF `v=spf1 include:spf.privateemail.com ~all` · DKIM desde el panel de Private Email
-      (lo autogenera) · DMARC `_dmarc` con `v=DMARC1; p=none; rua=mailto:support@...`.
-      Despues mandar un correo DESDE support@ a un gmail y ver que no caiga en spam.
-      **Cuando entre Resend para las claves de licencia (T-51), su include va en el MISMO
-      SPF** — un dominio no puede tener dos registros SPF.
+- [~] **C9 · DNS HECHO, falta confirmar el envio.** SPF, DKIM y DMARC cargados y
+      **verificados contra 8.8.8.8 y 1.1.1.1** (2026-07-28): un solo registro SPF, la cadena
+      de `include` resuelve, DKIM con prefijo `v=DKIM1;k=rsa;` correcto.
+      Los dos rebotes de Gmail (`550-5.7.26`) son ANTERIORES: sus IPs `198.54.127.128` y
+      `104.207.68.28` **estan ambas autorizadas** por el SPF actual (via
+      `spf-pe.jellyfish.systems`). El 2do fallo fue **cache negativa**: Gmail habia guardado
+      "este dominio no tiene SPF" de la 1ra consulta. Falta reintentar y ver PASS/PASS.
+      **Cuando entre Resend (T-51), su include va en el MISMO registro SPF** — un dominio
+      con dos registros SPF falla en ambos y ahi se pierde el correo de licencias.
 - [ ] **C3** wallpapers de las skins nuevas. Para Gato/Perro mandar **el TILE** (~400x400),
       no el pantallazo: son patrones sin costura, tilear ya esta soportado
       (`--bg-repeat`/`--bg-size`) y un tile pesa ~30KB vs ~170KB del full-screen.
-- [ ] **C4** redeployar ai-proxy con el prompt bilingue si no se hizo (T-53d). ⛔ en
-      TESTING C2 porque **la web ya vende la voz en ingles**.
+- [~] **C4 · probablemente HECHO.** El dueño reporto dos veces (2026-07-27 y -28) que **los
+      comandos en INGLES funcionan** en su device, que es justo lo que el prompt bilingue
+      (T-53d) habilita — y es lo que mide TESTING C2. Falta solo que lo marque formalmente
+      ahi. Era ⛔ porque **la web ya vende la voz en ingles**.
 - [ ] **C5** screenshots nuevas del sitio: las actuales son de la skin anime, que ya no es
       el look por defecto (T-56). Son tambien las que ve Paddle.
 - [ ] **C6** `supabase functions deploy send-feedback --no-verify-jwt` (desde v1.5).
