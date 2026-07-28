@@ -19,12 +19,17 @@ historia:            CONTEXT.md + git log
 
 ## B — BLOQUEANTES (rotos AHORA, en produccion)
 
-- **B1 · EN CURSO 2026-07-27: `support@linuxremoteplayer.com` todavia no recibe.** T-61
-  arreglo el string en la web (14 lugares) pero el buzon no existia: la prueba de C8 reboto
-  con `554 5.7.1 Relay access denied` (el DNS estaba bien; faltaba dar de alta la cuenta —
-  comprar el dominio no crea buzones). El dueño ya agrego los DNS records del Webmail;
-  **queda esperar la propagacion (~4h) y REPETIR la prueba de C8** antes de darlo por bueno.
-  *Leccion:* que la web publique una direccion no prueba que exista un buzon detras.
+- **B1 · EN CURSO: el buzon `support@` ya existe; falta confirmar que RECIBE y arreglar SPF.**
+  T-61 puso la direccion en la web (14 lugares) cuando no habia buzon detras (C8 reboto con
+  `554 Relay access denied`). El dueño migro a un buzon REAL: **verificado 2026-07-27 que los
+  MX ahora son `mx1/mx2.privateemail.com`** (Namecheap Private Email) y ya no el reenvio
+  gratuito — o sea que support@ tambien puede ENVIAR, no solo recibir. Falta C8.
+  **HUECO NUEVO (verificado contra 8.8.8.8 y 1.1.1.1): el dominio NO tiene NINGUN registro
+  TXT.** Se perdio el SPF que existia con el reenvio, y no hay DKIM ni DMARC. Efecto: lo que
+  SALGA de support@ tiene alta chance de caer en spam en Gmail/Outlook. **Importa ya**: T-51
+  manda las claves de licencia por correo y la correspondencia con Paddle va por ahi.
+  Fix (ver C9). *Leccion:* que la web publique una direccion no prueba que exista un buzon,
+  y que el buzon exista no prueba que lo que mande llegue.
 - **B1b · `website/gracias.html:226` publica el gmail PERSONAL del dueño**
   (`aeciminer02@gmail.com`). La pagina de "gracias por comprar" es de las que MIRA un
   procesador de pagos: un gmail personal ahi resta credibilidad. Se rehace en T-51.
@@ -126,9 +131,15 @@ Lo unico de ahi que el proximo agente no puede re-derivar de git:
 ## C — CHECKLIST DEL DUEÑO (operativo; lo del device esta en TESTING.md)
 
 - [x] **C1** push de 1.8.9 (T-60). · [x] **C2** dominio comprado + `support@` en la web (T-61).
-- [ ] **C8** repetir el correo de prueba a `support@linuxremoteplayer.com` cuando propaguen
-      los DNS del Webmail (~4h desde 2026-07-27). Fallo la primera vez; cierra B1 y es
-      prerrequisito de Paddle.
+- [ ] **C8** correo de prueba a `support@linuxremoteplayer.com` desde una cuenta de fuera
+      (gmail) y confirmar que LLEGA al buzon. Los MX ya apuntan a Private Email. Cierra
+      la mitad de B1 y es prerrequisito de Paddle.
+- [ ] **C9** cargar los TXT que faltan en el DNS (hoy el dominio no tiene NINGUNO):
+      SPF `v=spf1 include:spf.privateemail.com ~all` · DKIM desde el panel de Private Email
+      (lo autogenera) · DMARC `_dmarc` con `v=DMARC1; p=none; rua=mailto:support@...`.
+      Despues mandar un correo DESDE support@ a un gmail y ver que no caiga en spam.
+      **Cuando entre Resend para las claves de licencia (T-51), su include va en el MISMO
+      SPF** — un dominio no puede tener dos registros SPF.
 - [ ] **C3** wallpapers de las skins nuevas. Para Gato/Perro mandar **el TILE** (~400x400),
       no el pantallazo: son patrones sin costura, tilear ya esta soportado
       (`--bg-repeat`/`--bg-size`) y un tile pesa ~30KB vs ~170KB del full-screen.
