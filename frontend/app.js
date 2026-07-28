@@ -1450,7 +1450,7 @@ window.addEventListener('appinstalled', () => {
     if (installUI) {
         installUI.innerHTML = '<div class="flex-1 flex flex-col items-center justify-center text-center p-6 gap-3">'
             + '<h1 class="text-2xl font-bold text-green-500">Instalada!</h1>'
-            + '<p class="text-gray-300 max-w-sm">Abre Remote Linux Player desde el icono de tu pantalla de inicio.</p></div>';
+            + '<p class="text-gray-300 max-w-sm">Abre LinuxRemotePlayer desde el icono de tu pantalla de inicio.</p></div>';
     }
 });
 

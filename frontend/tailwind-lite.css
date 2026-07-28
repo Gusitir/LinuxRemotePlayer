@@ -839,23 +839,14 @@ body {
 .bg-blue-500\/20 { background-color: rgba(59, 130, 246, 0.2); }
 .bg-blue-600\/10 { background-color: rgba(37, 99, 235, 0.1); }
 .bg-blue-600\/20 { background-color: rgba(37, 99, 235, 0.2); }
-.bg-cyan-400 { background-color: #22d3ee; }
-.bg-cyan-500\/20 { background-color: rgba(6, 182, 212, 0.2); }
-.bg-fuchsia-400 { background-color: #e879f9; }
-.bg-fuchsia-500\/20 { background-color: rgba(217, 70, 239, 0.2); }
-.bg-fuchsia-950 { background-color: #4a044e; }
 .bg-gray-600 { background-color: #4b5563; }
 .bg-green-500\/20 { background-color: rgba(34, 197, 94, 0.2); }
 .bg-slate-100 { background-color: #f1f5f9; }
 
 .border-blue-500\/30 { border-color: rgba(59, 130, 246, 0.3); }
-.border-cyan-800 { border-color: #155e75; }
-.border-fuchsia-800 { border-color: #86198f; }
 .border-gray-300 { border-color: #d1d5db; }
 .focus\:border-blue-500:focus { border-color: #3b82f6; }
 
-.from-cyan-900\/40 { --tw-gradient-from: rgba(22, 78, 99, 0.4); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(22, 78, 99, 0)); }
-.from-fuchsia-600\/40 { --tw-gradient-from: rgba(192, 38, 211, 0.4); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(192, 38, 211, 0)); }
 .to-orange-500\/20 { --tw-gradient-to: rgba(249, 115, 22, 0.2); }
 
 .gap-6 { gap: 1.5rem; }
@@ -876,8 +867,6 @@ body {
 .hover\:bg-gray-500:hover { background-color: #6b7280; }
 .hover\:bg-gray-700:hover { background-color: #374151; }
 .hover\:border-blue-400:hover { border-color: #60a5fa; }
-.hover\:border-cyan-400:hover { border-color: #22d3ee; }
-.hover\:border-fuchsia-400:hover { border-color: #e879f9; }
 .hover\:border-gray-400:hover { border-color: #9ca3af; }
 .hover\:text-blue-300:hover { color: #93c5fd; }
 
@@ -894,8 +883,6 @@ body {
 .space-y-2 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.5rem; }
 
 .text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
-.text-cyan-400 { color: #22d3ee; }
-.text-fuchsia-300 { color: #f0abfc; }
 .text-gray-100 { color: #f3f4f6; }
 .text-green-400 { color: #4ade80; }
 .text-slate-700 { color: #334155; }
