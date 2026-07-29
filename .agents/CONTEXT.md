@@ -4,72 +4,69 @@
      decisiones vigentes y lecciones de proceso. Lo operativo del dia vive en CURRENT.md;
      el detalle esta en git log. Techo del archivo: ~8KB. -->
 
-## 2026-07-27 · Claude Opus 5 — 1.8.9 publicada, dominio propio, codigo de v1.9.0 cerrado
+## 2026-07-28 · Claude Opus 5 — correo real, pulido pre-Paddle, revision de la skill
 
-**Lo que se publico:** el release 1.8.9 estaba construido y auditado desde el 24 pero
-**nunca se habia pusheado**. Se reunieron los dos clones divergidos (T-60) y quedo LIVE.
-Eso cerro B3 (la voz estaba muerta para toda instalacion nueva: el 1.8.0 publicado llamaba
-a Together con llaves revocadas). El dominio `www.linuxremoteplayer.com` ya sirve el sitio.
+**Arranca aca el chat nuevo.** El codigo de v1.9.0 esta COMPLETO y auditado (T-60..T-66).
+No falta programar: falta **construir el .deb y correr la matriz de TESTING**, que sigue
+sin ejecutarse desde que se publico 1.8.9.
 
-**Tareas auditadas APTO:** T-60 push del release · T-61 dominio + `support@` en la web ·
-T-62 skins liberadas (implementa D4) · T-63 doc de FastAPI oculta (cierra H9) · T-64
-`apt remove` limpia de verdad (arregla B2 en codigo) · T-65 URLs de maquina al dominio.
-**Con eso el CODIGO de v1.9.0 esta completo**; lo que falta para el release no es codigo.
+**T-66 (APTO)** cerro tres cosas de golpe: el nombre del producto estaba **invertido**
+("Remote Linux Player") en 8 lugares incluido el `<title>` y el manifest, `gracias.html`
+publicaba el **gmail personal** del dueño, y sobrevivian 13 reglas CSS muertas. Se descubrio
+al preparar C5: **las capturas para Paddle iban a fotografiar el nombre mal**. De ahi la
+regla de orden: *pulir → release → capturas → Paddle*, nunca al reves.
 
-**Lo que NO esta verificado y es lo mas peligroso que hay abierto:** T-64 toca el `prerm`
-del `.deb`. Si el guard `$1 = "remove"` fallara, **cada actualizacion OTA borraria las
-reglas del sistema y liberaria la licencia de todos los dispositivos**. No se puede probar
-sin un Debian real → **TESTING §E, E1 primero**.
+**La saga del correo, que valio por tres lecciones.** La web publicaba `support@` desde
+T-61 y el buzon NO EXISTIA (rebote `554 Relay access denied`). El dueño migro del reenvio
+gratuito a un buzon real (Namecheap Private Email, MX `mx1/mx2.privateemail.com`), pero al
+migrar **se perdio el SPF** y el dominio quedo sin ningun TXT. Los envios rebotaban con
+`550-5.7.26` de Gmail. Se cargaron SPF+DKIM+DMARC y se verificaron contra 8.8.8.8 y 1.1.1.1.
+**El segundo rebote, ya con el DNS puesto, fue cache negativa**: Gmail habia guardado "este
+dominio no tiene SPF" de la consulta anterior. Falta solo reintentar (C8/C9).
+- *Leccion 1:* publicar una direccion no prueba que exista un buzon, y que el buzon exista
+  no prueba que lo que mande llegue. **Un item se cierra con el efecto verificado.**
+- *Leccion 2:* en el panel de Namecheap, MAIL SETTINGS (los MX) y HOST RECORDS (los TXT) son
+  bloques SEPARADOS. El desplegable es excluyente solo entre formas de configurar MX.
+- *Leccion 3:* cuando entre Resend (T-51), su include va en el **MISMO** registro SPF. Dos
+  registros SPF fallan en ambos y ahi se pierde el correo de licencias.
 
-**Lecciones de proceso (las tres ya estan en AGENTS.md):**
-1. *Un push sin el bloque STOP no es una entrega.* T-64 —el cambio mas riesgoso— se
-   commiteo y pusheo sin una linea de evidencia. Se descubrio solo porque el push de la
-   tarea siguiente arrancaba en un hash desconocido. **El auditor arranca siempre por
-   `git log <ultimo-auditado>..origin/main`, no por el reporte.**
-2. *Los numeros de un brief salen de un comando corrido, no de la memoria ni de un .md.*
-   Fallaron tres veces el mismo dia: un conteo de `isLicensed` (eran 4, no 3), un
-   `grep "set -e"` que matcheaba el comentario del propio archivo y habria reprobado codigo
-   correcto, y una nota de CURRENT que afirmaba que `uninstall.sh` no viajaba en el `.deb`
-   cuando si viaja. Los numeros de linea ademas se mueven con cada tarea.
-3. *Hay defectos que ninguna verificacion de sintaxis caza.* `lrp-cleanup.sh` se commiteo
-   sin bit de ejecucion: perfecto para `bash -n`, y silenciosamente rompia el desinstalador
-   manual mientras el camino del `.deb` seguia bien porque `build_deb.sh` le hace `chmod`.
+**Icono en iOS (TESTING B2), diagnosticado sin poder cerrarlo.** iOS **ignora los iconos del
+`manifest.json`**: solo lee `<link rel="apple-touch-icon">`. El archivo del repo es correcto
+(PNG 180x180, **sin canal alfa**, etiqueta presente) y los 12 assets del precache existen.
+Si igual sale la letra, el sospechoso es el **certificado autofirmado**: aceptar la
+advertencia de Safari sirve para navegar, pero la descarga del icono no hereda esa excepcion.
+Hay que instalar la CA **y activar la confianza total** (Ajustes → General → Informacion →
+Ajustes de confianza del certificado), y recien ahi borrar y re-agregar la PWA.
 
-**Decisiones nuevas:** las URLs de maquina se migraron al dominio propio **pero el alias
-`vercel.app` no se apaga NUNCA** — los equipos con 1.8.x lo tienen grabado en su codigo.
-`LRP_DEV` en vez de `LRP_MODE` para la doc de FastAPI (`desktop` es un modo de usuario
-real, no de desarrollo). La web sigue vendiendo los temas como Pro a proposito: esas 6
-lineas se corrigen **el dia del release**, no antes, o mentiria al reves para quien tiene
-1.8.9 (CURRENT §N2). Nace **PH20**, la demo interactiva del sitio, con dos reglas duras:
-etiqueta de simulacion visible y cero red.
+**Skin `agents-workflow` revisada (repo aparte, NO se implemento nada).** Crecio a 45KB y
+**todas sus war stories son de este proyecto**. Veredicto para LRP:
+- **Adoptar:** la *verification surface* de PH0 — UN comando que corre todos los gates y sale
+  distinto de cero. Hoy los gates estan desperdigados (`check_css_sync.py` dentro de
+  `build_deb.sh`; `py_compile`/`node --check`/`bash -n` escritos A MANO en cada brief), y esa
+  redaccion manual ya produjo un check erroneo. Es la mejora con mejor retorno.
+- **Adoptar, cuesta cero:** las 5 preguntas del dueño y el checklist de integridad de release
+  (sus 8 items son agujeros que este proyecto ya tuvo) → al hito T-56.
+- **NO adoptar ahora:** la ejecucion delegada (el auditor invocando al ejecutor por CLI).
+  Exige la verification surface como precondicion dura, y sobre todo **multiplica las
+  entregas sin multiplicar la matriz de test** — que es justo el cuello de botella real de
+  LRP hoy. Aceleraria lo que ya no damos abasto para verificar.
 
-**Regla nueva de licencias (AGENTS.md §CÓDIGO DE TERCEROS):** aparecio `Techlm77/LinuxPlay`
-(GPL-2.0). No es competencia —ellos hacen streaming de escritorio, LRP no transmite video—
-pero su codigo no entra al contexto de ningun agente. **El porque es propio de este
-proyecto: como casi todo lo escribio una IA, si un agente lee copyleft y produce algo
-parecido, no queda nadie que pueda declarar que no hubo derivacion.** Analisis en
-PLAN.md §MERCADO.
-
-**Abierto al cerrar:** B1 (el buzon `support@` todavia no recibia; el dueño agrego los DNS
-del Webmail y falta repetir la prueba de C8) · B2 pendiente de TESTING §E · H11 (link de
-Stripe TEST en `.env.example`) · H12 (el numero de version que muestra la app sale del
-backend y la interfaz del cache del SW: pueden discrepar. Bajado de prioridad — el 1.8.9
-raro del device era un build de prueba de una sesion que nunca se anoto. *Leccion: si se
-toca el device, se anota, o reaparece meses despues como un bug fantasma*).
-
-## 2026-07-24 (b) · Claude Opus 5 — documentacion humana + skill como paquete
-
-Nacen `docs/ARCHITECTURE.md` y `docs/DEVELOPING.md`, verificados contra el codigo.
-**Leccion:** `APPCORE.md` es un indice para agentes y vive donde ningun humano mira, asi
-que un colaborador contratado no tenia nada — y pesa mas aca que en un proyecto normal:
-cuando la mayoria del codigo lo escribio una IA, NADIE tiene el diseño en la cabeza. Un
-colaborador humano es un TERCER ROL bajo el mismo contrato que los agentes.
-**Formato:** se sigue en Markdown, NO se migra a HTML (GitHub no lo renderiza desde el
-repo, es impuesto de tokens y ensucia los diffs; los grafos ya salen con Mermaid).
-**Skill aparte** (`markdawnproyectstructure`, repo propio): el flujo es LIVE -> repo, nunca
-al reves; correr su install.sh sobrescribiria la version LIVE.
+**Decision pendiente del dueño:** `manifest.json` `short_name` quedo en `"RemoteLinux"`, una
+tercera variante del nombre. Recomendacion: **`"LRP"`** (D2). Se aplica en T-56.
 
 ## Sesiones anteriores (comprimidas)
+
+- **2026-07-27 · se publico 1.8.9 y se cerro el codigo de v1.9.0** (T-60..T-65). Llevaba tres
+  dias construido y auditado **sin pushear**, con dos clones divergidos. **Vigente:** el alias
+  `vercel.app` **no se apaga nunca** (los 1.8.x lo tienen grabado); `LRP_DEV` y no `LRP_MODE`
+  para la doc de FastAPI. Nace PH20. Las lecciones del dia estan en **AGENTS.md** (§CICLO,
+  §FORMATO y §CÓDIGO DE TERCEROS), que es donde se aplican.
+- **2026-07-24 (b) · documentacion para humanos.** Nacen `docs/ARCHITECTURE.md` y
+  `docs/DEVELOPING.md`. **Leccion:** `APPCORE.md` es un indice de agentes y vive donde ningun
+  humano mira; cuando la mayoria del codigo lo escribio una IA, NADIE tiene el diseño en la
+  cabeza, asi que un colaborador humano es un TERCER ROL bajo el mismo contrato.
+  **Formato:** se sigue en Markdown, NO se migra a HTML. **Skill** (repo aparte): el flujo es
+  LIVE -> repo, nunca al reves; correr su install.sh pisaria la version LIVE.
 
 - **2026-07-24 · identidad visual + release 1.8.9 + spec Skins 2.0.** T-58 alineo las skins
   con la paleta del sitio y rehizo el logo. **Leccion tecnica que sigue viva:** el marcado

@@ -21,6 +21,7 @@
 | PH16 | Archivos / disco virtual | v2.2 |
 | PH18 | Modo gamepad | v2.3 |
 | MERCADO | proyectos vecinos (LinuxPlay) + colision de nombre | contexto, decision en CURRENT §D7 |
+| **PH0** | **superficie de verificacion (un comando = todos los gates)** | **propuesta, SIN adoptar — decide el dueño** |
 
 Orden comercial vigente: **v1.9 lanzamiento → v1.9.1 skins + demo web → v2.0 skins Pro +
 Voz 2.0 → v2.1 APK → v2.2 archivos → v2.3 gamepad**.
@@ -324,6 +325,45 @@ Killer feature: multijugador — cada teléfono conectado = un mando (sin hardwa
 - [ ] APK fase 2: háptica/multitouch nativos + menor latencia -> argumento de venta
       extra del APK premium
 - [ ] Gate: misma licencia Pro única
+
+# PH0: SUPERFICIE DE VERIFICACION [propuesta 2026-07-28, SIN adoptar — decide el dueño]
+
+Viene de revisar la skill `agents-workflow` (repo aparte). **Nada de esto se implemento**;
+queda registrado para que la evaluacion no se pierda con el chat.
+
+## El hueco real que tenemos
+Los gates de LRP estan DESPERDIGADOS: `check_css_sync.py` corre dentro de `build_deb.sh`, y
+`py_compile` / `node --check` / `bash -n` los escribe **a mano el auditor en cada brief**.
+Esa redaccion manual ya produjo un check equivocado (un `grep "set -e"` que matcheaba el
+comentario del propio archivo y habria reprobado codigo correcto). **Un archivo versionado
+elimina esa clase entera de error**: se corrige una vez y sirve para siempre.
+
+## Que seria
+- [ ] `scripts/verify.sh`: UN comando que corre todos los gates y **sale distinto de cero**
+      si algo falla. Dia uno puede ser solo los chequeos de sintaxis que ya usamos.
+- [ ] Registrar en AGENTS.md **que cubre y que NO cubre**. Lo que no cubre es exactamente lo
+      que justifica TESTING.md — no es un hueco a esconder.
+- [ ] Cada incidente nuevo que revele una clase de bug agrega un gate (el ciclo de las war
+      stories, automatizado).
+
+## Adoptar tambien, cuesta cero
+- **Las 5 preguntas del dueño** (no requieren leer codigo): "pega la salida del comando",
+  "que archivos toco el commit", "que NO verificaste", "cambio de significado algo fuera del
+  codigo", "que pasa con quien ya instalo la version anterior".
+- **Checklist de integridad de release** → va al hito **T-56**. Sus 8 items son, uno por uno,
+  agujeros que ESTE proyecto ya tuvo: direcciones de soporte muertas, doc prometiendo lo que
+  el script no hace, un build publicado roto mientras las maquinas de dev funcionan, renames
+  que no llegaron al marketing, instalaciones existentes huerfanas por un cambio de dominio,
+  capturas de tres releases atras.
+
+## NO adoptar ahora: la ejecucion delegada (auditor invocando al ejecutor por CLI)
+Suena a la solucion obvia —el dueño es hoy el transporte entre Gemini y Claude— pero:
+1. Exige la superficie de verificacion como **precondicion dura**: un auditor sin humano solo
+   puede aprobar lo que puede chequear, y hoy no existe ese comando.
+2. **Multiplica las entregas sin multiplicar la matriz de test**, que sigue siendo una persona
+   con hardware real. Ese es el cuello de botella REAL de LRP hoy: T-60..T-66 auditadas y
+   TESTING sin correr. Delegar aceleraria justo lo que ya no damos abasto para verificar.
+Revisar recien cuando PH0 exista y la matriz este al dia.
 
 # MERCADO: PROYECTOS VECINOS (revisado 2026-07-26) — decision viva en CURRENT §D7
 

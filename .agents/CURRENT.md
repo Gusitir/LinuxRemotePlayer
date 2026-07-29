@@ -1,163 +1,142 @@
 # CURRENT — estado vivo
 <!-- Formato: AGENTS.md §FORMATO. IDs (B/N/D/H/C) son anclas: citalos, no copies el texto.
-     Ronda el techo de 8KB y a veces lo pasa. El espacio se recupera CERRANDO items
-     (B1, B2, H11, H12), no borrando el porque. El detalle de cada auditoria esta en git. -->
+     Compactado 2026-07-28: 11.2KB -> ~9.4KB. Queda ~1.4KB SOBRE el techo de 8KB; lo que
+     sobra es el porque de B1, B2, D4-D8 y H11-H12, y podarlo mas costaba informacion que
+     el proximo agente no puede re-derivar. Se recupera CERRANDO items: B2 se lleva ~0.5KB
+     el dia que TESTING §E pase. El detalle de cada auditoria esta en git log, no aca. -->
 
 ```yaml
 version_publicada:   1.8.9    # LIVE desde 2026-07-26 (T-60). sha 890211c8…bf87c
-dominio:             https://www.linuxremoteplayer.com  # comprado y sirviendo desde Vercel
-alias_vercel:        linux-remote-player.vercel.app     # VIVO a proposito: es el canal OTA
-correo_soporte:      support@linuxremoteplayer.com      # el viejo soporte@ NO existia
-fase_activa:         v1.9 -> PLAN_v1.9.md   # ejecutadas T-46..T-65; faltan T-51/T-55/T-56/T-57
+version_en_curso:    1.9.0    # CODIGO COMPLETO Y AUDITADO, sin construir ni publicar
+dominio:             https://www.linuxremoteplayer.com  # sirviendo desde Vercel
+alias_vercel:        linux-remote-player.vercel.app     # VIVO a proposito: canal OTA del parque 1.8.x
+correo_soporte:      support@linuxremoteplayer.com      # buzon real (Namecheap Private Email)
+fase_activa:         v1.9 -> PLAN_v1.9.md   # hechas T-46..T-66; faltan T-51/T-55/T-56/T-57
 repo:                publico; se privatiza en T-57
 licencia:            Elastic 2.0
-ultima_sesion:       2026-07-27
-pruebas_device:      TESTING.md (matriz ciclo 1.8.9; DESBLOQUEADA por T-60)
+ultima_sesion:       2026-07-28
+pruebas_device:      TESTING.md — matriz del ciclo 1.8.9 SIN EJECUTAR TODAVIA
 docs_humanos:        docs/ARCHITECTURE.md (la forma) + docs/DEVELOPING.md (como trabajar)
 historia:            CONTEXT.md + git log
 ```
 
-## B — BLOQUEANTES (rotos AHORA, en produccion)
+> **Lo mas importante que hay que entender al entrar:** el codigo de v1.9.0 esta terminado
+> y auditado, pero **no existe ningun `.deb` de 1.9.0 y la matriz de TESTING nunca se corrio**.
+> Todo lo pendiente cuelga de eso, no de escribir mas codigo.
 
-- **B1 · EN CURSO: el buzon `support@` ya existe; falta confirmar que RECIBE y arreglar SPF.**
-  T-61 puso la direccion en la web (14 lugares) cuando no habia buzon detras (C8 reboto con
-  `554 Relay access denied`). El dueño migro a un buzon REAL: **verificado 2026-07-27 que los
-  MX ahora son `mx1/mx2.privateemail.com`** (Namecheap Private Email) y ya no el reenvio
-  gratuito — o sea que support@ tambien puede ENVIAR, no solo recibir. Falta C8.
-  **HUECO NUEVO (verificado contra 8.8.8.8 y 1.1.1.1): el dominio NO tiene NINGUN registro
-  TXT.** Se perdio el SPF que existia con el reenvio, y no hay DKIM ni DMARC. Efecto: lo que
-  SALGA de support@ tiene alta chance de caer en spam en Gmail/Outlook. **Importa ya**: T-51
-  manda las claves de licencia por correo y la correspondencia con Paddle va por ahi.
-  Fix (ver C9). *Leccion:* que la web publique una direccion no prueba que exista un buzon,
-  y que el buzon exista no prueba que lo que mande llegue.
-- ~~**B1b · gmail personal en `gracias.html`.**~~ **CERRADA en T-66**: ahora publica
-  `support@linuxremoteplayer.com`, que ya recibe.
-- **B2 · `apt remove` incumple la doc — ARREGLADO EN CODIGO (T-64), SIN PROBAR EN DEVICE.**
-  Sigue listado como bloqueante porque el fix **no esta verificado**: toca un script de
-  mantenedor y eso no se puede probar sin un Debian real. Se cierra recien con **TESTING §E**.
-  *Que hace el fix:* nace `scripts/lrp-cleanup.sh` (no interactivo, sin `set -e`, siempre
-  `exit 0`) con las 4 acciones que la doc promete; lo llaman el `prerm` y `uninstall.sh`.
-  **El riesgo que domina esto: la limpieza solo corre con `$1 = "remove"`.** dpkg invoca el
-  prerm TAMBIEN en cada actualizacion con `upgrade`; sin ese guard, cada OTA borraria las
-  reglas udev y liberaria la licencia de todos los dispositivos. Es T-19 otra vez, y es lo
-  que prueba **TESTING E1**.
+## B — BLOQUEANTES
+
+- **B1 · el correo de soporte no esta probado de punta a punta.** La web publica `support@`
+  en 14 lugares. **Recibir funciona**; enviar rebotaba con `550-5.7.26` de Gmail, pero **esa
+  causa ya no existe**: el DNS (SPF unico + DKIM + DMARC) se cargo despues y esta verificado
+  contra 8.8.8.8 y 1.1.1.1, y las dos IPs que Gmail rechazo estan autorizadas por ese SPF.
+  El 2do fallo fue **cache negativa** de Gmail. → Falta solo **reintentar el envio** (C8/C9).
+  **NO tocar el DNS mientras tanto**: cada cambio reinicia el reloj del cache.
+  *Leccion:* publicar una direccion no prueba que exista un buzon, y que el buzon exista no
+  prueba que lo que mande llegue.
+- **B2 · `apt remove` incumple la doc — ARREGLADO EN CODIGO (T-64), SIN PROBAR.**
+  Sigue como bloqueante porque el fix **no esta verificado**: toca un script de mantenedor y
+  eso necesita un Debian real. Se cierra con **TESTING §E**.
+  *El fix:* `scripts/lrp-cleanup.sh` (no interactivo, sin `set -e`, siempre `exit 0`) con las
+  4 acciones que promete la doc; lo llaman el `prerm` y `uninstall.sh`.
+  **El riesgo que domina todo esto: la limpieza solo corre con `$1 = "remove"`.** dpkg invoca
+  el prerm TAMBIEN en cada actualizacion con `upgrade`; sin ese guard, **cada OTA borraria las
+  reglas udev y liberaria la licencia de todos los dispositivos**. Es T-19 otra vez, y es
+  exactamente lo que mide **TESTING E1**.
 
 ## N — SIGUIENTE (orden estricto)
 
-1. **N1 · el dueño ejecuta TESTING.md** (empezar por los ⛔). Nada lo bloquea.
+1. **N1 · el dueño ejecuta TESTING.md sobre 1.8.9** (§A §B §C §D §F §G; §E necesita 1.9.0).
+   Nada lo bloquea y es el camino critico: lo que falle tiene que entrar en el MISMO .deb.
+   Antes: poner el HTPC en el 1.8.9 **publicado** (el que tiene es un build de prueba).
 2. **N2 · corregir la web AL PUBLICAR v1.9.0, no antes** (parte de T-56). La web vende los
-   temas como Pro y T-62 ya los libero en el codigo: hasta que el `.deb` nuevo este
-   publicado, cambiarlas haria mentir a la web al reves para todo el que tenga 1.8.9.
+   temas como Pro y T-62 ya los libero en codigo: cambiarlas antes haria mentir a la web al
+   reves para todo el que tenga 1.8.9.
    Lineas: `website/index.html:148,254,299` + `website/en/index.html:148,256,301`.
-3. **N3 · T-56, armar el release v1.9.0.** El CODIGO YA ESTA COMPLETO (T-62 skins libres,
-   T-63 doc FastAPI, T-64 apt remove, T-65 dominio). El brief de T-56 tiene que absorber N2
-   y seguir §PROCESO DE RELEASE de AGENTS.md. **Ojo: el .deb se construye en el clon WSL
-   nativo, que hoy esta desactualizado** — hay que traer todos los commits de T-62..T-65.
-4. **N4** → T-51 Paddle (alta, producto $5, webhook, compra real + refund; arrastra B1b y
-   H11) → T-55 docs (absorbe T-43/T-44) → T-57 privatizar.
+3. **N3 · T-56, armar el release v1.9.0.** Absorbe N2 y la decision de `short_name` (ver D8).
+   Sigue §PROCESO DE RELEASE de AGENTS.md. **Ojo: el clon WSL nativo esta desactualizado** —
+   hay que traerle T-62..T-66 antes de construir.
+4. **N4** → T-51 Paddle (alta, producto $5, webhook, compra real + refund; arrastra H11) →
+   T-55 docs (absorbe T-43/T-44) → T-57 privatizar.
 
-## HECHO (fase v1.9 — todas auditadas APTO; la evidencia esta en git log)
+## HECHO (fase v1.9 — todas auditadas APTO; evidencia en git log)
 
 **T-46..T-50** ai-proxy + anti-abuso + licencia 1-dispositivo · **T-50b, T-53a..d** sitio
-ES+EN LIVE · **T-58** identidad app↔web (`ae27a31`) · **T-59+T-60** release 1.8.9 construido
-y PUBLICADO · **T-61** (`014269f`) dominio + `support@` en la web · **T-62** (`4c52165`)
-skins liberadas · **T-63** (`03581cc`) doc de FastAPI oculta · **T-64** (`21e7d09`+`82a84c9`)
-apt remove limpia · **T-65** (`4f35c0d`) URLs de maquina al dominio · **T-66** (`e1ef501`)
-pulido pre-Paddle: nombre del producto en 8 lugares, `support@` en gracias.html, 13 reglas
-CSS muertas (cierra H7, H8a y B1b).
+ES+EN LIVE · **T-58** identidad app↔web · **T-59+T-60** release 1.8.9 publicado ·
+**T-61** dominio + `support@` en la web · **T-62** skins liberadas · **T-63** doc de FastAPI
+oculta · **T-64** apt remove limpia · **T-65** URLs de maquina al dominio · **T-66** pulido
+pre-Paddle (cierra H7, H8a, B1b).
 
-Lo unico de ahi que el proximo agente no puede re-derivar de git:
+Lo unico que el proximo agente no puede re-derivar de git:
 - **T-46..T-50 se validaron sobre un build de prueba, NO sobre un .deb publicado** →
-  revalidar en TESTING §C/§D. Falta de T-53: video demo y `gracias.html`.
-  Placeholders vivos en la web: PADDLE / KOFI / VIDEO.
-- **T-62 y T-64 todavia NO llegan a ningun device**: necesitan el release v1.9.0.
-- **T-64 se entrego SIN reporte** y traia un defecto que ninguna verificacion de sintaxis
-  caza: `lrp-cleanup.sh` commiteado en modo `100644`. En el `.deb` no se veia porque
-  `build_deb.sh:61` le hace `chmod +x`, pero en un clon de git el guard `[ -x ]` de
-  `uninstall.sh` daba falso y el desinstalador manual dejaba de hacer las 4 acciones **en
-  silencio**. Corregido. La leccion esta en AGENTS.md §CICLO.
+  revalidar en TESTING §C/§D. De T-53 falta el video demo. Placeholders vivos en la web:
+  PADDLE / KOFI / VIDEO.
+- **T-62 y T-64 no llegan a ningun device hasta el release v1.9.0.**
+- **T-64 traia un defecto que ninguna verificacion de sintaxis caza**: `lrp-cleanup.sh`
+  commiteado sin bit de ejecucion. En el `.deb` no se veia (`build_deb.sh:61` hace `chmod +x`),
+  pero en un clon de git el guard `[ -x ]` de `uninstall.sh` daba falso y el desinstalador
+  manual dejaba de hacer sus 4 acciones **en silencio**. Corregido.
 
 ## D — DECISIONES VIGENTES (no re-litigar)
 
-- **D1 · pagos: PADDLE.** Stripe no opera para vendedores en Ecuador. PayPal plan B.
-  Donaciones por Ko-fi. Validacion = compra real $5 + refund. Paddle REVISA el sitio
-  antes de aprobar → por eso web y dominio van ANTES del alta.
-- **D2 · nombre comercial: LinuxRemotePlayer** (rebrand cancelado); "LRP" marca corta.
+- **D1 · pagos: PADDLE.** Stripe no opera para vendedores en Ecuador; PayPal plan B;
+  donaciones por Ko-fi. Validacion = compra real $5 + refund. **Paddle REVISA el sitio antes
+  de aprobar** → por eso web, dominio y capturas van ANTES del alta.
+- **D2 · nombre comercial: LinuxRemotePlayer** (rebrand cancelado); **"LRP" marca corta**.
 - **D3 · precio:** Pro unico $5 lifetime al lanzar. Suscripcion recien con Voz 2.0.
-- **D4 · skins: las 7 planeadas van GRATIS**, son el gancho; el Pro se vendera con skins
-  ADICIONALES en v2.0. Roster, spec, set de botones y criticas: **PLAN.md §PH17** (v1.9.1);
-  mockups en `.agents/design/skins2/`. Falta del dueño: wallpapers (C3).
+- **D4 · las 7 skins planeadas van GRATIS**, son el gancho; el Pro se vendera con skins
+  ADICIONALES en v2.0. Roster y spec: **PLAN.md §PH17** (v1.9.1); mockups en
+  `.agents/design/skins2/`. Falta del dueño: wallpapers (C3).
   **Codigo: las 4 que existen ya estan libres (T-62); las otras 3 son PH17.**
 - **D5 · Voz 2.0 repriorizada a v2.0** (PLAN.md §PH19). Meta: que "pon video de gatos"
-  REPRODUZCA, no que se quede en la busqueda. Orden 1→2→3: keymaps por sitio primero;
-  control del DOM (WebDriver BiDi, el equivalente Firefox de las DevTools) al final, con
-  la nota de seguridad del puerto de depuracion.
-- **D6 · demo interactiva en la web** (2026-07-26): minijuego con control simulado + "TV"
-  que reacciona, con las 4 skins. Spec: **PLAN.md §PH20** (v1.9.1). Dos reglas que NO se
-  negocian: etiqueta de SIMULACION visible, y CERO red. Va con PH17 o despues, nunca antes.
-  **No bloquea Paddle** (esa va con capturas, C5).
-- **D7 · `Techlm77/LinuxPlay` NO es competencia: es otra categoria** (GPL-2.0; ellos hacen
-  streaming de escritorio, LRP no transmite video). **NO se rebrandea.** Analisis, mitigacion
-  de la colision de nombre y el diferenciador de cifrado usable en la web:
-  **PLAN.md §MERCADO**. Su codigo no entra acá: **AGENTS.md §CÓDIGO DE TERCEROS**.
+  REPRODUZCA, no que se quede en la busqueda.
+- **D6 · demo interactiva en la web** (minijuego con control simulado + "TV"), spec en
+  **PLAN.md §PH20** (v1.9.1). Dos reglas que NO se negocian: etiqueta de SIMULACION visible
+  y CERO red. Va con PH17 o despues, nunca antes. No bloquea Paddle.
+- **D7 · `Techlm77/LinuxPlay` NO es competencia: otra categoria** (GPL-2.0, streaming de
+  escritorio; LRP no transmite video). **NO se rebrandea.** Analisis: **PLAN.md §MERCADO**.
+  Su codigo no entra acá: **AGENTS.md §CÓDIGO DE TERCEROS**.
+- **D8 · PENDIENTE de decidir, se aplica en T-56 · `manifest.json` `short_name`.** Quedo en
+  `"RemoteLinux"`, una TERCERA variante del nombre (T-66 arreglo las otras 8; esta no estaba
+  en su alcance). Es el rotulo bajo el icono en Android y el campo existe para ser CORTO, asi
+  que "LinuxRemotePlayer" (17 chars) no sirve. **Recomendacion: `"LRP"`** (D2).
 
 ## H — HALLAZGOS ABIERTOS (no bloquean)
 
-- **H12 · el numero de version que muestra la app NO describe la interfaz que corre.** Sale
-  de `/api/status` (BACKEND) mientras el HTML/JS los sirve el service worker desde su cache:
-  pueden discrepar sin que nada avise, y un cliente diria "actualice y no cambio nada" con
-  el propio producto dandole la razon. Suma a H3. **Bajado de prioridad** (dueño 2026-07-27):
-  el caso que lo destapo era un build de prueba nunca anotado, no una instalacion normal.
-  *Fix si algun dia molesta:* que el frontend exponga SU version (la que `build_deb` inyecta
-  en `sw.js`) y el panel avise cuando no coincide.
-- **H11** `backend/.env.example:20` trae `BUY_URL=https://buy.stripe.com/test_5kQ3...`:
-  Stripe en modo TEST cuando los pagos ya son Paddle (D1). Ese archivo es la plantilla del
-  `.env` real → el boton "comprar" de un device instalado apunta a un checkout de prueba de
-  una pasarela que no se va a usar. Se arregla en T-51, con la URL definitiva.
-- **H1** cold-start de voz: 1er comando tras inactividad tarda segundos (Edge Function
-  dormida + Whisper frio). Mitigacion: keep-alive. Medir en TESTING C3 antes de decidir.
-- **H2** Whisper alucina con silencio → texto fantasma → accion rara. No es regresion.
-  Arreglo barato: descartar audios <~1s antes de facturar.
-- **H3** OTA no es transparente: actualiza al cerrar/reabrir la PWA, no sola. Aceptado.
+- **H11** `backend/.env.example:20` trae `BUY_URL=https://buy.stripe.com/test_...`: Stripe en
+  modo TEST cuando los pagos ya son Paddle (D1). Es la plantilla del `.env` real → el boton
+  "comprar" de un device apuntaria a un checkout de prueba. Se arregla en T-51.
+- **H12** el numero de version que muestra la app **no describe la interfaz que corre**: sale
+  de `/api/status` (backend) mientras el HTML/JS los sirve el service worker desde su cache.
+  Un cliente diria "actualice y no cambio nada" con el producto dandole la razon. Prioridad
+  baja. *Fix si molesta:* que el frontend exponga SU version (la de `sw.js`) y el panel avise.
+- **H1** cold-start de voz: el 1er comando tras inactividad tarda segundos (Edge Function
+  dormida + Whisper frio). Medir en TESTING C3 antes de decidir un keep-alive.
+- **H2** Whisper alucina con silencio → texto fantasma. Arreglo: descartar audios <~1s.
+- **H3** el OTA no es transparente: actualiza al cerrar/reabrir la PWA. Aceptado.
 - **H4** falta intent "volumen al maximo" (hoy sube 1 paso).
-- **H5** `showInstallScreen` usa `appUI.hidden=true` pero `#app-ui` tiene `.flex` (el autor
+- **H5** `showInstallScreen` usa `appUI.hidden=true` pero `#app-ui` tiene `.flex` (el autor le
   gana al `[hidden]` del UA); `showPairingScreen` lo esquiva con `style.display`. Unificar.
 - **H6** `bootstrap.sh` (instala por git-clone) es legacy y muere con el repo privado (T-54).
-- **H8b · "Okular" aparece DUPLICADO** en las apps detectadas. Unico resto del backlog visual
-  (el nombre invertido se cerro en T-66). Vive en `backend/discovery.py`, que escanea
-  `.desktop`: la causa probable es el mismo id presente en dos rutas (`/usr/share/applications`
-  y `~/.local/share/applications`) y que no se deduplica. **No se puede reproducir sin el
-  HTPC** → diagnosticar en device antes de tocar codigo, no a ciegas.
-- **DECISION PENDIENTE del dueño · `manifest.json` `short_name`.** Quedo en `"RemoteLinux"`,
-  una TERCERA variante del nombre (T-66 arreglo las otras 8; esta no estaba en su alcance).
-  En Android es el rotulo bajo el icono, y `short_name` existe para ser CORTO:
-  "LinuxRemotePlayer" (17 chars) no sirve ahi. Segun D2 la marca corta es **"LRP"**.
-  Se decide y se aplica con el release v1.9.0.
-- Cerradas: **H7** y **H8a** (T-66) · **H9** (T-63) · **H10** (docs/DEVELOPING.md).
+- **H8b** "Okular" DUPLICADO en las apps detectadas (`backend/discovery.py` escanea `.desktop`;
+  causa probable: mismo id en dos rutas sin deduplicar). **No se reproduce sin el HTPC.**
+- Cerradas: **H7**, **H8a** (T-66) · **H9** (T-63) · **H10** (docs/DEVELOPING.md).
 
-## C — CHECKLIST DEL DUEÑO (operativo; lo del device esta en TESTING.md)
+## C — CHECKLIST DEL DUEÑO (lo del device esta en TESTING.md)
 
-- [x] **C1** push de 1.8.9 (T-60). · [x] **C2** dominio comprado + `support@` en la web (T-61).
-- [ ] **C8** correo de prueba a `support@linuxremoteplayer.com` desde una cuenta de fuera
-      (gmail) y confirmar que LLEGA al buzon. Los MX ya apuntan a Private Email. Cierra
-      la mitad de B1 y es prerrequisito de Paddle.
-- [~] **C9 · DNS HECHO, falta confirmar el envio.** SPF, DKIM y DMARC cargados y
-      **verificados contra 8.8.8.8 y 1.1.1.1** (2026-07-28): un solo registro SPF, la cadena
-      de `include` resuelve, DKIM con prefijo `v=DKIM1;k=rsa;` correcto.
-      Los dos rebotes de Gmail (`550-5.7.26`) son ANTERIORES: sus IPs `198.54.127.128` y
-      `104.207.68.28` **estan ambas autorizadas** por el SPF actual (via
-      `spf-pe.jellyfish.systems`). El 2do fallo fue **cache negativa**: Gmail habia guardado
-      "este dominio no tiene SPF" de la 1ra consulta. Falta reintentar y ver PASS/PASS.
-      **Cuando entre Resend (T-51), su include va en el MISMO registro SPF** — un dominio
-      con dos registros SPF falla en ambos y ahi se pierde el correo de licencias.
-- [ ] **C3** wallpapers de las skins nuevas. Para Gato/Perro mandar **el TILE** (~400x400),
-      no el pantallazo: son patrones sin costura, tilear ya esta soportado
-      (`--bg-repeat`/`--bg-size`) y un tile pesa ~30KB vs ~170KB del full-screen.
-- [~] **C4 · probablemente HECHO.** El dueño reporto dos veces (2026-07-27 y -28) que **los
-      comandos en INGLES funcionan** en su device, que es justo lo que el prompt bilingue
-      (T-53d) habilita — y es lo que mide TESTING C2. Falta solo que lo marque formalmente
-      ahi. Era ⛔ porque **la web ya vende la voz en ingles**.
-- [ ] **C5** screenshots nuevas del sitio: las actuales son de la skin anime, que ya no es
-      el look por defecto (T-56). Son tambien las que ve Paddle.
+- [x] **C1** push de 1.8.9 · [x] **C2** dominio + `support@` en la web
+- [ ] **C8** correo de prueba HACIA `support@` desde gmail → confirmar que llega.
+- [ ] **C9** correo DESDE `support@` hacia gmail → "Mostrar original" con **SPF y DKIM PASS**.
+      El DNS ya esta cargado y verificado; esto solo espera que expire el cache de Gmail.
+      **Cuando entre Resend (T-51), su include va en el MISMO registro SPF** — un dominio con
+      dos registros SPF falla en ambos y ahi se pierde el correo de licencias.
+- [~] **C4 · probablemente HECHO**: el dueño reporto dos veces que **los comandos en INGLES
+      funcionan** — es lo que habilita el prompt bilingue (T-53d) y lo que mide TESTING C2.
+      Falta marcarlo formalmente ahi.
+- [ ] **C5** capturas nuevas — **tienen que salir de v1.9.0**, o fotografian el nombre viejo
+      y las skins bloqueadas. Son las que ve Paddle.
 - [ ] **C6** `supabase functions deploy send-feedback --no-verify-jwt` (desde v1.5).
+- [ ] **C3** wallpapers de las skins nuevas (PH17/v1.9.1, no bloquea el lanzamiento). Para
+      Gato/Perro mandar **el TILE** (~400x400), no el pantallazo: son patrones sin costura,
+      tilear ya esta soportado y un tile pesa ~30KB vs ~170KB del full-screen.
 - [ ] **C7** privatizar el repo al lanzar (T-57).
