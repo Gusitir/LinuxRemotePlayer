@@ -34,6 +34,13 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y "./linuxremoteplayer_${VERSION}_all.deb"
 
-if [ ! -t 0 ] && [ -e /dev/tty ]; then exec < /dev/tty; fi
 echo "Package installed. Running setup..."
-/usr/local/bin/lrp-setup || echo -e "\n[!] Falló la ejecución automática. Por favor ejecuta manualmente:\n    sudo lrp-setup\n"
+# OJO: NO usar `exec < /dev/tty`. Este script llega por `curl | sudo bash`, o sea que bash
+# lee el SCRIPT desde stdin; reemplazar stdin hace que bash pase a leer las lineas
+# siguientes del script desde el teclado y el instalador se corta a la mitad en silencio.
+# La redireccion va SOLO en la llamada, para que lrp-setup pueda hacer sus preguntas.
+if [ -e /dev/tty ]; then
+    /usr/local/bin/lrp-setup < /dev/tty || echo -e "\n[!] La configuracion automatica no pudo ejecutarse. Ejecutala a mano:\n    sudo lrp-setup\n"
+else
+    echo -e "\n[!] No hay terminal interactiva disponible. Ejecuta la configuracion a mano:\n    sudo lrp-setup\n"
+fi

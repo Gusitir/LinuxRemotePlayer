@@ -166,7 +166,10 @@ INNEREOF
 chmod 755 /usr/local/bin/lrp-update
 
 echo "================================================="
-echo " Paquete base instalado. "
+echo " Paquete base instalado."
+echo ""
+echo " FALTA UN PASO. Para configurar el servicio ejecuta:"
+echo "     sudo lrp-setup"
 echo "================================================="
 EOF
 chmod 755 pkg/DEBIAN/postinst
