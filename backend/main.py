@@ -53,7 +53,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-VOICE_ENABLED = os.getenv("ENABLE_VOICE", "false").lower() == "true"
+def voice_enabled() -> bool:
+    """Se lee en cada consulta A PROPOSITO: activar la licencia enciende la voz escribiendo
+    el .env, y con una constante de modulo ese cambio no tendria efecto hasta reiniciar el
+    servicio -- que es justo lo que dejaba al cliente sin microfono."""
+    return os.getenv("ENABLE_VOICE", "false").lower() == "true"
 
 import audio
 logger.info(f"Audio backend selected: {audio.get_audio_backend() or 'None (uinput fallback)'}")
@@ -421,7 +425,7 @@ async def get_api_status(request: Request):
         "connected_clients": connected_clients,
         "last_input_timestamp": last_input_time,
         "uinput_ok": getattr(input_emulator.mouse, 'ui', None) is not None,
-        "voice_enabled": VOICE_ENABLED,
+        "voice_enabled": voice_enabled(),
         "kiosk_active": getattr(kiosk, "_kiosk_proc", None) is not None,
         "adblock_status": kiosk.adblock_status(),
         "buy_url": "https://www.linuxremoteplayer.com/"
@@ -446,10 +450,10 @@ def health_check():
 @app.get("/api/config")
 def get_config():
     return {
-        "voice_enabled": VOICE_ENABLED,
+        "voice_enabled": voice_enabled(),
         "hostname": socket.gethostname(),
         "version": VERSION,
-        "buy_url": os.getenv("BUY_URL", "https://buy.stripe.com/test_5kQ3cv99t9aY8pu1aVe3e00")
+        "buy_url": os.getenv("BUY_URL", "https://www.linuxremoteplayer.com/")
     }
 
 
@@ -524,15 +528,41 @@ async def activate_license(payload: ActivateBody):
             with open(env_file, "w") as f:
                 f.write("")
         await asyncio.to_thread(set_key, env_file, "LICENSE_TOKEN", payload.key)
+        # D9: la voz es la razon por la que se compra el Pro. Encenderla aca evita que el
+        # cliente active la licencia y se quede sin microfono sin saber por que.
+        await asyncio.to_thread(set_key, env_file, "ENABLE_VOICE", "true")
         try:
             os.chmod(env_file, 0o600)
         except Exception as pe:
             logger.warning(f"Could not set secure permissions on .env file: {pe}")
         os.environ["LICENSE_TOKEN"] = payload.key
+        os.environ["ENABLE_VOICE"] = "true"
         return {"status": "success", "plan": "lifetime"}
     except Exception as e:
         logger.error(f"Failed to save license key: {e}")
         raise HTTPException(status_code=500, detail="Error interno al guardar la clave")
+
+
+class VoiceToggleBody(BaseModel):
+    enabled: bool
+
+
+@app.post("/api/voice/toggle", dependencies=[Depends(require_token)])
+async def toggle_voice(payload: VoiceToggleBody):
+    """D10: apagar la voz es una decision legitima de privacidad. No toca la licencia:
+    el usuario sigue siendo Pro, solo deja de usar el microfono."""
+    try:
+        env_file = os.path.abspath(os.path.join(os.path.dirname(__file__), ".env"))
+        if not os.path.exists(env_file):
+            with open(env_file, "w") as f:
+                f.write("")
+        value = "true" if payload.enabled else "false"
+        await asyncio.to_thread(set_key, env_file, "ENABLE_VOICE", value)
+        os.environ["ENABLE_VOICE"] = value
+        return {"status": "success", "voice_enabled": payload.enabled}
+    except Exception as e:
+        logger.error(f"Failed to toggle voice: {e}")
+        raise HTTPException(status_code=500, detail="Error interno al guardar la preferencia")
 
 
 @app.post("/api/license/takeover", dependencies=[Depends(require_token)])
@@ -557,7 +587,7 @@ async def get_license_status():
     return {
         "licensed": licensed,
         "plan": "lifetime" if licensed else None,
-        "voice_enabled": VOICE_ENABLED
+        "voice_enabled": voice_enabled()
     }
 
 
@@ -738,7 +768,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
                 global last_input_time
                 last_input_time = time.time()
 
-                if not VOICE_ENABLED:
+                if not voice_enabled():
                     await safe_send_json({"status": "error", "message": "Voice disabled"})
                     continue
                 audio_data = message.get("bytes")
