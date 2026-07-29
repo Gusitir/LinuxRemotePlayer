@@ -428,7 +428,9 @@ async def get_api_status(request: Request):
         "voice_enabled": voice_enabled(),
         "kiosk_active": getattr(kiosk, "_kiosk_proc", None) is not None,
         "adblock_status": kiosk.adblock_status(),
-        "buy_url": "https://www.linuxremoteplayer.com/"
+        # PLACEHOLDER-PADDLE: se completa con el checkout real en T-51. Vacio a proposito:
+        # es preferible no ofrecer compra a mandar al cliente a una pasarela que no usamos.
+        "buy_url": os.getenv("BUY_URL", "")
     }
 
 
@@ -453,7 +455,7 @@ def get_config():
         "voice_enabled": voice_enabled(),
         "hostname": socket.gethostname(),
         "version": VERSION,
-        "buy_url": os.getenv("BUY_URL", "https://www.linuxremoteplayer.com/")
+        "buy_url": os.getenv("BUY_URL", "")   # PLACEHOLDER-PADDLE, ver T-51
     }
 
 

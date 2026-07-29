@@ -445,12 +445,18 @@
                         document.getElementById('val-mode').textContent = data.mode === "desktop" ? "Escritorio" : "TV";
                     }
 
+                    const buyInfo = document.getElementById('buy-info');
                     if (data.buy_url) {
+                        if (buyInfo) buyInfo.style.display = '';
                         const link = document.getElementById('buy-link');
                         if (link) {
                             link.href = data.buy_url;
                             link.textContent = data.buy_url.replace(/^https?:\/\//, '');
                         }
+                    } else {
+                        // PLACEHOLDER-PADDLE: sin enlace de compra configurado no se anuncia nada,
+                        // en vez de dejar un "Cargando..." eterno.
+                        if (buyInfo) buyInfo.style.display = 'none';
                     }
 
                 } else {
