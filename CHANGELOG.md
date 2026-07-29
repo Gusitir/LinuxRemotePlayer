@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.10] - 2026-07-29
+
+### Added
+- **La voz se activa sola al registrar la licencia**: antes quedaba apagada y no había forma de encenderla desde la app; ahora aparece el micrófono al activar la clave, y se puede desactivar cuando se quiera.
+- **Temas desbloqueados**: los cuatro temas (Day, Night, Cafe, Anime) pasan a estar disponibles sin licencia.
+- **Instalación más clara**: el instalador ya no se interrumpe a mitad de camino y el paquete indica el paso que falta al terminar.
+- **Correcciones internas**: la documentación técnica del servidor deja de ser pública en la red local, la desinstalación limpia lo que promete, y el enlace de compra queda unificado.
+
 ## [1.8.9] - 2026-07-24
 
 ### Added

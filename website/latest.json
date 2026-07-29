@@ -1,6 +1,6 @@
 {
-  "version": "1.8.9",
-  "deb_url": "https://www.linuxremoteplayer.com/downloads/linuxremoteplayer_1.8.9_all.deb",
-  "sha256": "890211c8d65742d81415356195c8601c42316a6d8f53710c51780e2d072bf87c",
-  "notes": "Voz con IA por servidor propio, licencia de 1 dispositivo con mudanza, temas nuevos (Day por defecto) y logo nuevo."
+  "version": "1.8.10",
+  "deb_url": "https://www.linuxremoteplayer.com/downloads/linuxremoteplayer_1.8.10_all.deb",
+  "sha256": "122aae5641bf5ac06e6779b7359a550743ae4c7ade3a7919475928d1ebdb3dc5",
+  "notes": "Build de prueba: la voz se activa al registrar la licencia, temas desbloqueados e instalacion mas clara."
 }
