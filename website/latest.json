@@ -1,6 +1,6 @@
 {
-  "version": "1.8.11",
-  "deb_url": "https://www.linuxremoteplayer.com/downloads/linuxremoteplayer_1.8.11_all.deb",
-  "sha256": "741101bbbb36b6eacc86e88f62b3d3ce4962edf7523598c062c1018b2470cf58",
-  "notes": "Build de prueba: actualizaciones que ya no dejan el servicio caido, microfono tras actualizar y reinstalacion sin romper el emparejamiento."
+  "version": "1.8.12",
+  "deb_url": "https://www.linuxremoteplayer.com/downloads/linuxremoteplayer_1.8.12_all.deb",
+  "sha256": "5f0d6358e1b7f0972a1dffc6ac586bf6030a3c1f18709cb43a1188fed0ac9080",
+  "notes": "Build de prueba: desinstalar deja el equipo limpio de certificados, claves y credenciales."
 }
