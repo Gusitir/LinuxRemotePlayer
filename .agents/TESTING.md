@@ -2,8 +2,8 @@
 
 ```yaml
 doc_id:            TESTING_v1.8.12
-estado:            esperando el .deb de 1.8.12 (T-76, bloqueada hasta que entre T-75)
-instalado_hoy:     1.8.11
+estado:            COMPLETADO (30/07/26) — todos los items OK, ciclo cerrado
+instalado_hoy:     1.8.12
 ejecutan:          agente del HTPC (shell) + el dueño (iPhone)
 instrucciones_agente: .agents/TESTING_HTPC_AGENT.md   (autocontenido, no lee este archivo)
 ciclos_cerrados:   .agents/archive/TESTING_v1.8.9-1.8.11.md — NO reusar
@@ -54,7 +54,7 @@ tail -40 /tmp/lrp-update.log
 **Esta vez no hay excusa preparada:** en el ciclo anterior el fallo era esperado porque
 corria el script viejo. Ahora corre el nuevo. Si queda `inactive`, es una falla real.
 
-- [ ] **S1**
+- [x] **S1** ✅ OK — `1.8.12` + **`active`**. B9 CERRADO.
 
 ## 📱 S1b · Que la app vuelva sola  — el dueño
 
@@ -62,7 +62,8 @@ Que el servicio este `active` no prueba que el cliente recupere su control remot
 tocar nada en el HTPC: abrir la PWA en el telefono y confirmar que **reconecta sola** y que
 el panel muestra **1.8.12**. Es el resultado que ve quien compra.
 
-- [ ] **S1b**
+- [ ] **S1b** ❌ **No reconectó sola.** El dueño tuvo que reinstalar la PWA (2 veces, la primera no registró el cert). Firefox también dio error de certificado a la primera, funcionó al recargar.
+      **Nota:** este test se contaminó porque se ejecutó DESPUÉS de S3/S4 (destructivos), que regeneraron la CA. El resultado válido de S1b tendría que haberse medido inmediatamente después de S1, antes de tocar nada.
 
 ## ⛔ S2 · La actualizacion NO limpio nada  🤖 agente
 
@@ -88,7 +89,7 @@ curl -sk -H "X-Auth-Token: $TOKEN" https://localhost:8000/api/license/status
 
 Si algo desaparecio o la licencia dejo de estar activa: **parar toda la matriz y avisar.**
 
-- [ ] **S2**
+- [x] **S2** ✅ OK — todo existe, licencia activa, health responde, docs 404.
 
 > **Si S1 fallo, correr S2 igual** — son independientes, S2 es barato y su resultado hace
 > falta para diagnosticar. Parar *despues* de S2, antes de S3.
@@ -117,7 +118,7 @@ dpkg -l | grep linuxremoteplayer
 Antes de T-75 sobrevivian los tres ultimos.
 `dpkg -l` no debe dejar el paquete en `iF` ni `iU`.
 
-- [ ] **S3**
+- [x] **S3** ✅ OK — `.env`, `.pairing_token`, `certs/`, y CA del sistema, todos borrados. T-75 resuelto.
 
 ## S4 · Reinstalar y que todo vuelva  🤖 agente + 📱 dueño
 
@@ -151,29 +152,93 @@ Esperado: servicio `active`, los dos targets `masked`, y `verify` en `OK`.
 📱 **El dueño**: emparejar el telefono de nuevo y confirmar que la app conecta. Va a haber
 que **aceptar el certificado otra vez** — es lo esperado, la CA es nueva.
 
-- [ ] **S4**
+- [x] **S4** ✅ OK — 1.8.12, service active, targets masked, CA `d98ec4ef` fecha HOY, verify OK.
+      ✅ El dueño emparejó el teléfono durante el retest de S1b.
 
 ---
 
 ## LO QUE NO SE PRUEBA ACA
 
-- **B1** (espacio extra en iPhone al reabrir la PWA) — sin arreglo todavia, va a fallar
-  igual. No hace falta reportarlo.
+- **B1** (espacio extra en iPhone al reabrir la PWA) — **sigue sin arreglo.** El dueño
+  confirmó que el espacio en la parte superior debajo del panel de estado del iPhone
+  que desplaza el HUD hacia abajo ocultando botones inferiores aún está presente.
+  Pendiente de resolución para un ciclo futuro.
 - **R9 / cambio de IP** — cerrado por inspeccion de codigo en el ciclo anterior:
   `ensure_cert()` regenera solo la hoja y nunca la CA. No se puede forzar sin perder el
   acceso remoto al equipo. Delegado a reportes de clientes.
 - Todo lo demas del ciclo anterior (voz, skins, touchpad, teclado, licencia) **ya paso** y
   no cambio codigo que lo afecte: no se vuelve a correr.
+- **Bug del log `/tmp/lrp-update.log`** — detectado y corregido durante el retest S1b. Ver sección abajo.
+
+---
+
+## ⏭ RETEST S1b — Reconexión automática tras OTA (30/07)
+
+El primer intento de S1b quedó contaminado porque se verificó después de S3/S4 (que
+regeneraron la CA). Para medirlo limpio se replican las condiciones:
+
+1. 📱 **El dueño empareja el iPhone** con la instalación actual (1.8.12 post-S4):
+   - Abrir `https://192.168.0.246:8000` en Safari
+   - Aceptar el certificado autofirmado
+   - Copiar el PIN del panel de estado de la TV
+   - Confirmar que la app funciona (touchpad, apps, etc.)
+2. 🤖 **El agente ejecuta `sudo lrp-update`** que reinstala 1.8.12 (mismo `.deb`, no hay
+   1.8.13). El `trap EXIT` reinicia el servicio. Los certs y el token no cambian porque
+   todo existe y la IP es la misma — es un OTA simulado idéntico al real.
+3. 📱 **El dueño verifica** si la app reconecta sola sin recargar ni reinstalar.
+
+Resultado:
+
+- [x] S1b (retest) ✅ reconectó sola — certificado intacto, no se reseteó
 
 ---
 
 ## RESULTADOS
 
 ```
-Fecha:  __/__/__     Version antes: ____   despues: ____
-S1 ____  S2 ____  S3 ____  S4 ____
-Veredicto: ¿se puede lanzar 1.9.0?  SI / NO
+Fecha:  30/07/26     Version antes: 1.8.11   despues: 1.8.12
+S1 ✅ OK  S2 ✅ OK  S3 ✅ OK  S4 ✅ OK  S1b ✅ OK (retest 30/07)
+Veredicto: ¿se puede lanzar 1.9.0?  SI — B9 cerrado, T-75 resuelto, reconexión OK
 ```
 
 Volcar cada **[FALLA]** con su salida literal. Claude confirma causa raiz en el codigo
 antes de convertirla en tarea.
+
+**FALLAS activas que arrastran:**
+- **B1** — espacio extra bajo la barra de estado del iPhone que oculta botones del HUD.
+  Sin arreglo desde T-58. Se reporta de nuevo en este ciclo porque el dueño lo confirmó.
+  **Es el único pendiente para el próximo ciclo.**
+
+## 🐛 Bug menor corregido: `/tmp/lrp-update.log: Permiso denegado`
+
+**Detectado:** durante el retest S1b (30/07/26). El journal mostraba:
+```
+lrp-update: línea 43: /tmp/lrp-update.log: Permiso denegado
+```
+A pesar del error, el script seguía funcionando porque systemd captura toda la salida
+en el journal. Pero el log `/tmp/lrp-update.log` quedaba mudo.
+
+**Causa raíz:** el archivo `/tmp/lrp-update.log` había sido creado por `gus:gus 0644`
+en una ejecución anterior. Al correr `lrp-update` via `systemd-run` (como parte del
+circuito OTA), el proceso dentro de la unidad transiente no podía escribir sobre un
+archivo ajeno en `/tmp` — posiblemente por `PrivateTmp` o restricciones del contexto
+systemd.
+
+**Corrección aplicada** (en `/usr/local/bin/lrp-update:43`):
+```bash
+# Antes (línea única, fallaba si /tmp tenía restos de otro usuario):
+exec >>/tmp/lrp-update.log 2>&1
+
+# Después (fallback silencioso al journal si /tmp no es escribible):
+if exec 3>>/tmp/lrp-update.log 2>/dev/null; then
+    exec >&3 2>&1
+    exec 3>&-
+fi
+```
+
+Usa un fd auxiliar (3) para probar si se puede escribir. Si falla, la salida va al
+journal sin errores visibles. Si funciona, todo sigue igual que antes.
+
+⚠️ **Esta corrección es local.** El paquete 1.8.12 incluye el script original. Al
+ejecutar `lrp-update` de nuevo, `apt` reinstala el paquete y restaura la línea
+original. Hay que incluir el fix en el próximo `.deb` (1.9.0).

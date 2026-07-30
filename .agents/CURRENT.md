@@ -84,12 +84,14 @@ Function** — va con T-51. Lo que decian era:
 
 ## N — SIGUIENTE (orden estricto)
 
-1. **N1 · T-75: cerrar la desinstalacion** (B16 + B17 + H15). Es lo ultimo de codigo y son
-   tres lineas en `lrp-cleanup.sh` mas averiguar lo del `sleep.target`. Va ANTES del release
-   porque toca el `.deb`.
-2. **N2 · T-56, el release v1.9.0.** Absorbe N4 (la web). **Y es la prueba de B9**: al
-   actualizar el HTPC de 1.8.11 a 1.9.0, el servicio tiene que reiniciarse solo. Ver el
-   recuadro de §RESULTADO DEL TEST — si eso falla, no se lanza.
+1. **N1 · T-77: el log del actualizador a `/var/log`** (H18). Una linea, y es lo ultimo de
+   codigo. Se puede plegar dentro de T-56 si se prefiere no gastar una tarea.
+2. **N2 · T-56, el release v1.9.0. YA NO HAY BLOQUEANTES TECNICOS.** Absorbe N4 (las 6
+   lineas de la web que aun venden los temas como Pro) y el `CHANGELOG`. El ciclo de 1.8.12
+   cerro B9, T-75 y la reconexion de la PWA: **lo que falta para vender ya no es codigo.**
+   Sigue §PROCESO DE RELEASE de AGENTS.md.
+3. **N3 · lo comercial:** C8/C9 (probar el correo), C5 (capturas con la skin Day), T-51
+   (alta de Paddle, arrastra B1b y H11), T-55 docs, T-57 privatizar (PLAN.md §T-57).
 4. **N4 · corregir la web AL PUBLICAR v1.9.0, no antes.** La web vende los temas como Pro y
    T-62 ya los libero en codigo; cambiarlas antes haria mentir a la web al reves.
    Lineas: `website/index.html:148,254,299` + `website/en/index.html:148,256,301`.
@@ -152,7 +154,20 @@ se borro `ENABLE_VOICE` del `.env`, se reinicio y el backend lo repuso), B11 (`c
 (`Name=LinuxRemotePlayer`, `short_name=LRP`, confirmado tambien en el iPhone) y **B14 (CA
 regenerada como `CN=LinuxRemotePlayer CA d98ec4ef`, CON sufijo)**.
 
-> ### ⛔ LO UNICO QUE SIGUE SIN PROBARSE ES LO MAS IMPORTANTE: B9
+> ### ✅ B9 CERRADO EN DEVICE — 2026-07-30, ciclo 1.8.12
+> El OTA de 1.8.11 → 1.8.12, **disparado por la API igual que lo haria un cliente**, dejo el
+> servicio en **`active`** sin intervencion. Era la unica correccion que faltaba validar y
+> **la que bloqueaba el lanzamiento**. Tambien quedaron verificados: T-75 (el `apt remove`
+> borra `.env`, `.pairing_token`, `certs/` y la CA del sistema), que la actualizacion NO
+> toca nada ni libera la licencia, y —en un retest limpio— que **la PWA reconecta sola**.
+> **Veredicto del ciclo: se puede lanzar 1.9.0.**
+>
+> *Nota de metodo:* el primer S1b dio FALLA pero estaba **contaminado** (se midio despues de
+> los items destructivos, que regeneran la CA). El agente lo detecto, lo declaro, y armo un
+> retest limpio reinstalando el mismo `.deb` para simular un OTA sin cambiar certificados.
+> Esa distincion es la diferencia entre un bug inventado y un dato.
+
+> ### ~~⛔ LO UNICO QUE SIGUE SIN PROBARSE ES LO MAS IMPORTANTE: B9~~ (historico)
 > R1 fallo **como estaba previsto** — el equipo corria el `lrp-update` roto de 1.8.10 para
 > instalar su propia correccion, y el servicio quedo `inactive`. O sea que **el arreglo que
 > hace que una actualizacion reinicie el servicio NUNCA se ejecuto todavia.**
@@ -170,6 +185,23 @@ Dos cosas mas del reporte:
   se le pidio.
 
 ## H — HALLAZGOS ABIERTOS (no bloquean)
+
+- **H18 · el log del actualizador queda mudo si `/tmp/lrp-update.log` es de otro usuario.**
+  Lo encontro el agente del HTPC (30/07): `exec >>/tmp/lrp-update.log 2>&1` falla con
+  "Permiso denegado" cuando el archivo lo creo otro usuario en una corrida previa.
+  **NO es peligroso — verificado empiricamente:** el script sobrevive (bash imprime el error
+  y sigue) porque ese `exec` va ANTES del `set -e`, y systemd captura toda la salida en el
+  journal igual. El costo es solo perder el log dedicado, que es justo el que se mira cuando
+  un OTA sale mal.
+  **NO adoptar el parche que probo el agente** (`exec 3>>` dentro de un `if`): probado, no
+  silencia el mensaje —el `2>/dev/null` no alcanza al error que bash emite por la
+  redireccion— y agrega complejidad a un script critico sin resolver el sintoma.
+  *Fix correcto, va en 1.9.0:* mover el log a **`/var/log/lrp-update.log`**. Es root-only,
+  asi que ningun usuario puede dejar ahi un archivo ajeno, y queda fuera de `/tmp`, que es lo
+  que aislaria `PrivateTmp` si algun dia se activa.
+  *Ojo:* el agente aplico su parche **en vivo sobre el equipo** — una excepcion a su regla de
+  no tocar codigo. Lo declaro, y advirtio que el proximo `apt` lo pisa. Esta bien que lo
+  dijera; el arreglo de verdad tiene que viajar en el `.deb`.
 
 - **B16 · `apt remove` deja CLAVES y CREDENCIALES en el disco.** `uninstall.sh` borra
   `certs/` y `.pairing_token`, pero **`lrp-cleanup.sh` —el camino de `apt remove`, que es el

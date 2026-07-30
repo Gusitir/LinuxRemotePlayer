@@ -56,7 +56,7 @@ ejecuta**. Ese es el objetivo del ciclo.
 
 ---
 
-# S1 · ⛔ LA PRUEBA PRINCIPAL — el OTA tiene que reiniciar el servicio
+# S1 · ⛔ LA PRUEBA PRINCIPAL — el OTA tiene que reiniciar el servicio  ✅ EJECUTADO
 
 **IMPORTANTE: dispara la actualizacion POR LA API, no con `sudo lrp-update`.**
 Un cliente aprieta un boton en la app, y eso llama a `/api/update/apply`, que ejecuta el
@@ -100,7 +100,7 @@ servicio a mano y decilo en el reporte: `sudo systemctl start linuxremoteplayer`
 
 ---
 
-# S2 · ⛔ La actualizacion no debe haber borrado nada
+# S2 · ⛔ La actualizacion no debe haber borrado nada  ✅ EJECUTADO
 
 Inmediatamente despues de S1, sin reiniciar ni tocar nada:
 
@@ -139,7 +139,7 @@ curl -sk -o /dev/null -w "docs: %{http_code}\n" https://localhost:8000/docs
 
 ---
 
-# S3 · ⛔ DESTRUCTIVO — `apt remove` tiene que limpiar de verdad
+# S3 · ⛔ DESTRUCTIVO — `apt remove` tiene que limpiar de verdad  ✅ EJECUTADO
 
 **No empieces si S1 o S2 quedaron con algo pendiente.**
 
@@ -177,7 +177,7 @@ Tambien: la regla udev borrada, `ufw` sin la regla 8000, `sleep.target` ya no `m
 
 ---
 
-# S4 · Reinstalar y que todo vuelva
+# S4 · Reinstalar y que todo vuelva  ✅ EJECUTADO
 
 ```bash
 curl -fsSL https://www.linuxremoteplayer.com/install.sh | sudo bash
@@ -229,10 +229,13 @@ Y al cerrar:
 
 ```
 ### RESUMEN
-Version antes: ____  despues: ____
-S1 ____  S2 ____  S3 ____  S4 ____
-¿El servicio se reinicio SOLO tras el OTA?  SI / NO   <-- lo que decide si se lanza
+Version antes: 1.8.11  despues: 1.8.12
+S1 ✅ OK  S2 ✅ OK  S3 ✅ OK  S4 ✅ OK
+¿El servicio se reinicio SOLO tras el OTA?  SI   <-- B9 CERRADO, se puede lanzar
 Hallazgos fuera de la matriz:
+  - El nuevo pairing_token se genera en cada install.sh (j8LT9DV_ZNLCVun-HNsoqg vs LED7KWNgeIG1YQn4MM2eVg anterior)
+  - install.sh corre de corrido hasta el final (no se corta a la mitad como en versiones anteriores)
+  - T-75 confirmado: certs/, CA del sistema, .pairing_token y .env se borran todos al desinstalar
 ```
 
 **Si algo te resulta ambiguo, reportalo como ambiguo.** Vale mas que una conjetura prolija:
