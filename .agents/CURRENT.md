@@ -69,7 +69,12 @@ va a leer quien intente "ordenarlo"; el detalle de cada auditoria, en git log:
   "firma invalida" y la cadena de B11 no lo arreglaba. **No repara lo ya roto: hay que borrar
   la CA vieja a mano del sistema y del iPhone, una vez.**
 
-**Pendientes, van en T-73:**
+**Pendientes** — ya no: **B12 y B13 se cerraron en T-73** (`6ac5d2d`). Ese commit toco 5
+archivos y no 3: mi brief decia "3 archivos" pero su propio check exigia cero ocurrencias
+del nombre en TODO el repo, asi que el ejecutor siguio la verificacion, que era la spec
+estricta. Aparecio ademas el nombre invertido en **el correo que recibe el cliente con su
+clave** (`stripe-webhook`). **OJO: ese cambio no surte efecto hasta redesplegar la Edge
+Function** — va con T-51. Lo que decian era:
 - **B12 · `apt remove` deja credenciales en disco.** El `.env` conserva `LICENSE_TOKEN` y
   `PAIRING_TOKEN`, y al reinstalar re-reclama la licencia sola. *Fix:* borrarlo **al final**
   de `lrp-cleanup.sh` — el paso que libera la licencia lee ese mismo archivo.
@@ -79,17 +84,16 @@ va a leer quien intente "ordenarlo"; el detalle de cada auditoria, en git log:
 
 ## N — SIGUIENTE (orden estricto)
 
-1. **N1 · terminar T-73** (B12 + B13 + D8). Es lo ultimo que falta de codigo.
-2. **N2 · construir y publicar 1.8.11, otro build de PRUEBA.** Cinco arreglos criticos
-   (T-70..T-72) no se probaron en device y **ninguno se puede probar sin un `.deb`**.
+1. **N1 · construir y publicar 1.8.11, otro build de PRUEBA.** **El codigo de 1.9.0 esta
+   COMPLETO** (T-62..T-73); lo que falta no es programar. Seis arreglos criticos no tocaron
+   hardware y **ninguno se puede probar sin un `.deb`**.
    **Contar con que ESTE OTA deje el servicio muerto otra vez**: el equipo esta en 1.8.10 y
-   usa su `lrp-update` roto para instalar. Se levanta a mano (`systemctl start
+   usa su `lrp-update` roto para instalar. Se levanta a mano (`sudo systemctl start
    linuxremoteplayer`) y se sigue. **El OTA que tiene que verse verde es 1.8.11 → 1.9.0.**
-3. **N3 · re-correr en device sobre 1.8.11:** §A1 (OTA) · §E1-E5 (desinstalar: ahora el
-   `.env` tiene que desaparecer) · §C+D1 (la voz sin tocar el `.env` a mano) · §F6 y §G4
-   (certificado tras reinstalar, y el nombre en el menu de aplicaciones).
-   **Antes de §F6: borrar a mano la CA vieja** del sistema y del iPhone, o el
-   `SEC_ERROR_BAD_SIGNATURE` va a persistir aunque T-72 este bien (ver B14).
+2. **N2 · re-correr en device: TESTING §CICLO SIGUIENTE (R1..R9)**, arriba de todo en ese
+   archivo. Son 9 items, no la matriz entera: lo demas del ciclo viejo sigue valiendo.
+   **R6 exige borrar a mano la CA vieja ANTES de probar**, o el `SEC_ERROR_BAD_SIGNATURE`
+   persiste aunque T-72 este bien (ver B14).
 4. **N4 · corregir la web AL PUBLICAR v1.9.0, no antes.** La web vende los temas como Pro y
    T-62 ya los libero en codigo; cambiarlas antes haria mentir a la web al reves.
    Lineas: `website/index.html:148,254,299` + `website/en/index.html:148,256,301`.

@@ -1,4 +1,47 @@
-# TESTING — ciclo v1.8.9 (OTA desde 1.8.0)
+# TESTING — ciclo v1.8.9/1.8.10 · CERRADO. El proximo ciclo es 1.8.11 (ver arriba de todo)
+
+> ## ⏭ CICLO SIGUIENTE — QUE RE-TESTEAR SOBRE 1.8.11
+> El ciclo de abajo YA SE EJECUTO (29/07, sobre 1.8.10) y produjo B9..B14. **Cinco arreglos
+> criticos (T-70..T-73) no tocaron hardware todavia.** Cuando exista el `.deb` de 1.8.11,
+> re-correr SOLO esto — lo demas del ciclo viejo sigue valiendo:
+>
+> - [ ] ⛔ **R1 · el OTA reinicia el servicio.** Actualizar y comprobar
+>       `systemctl status linuxremoteplayer` → **active**, sin tocar la terminal.
+>       **ESPERADO QUE FALLE ESTA VEZ:** el equipo esta en 1.8.10 y usa su `lrp-update` roto
+>       para instalar; el arreglo de B9 recien corre en el OTA SIGUIENTE. Levantarlo a mano
+>       (`sudo systemctl start linuxremoteplayer`) y seguir. **El que tiene que verse verde
+>       es 1.8.11 → 1.9.0.**
+> - [ ] ⛔ **R2 · un OTA NO limpia nada** (era E1). Tras actualizar:
+>       `ls /etc/udev/rules.d/99-uinput.rules` existe · `ufw status | grep 8000` con la regla ·
+>       `systemctl is-enabled sleep.target` masked · y la app **sigue diciendo Pro**.
+> - [ ] ⛔ **R3 · la voz aparece sola.** Con la licencia YA activada de antes, tras el OTA el
+>       microfono tiene que estar **sin tocar el `.env` a mano** (era el bug B10).
+> - [ ] **R4 · apagar y volver a encender la voz** desde la app. Al apagarla, el `.env` queda
+>       en `ENABLE_VOICE=false` y **un reinicio del servicio NO debe volver a prenderla**.
+> - [ ] ⛔ **R5 · `apt remove` borra el `.env`** (era E2). Despues:
+>       `ls /opt/linuxremoteplayer/backend/.env` → **no existe**, y al reinstalar tiene que
+>       pedir emparejar de nuevo y NO reclamar la licencia sola.
+> - [ ] **R6 · certificado tras reinstalar** (era F6/B14). **ANTES de probar, borrar a mano la
+>       CA vieja**: en el HTPC `sudo rm /usr/local/share/ca-certificates/lrp-ca.crt &&
+>       sudo update-ca-certificates --fresh`, y en el iPhone borrar el perfil viejo. Sin eso
+>       el `SEC_ERROR_BAD_SIGNATURE` persiste aunque T-72 este bien.
+>       Comprobar tambien que la CA nueva tenga sufijo:
+>       `openssl x509 -in /opt/linuxremoteplayer/backend/certs/ca.pem -noout -subject`
+>       → tiene que decir `CN=LinuxRemotePlayer CA <8 caracteres>`.
+> - [ ] **R7 · el nombre en el menu de aplicaciones** dice **LinuxRemotePlayer** (era G4/B13).
+> - [ ] **R8 · el icono de la PWA**, tras borrarla y volver a agregarla, muestra el logo y el
+>       rotulo **LRP** (era B2/D8).
+> - [ ] **R9 · G2, cambio de IP** — se puede provocar: reservar otra IP en el DHCP del router
+>       y reiniciar la red (`sudo nmcli con down <nombre> && sudo nmcli con up <nombre>`) o el
+>       equipo. `monitor_ip` deberia regenerar la hoja **sin** regenerar la CA, y el panel
+>       tiene que abrir sin advertencia en la IP nueva.
+>
+> **Sigue sin arreglo y va a fallar igual: B1** (el espacio extra en iPhone tras abrir y
+> cerrar la PWA). Es esperado, no hace falta volver a reportarlo.
+
+---
+
+## CICLO EJECUTADO — v1.8.9 → 1.8.10 (resultados del 29/07, ya triados)
 
 ```yaml
 doc_id: TESTING_v1.8.9
