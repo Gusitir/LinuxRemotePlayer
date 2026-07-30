@@ -10,8 +10,8 @@ entrada canónico: describe cómo trabajamos. Es estable — si el proceso cambi
 3. **CURRENT.md** — estado ACTUAL: versión publicada, fase/tarea activa, pendientes.
 4. **APPCORE.md** — mapa del código: qué vive dónde. Leerlo ANTES de grepear; ahorra
    media hora de exploración a ciegas.
-Después, según necesites: PLAN.md (roadmap PH-NN), **PLAN_v1.9.md (fase ACTIVA)**,
-TESTING.md (matriz del device).
+Después, según necesites: **PLAN.md** (roadmap PH-NN + specs de fase) y **TESTING.md**
+(matriz del ciclo vivo). Los planes de fase cerrados viven en `archive/`.
 > Si este puntero de fase nombra una versión ya publicada, está rancio: creele a CURRENT.
 
 ## FORMATO DE LOS ARCHIVOS .agents/ (los escribe una IA para que los lea otra IA)
@@ -92,7 +92,9 @@ es telegráfico — la ambigüedad obliga a releer y sale más cara que lo que a
    CURSO con puntero al checklist. (B1 se marcó "cerrada" con la web corregida mientras el
    buzón de soporte seguía sin existir.)
 5. **Una T-NN nacida fuera del plan de fase se registra en ese plan AL CREARLA** (una línea
-   con puntero a CURRENT basta). T-60..T-65 fueron invisibles para PLAN_v1.9.md una sesión.
+   con puntero a CURRENT basta). T-60..T-65 fueron invisibles para su plan de fase una sesión
+   entera, y ese plan termino archivado sin un solo checkbox marcado: el estado real vivia
+   en CURRENT. Si el plan de fase deja de reflejar la realidad, se archiva — no se arrastra.
 
 ## REGLAS DE ORO
 - Evidencia = salida literal pegada. Si no lo corriste, no lo reportes. El auditor re-corre.

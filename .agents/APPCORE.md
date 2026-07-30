@@ -1,135 +1,106 @@
-# APPCORE — mapa del código (re-sync 2026-07-20 base v1.7.7; parches puntuales 2026-07-27
-# por T-62/63/64/65 — REINDEX COMPLETO PENDIENTE tras el release v1.9.0)
+# APPCORE — mapa del código (re-sincronizado 2026-07-30 contra el repo, base v1.8.12)
+# Índice para AGENTES. Leerlo ANTES de grepear. La doc para humanos es docs/ARCHITECTURE.md.
 
 # DIRECTORIES
-- /backend/: FastAPI server (Python). /frontend/: PWA estática (vanilla JS, sin build).
-- /scripts/: bash (install, build_deb, update, uninstall, bootstrap, lrp-cleanup [T-64:
-  limpieza NO interactiva compartida por prerm y uninstall]) + check_css_sync.py.
-- /website/: Vercel landing + install.sh bootstrap + /downloads (.deb) + latest.json.
-- /supabase/functions/: Edge Functions (stripe-webhook, validate-license, send-feedback).
-- /.agents/: contexto IA (AGENTS entrada, CONTEXT handoff, CURRENT, PLAN, PLAN_v1.8,
-  TESTING, APPCORE, archive/, AUDITS/, skills/manage_context = skill `reindex`).
+- /backend/: FastAPI (Python). /frontend/: PWA estática (vanilla JS, sin build).
+- /scripts/: install, build_deb, update, uninstall, lrp-cleanup, bootstrap(legacy, muere
+  con el repo privado) + check_css_sync.py (guard, corre en el build).
+- /website/: Vercel — landing ES+EN, install.sh, /downloads (.deb), latest.json (canal OTA).
+- /supabase/functions/: Edge Functions (ai-proxy, validate-license, stripe-webhook[legacy],
+  send-feedback). **Editarlas en el repo NO las despliega.**
+- /.agents/: contexto IA. /docs/: para humanos. /.agents/archive/: fases cerradas, NO reusar.
 
-# ENDPOINTS backend/main.py (gate entre paréntesis)
-- Doc automática (/docs /redoc /openapi.json): APAGADA por defecto (T-63/H9); solo
-  existe con LRP_DEV=true en .env. No usar LRP_MODE para esto: desktop es modo de
-  usuario final, no de desarrollo.
-- Pairing: /api/pairing-pin (local), POST /api/pair (LAN sin auth, PIN 6 dígitos un solo
-  uso TTL 120s + anti-brute-force 5/IP), /api/pairing-token (+/regenerate) (local),
-  /api/pairing-qr (local, SVG segno).
-- Estado: /api/status (local; version, mode[LRP_MODE], licensed, adblock_status, ips,
-  clientes, uinput_ok, buy_url — latencia la mide el panel client-side),
-  /status (local, sirve status.html), /health /api/config /api/ca /api/icon/{app_id}
-  (abiertos por diseño).
-- Control: /api/apps (token; responde {"type":"discovery_sync", suggested_kiosks,
-  installed_apps}), /api/kiosk/launch|kill, /api/panel/show, /api/app/launch (token;
-  TODOS via asyncio.to_thread — C-01), /api/debug (token).
-- Licencia: /api/license/activate|status (token; activate persiste LICENSE_TOKEN en
-  .env + os.environ).
-- OTA: /api/update/check (local_or_token; lee latest.json), /api/update/apply (token ->
-  sudo lrp-update), /api/system/update (local -> update.sh).
-- monitor_idle_panel: panel a los 45s si 0 clientes Y sin audio (pactl sink-inputs con
-  env=gui_env(); requiere pulseaudio-utils) Y sin procesos propios.
+# ENDPOINTS backend/main.py (876 líneas · gate entre paréntesis)
+- **Doc automática APAGADA** (T-63/H9): /docs, /redoc, /openapi.json solo existen con
+  `LRP_DEV=true`. NO usar LRP_MODE para esto: `desktop` es modo de usuario, no de dev.
+- Pairing: /api/pairing-pin (local) · POST /api/pair (LAN sin auth; PIN 6 dígitos un solo
+  uso TTL 120s + anti-brute-force 5/IP) · /api/pairing-token (+/regenerate) (local) ·
+  /api/pairing-qr (local, SVG segno; codifica `https://<ip>:<port>/?token=<PAIRING_TOKEN>`).
+- Estado: /api/status (local) · /status (sirve status.html) · /health · /api/config ·
+  /api/ca · /api/icon/{app_id} (abiertos por diseño).
+  **/api/status y /api/config devuelven el MISMO `buy_url`**, vacío por defecto
+  (PLACEHOLDER-PADDLE, se llena en T-51).
+- Control (token): /api/apps (→ discovery_sync) · /api/kiosk/launch|kill · /api/panel/show ·
+  /api/app/launch · /api/debug. TODOS vía asyncio.to_thread.
+- Licencia (token): /api/license/activate|status|takeover.
+  **activate persiste LICENSE_TOKEN Y `ENABLE_VOICE=true`** (T-71/B10: sin eso, quien ya era
+  Pro se quedaba sin micrófono para siempre).
+- Voz (token): **POST /api/voice/toggle** (T-68/D10) — el usuario puede apagarla; el arranque
+  NUNCA pisa un `false` explícito.
+- OTA: /api/update/check (local_or_token) · /api/update/apply (token → `sudo lrp-update`,
+  habilitado por `/etc/sudoers.d/linuxremoteplayer`) · /api/system/update (local).
+- `voice_enabled()` es FUNCIÓN, no constante: se lee en cada consulta porque activar la
+  licencia escribe el .env y una constante no lo vería sin reiniciar.
+- monitor_idle_panel: panel a los 45s si 0 clientes Y sin audio Y sin procesos propios.
 
-# WS PROTOCOL (frontend->backend; handler en main.py ~700-880)
-- {"type":"auth","token"} (malo -> close 1008) / {"type":"ping"} -> {"type":"pong"}
-  (cliente mide RTT y lo muestra en HUD).
+# WS PROTOCOL (frontend→backend; handler en main.py)
+- {"type":"auth","token"} (malo → close 1008) · {"type":"ping"} → pong (RTT en el HUD).
 - {"type":"input","device":"gamepad","action":"press","key":"KEY_*"} (whitelist).
 - {"type":"pointer","dx","dy"|"click":"left"|"right"|"back"(BTN_SIDE)|"scroll":N}.
-- {"type":"text","text"} (<=500 chars; teclas según KEYBOARD_LAYOUT).
-- {"type":"combo","name":"browser_back"(->BTN_SIDE, fallback Alt+Left)|"close_window"}.
-- Audio binario (<=5MB HOY; bajar a ~512KB en v1.9/anti-abuso) -> STT+LLM. Intents:
-  launch_kiosk, media_control, search. Handler ENDURECIDO (T-26): target.lower().strip()
-  contra SUGGESTED_KIOSKS_MAP; media key .upper()+prefijo KEY_ contra whitelist; errores
-  con etapa ("Voz: error STT/LLM/app no reconocida"); log de tamaño de binario recibido.
+- {"type":"text","text"} (≤500 chars, según KEYBOARD_LAYOUT).
+- {"type":"combo","name":"browser_back"|"close_window"}.
+- Audio binario → STT+LLM vía ai-proxy. Intents: launch_kiosk, media_control, search.
+  Handler endurecido (T-26): target contra SUGGESTED_KIOSKS_MAP, media key contra whitelist.
 
-# CRITICAL FILES (1-3 líneas c/u)
-- backend/main.py (~880 líneas): endpoints + WS + PinManager + SUGGESTED_KIOSKS(_MAP) +
-  MEDIA_KEYS. main.py:~53 usa CLOUD_STT_KEY/CLOUD_LLM_KEY (NO NVIDIA_KEY — crasheaba).
-  El handler de voz pasa valid_targets=[k["id"] for k in SUGGESTED_KIOSKS] a parse_intent.
-- backend/auth.py: verify_access (PAIRING_TOKEN); licencia vía Edge Function
-  (LICENSE_API_URL) con cache de gracia 72h. Sin secretos Supabase en dispositivo.
-- backend/input_emulator.py: UInput caps range(1,105) (incluye RIGHTALT=100).
-  CHAR_KEYS por KEYBOARD_LAYOUT us|es|latam con AltGr; "/"=KPSLASH universal.
-  Gap conocido: < > (KEY_102ND) y corchetes AltGr. VirtualMouse: BTN_LEFT/RIGHT/SIDE.
-- backend/discovery.py: get_installed_apps escanea .desktop. SIN filtro de categorías
-  (T-25: SKIP_CATEGORIES eliminado -> Dolphin/terminal/apps de sistema visibles);
-  SOLO filtra NoDisplay/Hidden.
-- backend/kiosk.py: find_browser FIREFOX primero (perfil ~/.config/lrp-kiosk-ff;
-  snap: ~/snap/firefox/common/lrp-kiosk), fallback brave/chromium. kill: SIGTERM +
-  espera 10s -> SIGKILL. close_all: wmctrl (X11) -> fallback KWin DBus (qdbus6|qdbus,
-  unloadScript+loadScript+run, DBUS addr desde XDG_RUNTIME_DIR/bus).
-  adblock_status: shields|ubo-firefox|ubol|none.
-- backend/run.py: HTTPS self-healing, CA dos niveles (ca.pem estable + leaf por
-  IP/FQDN), monitor_ip reinicia bajo systemd al cambiar IP.
-- backend/ai_pipeline.py: STT/LLM cloud configurable por env (CLOUD_STT_URL/KEY/MODEL,
-  CLOUD_LLM_*). STACK PRODUCCIÓN VALIDADO (2026-07-19): STT openai/whisper-large-v3,
-  LLM Qwen/Qwen2.5-7B-Instruct-Turbo en Together (nemotron-streaming y Llama-3.1 dan
-  400). transcribe_audio detecta formato por magic bytes (webm 0x1A45DFA3 / mp4 'ftyp'
-  offset 4). parse_intent(transcription, valid_targets): system_prompt DINÁMICO (apps
-  inyectadas, jamás hardcodeadas) + keys media exactas + ejemplos ES. SOLO cloud: modo IA
-  local + MOCK + defaults NVIDIA/OpenRouter ELIMINADOS (T-33); defaults ahora = Together.
-  PENDIENTE VENTA: ai-proxy Edge Function (claves fuera del dispositivo).
-- backend/.env(.example): ENABLE_VOICE, CLOUD_* (whisper+qwen), KEYBOARD_LAYOUT,
-  LRP_MODE (escrito por install.sh), PAIRING_TOKEN, LICENSE_*, BUY_URL (ojo H11:
-  el example trae Stripe TEST), LRP_DEV (T-63, default false).
-- frontend/index.html (~85KB): status-bar `default` (T-58: con la skin clara por
-  defecto, `black-translucent` dejaba el texto de la barra iOS invisible) + .app-header con
-  max(env(safe-area-inset-top)) en standalone; altura por var(--app-h). Onboarding
-  SOLO PIN. mic-overlay + ejemplos de comandos. Card "Comandos de voz" en Ajustes.
-  Registro SW con reg.update() en visibilitychange/pageshow + controllerchange->reload
-  (T-28, auto-actualización). Iconos Lucide inline. Media query max-height:750px.
-- frontend/app.js (~1500 líneas): WS client (backoff, reconnect-on-wake, RTT HUD).
-  Voz push-to-talk: micHeld anti-carrera, failsafe 8s, overlay, cancel <250ms; mime
-  dinámico (isTypeSupported webm->mp4->default, iOS) + toast en error. createAppTile:
-  is_native -> /api/icon/{id}; con url -> setTileFavicon (DDG->S2->LETRA); × si custom_
-  o is_native. #voice-apps-list poblado desde lastSuggestedKiosks (loadApps). Hint de
-  voz primera vez (localStorage lrp_voice_hint_shown). updateAppHeight -> --app-h.
-- frontend/status.html: panel TV. /api/pairing-qr, latencia RTT, modo TV/Escritorio,
-  badge adblock, buy-link clicable, meta refresh 3600, Mantenimiento.
-- frontend/sw.js: CACHE = 'lrp-__LRP_VERSION__' (placeholder; build_deb inyecta la
-  versión real -> cada release invalida cache -> PWA recibe assets frescos).
-  network-first shell (/, index, app.js), cache-first assets.
-- frontend/tailwind-lite.css: subset a mano + reset border-box GLOBAL + utilidades.
-  Guard: scripts/check_css_sync.py (IGNORE_CLASSES~4) corre en build_deb (ABORTA si
-  hay clase usada sin definir; ya cazó deriva real en T-29).
-- frontend/skins.css (T-58): 4 skins vía `data-skin` en <html> — day (clara, POR
-  DEFECTO), night, cafe, anime; paleta IDÉNTICA a website/style.css. **TODAS GRATIS
-  desde T-62** (setSkin ya no consulta isLicensed; FREE_SKIN→DEFAULT_SKIN; la VOZ
-  sigue Pro). La web aún las vende como Pro a propósito hasta v1.9.0 (CURRENT §N2).
-  Bloque PUENTE al final: reasigna utilidades neutras y de marca de tailwind-lite
-  (border-gray-700, text-gray-300, bg-blue-600, text-amber-300…) a variables de skin.
-  SIN ese puente la skin clara rompe el marcado histórico, que asume fondo oscuro →
-  toda clase neutra nueva en el HTML hay que puentearla acá. Vars de contraste:
-  --accent-contrast (texto sobre --accent) y --green-contrast (sobre --accent-green;
-  el verde brillante pide texto OSCURO). Migración de ids viejos en app.js setSkin().
-- frontend/icon.svg + icon-192/512, apple-touch-icon, website/icon-*, favicon-32:
-  logo "Touchpad" (T-58). Los PNG se generan con scripts/dev/generate_png_icons.py,
-  que REIMPLEMENTA la geometría del SVG con PIL (no hay rasterizador SVG en el entorno)
-  → si se toca icon.svg hay que replicar el cambio en ese script, y viceversa.
-- scripts/install.sh (= lrp-setup): modo 1|2 -> LRP_MODE en .env; LRP_NOSLEEP -> mask
-  sleep/suspend (uninstall unmask); KEYBOARD_LAYOUT; instala firefox-esr||firefox +
-  pulseaudio-utils wmctrl qdbus libnss3-tools; escribe /etc/firefox/policies/policies.json
-  SIEMPRE (uBlock force_installed + Certificates.Install ca.pem + EME); certutil
-  NO-interactivo (pwfile + </dev/null); CA a trust del sistema POST-arranque (espera
-  ca.pem 30s); UFW OpenSSH||22 fallback; mensaje final PIN-first.
-- scripts/build_deb.sh: empaqueta .deb; inyecta VERSION en sw.js + guard; embebe
-  lrp-setup, lrp-update, sudoers, prerm. lrp-update: RE-EXEC vía systemd-run
-  --unit=lrp-update-job (escapa del cgroup del servicio — fix T-14) + restart por
-  EXISTENCIA del unit (T-19, no is-enabled). prerm: stop+disable SOLO en "remove"
-  (T-19, upgrade solo stop) + llama lrp-cleanup.sh SOLO en "remove" (T-64: licencia/
-  udev/ufw/sleep; si corriera en upgrade, cada OTA limpiaría el sistema — TESTING E1).
-  Recommends: firefox-esr|firefox, pulseaudio-utils.
-- website/install.sh: bootstrap curl|bash -> baja .deb por latest.json + sha256 ->
-  apt install -> encadena lrp-setup (llamada directa, NO exec).
+# CRITICAL FILES
+- backend/main.py (876 ln): endpoints + WS + PinManager + SUGGESTED_KIOSKS + MEDIA_KEYS.
+- backend/auth.py (80 ln): verify_access; licencia por Edge Function con cache de gracia 72h.
+  **PAIRING_TOKEN: lee el env y si no está cae a `backend/.pairing_token`** (lo escribe
+  install.sh). NO vive en el .env — creerlo costó dar B12 por cerrado sin estarlo.
+- backend/run.py (228 ln): HTTPS self-healing. CA de dos niveles: `ca.pem` **con sufijo único
+  por máquina** (`/etc/machine-id[:8]`, respaldo uuid4 — T-72/B14: sin eso, reinstalar creaba
+  otra CA con el MISMO nombre y los navegadores daban SEC_ERROR_BAD_SIGNATURE) + hoja por
+  IP/FQDN. `ensure_full_chain()` concatena ca.pem al cert.pem (idempotente) y se llama donde
+  se configura uvicorn, NO dentro de ensure_cert — esa retorna temprano y no repararía una
+  instalación existente. monitor_ip reinicia al cambiar la IP (regenera la hoja, NUNCA la CA).
+- backend/input_emulator.py: UInput caps range(1,105). CHAR_KEYS por KEYBOARD_LAYOUT
+  us|es|latam con AltGr. Gap: `< >` (KEY_102ND) y corchetes AltGr.
+- backend/discovery.py: escanea .desktop, SIN filtro de categorías; solo NoDisplay/Hidden.
+  (Okular duplicado = dos .desktop reales de Plasma Bigscreen, NO es defecto.)
+- backend/kiosk.py: FIREFOX primero (perfil lrp-kiosk-ff), fallback brave/chromium.
+  kill: SIGTERM +10s → SIGKILL. close_all: wmctrl → KWin DBus.
+- backend/ai_pipeline.py: STT/LLM SOLO por ai-proxy; **sin llaves de IA en el device**.
+  Stack validado: whisper-large-v3 + Qwen2.5-7B-Turbo (Together).
+- backend/.env(.example): ENABLE_VOICE (lo enciende la activación de licencia, no el usuario),
+  KEYBOARD_LAYOUT, LRP_MODE, LICENSE_*, BUY_URL (vacío, PLACEHOLDER-PADDLE), LRP_DEV=false.
+- frontend/app.js (1447 ln): WS client (backoff, reconnect-on-wake, RTT HUD). Voz
+  push-to-talk (micHeld anti-carrera, failsafe 8s, mime dinámico webm→mp4 iOS).
+  **DEFAULT_SKIN, no FREE_SKIN**: las 4 skins son GRATIS desde T-62; `isLicensed` ya solo
+  gatea la VOZ. updateAppHeight → `--app-h` (**ver B1**).
+- frontend/index.html (426 ln): status-bar `default` + .app-header con safe-area.
+  Onboarding solo PIN. Selector de temas SIN candados.
+- frontend/sw.js: CACHE = 'lrp-__LRP_VERSION__' (build_deb inyecta la versión → cada release
+  invalida la caché). network-first shell, cache-first assets.
+  **Trampa conocida:** `caches.match` compara la URL COMPLETA, así que un `?token=` no
+  matchea el precache y devuelve "Offline" (bug del QR, sin arreglar).
+- frontend/tailwind-lite.css (283 ln): subset a mano. Guard check_css_sync.py ABORTA el build
+  si hay clase usada sin definir. NO detecta CSS muerto (al revés).
+- frontend/skins.css (283 ln): 4 skins por `data-skin`. **Bloque PUENTE al final**: el
+  marcado histórico asume fondo OSCURO, así que toda clase neutra nueva hay que puentearla
+  o la skin clara se rompe.
+- scripts/build_deb.sh (206 ln): empaqueta, inyecta VERSION en sw.js, corre el guard CSS,
+  embebe lrp-setup / lrp-update / sudoers / postinst / prerm.
+  **lrp-update: TODO en funciones y `main "$@"; exit $?` en la MISMA línea** — el postinst
+  reescribe ese archivo mientras corre y bash lee por offset de byte; sin eso el OTA dejaba
+  el servicio MUERTO (T-70/B9). Lleva `trap` que reinicia pase lo que pase.
+  **prerm: la limpieza SOLO con `$1 = "remove"`** — dpkg lo invoca también en `upgrade` y ahí
+  borraría las reglas del sistema de todos los equipos (T-64, trampa de T-19).
+- scripts/lrp-cleanup.sh (60 ln): limpieza NO interactiva, **sin `set -e`, siempre `exit 0`**
+  (un fallo suyo jamás puede abortar un `apt remove`). La comparten prerm y uninstall.sh.
+  Libera licencia → udev → ufw → unmask sleep → borra `.env`, `.pairing_token`, `certs/` y la
+  CA del sistema. **El borrado va ÚLTIMO: el primer paso lee el .env para liberar la licencia.**
+- scripts/install.sh (336 ln): modo 1|2 → LRP_MODE; LRP_NOSLEEP → mask sleep/suspend;
+  instala firefox + deps; policies.json (uBlock + CA + EME); **CA al trust del sistema y al
+  NSS de Firefox, borrando antes la entrada previa** (T-72); UFW con OpenSSH primero.
+- website/install.sh: `curl | sudo bash`. **NO usar `exec < /dev/tty`**: bash lee el script
+  desde stdin y reemplazarlo corta el instalador a la mitad en silencio (T-67/B7).
 
 # SALES PIPELINE
-- Cliente=PWA (PIN pairing). Servidor=.deb vía website/install.sh. OTA por latest.json.
-- Stripe TEST -> webhook -> licencia por email (Resend) -> activar en app.
-- Licencia Pro ÚNICA lifetime cubrirá todo lo premium (voz, APK, archivos, skins,
-  gamepad) — roadmap PH15-PH19 en PLAN.md. Licencia 1-dispositivo + rotación: v1.9.
-- FALTA PARA VENDER: ai-proxy, Stripe LIVE, dominio propio + Resend verificado.
+- Cliente = PWA (pairing por PIN). Servidor = .deb vía website/install.sh. OTA por latest.json.
+- Pagos: **PADDLE** (Stripe no opera en Ecuador). El `stripe-webhook` es legacy.
+- Licencia Pro única lifetime; 1 dispositivo con mudanza autoservicio.
+- FALTA PARA VENDER: alta de Paddle, correo verificado, capturas.
 
-# reindex: tras cada release o si el índice miente, verificar contra el repo REAL
-# (grep endpoints/rutas/protocolos), corregir rancio, añadir nuevo, borrar muerto.
-# Nunca escribir lo no verificado. Anotar "APPCORE re-sincronizado <fecha>" en CURRENT.
+# reindex: tras cada release, verificar contra el repo REAL (grep endpoints/rutas/tamaños),
+# corregir lo rancio, borrar lo muerto. Nunca escribir lo no verificado.
+# Protocolo detallado: .agents/skills/manage_context/SKILL.md
