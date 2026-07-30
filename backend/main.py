@@ -652,13 +652,17 @@ async def apply_update():
         cmd = ["sudo", script_path]
 
     try:
-        with open("/tmp/lrp-update.log", "a") as log_file:
-            subprocess.Popen(
-                cmd,
-                stdout=log_file,
-                stderr=log_file,
-                start_new_session=True
-            )
+        # NO abrir un archivo de log aca. El actualizador redirige su propia salida a
+        # /var/log como primera cosa que hace, asi que capturarla desde
+        # el backend es redundante -- y peligroso: si el archivo pertenece a otro usuario
+        # de una corrida anterior, este `open()` lanza, se devuelve un 500 y el boton
+        # "Actualizar" de la app falla sin que la actualizacion llegue a lanzarse.
+        subprocess.Popen(
+            cmd,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True
+        )
         return {"status": "started"}
     except Exception as e:
         logger.error(f"Failed to start update script: {e}")
@@ -672,13 +676,12 @@ async def system_apply_update(request: Request):
     if not os.path.exists(script_path):
         raise HTTPException(status_code=404, detail="Update script not found")
     try:
-        with open("/tmp/lrp-update.log", "a") as log_file:
-            subprocess.Popen(
-                ["bash", script_path],
-                stdout=log_file,
-                stderr=log_file,
-                start_new_session=True
-            )
+        subprocess.Popen(
+            ["bash", script_path],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True
+        )
         return {"status": "started"}
     except Exception as e:
         logger.error(f"Failed to start update script: {e}")
