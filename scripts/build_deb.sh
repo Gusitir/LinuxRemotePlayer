@@ -37,7 +37,7 @@ cp frontend/icon-512.png pkg/usr/share/icons/hicolor/512x512/apps/linuxremotepla
 cat <<EOF > pkg/usr/share/applications/linuxremoteplayer-panel.desktop
 [Desktop Entry]
 Type=Application
-Name=Remote Linux Player
+Name=LinuxRemotePlayer
 Comment=Panel de estado y emparejamiento
 Exec=xdg-open https://127.0.0.1:8000/status
 Icon=linuxremoteplayer
@@ -66,7 +66,7 @@ Package: linuxremoteplayer
 Version: ${VERSION}
 Architecture: all
 Maintainer: LinuxRemotePlayer
-Description: Remote Linux Player API and web interface
+Description: LinuxRemotePlayer API and web interface
 Depends: python3, python3-venv, python3-dev, build-essential, openssl, avahi-daemon
 Recommends: firefox-esr | firefox, ufw, pulseaudio-utils
 EOF

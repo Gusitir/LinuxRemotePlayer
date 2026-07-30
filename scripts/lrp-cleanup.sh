@@ -38,5 +38,13 @@ fi
 # 4. Devolver la suspension del sistema (install.sh la enmascara con LRP_NOSLEEP)
 systemctl unmask sleep.target suspend.target hibernate.target hybrid-sleep.target >/dev/null 2>&1
 
+# 5. Borrar el .env. VA ULTIMO A PROPOSITO: el paso 1 lo lee para sacar el LICENSE_TOKEN
+#    y liberar la licencia en el servidor. Si se borrara antes, la licencia quedaria
+#    ocupada para siempre y el usuario perderia su slot.
+#    Se borra porque guarda DOS credenciales -- LICENSE_TOKEN y PAIRING_TOKEN -- y una
+#    desinstalacion no puede dejarlas en el disco. Ademas, mientras el token siguiera ahi,
+#    una reinstalacion re-reclamaba la licencia sola.
+rm -f "$BACKEND_DIR/.env" 2>/dev/null
+
 echo "[+] LRP: limpieza completada."
 exit 0

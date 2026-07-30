@@ -1,4 +1,4 @@
-# Remote Linux Player
+# LinuxRemotePlayer
 
 **Convierte tu PC con Linux en una Smart TV.** Control remoto completo desde el teléfono: touchpad, teclado, apps de streaming en modo kiosk y control por voz con IA — todo en tu red local, sin hardware extra y sin cuentas.
 
