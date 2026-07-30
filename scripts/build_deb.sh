@@ -151,7 +151,12 @@ main() {
         exec systemd-run --collect --unit=lrp-update-job --setenv=LRP_DETACHED=1 /usr/local/bin/lrp-update
     fi
 
-    exec >>/tmp/lrp-update.log 2>&1
+    # H18: el log va a /var/log y no a /tmp. En /tmp cualquier usuario puede haber dejado
+    # antes un archivo con ese nombre, y entonces el actualizador -- que corre como root
+    # dentro de una unidad transiente -- no puede escribirlo y el log queda mudo justo
+    # cuando mas se lo necesita. /var/log es root-only y ademas queda fuera del alcance de
+    # PrivateTmp. El script sobrevive igual si falla (este exec va ANTES del `set -e`).
+    exec >>/var/log/lrp-update.log 2>&1
 
     # El servicio se reinicia SIEMPRE, salga como salga la actualizacion. Un fallo
     # bajando el .deb no puede dejar al usuario sin control remoto.

@@ -1554,10 +1554,29 @@ function updateAppHeight() {
     const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
     document.documentElement.style.setProperty('--app-h', h + 'px');
 }
+
+// B1: al volver del segundo plano, iOS todavia reporta la altura ANTERIOR en el momento en
+// que disparan pageshow/visibilitychange -- la vista se asienta unos frames despues. Si se
+// escribe ese numero viejo y es mayor que el viewport real, el body queda mas alto que la
+// pantalla y los botones de abajo se van fuera de vista. Por eso NO alcanza con tener el
+// listener (ya estaban): hay que re-leer cuando la disposicion ya se acomodo.
+// Se mide tres veces a proposito -- ya, al frame siguiente, y a los 300ms -- porque el
+// momento exacto en que iOS actualiza el valor no es estable entre modelos ni versiones.
+function updateAppHeightSettled() {
+    updateAppHeight();
+    requestAnimationFrame(updateAppHeight);
+    setTimeout(updateAppHeight, 300);
+}
+
 window.addEventListener('load', updateAppHeight);
 window.addEventListener('resize', updateAppHeight);
-window.addEventListener('orientationchange', updateAppHeight);
-window.addEventListener('pageshow', updateAppHeight);
+window.addEventListener('orientationchange', updateAppHeightSettled);
+window.addEventListener('pageshow', updateAppHeightSettled);
+// visibilitychange es el que dispara de verdad al reabrir una PWA instalada en iOS:
+// pageshow puede no llegar si la pagina no venia del bfcache.
+document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) updateAppHeightSettled();
+});
 if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', updateAppHeight);
 }
