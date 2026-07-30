@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.11] - 2026-07-30
+
+### Fixed
+- **Las actualizaciones ya no dejan el servicio caido.** El actualizador se interrumpia a si mismo y la app quedaba sin responder hasta reiniciarla a mano.
+- **El microfono aparece tras actualizar** aunque la licencia ya estuviera activada de antes.
+- **Reinstalar ya no rompe la conexion con los telefonos emparejados**: el certificado del equipo dejo de chocar con el de la instalacion anterior.
+- **Desinstalar borra las credenciales guardadas** en el equipo, no solo la licencia en el servidor.
+- **El nombre de la aplicacion** se muestra correcto en el menu del sistema y bajo el icono del telefono.
+
 ## [1.8.10] - 2026-07-29
 
 ### Added

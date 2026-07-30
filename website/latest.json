@@ -1,6 +1,6 @@
 {
-  "version": "1.8.10",
-  "deb_url": "https://www.linuxremoteplayer.com/downloads/linuxremoteplayer_1.8.10_all.deb",
-  "sha256": "122aae5641bf5ac06e6779b7359a550743ae4c7ade3a7919475928d1ebdb3dc5",
-  "notes": "Build de prueba: la voz se activa al registrar la licencia, temas desbloqueados e instalacion mas clara."
+  "version": "1.8.11",
+  "deb_url": "https://www.linuxremoteplayer.com/downloads/linuxremoteplayer_1.8.11_all.deb",
+  "sha256": "741101bbbb36b6eacc86e88f62b3d3ce4962edf7523598c062c1018b2470cf58",
+  "notes": "Build de prueba: actualizaciones que ya no dejan el servicio caido, microfono tras actualizar y reinstalacion sin romper el emparejamiento."
 }
