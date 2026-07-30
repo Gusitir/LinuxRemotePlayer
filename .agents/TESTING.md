@@ -1,9 +1,23 @@
 # TESTING — ciclo v1.8.9/1.8.10 · CERRADO. El proximo ciclo es 1.8.11 (ver arriba de todo)
 
 > ## ⏭ CICLO SIGUIENTE — QUE RE-TESTEAR SOBRE 1.8.11
-> El ciclo de abajo YA SE EJECUTO (29/07, sobre 1.8.10) y produjo B9..B14. **Cinco arreglos
-> criticos (T-70..T-73) no tocaron hardware todavia.** Cuando exista el `.deb` de 1.8.11,
-> re-correr SOLO esto — lo demas del ciclo viejo sigue valiendo:
+> El ciclo de abajo YA SE EJECUTO (29/07, sobre 1.8.10) y produjo B9..B14. **Seis arreglos
+> criticos (T-70..T-73) no tocaron hardware todavia.** 1.8.11 ya esta publicada (T-74,
+> auditada contra el `.deb` real). Re-correr SOLO esto — lo demas del ciclo viejo sigue
+> valiendo:
+>
+> ### QUIEN EJECUTA CADA ITEM (2026-07-30)
+> El testeo del HTPC se delega a un agente con shell en esa maquina; sus instrucciones
+> autocontenidas estan en **`.agents/TESTING_HTPC_AGENT.md`** (no lee este archivo).
+> - 🤖 **agente del HTPC** — todo lo que se comprueba por shell. Incluye R4 y R9, que antes
+>   figuraban como manuales y son automatizables via API y `nmcli`.
+> - 📱 **el dueño** — lo que necesita el iPhone: no hay forma de que el agente lo vea.
+> - **El agente NO toca codigo** (AGENTS.md §ROLES): un arreglo suyo lo pisa el proximo OTA
+>   y encima hace que la prueba siguiente mida algo que no existe en el producto.
+>
+> **ANTES DE EMPEZAR, el dueño borra la CA vieja** o R6 falla aunque el arreglo este bien:
+> `sudo rm -f /usr/local/share/ca-certificates/lrp-ca.crt && sudo update-ca-certificates --fresh`
+> y borrar el perfil del certificado viejo en el iPhone.
 >
 > - [ ] ⛔ **R1 · el OTA reinicia el servicio.** Actualizar y comprobar
 >       `systemctl status linuxremoteplayer` → **active**, sin tocar la terminal.
