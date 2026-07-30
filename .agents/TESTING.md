@@ -26,27 +26,43 @@ solo objetivo real: **ver si una actualizacion reinicia el servicio sola.**
 
 ## ⛔ S1 · LA PRUEBA DE B9 — el OTA reinicia el servicio  🤖 agente
 
-Con 1.8.11 instalado y funcionando:
+**El disparo va POR LA API, no con `sudo lrp-update` a mano.** Un cliente aprieta el boton
+en la app, y eso llama a `/api/update/apply`, que ejecuta el actualizador **como el usuario
+del servicio** apoyandose en la regla de sudoers `%input ... NOPASSWD: /usr/local/bin/
+lrp-update`. Si esa regla estuviera rota, correrlo desde una shell con sudo funcionaria
+igual y el boton del cliente fallaria: estariamos probando otro camino.
 
 ```bash
 cat /opt/linuxremoteplayer/VERSION
-sudo lrp-update
-sleep 60
+TOKEN=$(sudo cat /opt/linuxremoteplayer/backend/.pairing_token)
+curl -sk -X POST -H "X-Auth-Token: $TOKEN" https://localhost:8000/api/update/apply
+sleep 90
 cat /opt/linuxremoteplayer/VERSION
 systemctl is-active linuxremoteplayer
-tail -30 /tmp/lrp-update.log
+tail -40 /tmp/lrp-update.log
 ```
+
+**El `curl` vuelve enseguida y eso es normal:** el actualizador se re-lanza con
+`systemd-run --unit=lrp-update-job` y se desprende. Por eso el `sleep` y el log.
 
 | Resultado | Significa |
 |---|---|
 | `1.8.12` + **`active`** | **B9 CERRADO.** El OTA funciona de punta a punta. Se puede lanzar |
-| `1.8.12` + `inactive` | El arreglo no sirvio. **NO SE LANZA.** Pegar el log completo y parar |
+| `1.8.12` + `inactive` | El arreglo no sirvio. **NO SE LANZA.** Pegar el log completo |
 | la version no cambia | Otro problema. Parar y reportar |
 
 **Esta vez no hay excusa preparada:** en el ciclo anterior el fallo era esperado porque
 corria el script viejo. Ahora corre el nuevo. Si queda `inactive`, es una falla real.
 
 - [ ] **S1**
+
+## 📱 S1b · Que la app vuelva sola  — el dueño
+
+Que el servicio este `active` no prueba que el cliente recupere su control remoto. Sin
+tocar nada en el HTPC: abrir la PWA en el telefono y confirmar que **reconecta sola** y que
+el panel muestra **1.8.12**. Es el resultado que ve quien compra.
+
+- [ ] **S1b**
 
 ## ⛔ S2 · La actualizacion NO limpio nada  🤖 agente
 
@@ -56,15 +72,26 @@ Inmediatamente despues de S1, sin reiniciar ni tocar nada:
 ls -l /etc/udev/rules.d/99-uinput.rules
 sudo ufw status | grep 8000
 systemctl is-enabled sleep.target
-ls -l /opt/linuxremoteplayer/backend/.env /opt/linuxremoteplayer/backend/.pairing_token
-ls -d /opt/linuxremoteplayer/backend/certs
+sudo ls -l /opt/linuxremoteplayer/backend/.env /opt/linuxremoteplayer/backend/.pairing_token
+sudo ls -d /opt/linuxremoteplayer/backend/certs
+TOKEN=$(sudo cat /opt/linuxremoteplayer/backend/.pairing_token)
+curl -sk -H "X-Auth-Token: $TOKEN" https://localhost:8000/api/license/status
 ```
 
-**Todo tiene que seguir existiendo.** Si algo desaparecio, el guard del `prerm` fallo:
-**parar toda la matriz y avisar** — significaria que cada actualizacion rompe la
-configuracion de todos los equipos.
+**Todo tiene que seguir existiendo Y la licencia tiene que seguir activa.**
+
+> **El chequeo de la licencia es el mas importante de S2 y el mas facil de olvidar.** Si el
+> guard del `prerm` fallara, la limpieza correria en cada actualizacion y **liberaria la
+> licencia en el SERVIDOR** — el `.env` local seguiria teniendo el token y todo *pareceria*
+> normal en el disco, pero el usuario habria perdido su slot de dispositivo. Mirar solo los
+> archivos no lo detecta.
+
+Si algo desaparecio o la licencia dejo de estar activa: **parar toda la matriz y avisar.**
 
 - [ ] **S2**
+
+> **Si S1 fallo, correr S2 igual** — son independientes, S2 es barato y su resultado hace
+> falta para diagnosticar. Parar *despues* de S2, antes de S3.
 
 ## ⛔ S3 · `apt remove` limpia de verdad (prueba de T-75)  🤖 agente
 
@@ -111,9 +138,15 @@ sudo openssl verify -CAfile /opt/linuxremoteplayer/backend/certs/ca.pem \
      /opt/linuxremoteplayer/backend/certs/cert.pem
 ```
 
-Esperado: servicio `active`, los dos targets `masked`, la CA con **sufijo nuevo y distinto
-de `d98ec4ef`** (los certificados se borraron en S3, asi que nace una CA nueva), y
-`verify` en `OK`.
+Esperado: servicio `active`, los dos targets `masked`, y `verify` en `OK`.
+
+> **OJO con el sufijo de la CA: va a ser EL MISMO `d98ec4ef`, y eso es correcto.** Sale de
+> `/etc/machine-id`, que no cambia al reinstalar el producto — solo si se reinstala el
+> sistema operativo. **Un sufijo identico NO significa que los certificados no se borraron.**
+> Para saber si la CA se regenero de verdad hay que mirar la fecha, no el nombre:
+> `sudo openssl x509 -in .../certs/ca.pem -noout -subject -startdate`
+> El `notBefore` tiene que ser de HOY. Si es de una fecha vieja, ahi si los certificados
+> sobrevivieron al `apt remove` y S3 fallo.
 
 📱 **El dueño**: emparejar el telefono de nuevo y confirmar que la app conecta. Va a haber
 que **aceptar el certificado otra vez** — es lo esperado, la CA es nueva.

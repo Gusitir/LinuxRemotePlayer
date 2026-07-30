@@ -58,32 +58,45 @@ ejecuta**. Ese es el objetivo del ciclo.
 
 # S1 · ⛔ LA PRUEBA PRINCIPAL — el OTA tiene que reiniciar el servicio
 
+**IMPORTANTE: dispara la actualizacion POR LA API, no con `sudo lrp-update`.**
+Un cliente aprieta un boton en la app, y eso llama a `/api/update/apply`, que ejecuta el
+actualizador **como el usuario del servicio** apoyandose en una regla de sudoers. Si esa
+regla estuviera rota, correrlo desde tu shell con sudo funcionaria igual y el boton del
+cliente fallaria: estarias probando otro camino y dando por bueno algo que no lo es.
+
 ```bash
 cat /opt/linuxremoteplayer/VERSION
 systemctl is-active linuxremoteplayer
-sudo lrp-update
-sleep 60
+TOKEN=$(sudo cat /opt/linuxremoteplayer/backend/.pairing_token)
+curl -sk -X POST -H "X-Auth-Token: $TOKEN" https://localhost:8000/api/update/apply
+sleep 90
 cat /opt/linuxremoteplayer/VERSION
 systemctl is-active linuxremoteplayer
-tail -30 /tmp/lrp-update.log
+tail -40 /tmp/lrp-update.log
 ```
 
-**Contexto que necesitas para interpretarlo:** el actualizador llama a `apt-get install`, y
-ese paquete **reescribe el propio actualizador mientras corre**. Antes eso lo mataba antes
-de reiniciar el servicio. La correccion envuelve todo en funciones para que el script se lea
-entero en memoria antes de ejecutarse.
+**El `curl` vuelve enseguida y eso es normal, no significa que termino:** el actualizador se
+re-lanza con `systemd-run --unit=lrp-update-job` y se desprende del proceso que lo llamo.
+Por eso el `sleep 90` y por eso el log es la fuente de verdad, no la respuesta del curl.
+Si querés seguirlo mientras corre: `journalctl -u lrp-update-job -f`
+
+**Contexto para interpretarlo:** el actualizador llama a `apt-get install`, y ese paquete
+**reescribe el propio actualizador mientras corre**. Antes eso lo mataba antes de reiniciar
+el servicio. La correccion envuelve todo en funciones para que el script se lea entero en
+memoria antes de ejecutarse.
 
 | Resultado | Que significa |
 |---|---|
 | `1.8.12` + **`active`** | **La correccion funciona.** Es el resultado que se busca |
-| `1.8.12` + `inactive` | **FALLA REAL.** Pega el log completo y PARA. No sigas con S2 |
+| `1.8.12` + `inactive` | **FALLA REAL.** Pega el log completo |
 | la version no cambia | Otro problema. PARA y reporta |
 
 > En el ciclo anterior este item fallo **a proposito** y estaba avisado, porque corria el
 > script viejo. **Esta vez no.** Si queda `inactive`, es una falla y bloquea el lanzamiento.
 
-Si quedo `inactive` y necesitas seguir para reportar mas cosas, levantalo a mano y decilo:
-`sudo systemctl start linuxremoteplayer`
+**Si quedo `inactive`: corre S2 igual** (son independientes y su resultado hace falta para
+diagnosticar), y PARA despues de S2, sin entrar en S3. Para poder seguir, levanta el
+servicio a mano y decilo en el reporte: `sudo systemctl start linuxremoteplayer`
 
 ---
 
@@ -101,20 +114,28 @@ sudo ls -d /opt/linuxremoteplayer/backend/certs
 
 **Los cinco tienen que SEGUIR EXISTIENDO.**
 
-> Si algo desaparecio: **PARA TODA LA MATRIZ Y REPORTA YA**. Significaria que una
-> actualizacion normal borra la configuracion del sistema y las credenciales del usuario.
-> Es el peor fallo posible del producto.
-
-Comproba tambien que el servicio responde:
+Y ahora **la comprobacion mas importante de S2**, que es la que no se ve mirando archivos:
 
 ```bash
-curl -sk https://localhost:8000/health
 TOKEN=$(sudo cat /opt/linuxremoteplayer/backend/.pairing_token)
+curl -sk -H "X-Auth-Token: $TOKEN" https://localhost:8000/api/license/status
+curl -sk https://localhost:8000/health
 curl -sk -H "X-Auth-Token: $TOKEN" https://localhost:8000/api/config
 curl -sk -o /dev/null -w "docs: %{http_code}\n" https://localhost:8000/docs
 ```
 
+**La licencia tiene que seguir ACTIVA.**
+
+> Por que importa mas que los archivos: si el guard del `prerm` fallara, la limpieza
+> correria en cada actualizacion y **liberaria la licencia en el SERVIDOR**. El `.env` local
+> seguiria teniendo el token y en el disco todo *pareceria* normal, pero el usuario habria
+> perdido su slot de dispositivo sin enterarse. Mirar solo archivos no lo detecta.
+
 `/docs` tiene que dar **404**: un 200 expondria el mapa de la API en la red local.
+
+> Si algo desaparecio o la licencia dejo de estar activa: **PARA TODA LA MATRIZ Y REPORTA
+> YA**. Significaria que una actualizacion normal rompe la configuracion y las credenciales
+> de todos los equipos. Es el peor fallo posible del producto.
 
 ---
 
@@ -172,16 +193,22 @@ mitad y dejaba al usuario ante un cursor mudo.
 cat /opt/linuxremoteplayer/VERSION
 systemctl is-active linuxremoteplayer
 systemctl is-enabled sleep.target suspend.target
-sudo openssl x509 -in /opt/linuxremoteplayer/backend/certs/ca.pem -noout -subject
+sudo openssl x509 -in /opt/linuxremoteplayer/backend/certs/ca.pem -noout -subject -startdate
 sudo grep -c "BEGIN CERTIFICATE" /opt/linuxremoteplayer/backend/certs/cert.pem
 sudo openssl verify -CAfile /opt/linuxremoteplayer/backend/certs/ca.pem \
      /opt/linuxremoteplayer/backend/certs/cert.pem
 ```
 
-**Esperado:** servicio `active`, los dos targets `masked`, `cert.pem` con **2** certificados,
-`verify` en `OK`, y la CA con un sufijo **NUEVO y distinto de `d98ec4ef`** (el del ciclo
-anterior). Como S3 borro los certificados, tiene que nacer una CA nueva — si sale el mismo
-sufijo, los certificados no se borraron y hay que reportarlo.
+**Esperado:** servicio `active`, los dos targets `masked`, `cert.pem` con **2** certificados
+y `verify` en `OK`.
+
+> **El sufijo de la CA va a ser el MISMO `d98ec4ef` del ciclo anterior, y eso es CORRECTO.**
+> Sale de `/etc/machine-id`, que no cambia al reinstalar el producto — solo cambiaria al
+> reinstalar el sistema operativo. **Un sufijo identico NO significa que los certificados
+> sobrevivieron.**
+> Lo que hay que mirar es la FECHA, no el nombre: el `notBefore` que imprime `-startdate`
+> tiene que ser **de hoy**. Si es de una fecha vieja, ahi si los certificados sobrevivieron
+> al `apt remove` y S3 fallo.
 
 ---
 
