@@ -8,6 +8,7 @@ import uvicorn
 import logging
 import threading
 import time
+import uuid
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
@@ -126,13 +127,25 @@ def ensure_cert(ip, fqdn):
     if not os.path.exists(CA_KEY_FILE) or not os.path.exists(CA_CERT_FILE):
         try:
             logger.info("Generating new CA key and certificate...")
+            # B14: el nombre de la CA lleva un sufijo unico por instalacion. Si dos CA distintas
+            # comparten nombre, un navegador que guardo la vieja intenta validar la nueva con la
+            # llave vieja y tira SEC_ERROR_BAD_SIGNATURE -- un error que el usuario no puede
+            # saltear. Con nombres distintos el peor caso es "emisor desconocido", que se acepta
+            # y se resuelve reinstalando el ca.pem.
+            try:
+                with open("/etc/machine-id", "r") as mid:
+                    ca_suffix = mid.read().strip()[:8]
+            except Exception:
+                ca_suffix = uuid.uuid4().hex[:8]
+            ca_subject = f"/CN=LinuxRemotePlayer CA {ca_suffix}"
+
             subprocess.run(
                 ["openssl", "genrsa", "-out", CA_KEY_FILE, "2048"],
                 check=True, capture_output=True
             )
             subprocess.run(
                 ["openssl", "req", "-x509", "-new", "-nodes", "-key", CA_KEY_FILE,
-                 "-sha256", "-days", "3650", "-subj", "/CN=LinuxRemotePlayer CA", "-out", CA_CERT_FILE],
+                 "-sha256", "-days", "3650", "-subj", ca_subject, "-out", CA_CERT_FILE],
                 check=True, capture_output=True
             )
             os.chmod(CA_KEY_FILE, 0o600)

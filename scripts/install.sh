@@ -361,6 +361,11 @@ if [ -f "$BACKEND_DIR/certs/ca.pem" ]; then
     echo "" > "$PWFILE"
     
     sudo -u "$TARGET_USER" certutil -d sql:"$USER_NSSDB" -N --empty-password -f "$PWFILE" < /dev/null 2>/dev/null || true
+    # B14: borrar cualquier "LRP CA" previa antes de agregar la nueva. certutil -A no
+    # reemplaza: acumula entradas con el mismo apodo y llaves distintas, y despues el
+    # navegador elige la equivocada. El fallo se tolera porque en la primera instalacion
+    # no hay nada que borrar.
+    sudo -u "$TARGET_USER" certutil -d sql:"$USER_NSSDB" -D -n "LRP CA" -f "$PWFILE" < /dev/null 2>/dev/null || true
     if ! sudo -u "$TARGET_USER" certutil -d sql:"$USER_NSSDB" -A -t "C,," -n "LRP CA" -i "$BACKEND_DIR/certs/ca.pem" -f "$PWFILE" < /dev/null; then
         echo "[!] Warning: Could not import CA into NSS database (maybe it has a password?). Firefox kiosk will still work via policies."
     fi
