@@ -1,9 +1,10 @@
 # CURRENT — estado vivo
 <!-- Formato: AGENTS.md §FORMATO. IDs (B/N/D/H/C) son anclas: citalos, no copies el texto.
-     Compactado 2026-07-28: 11.2KB -> ~9.4KB. Queda ~1.4KB SOBRE el techo de 8KB; lo que
-     sobra es el porque de B1, B2, D4-D8 y H11-H12, y podarlo mas costaba informacion que
-     el proximo agente no puede re-derivar. Se recupera CERRANDO items: B2 se lleva ~0.5KB
-     el dia que TESTING §E pase. El detalle de cada auditoria esta en git log, no aca. -->
+     Tamaño ~12.8KB, SOBRE el techo de 8KB. Esta inflado a proposito y de forma transitoria:
+     el ciclo de correcciones de 1.8.10 tiene 6 bugs abiertos a la vez (§B9..B14) que se van
+     TODOS cuando el device valide 1.8.11. Ya se movio a PLAN lo que era spec de tarea
+     futura (T-57) y a comentarios del codigo el porque de B9/B14. Lo que queda es estado
+     vivo. El detalle de cada auditoria esta en git log, no aca. -->
 
 ```yaml
 version_publicada:   1.8.10   # LIVE desde 2026-07-29 (T-69). Build DE PRUEBA, no lanzamiento
@@ -46,58 +47,35 @@ historia:            CONTEXT.md + git log
   reglas udev y liberaria la licencia de todos los dispositivos**. Es T-19 otra vez, y es
   exactamente lo que mide **TESTING E1**.
 
-## B9..B13 — LO QUE ENCONTRO EL TEST DE 1.8.10 EN DEVICE (2026-07-29)
+## B9..B14 — LO QUE ENCONTRO EL TEST DE 1.8.10 EN DEVICE (2026-07-29)
 
-El release de prueba 1.8.10 se publico y se probo por OTA. **Encontro un bug que habria
-golpeado a TODOS los clientes el dia del lanzamiento** — esa sola razon justifico la
-estrategia de sacar un build de prueba antes de 1.9.0.
+El build de prueba encontro **un bug que habria golpeado a todos los clientes el dia del
+lanzamiento**, y eso solo justifico la estrategia de probar antes de 1.9.0.
+**Ninguno de los arreglos se probo en device todavia** — hace falta 1.8.11 (§N).
 
-- **B9 ⛔⛔ · el OTA dejaba el servicio MUERTO. ARREGLADO en T-70, sin probar en device.**
-  *Causa (no era la obvia):* `lrp-update` llama a `apt-get install --reinstall`, y el
-  postinst de ese paquete **reescribe `/usr/local/bin/lrp-update`** — el archivo que bash
-  esta leyendo. Bash lee por posicion de byte: retoma en un offset del archivo NUEVO, cae a
-  mitad de palabra, ejecuta el fragmento `start`, y `set -e` lo mata ANTES del
-  `systemctl restart`. *Fix:* todo el cuerpo en funciones + `main "$@"; exit $?` en la
-  MISMA linea (bash parsea el archivo entero antes de ejecutar) + `trap` que reinicia el
-  servicio en toda salida. **Probado empiricamente**: el patron viejo se detiene en silencio
-  y devuelve exit 0; el nuevo llega al final.
-  **OJO al planificar: el fix NO puede reparar la actualizacion que lo entrega.** Un equipo
-  en <=1.8.10 usa su `lrp-update` roto para instalar la siguiente version, asi que sufre el
-  bug una vez mas. El OTA que tiene que verse verde antes de lanzar es **1.8.11 → 1.9.0**.
-- **B10 ⛔ · la voz no se encendia si la licencia ya estaba activa antes del update.
-  ARREGLADO en T-71.** `ENABLE_VOICE` solo se escribia dentro de `activate_license`; quien
-  ya era Pro nunca volvia a pasar por ese flujo. *Fix:* al arrancar, si hay `LICENSE_TOKEN`
-  y `ENABLE_VOICE` **no existe** en el `.env`, se pone en true. **Nunca pisa un `false`
-  explicito** — eso es el usuario apagandola (D10), y esta cubierto por un test.
-- **B11 ⛔ · cadena de certificados incompleta. ARREGLADO en T-71.** `run.py` pasaba a uvicorn
-  solo la hoja. `ensure_full_chain()` concatena el `ca.pem`, es idempotente (verificado con
-  6 llamadas seguidas) y se invoca donde se configura uvicorn, **no dentro de `ensure_cert`**:
-  esa funcion retorna temprano cuando el cert ya existe, asi que ahi adentro jamas repararia
-  una instalacion ya rota. *Ojo:* esto NO era la causa del `SEC_ERROR_BAD_SIGNATURE` — ver B14.
-- **B12 · `apt remove` deja las credenciales en disco.** `lrp-cleanup.sh` libera la licencia
-  en el servidor pero el `.env` conserva el `LICENSE_TOKEN` **y el `PAIRING_TOKEN`**: al
-  reinstalar re-reclama la key sola y no se puede probar la mudanza. *Fix (T-73):* borrarlo,
-  **al final del script** — el paso 1 lee ese mismo `.env` para liberar la licencia, y
-  borrarlo antes dejaria el slot del dispositivo ocupado para siempre.
+**Resueltos (T-70..T-72). El porque tecnico esta COMENTADO EN EL CODIGO**, que es donde lo
+va a leer quien intente "ordenarlo"; el detalle de cada auditoria, en git log:
+- **B9 ⛔⛔ el OTA dejaba el servicio MUERTO** — `lrp-update` se reescribia a si mismo al
+  correr `apt-get install`. Ver la cabecera del heredoc en `scripts/build_deb.sh`.
+  **Al planificar: el fix NO repara la actualizacion que lo entrega** — un equipo en <=1.8.10
+  sufre el bug una vez mas. El OTA que tiene que verse verde es **1.8.11 → 1.9.0**.
+- **B10 ⛔ la voz no se encendia si ya eras Pro** — ahora tambien al arrancar, y **nunca pisa
+  un `false` explicito** (eso es D10, y hay test que lo cubre).
+- **B11 ⛔ faltaba mandar la cadena de certificados** — `ensure_full_chain()`, idempotente y
+  llamada donde se configura uvicorn, NO dentro de `ensure_cert` (que retorna temprano y ahi
+  adentro no repararia una instalacion rota).
+- **B14 una reinstalacion rompia los telefonos emparejados** — la CA renacia con el MISMO
+  nombre y otra llave: el navegador tenia el dato VIEJO, no le faltaba uno; por eso decia
+  "firma invalida" y la cadena de B11 no lo arreglaba. **No repara lo ya roto: hay que borrar
+  la CA vieja a mano del sistema y del iPhone, una vez.**
+
+**Pendientes, van en T-73:**
+- **B12 · `apt remove` deja credenciales en disco.** El `.env` conserva `LICENSE_TOKEN` y
+  `PAIRING_TOKEN`, y al reinstalar re-reclama la licencia sola. *Fix:* borrarlo **al final**
+  de `lrp-cleanup.sh` — el paso que libera la licencia lee ese mismo archivo.
 - **B13 · el `.desktop` dice "Remote Linux Player"** (`build_deb.sh:40`). T-66 no lo cazo
-  porque **el brief acoto la busqueda a `frontend/` y `website/`** — el nombre tambien vivia
-  en `scripts/`. Es la leccion de "auditar REFERENCIAS" incumplida al escribir el alcance.
-- **B14 · una reinstalacion rompe los telefonos ya emparejados. ARREGLADO en T-72.**
-  *El sintoma:* Firefox tira `SEC_ERROR_BAD_SIGNATURE` tras desinstalar y reinstalar.
-  *Por que NO era falta de cadena* (esa fue una conclusion apresurada del auditor, corregida
-  al investigar): `uninstall.sh:60` borra `certs/` y con eso **destruye la CA**; al
-  reinstalar, `run.py` creaba otra con **el mismo nombre fijo** `/CN=LinuxRemotePlayer CA`
-  pero otra llave. El navegador, que guardo la vieja, encuentra una CA con ESE nombre e
-  intenta validar con la llave equivocada. Por eso el error dice "firma invalida" y no
-  "emisor desconocido": es **colision de nombre**, y mandar la cadena completa no la arregla
-  porque al navegador no le falta un dato, le sobra el dato viejo.
-  *Fix:* sufijo unico por instalacion tomado de `/etc/machine-id` (con respaldo `uuid4`), y
-  `install.sh` borra la entrada "LRP CA" previa antes de agregar la nueva (`certutil -A`
-  acumula, no reemplaza). **Verificado con openssl real**: CA `…CA dfd25b14`, hoja con la IP
-  intacta, y `openssl verify` OK sobre la cadena.
-  *No repara lo ya roto:* los navegadores y el iPhone que guardaron la CA vieja necesitan
-  que se borre a mano una vez. Despues de eso el peor caso pasa a ser "emisor desconocido",
-  que el usuario si puede aceptar.
+  porque **el brief acoto la busqueda a `frontend/` y `website/`**: la leccion de "auditar
+  REFERENCIAS" incumplida al escribir el alcance.
 
 ## N — SIGUIENTE (orden estricto)
 
@@ -166,27 +144,6 @@ Lo unico que el proximo agente no puede re-derivar de git:
   en su alcance). Es el rotulo bajo el icono en Android y el campo existe para ser CORTO, asi
   que "LinuxRemotePlayer" (17 chars) no sirve. **Recomendacion: `"LRP"`** (D2).
 
-## PRIVATIZAR EL REPO (T-57) — que hay que hacer ANTES de apretar el boton
-
-Verificado 2026-07-29. **El OTA NO se rompe**: `latest.json` y el `.deb` se sirven de Vercel,
-no de GitHub. Pero hay tres cosas que si:
-1. **Vercel tiene que seguir desplegando desde un repo privado.** Soporta privados, pero la
-   integracion con GitHub debe conservar el acceso. **Verificar asi:** privatizar → hacer un
-   commit trivial en `website/` → confirmar que Vercel lo despliega. Si no lo hace, se
-   re-autoriza la app de GitHub. **Si esto falla y no se nota, el canal OTA se congela.**
-2. **El clon WSL del release** (`git clone <origin> ~/lrp-release`, §PROCESO DE RELEASE paso 2)
-   va a pedir credenciales. Resolverlo ANTES, no en medio de un release.
-3. **`scripts/bootstrap.sh` muere** (H6): clona desde GitHub y va a dar 404 para todos.
-   Borrarlo en la misma tarea, no dejarlo publicado roto.
-- Dato menor: `backend/.env.example:15` trae `GITHUB_REPO=Gusitir/LinuxRemotePlayer` y
-  **ningun codigo lo lee** — variable muerta, sacarla de paso.
-- **4. El push pasa a ser del dueño A PARTIR de 1.9.0, no antes.** Durante 1.8.x sigue
-  vigente §CICLO paso 2 tal cual: Gemini commitea Y pushea. Cuando cambie hay que editar
-  ese paso: Gemini termina con el **hash del commit local**, el auditor audita ESE commit
-  (nunca el working tree — trampa de T-64) y recien con APTO pushea el dueño.
-  *(Los briefs de T-69 y T-70 pidieron "no pushear" por adelantado; fue un error de tiempo
-  del auditor, no un cambio de contrato.)*
-
 ## H — HALLAZGOS ABIERTOS (no bloquean)
 
 - **H11** `backend/.env.example:20` trae `BUY_URL=https://buy.stripe.com/test_...`: Stripe en
@@ -225,4 +182,6 @@ no de GitHub. Pero hay tres cosas que si:
 - [ ] **C3** wallpapers de las skins nuevas (PH17/v1.9.1, no bloquea el lanzamiento). Para
       Gato/Perro mandar **el TILE** (~400x400), no el pantallazo: son patrones sin costura,
       tilear ya esta soportado y un tile pesa ~30KB vs ~170KB del full-screen.
-- [ ] **C7** privatizar el repo al lanzar (T-57).
+- [ ] **C7** privatizar el repo al lanzar. **Que verificar antes: PLAN.md §T-57** — el OTA
+      no se rompe (lo sirve Vercel), pero si Vercel deja de desplegar y no se nota, el canal
+      de actualizacion se congela en silencio.

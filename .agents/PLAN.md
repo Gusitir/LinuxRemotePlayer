@@ -326,6 +326,28 @@ Killer feature: multijugador — cada teléfono conectado = un mando (sin hardwa
       extra del APK premium
 - [ ] Gate: misma licencia Pro única
 
+# T-57: PRIVATIZAR EL REPO — que verificar ANTES de apretar el boton
+<!-- Estado vivo y decision: CURRENT. Aca esta el detalle operativo. -->
+
+Verificado 2026-07-29. **El OTA NO se rompe**: `latest.json` y el `.deb` se sirven de Vercel,
+no de GitHub. Pero hay tres cosas que si:
+1. **Vercel tiene que seguir desplegando desde un repo privado.** Soporta privados, pero la
+   integracion con GitHub debe conservar el acceso. **Verificar asi:** privatizar → hacer un
+   commit trivial en `website/` → confirmar que Vercel lo despliega. Si no lo hace, se
+   re-autoriza la app de GitHub. **Si esto falla y no se nota, el canal OTA se congela.**
+2. **El clon WSL del release** (`git clone <origin> ~/lrp-release`, §PROCESO DE RELEASE paso 2)
+   va a pedir credenciales. Resolverlo ANTES, no en medio de un release.
+3. **`scripts/bootstrap.sh` muere** (H6): clona desde GitHub y va a dar 404 para todos.
+   Borrarlo en la misma tarea, no dejarlo publicado roto.
+- Dato menor: `backend/.env.example:15` trae `GITHUB_REPO=Gusitir/LinuxRemotePlayer` y
+  **ningun codigo lo lee** — variable muerta, sacarla de paso.
+- **4. El push pasa a ser del dueño A PARTIR de 1.9.0, no antes.** Durante 1.8.x sigue
+  vigente §CICLO paso 2 tal cual: Gemini commitea Y pushea. Cuando cambie hay que editar
+  ese paso: Gemini termina con el **hash del commit local**, el auditor audita ESE commit
+  (nunca el working tree — trampa de T-64) y recien con APTO pushea el dueño.
+  *(Los briefs de T-69 y T-70 pidieron "no pushear" por adelantado; fue un error de tiempo
+  del auditor, no un cambio de contrato.)*
+
 # PH0: SUPERFICIE DE VERIFICACION [propuesta 2026-07-28, SIN adoptar — decide el dueño]
 
 Viene de revisar la skill `agents-workflow` (repo aparte). **Nada de esto se implemento**;
