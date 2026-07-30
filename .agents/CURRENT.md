@@ -24,6 +24,13 @@ historia:           CONTEXT.md + git log
 
 ## B — BLOQUEANTES
 
+- **B18 · la 1.9.0 PUBLICADA tiene el bug del boton "Actualizar"** (H18). Se arreglo en
+  **T-78, que NO viajo en ese `.deb`**. Un equipo con 1.9.0 y un `/tmp/lrp-update.log` ajeno
+  vera "Error al aplicar actualización" y no podra actualizarse desde la app.
+  *Salida manual mientras tanto:* `sudo rm -f /tmp/lrp-update.log`, o `sudo lrp-update`.
+  **Se cierra publicando 1.9.1**, que es la primera tarea de la sesion siguiente.
+
+
 - **B1 · el HUD se corre en iPhone — ARREGLADO en T-77, SIN PROBAR en device.** Sigue aca
   porque el arreglo no esta verificado. *Causa:* al volver del segundo plano iOS reporta la
   altura ANTERIOR en el instante en que disparan `pageshow`/`visibilitychange`; los listeners
@@ -85,12 +92,17 @@ Lo unico que el proximo agente no puede re-derivar de git:
 
 ## H — HALLAZGOS ABIERTOS (no bloquean)
 
-- **H18 · el log del actualizador queda mudo** si `/tmp/lrp-update.log` lo creo otro usuario.
-  **Probado: NO es peligroso** — el script sobrevive (ese `exec` va antes del `set -e`) y
-  systemd captura todo en el journal. Se pierde solo el log dedicado, que es justo el que se
-  mira cuando un OTA falla. *Fix (T-77):* mover el log a **`/var/log/lrp-update.log`**,
-  root-only y fuera del alcance de `PrivateTmp`. **NO usar el parche de `exec 3>>` que se
-  probo en el device: verificado que no silencia el mensaje y complica un script critico.**
+- **H18 · el log del actualizador — CERRADO en T-77 + T-78, pero la lectura inicial fue MALA.**
+  Se declaro "no peligroso" mirando solo el `exec` del script. **Lo era:** `backend/main.py`
+  abria ESE MISMO `/tmp/lrp-update.log` antes de lanzar el actualizador, y si el archivo era
+  de otro usuario el `open()` lanzaba, el endpoint devolvia 500 y **el boton "Actualizar" de
+  la app fallaba sin lanzar nada**. Lo reporto el dueño usando el producto, no el testing.
+  *Leccion:* un mismo recurso tocado desde dos lados solo se entiende mirando los dos.
+  T-77 movio el log del script a `/var/log`; T-78 saco la apertura del backend (usa
+  `DEVNULL`, porque el script ya redirige su propia salida). **Gemini encontro que
+  `system_apply_update` —el panel de la TV— tenia el bug identico**, fuera del alcance del
+  brief.
+
 - **H11 · `.env.example` traia un link de Stripe TEST** → ya vacio (PLACEHOLDER-PADDLE). Se
   completa en T-51 con la URL real de Paddle. `grep -rn PLACEHOLDER-PADDLE` lista lo pendiente.
 - **B1b · `gracias.html` publica el gmail personal del dueño.** La ve un procesador de pagos.

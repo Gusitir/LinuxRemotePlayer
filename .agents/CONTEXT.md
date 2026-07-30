@@ -63,6 +63,16 @@ device** — sobre todo **L2, que es B1 en los dos iPhone: es el unico arreglo d
 no se pudo verificar**. Despues privatizar (PLAN.md §T-57) y lo comercial: que `support@`
 ENVIE sin caer en spam, capturas de 1.9.0, y el alta de Paddle.
 
+**Lo ultimo de la sesion, y la leccion mas cara:** el dueño toco "Actualizar" en la app y
+dio error. La causa era H18, que **yo habia declarado "no peligroso"** tras verificar solo el
+`exec` del script. Faltaba mirar que `backend/main.py` abria ESE MISMO archivo antes de
+lanzar el actualizador: si pertenecia a otro usuario, el endpoint devolvia 500 y el boton
+fallaba sin lanzar nada. *Un mismo recurso tocado desde dos lados solo se entiende mirando
+los dos.* Lo arreglo T-78 — y Gemini encontro que el endpoint del panel de la TV tenia el
+bug identico, fuera del alcance del brief.
+**Consecuencia: la 1.9.0 publicada arrastra ese bug (B18). La 1.9.1 es lo primero de la
+sesion siguiente**, y ya iba a hacer falta si B1 necesitaba otra pasada.
+
 *Sobre B1:* la causa no era que faltaran listeners —ya estaban— sino que **iOS reporta la
 altura anterior en el instante en que disparan**. Si el arreglo no alcanza, el siguiente
 paso es eliminar `--app-h` y confiar en `100dvh`, con el riesgo de reabrir el problema de
