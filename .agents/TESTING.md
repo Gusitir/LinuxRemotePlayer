@@ -15,9 +15,12 @@
 > - **El agente NO toca codigo** (AGENTS.md §ROLES): un arreglo suyo lo pisa el proximo OTA
 >   y encima hace que la prueba siguiente mida algo que no existe en el producto.
 >
-> **ANTES DE EMPEZAR, el dueño borra la CA vieja** o R6 falla aunque el arreglo este bien:
-> `sudo rm -f /usr/local/share/ca-certificates/lrp-ca.crt && sudo update-ca-certificates --fresh`
-> y borrar el perfil del certificado viejo en el iPhone.
+> **BORRAR LA CA VIEJA ANTES DE REINSTALAR** — no al principio, o el Firefox del propio HTPC
+> queda sin CA durante el resto de las pruebas y ensucia los resultados.
+> - 🤖 la del HTPC la borra **el agente**, en su seccion D-2 (ya esta en sus instrucciones).
+> - 📱 el **perfil del iPhone lo borra el dueño**, antes de volver a conectar el telefono
+>   tras la reinstalacion. Sin eso, el `SEC_ERROR_BAD_SIGNATURE` persiste aunque T-72 este
+>   perfecto, y pareceria que el arreglo no sirvio.
 >
 > - [ ] ⛔ **R1 · el OTA reinicia el servicio.** Actualizar y comprobar
 >       `systemctl status linuxremoteplayer` → **active**, sin tocar la terminal.

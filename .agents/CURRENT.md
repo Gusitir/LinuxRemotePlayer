@@ -150,6 +150,15 @@ Lo unico que el proximo agente no puede re-derivar de git:
 
 ## H — HALLAZGOS ABIERTOS (no bloquean)
 
+- **H15 · desinstalar deja la CA en el almacen de confianza del sistema.** `install.sh:353`
+  copia el `ca.pem` a `/usr/local/share/ca-certificates/lrp-ca.crt`, y **ni `uninstall.sh`
+  ni `lrp-cleanup.sh` lo sacan jamas**. Queda un certificado raiz de confianza instalado
+  despues de desinstalar el producto. No es riesgo de colision (una reinstalacion lo pisa
+  con `cp`, y T-72 ya resolvio el choque de nombres en el almacen de Firefox), pero **es la
+  misma familia que B2 y B12: la desinstalacion no hace lo que la doc promete**, y esta vez
+  lo que sobra es una raiz de confianza. *Fix:* que `lrp-cleanup.sh` lo borre y corra
+  `update-ca-certificates --fresh`, en el mismo paso donde ya borra el `.env`.
+
 - **H11** `backend/.env.example:20` trae `BUY_URL=https://buy.stripe.com/test_...`: Stripe en
   modo TEST cuando los pagos ya son Paddle (D1). Es la plantilla del `.env` real → el boton
   "comprar" de un device apuntaria a un checkout de prueba. Se arregla en T-51.

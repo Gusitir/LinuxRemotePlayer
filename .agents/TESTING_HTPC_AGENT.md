@@ -235,7 +235,31 @@ dpkg -l | grep linuxremoteplayer
 - el `.env` **no existe** ← esto es nuevo en 1.8.11; en 1.8.10 sobrevivia con las credenciales
 - `dpkg -l` **no** debe mostrar el paquete en estado `iF` ni `iU` (medio roto)
 
-## D-2 · Reinstalar y comprobar que la CA nace con nombre unico
+**Ademas comproba esto, que es un hallazgo conocido sin arreglo todavia** — reportá lo que
+salga, no lo corrijas:
+
+```bash
+ls -l /usr/local/share/ca-certificates/lrp-ca.crt 2>&1
+```
+
+**Se espera que SIGA EXISTIENDO.** La desinstalacion no lo borra: `install.sh` copia la CA
+al almacen de confianza del sistema y ningun script la saca despues. Confirmalo y anotalo.
+
+## D-2 · Borrar la CA vieja y reinstalar
+
+**Este paso va ANTES de reinstalar y es imprescindible.** Si no se hace, el equipo se queda
+con la CA de la instalacion anterior y no se puede saber si la correccion funciono:
+cualquier error de certificado seria atribuible a la CA vieja y no al codigo nuevo.
+
+```bash
+sudo rm -f /usr/local/share/ca-certificates/lrp-ca.crt
+sudo update-ca-certificates --fresh
+ls -l /usr/local/share/ca-certificates/lrp-ca.crt 2>&1
+```
+
+**Esperado:** el `ls` final tiene que decir que **no existe**.
+
+Recien ahora, reinstalar:
 
 ```bash
 curl -fsSL https://www.linuxremoteplayer.com/install.sh | sudo bash
