@@ -171,13 +171,15 @@ Dos cosas mas del reporte:
 
 ## H — HALLAZGOS ABIERTOS (no bloquean)
 
-- **B16 · `apt remove` deja las CLAVES PRIVADAS en el disco.** Verificado: `uninstall.sh:60`
-  borra `$BACKEND_DIR/certs`, pero **`lrp-cleanup.sh` —que es el camino de `apt remove`— no
-  lo menciona**. Quedan `ca.key` y `key.pem` despues de desinstalar. Lo detecto el agente al
-  ver que la CA no se regeneraba con sufijo: hubo que borrar el directorio a mano.
-  *Efecto secundario util:* como los certs sobreviven, una reinstalacion por `apt` reusa la
-  MISMA CA y ningun navegador se rompe. Pero dejar claves privadas tras desinstalar no es
-  aceptable. Misma familia que B12 y H15.
+- **B16 · `apt remove` deja CLAVES y CREDENCIALES en el disco.** `uninstall.sh` borra
+  `certs/` y `.pairing_token`, pero **`lrp-cleanup.sh` —el camino de `apt remove`, que es el
+  que recomienda la doc— solo borra el `.env`**. Sobreviven: el directorio `certs/` con
+  `ca.key` y `key.pem` (**claves privadas**) y el `.pairing_token`. Lo destapo el agente al
+  ver que la CA no se regeneraba con sufijo.
+  **CORRECCION 2026-07-30:** B12 decia que el `PAIRING_TOKEN` vivia en el `.env`. **Es
+  inexacto**: `auth.py:17-25` lo lee del entorno y si no esta cae a
+  `backend/.pairing_token`, que es lo que escribe `install.sh:293`. O sea que borrar el
+  `.env` no alcanzaba para llevarse esa credencial. Lo caza T-75.
 - ~~**B17 · `sleep.target` en `static`.**~~ **CERRADO 2026-07-30, no era un bug.** Tras la
   reinstalacion de D-2 quedo `masked` en `sleep.target` y `suspend.target`: el `static` que
   vio el agente era residuo del ciclo anterior, donde la desinstalacion lo desenmascaro y no
