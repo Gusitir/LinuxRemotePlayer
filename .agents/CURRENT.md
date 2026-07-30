@@ -178,12 +178,10 @@ Dos cosas mas del reporte:
   *Efecto secundario util:* como los certs sobreviven, una reinstalacion por `apt` reusa la
   MISMA CA y ningun navegador se rompe. Pero dejar claves privadas tras desinstalar no es
   aceptable. Misma familia que B12 y H15.
-- **B17 · `sleep.target` quedo en `static` y nadie lo re-enmascaro.** El agente lo encontro
-  asi **antes** del OTA: residuo del ciclo anterior, donde la desinstalacion lo desenmascaro
-  y la reinstalacion no lo volvio a poner. *Efecto:* **el HTPC puede suspenderse solo durante
-  el uso**, que para un equipo de TV es una falla visible. `install.sh:79` lo enmascara, asi
-  que hay que averiguar por que no ocurrio. **Pendiente de confirmar en que estado quedo tras
-  la reinstalacion de D-2.**
+- ~~**B17 · `sleep.target` en `static`.**~~ **CERRADO 2026-07-30, no era un bug.** Tras la
+  reinstalacion de D-2 quedo `masked` en `sleep.target` y `suspend.target`: el `static` que
+  vio el agente era residuo del ciclo anterior, donde la desinstalacion lo desenmascaro y no
+  hubo reinstalacion despues. `install.sh:79` funciona.
 - **H15 · desinstalar deja la CA en el almacen de confianza del sistema.** `install.sh:353`
   copia el `ca.pem` a `/usr/local/share/ca-certificates/lrp-ca.crt`, y ningun script lo saca.
   Queda una raiz de confianza instalada tras desinstalar el producto. *No se pudo confirmar
