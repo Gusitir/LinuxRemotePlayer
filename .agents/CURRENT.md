@@ -4,48 +4,47 @@
      salio de aca. El detalle de cada auditoria esta en git log. -->
 
 ```yaml
-version_publicada:  1.8.12   # build de PRUEBA. La comercial es la 1.9.0, sin construir
+version_publicada:  1.9.0    # COMERCIAL. Publicada 2026-07-30, auditada contra el .deb real
 dominio:            https://www.linuxremoteplayer.com
 alias_vercel:       linux-remote-player.vercel.app   # VIVO a proposito: canal OTA del parque viejo
 correo_soporte:     support@linuxremoteplayer.com    # buzon real; falta probar que envia (C9)
-fase_activa:        v1.9 -> lanzamiento. Hechas T-46..T-76; faltan T-77, T-56, T-51, T-55, T-57
+fase_activa:        v1.9 CERRADA en codigo (T-46..T-77 + T-56). Falta probar 1.9.0 y lo comercial
 repo:               publico; se privatiza al lanzar (PLAN.md §T-57)
 licencia:           Elastic 2.0
 ultima_sesion:      2026-07-30
-pruebas_device:     TESTING.md (ciclo 1.9.0, sin ejecutar)
+pruebas_device:     TESTING.md (ciclo 1.9.0, SIN EJECUTAR — L2 es el que importa)
 docs_humanos:       docs/ARCHITECTURE.md + docs/DEVELOPING.md
 historia:           CONTEXT.md + git log
 ```
 
-> **Al entrar, lo que hay que saber:** el ciclo de correcciones **cerro completo** el 30/07.
-> Se hicieron tres builds de prueba (1.8.10, 1.8.11, 1.8.12) y el ultimo valido en hardware
-> **todo lo que bloqueaba la venta**, incluido el bug que dejaba el servicio muerto en cada
-> actualizacion. **No quedan bloqueantes tecnicos.** Falta B1 (visual, iPhone) y despues es
-> todo comercial.
+> **Al entrar, lo que hay que saber:** **la 1.9.0 esta PUBLICADA** (30/07) y es la version
+> comercial. El ciclo de correcciones cerro completo tras tres builds de prueba, y el codigo
+> de la fase v1.9 esta terminado. **Lo que falta no es programar:** probar 1.9.0 en device
+> (§TESTING, sobre todo L2 = B1 en los dos iPhone), privatizar el repo, y lo comercial.
 
 ## B — BLOQUEANTES
 
-- **B1 · el HUD se corre y tapa botones en iPhone.** Al reabrir la PWA aparece un espacio
-  extra bajo la barra de estado que desplaza el contenido; en iPhone 8+ oculta los botones
-  de abajo, en 12 solo molesta. **Abierto desde T-58 y confirmado en los tres ciclos.**
-  *Causa probable:* `--app-h` sale de `visualViewport.height` y **no se recalcula al reanudar
-  la PWA** — faltan `visualViewport.resize` y `pageshow`. Al volver de segundo plano conserva
-  un valor viejo en pixeles.
-  *Dos caminos:* agregar los listeners, o eliminar `--app-h` y confiar en `100dvh` (ese
-  mecanismo es anterior al soporte de `dvh` en iOS y hoy podrian estorbarse).
-  **Decision del dueño (30/07): se arregla en 1.9.0.** Necesita ida y vuelta con los dos
-  telefonos; si hace falta otra pasada, la definitiva seria 1.9.1.
+- **B1 · el HUD se corre en iPhone — ARREGLADO en T-77, SIN PROBAR en device.** Sigue aca
+  porque el arreglo no esta verificado. *Causa:* al volver del segundo plano iOS reporta la
+  altura ANTERIOR en el instante en que disparan `pageshow`/`visibilitychange`; los listeners
+  ya estaban, lo que faltaba era **no leer el valor de inmediato**. Ahora se re-lee tres
+  veces (ya, al frame, a los 300ms).
+  **Si tras probarlo el espacio sigue:** el siguiente paso es eliminar `--app-h` y confiar en
+  `100dvh` — mas limpio, pero puede reabrir el problema de viewport que ese mecanismo vino a
+  resolver en el ciclo v1.7. **Decision del dueño: si hace falta otra pasada, la definitiva
+  es la 1.9.1.** Se cierra con **TESTING §L2**, en iPhone 8+ Y 12 (se comportaban distinto).
 
 ## N — SIGUIENTE (orden estricto)
 
-1. **N1 · T-77: arreglar B1** + el log del actualizador (H18). Es lo ultimo de codigo.
-2. **N2 · T-56, el release v1.9.0.** Absorbe: las 6 lineas de la web que aun venden los temas
-   como Pro (`website/index.html:148,254,299` + `website/en/index.html:148,256,301`) y el
-   CHANGELOG. Sigue §PROCESO DE RELEASE de AGENTS.md. **Savepoint del proyecto.**
-3. **N3 · probar 1.9.0 en device** (TESTING.md) y **privatizar** (PLAN.md §T-57).
-4. **N4 · lo comercial:** C9 (que support@ ENVIE sin caer en spam) → C5 (capturas con la skin
-   Day) → **T-51 Paddle** (alta, producto $5, webhook, compra real + refund; arrastra B1b y
-   H11) → T-55 docs.
+1. **N1 · probar 1.9.0 en device** — `TESTING.md`, ciclo L1..L5. **L2 es el unico que decide
+   algo**: si B1 quedo resuelto. El agente del HTPC cubre L1/L3/L5; L2 y L4 son del dueño.
+2. **N2 · privatizar el repo** — **que verificar ANTES: PLAN.md §T-57.** El OTA no se rompe
+   (lo sirve Vercel), pero si Vercel deja de desplegar y no se nota, el canal se congela.
+3. **N3 · lo comercial:** C9 (que support@ ENVIE sin caer en spam) → C5 (capturas de 1.9.0,
+   las que ve Paddle) → **T-51 Paddle** (alta, producto $5, webhook, compra real + refund;
+   arrastra B1b y H11) → T-55 docs.
+4. **N4 · v1.9.1:** PH17 skins · PH20 demo web · D11 boton de modo oscuro · D12 iconos
+   borrosos · H19 el QR que lleva a "Offline".
 
 ## HECHO — fase v1.9 (todo auditado APTO; evidencia en git log)
 

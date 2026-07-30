@@ -54,10 +54,19 @@ vez de ocultarlas, marco como contaminada una prueba propia en lugar de darla po
 construyo un retest mejor que el del guion. Sus instrucciones estan en
 `TESTING_HTPC_AGENT.md`, autocontenidas.
 
-**Estado al cerrar:** falta **B1** (el HUD se corre en iPhone, decidido arreglarlo en 1.9.0)
-y el log del actualizador → **T-77**. Despues **T-56, el release 1.9.0**, que es el savepoint
-del proyecto y absorbe las 6 lineas de la web que aun venden los temas como Pro. Luego
-privatizar (PLAN.md §T-57) y lo comercial: correo, capturas, Paddle.
+**LA 1.9.0 QUEDO PUBLICADA (30/07)** — T-77 arreglo B1 y el log, y T-56 la construyo,
+auditada contra el `.deb` real (16 checks) y verificada en vivo, incluida la web, que ya no
+vende como Pro los cuatro temas que son gratis.
+
+**Estado al cerrar:** el codigo de la fase v1.9 esta TERMINADO. Falta **probar 1.9.0 en
+device** — sobre todo **L2, que es B1 en los dos iPhone: es el unico arreglo del ciclo que
+no se pudo verificar**. Despues privatizar (PLAN.md §T-57) y lo comercial: que `support@`
+ENVIE sin caer en spam, capturas de 1.9.0, y el alta de Paddle.
+
+*Sobre B1:* la causa no era que faltaran listeners —ya estaban— sino que **iOS reporta la
+altura anterior en el instante en que disparan**. Si el arreglo no alcanza, el siguiente
+paso es eliminar `--app-h` y confiar en `100dvh`, con el riesgo de reabrir el problema de
+viewport que ese mecanismo resolvio en v1.7. La definitiva seria la 1.9.1.
 
 ## Sesiones anteriores (comprimidas)
 
