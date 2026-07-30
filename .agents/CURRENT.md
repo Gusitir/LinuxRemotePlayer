@@ -84,16 +84,12 @@ Function** — va con T-51. Lo que decian era:
 
 ## N — SIGUIENTE (orden estricto)
 
-1. **N1 · construir y publicar 1.8.11, otro build de PRUEBA.** **El codigo de 1.9.0 esta
-   COMPLETO** (T-62..T-73); lo que falta no es programar. Seis arreglos criticos no tocaron
-   hardware y **ninguno se puede probar sin un `.deb`**.
-   **Contar con que ESTE OTA deje el servicio muerto otra vez**: el equipo esta en 1.8.10 y
-   usa su `lrp-update` roto para instalar. Se levanta a mano (`sudo systemctl start
-   linuxremoteplayer`) y se sigue. **El OTA que tiene que verse verde es 1.8.11 → 1.9.0.**
-2. **N2 · re-correr en device: TESTING §CICLO SIGUIENTE (R1..R9)**, arriba de todo en ese
-   archivo. Son 9 items, no la matriz entera: lo demas del ciclo viejo sigue valiendo.
-   **R6 exige borrar a mano la CA vieja ANTES de probar**, o el `SEC_ERROR_BAD_SIGNATURE`
-   persiste aunque T-72 este bien (ver B14).
+1. **N1 · T-75: cerrar la desinstalacion** (B16 + B17 + H15). Es lo ultimo de codigo y son
+   tres lineas en `lrp-cleanup.sh` mas averiguar lo del `sleep.target`. Va ANTES del release
+   porque toca el `.deb`.
+2. **N2 · T-56, el release v1.9.0.** Absorbe N4 (la web). **Y es la prueba de B9**: al
+   actualizar el HTPC de 1.8.11 a 1.9.0, el servicio tiene que reiniciarse solo. Ver el
+   recuadro de §RESULTADO DEL TEST — si eso falla, no se lanza.
 4. **N4 · corregir la web AL PUBLICAR v1.9.0, no antes.** La web vende los temas como Pro y
    T-62 ya los libero en codigo; cambiarlas antes haria mentir a la web al reves.
    Lineas: `website/index.html:148,254,299` + `website/en/index.html:148,256,301`.
@@ -148,16 +144,52 @@ Lo unico que el proximo agente no puede re-derivar de git:
   en su alcance). Es el rotulo bajo el icono en Android y el campo existe para ser CORTO, asi
   que "LinuxRemotePlayer" (17 chars) no sirve. **Recomendacion: `"LRP"`** (D2).
 
+## RESULTADO DEL TEST DE 1.8.11 EN DEVICE (2026-07-30, agente del HTPC + dueño)
+
+**5 de las 6 correcciones quedaron VERIFICADAS en hardware:** B10 (la voz se enciende sola:
+se borro `ENABLE_VOICE` del `.env`, se reinicio y el backend lo repuso), B11 (`cert.pem` con
+2 certificados y `openssl verify` OK), B12 (el `.env` desaparece con `apt remove`), B13/D8
+(`Name=LinuxRemotePlayer`, `short_name=LRP`, confirmado tambien en el iPhone) y **B14 (CA
+regenerada como `CN=LinuxRemotePlayer CA d98ec4ef`, CON sufijo)**.
+
+> ### ⛔ LO UNICO QUE SIGUE SIN PROBARSE ES LO MAS IMPORTANTE: B9
+> R1 fallo **como estaba previsto** — el equipo corria el `lrp-update` roto de 1.8.10 para
+> instalar su propia correccion, y el servicio quedo `inactive`. O sea que **el arreglo que
+> hace que una actualizacion reinicie el servicio NUNCA se ejecuto todavia.**
+> **El OTA de 1.8.11 → 1.9.0 ES la prueba de B9, y es tambien el lanzamiento.** Si falla
+> ahi, cada cliente pierde el control remoto en su primera actualizacion y hay que
+> levantarlo por SSH. Es el riesgo numero uno del lanzamiento: **publicar 1.9.0 y NO
+> actualizar el HTPC de inmediato para verificarlo seria lanzar a ciegas.**
+
+Dos cosas mas del reporte:
+- **R9 (cambio de IP) quedo verificado SOLO POR INSPECCION de codigo**, no de punta a punta:
+  no se puede forzar sin perder el acceso remoto al equipo. Aceptado como declarado.
+- El agente **declaro una excepcion a su propia regla de no tocar nada** (borro
+  `backend/certs/` con permiso del dueño para forzar la regeneracion de la CA) en vez de
+  ocultarla, y **construyo una prueba mejor que la del guion** para B10. Es la conducta que
+  se le pidio.
+
 ## H — HALLAZGOS ABIERTOS (no bloquean)
 
+- **B16 · `apt remove` deja las CLAVES PRIVADAS en el disco.** Verificado: `uninstall.sh:60`
+  borra `$BACKEND_DIR/certs`, pero **`lrp-cleanup.sh` —que es el camino de `apt remove`— no
+  lo menciona**. Quedan `ca.key` y `key.pem` despues de desinstalar. Lo detecto el agente al
+  ver que la CA no se regeneraba con sufijo: hubo que borrar el directorio a mano.
+  *Efecto secundario util:* como los certs sobreviven, una reinstalacion por `apt` reusa la
+  MISMA CA y ningun navegador se rompe. Pero dejar claves privadas tras desinstalar no es
+  aceptable. Misma familia que B12 y H15.
+- **B17 · `sleep.target` quedo en `static` y nadie lo re-enmascaro.** El agente lo encontro
+  asi **antes** del OTA: residuo del ciclo anterior, donde la desinstalacion lo desenmascaro
+  y la reinstalacion no lo volvio a poner. *Efecto:* **el HTPC puede suspenderse solo durante
+  el uso**, que para un equipo de TV es una falla visible. `install.sh:79` lo enmascara, asi
+  que hay que averiguar por que no ocurrio. **Pendiente de confirmar en que estado quedo tras
+  la reinstalacion de D-2.**
 - **H15 · desinstalar deja la CA en el almacen de confianza del sistema.** `install.sh:353`
-  copia el `ca.pem` a `/usr/local/share/ca-certificates/lrp-ca.crt`, y **ni `uninstall.sh`
-  ni `lrp-cleanup.sh` lo sacan jamas**. Queda un certificado raiz de confianza instalado
-  despues de desinstalar el producto. No es riesgo de colision (una reinstalacion lo pisa
-  con `cp`, y T-72 ya resolvio el choque de nombres en el almacen de Firefox), pero **es la
-  misma familia que B2 y B12: la desinstalacion no hace lo que la doc promete**, y esta vez
-  lo que sobra es una raiz de confianza. *Fix:* que `lrp-cleanup.sh` lo borre y corra
-  `update-ca-certificates --fresh`, en el mismo paso donde ya borra el `.env`.
+  copia el `ca.pem` a `/usr/local/share/ca-certificates/lrp-ca.crt`, y ningun script lo saca.
+  Queda una raiz de confianza instalada tras desinstalar el producto. *No se pudo confirmar
+  en este ciclo* (la CA ya se habia borrado a mano para D-2), pero esta claro en el codigo.
+  **B16, B17 y H15 van juntos en una sola tarea**: los tres son "la desinstalacion no hace lo
+  que promete", que es la tercera vez que aparece despues de B2 y B12.
 
 - **H11** `backend/.env.example:20` trae `BUY_URL=https://buy.stripe.com/test_...`: Stripe en
   modo TEST cuando los pagos ya son Paddle (D1). Es la plantilla del `.env` real → el boton

@@ -52,6 +52,8 @@ Se publico **1.8.11** con las correcciones. Esta matriz comprueba que funcionaro
 
 # SECCION A — Antes de tocar nada: foto del estado actual
 
+**✅ EJECUTADO — 30/07**
+
 Corre esto y pega la salida. Es la linea de base contra la que se compara todo despues.
 
 ```bash
@@ -74,7 +76,7 @@ correcto para 1.8.10 y es justo lo que tiene que cambiar despues.
 
 # SECCION B — La actualizacion (lo mas importante de toda la matriz)
 
-## B-1 · Lanzar el OTA
+## B-1 · Lanzar el OTA  ✅ EJECUTADO
 
 ```bash
 sudo lrp-update
@@ -103,7 +105,7 @@ systemctl is-active linuxremoteplayer
 **Si la version NO cambio a 1.8.11: PARA.** Es otro problema y hay que reportarlo antes de
 seguir.
 
-## B-2 · ⛔ La actualizacion NO debe haber borrado nada
+## B-2 · ⛔ La actualizacion NO debe haber borrado nada  ✅ EJECUTADO
 
 **Este es el item mas critico de la matriz.** Corre exactamente los mismos comandos de la
 seccion A:
@@ -126,7 +128,7 @@ grep -E '^LICENSE_TOKEN' /opt/linuxremoteplayer/backend/.env | cut -c1-25
 
 # SECCION C — Voz y certificados (no destructivo)
 
-## C-1 · ⛔ La voz se enciende sola
+## C-1 · ⛔ La voz se enciende sola  ❌ NO VERIFICABLE (contaminado)
 
 En 1.8.10 habia que editar el `.env` a mano. Ahora el backend deberia encenderla al
 arrancar si ya hay una licencia.
@@ -140,7 +142,7 @@ curl -sk -H "X-Auth-Token: $TOKEN" https://localhost:8000/api/config
 **Esperado:** hay `LICENSE_TOKEN`, aparece `ENABLE_VOICE=true` en el `.env` **sin que nadie
 lo haya escrito a mano**, y el JSON trae `"voice_enabled": true`.
 
-## C-2 · Apagar la voz y que siga apagada tras reiniciar
+## C-2 · Apagar la voz y que siga apagada tras reiniciar  ✅ EJECUTADO
 
 El usuario tiene que poder desactivarla, y un reinicio **no debe volver a prenderla**.
 
@@ -165,7 +167,7 @@ curl -sk -X POST -H "X-Auth-Token: $TOKEN" -H "Content-Type: application/json" \
      -d '{"enabled": true}' https://localhost:8000/api/voice/toggle
 ```
 
-## C-3 · El certificado ahora lleva sufijo y la cadena esta completa
+## C-3 · El certificado ahora lleva sufijo y la cadena esta completa  ✅ EJECUTADO (pre-check)
 
 ```bash
 sudo openssl x509 -in /opt/linuxremoteplayer/backend/certs/ca.pem -noout -subject
@@ -180,7 +182,7 @@ en una actualizacion. Eso se prueba de verdad en la seccion D, tras reinstalar.
 Lo que **si** tiene que cumplirse ya: `cert.pem` con **2** certificados y `verify` diciendo
 `OK`.
 
-## C-4 · El nombre en el menu de aplicaciones
+## C-4 · El nombre en el menu de aplicaciones  ✅ EJECUTADO
 
 ```bash
 grep -E '^Name=|^Comment=' /usr/share/applications/linuxremoteplayer-panel.desktop
@@ -190,7 +192,7 @@ grep -E '"name"|"short_name"' /opt/linuxremoteplayer/frontend/manifest.json
 **Esperado:** `Name=LinuxRemotePlayer` (una sola palabra, en ese orden),
 `"name": "LinuxRemotePlayer"` y `"short_name": "LRP"`.
 
-## C-5 · Regresion basica del servicio
+## C-5 · Regresion basica del servicio  ✅ EJECUTADO
 
 ```bash
 curl -sk https://localhost:8000/api/health
@@ -198,7 +200,7 @@ curl -sk https://localhost:8000/api/status | head -c 400
 sudo systemctl status linuxremoteplayer --no-pager | head -12
 ```
 
-## C-6 · La documentacion tecnica NO debe estar publica
+## C-6 · La documentacion tecnica NO debe estar publica  ✅ EJECUTADO
 
 ```bash
 curl -sk -o /dev/null -w "%{http_code}\n" https://localhost:8000/docs
@@ -215,7 +217,7 @@ cualquiera en la red local.
 > A partir de aca **se desinstala el producto**. No empieces esta seccion si quedo algo
 > pendiente arriba.
 
-## D-1 · ⛔ Desinstalar tiene que limpiar de verdad
+## D-1 · ⛔ Desinstalar tiene que limpiar de verdad  ✅ EJECUTADO
 
 ```bash
 grep -E '^LICENSE_TOKEN|^PAIRING_TOKEN' /opt/linuxremoteplayer/backend/.env | cut -c1-25
@@ -235,6 +237,9 @@ dpkg -l | grep linuxremoteplayer
 - el `.env` **no existe** ← esto es nuevo en 1.8.11; en 1.8.10 sobrevivia con las credenciales
 - `dpkg -l` **no** debe mostrar el paquete en estado `iF` ni `iU` (medio roto)
 
+**Resultados:** todo OK — udev borrado, ufw limpio, sleep.target `static` (ya no masked),
+.env eliminado, dpkg limpio. La licencia se liberó en el servidor.
+
 **Ademas comproba esto, que es un hallazgo conocido sin arreglo todavia** — reportá lo que
 salga, no lo corrijas:
 
@@ -244,8 +249,11 @@ ls -l /usr/local/share/ca-certificates/lrp-ca.crt 2>&1
 
 **Se espera que SIGA EXISTIENDO.** La desinstalacion no lo borra: `install.sh` copia la CA
 al almacen de confianza del sistema y ningun script la saca despues. Confirmalo y anotalo.
+**⚠️ Nota:** esta comprobación quedó invalidada porque la CA del sistema ya se había borrado
+a mano en preparación para D-2 (por orden del dueño). No se pudo determinar si `apt remove`
+la habría mantenido o no.
 
-## D-2 · Borrar la CA vieja y reinstalar
+## D-2 · Borrar la CA vieja y reinstalar  ✅ EJECUTADO
 
 **Este paso va ANTES de reinstalar y es imprescindible.** Si no se hace, el equipo se queda
 con la CA de la instalacion anterior y no se puede saber si la correccion funciono:
@@ -256,6 +264,16 @@ sudo rm -f /usr/local/share/ca-certificates/lrp-ca.crt
 sudo update-ca-certificates --fresh
 ls -l /usr/local/share/ca-certificates/lrp-ca.crt 2>&1
 ```
+
+**✅ EJECUTADO COMPLETO:**
+- CA del sistema eliminada ✅
+- CA del iPhone borrada por el dueño ✅
+- Reinstalación ejecutada ✅
+- Sufijo verificado: `CN=LinuxRemotePlayer CA d98ec4ef` ✅
+- cert.pem: 2 certificados ✅, openssl verify OK ✅
+- Servicio active, licencia reactivada, voz encendida ✅
+- ⚠️ Excepción a regla 1 (con permiso del dueño): se borró
+  `/opt/linuxremoteplayer/backend/certs/` para forzar regeneración de la CA.
 
 **Esperado:** el `ls` final tiene que decir que **no existe**.
 
@@ -288,7 +306,7 @@ sudo openssl verify -CAfile /opt/linuxremoteplayer/backend/certs/ca.pem \
 no funciono y hay que reportarlo.
 Ademas: `cert.pem` con 2 certificados y `verify` en `OK`.
 
-## D-3 · El desinstalador manual
+## D-3 · El desinstalador manual  🔄 SKIP (cubierto por E4 del ciclo anterior)
 
 ```bash
 sudo /opt/linuxremoteplayer/scripts/uninstall.sh

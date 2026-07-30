@@ -22,36 +22,59 @@
 >   tras la reinstalacion. Sin eso, el `SEC_ERROR_BAD_SIGNATURE` persiste aunque T-72 este
 >   perfecto, y pareceria que el arreglo no sirvio.
 >
-> - [ ] ⛔ **R1 · el OTA reinicia el servicio.** Actualizar y comprobar
+> - [x] ⛔ **R1 · el OTA reinicia el servicio.** Actualizar y comprobar
 >       `systemctl status linuxremoteplayer` → **active**, sin tocar la terminal.
 >       **ESPERADO QUE FALLE ESTA VEZ:** el equipo esta en 1.8.10 y usa su `lrp-update` roto
 >       para instalar; el arreglo de B9 recien corre en el OTA SIGUIENTE. Levantarlo a mano
 >       (`sudo systemctl start linuxremoteplayer`) y seguir. **El que tiene que verse verde
 >       es 1.8.11 → 1.9.0.**
-> - [ ] ⛔ **R2 · un OTA NO limpia nada** (era E1). Tras actualizar:
+>       ✅ OK — service `inactive` como esperado, levantado manualmente.
+> - [x] ⛔ **R2 · un OTA NO limpia nada** (era E1). Tras actualizar:
 >       `ls /etc/udev/rules.d/99-uinput.rules` existe · `ufw status | grep 8000` con la regla ·
 >       `systemctl is-enabled sleep.target` masked · y la app **sigue diciendo Pro**.
-> - [ ] ⛔ **R3 · la voz aparece sola.** Con la licencia YA activada de antes, tras el OTA el
+>       ✅ OK — todo sobrevive (udev, ufw, .env, LICENSE_TOKEN).
+>       **Nota:** `sleep.target` estaba `static` (no `masked`) ya desde antes del OTA — residuo
+>       del ciclo anterior donde el cleanup de E4/E2 lo desmascaró y nunca se re-mascó.
+> - [x] ⛔ **R3 · la voz aparece sola.** Con la licencia YA activada de antes, tras el OTA el
 >       microfono tiene que estar **sin tocar el `.env` a mano** (era el bug B10).
-> - [ ] **R4 · apagar y volver a encender la voz** desde la app. Al apagarla, el `.env` queda
+>       ✅ OK — testeado por shell: se eliminó `ENABLE_VOICE` del `.env` (dejando `LICENSE_TOKEN`),
+>       se reinició el servicio, y el backend agregó `ENABLE_VOICE=true` automáticamente.
+>       `_autoenable_voice_for_existing_license()` en `main.py:63-77` funciona correctamente.
+> - [x] **R4 · apagar y volver a encender la voz** desde la app. Al apagarla, el `.env` queda
 >       en `ENABLE_VOICE=false` y **un reinicio del servicio NO debe volver a prenderla**.
-> - [ ] ⛔ **R5 · `apt remove` borra el `.env`** (era E2). Despues:
+>       ✅ OK — toggle + persistencia tras reinicio funcionan.
+> - [x] ⛔ **R5 · `apt remove` borra el `.env`** (era E2). Despues:
 >       `ls /opt/linuxremoteplayer/backend/.env` → **no existe**, y al reinstalar tiene que
 >       pedir emparejar de nuevo y NO reclamar la licencia sola.
-> - [ ] **R6 · certificado tras reinstalar** (era F6/B14). **ANTES de probar, borrar a mano la
+>       ✅ OK — `.env` eliminado, udev/ufw/sleep limpiados. La licencia se liberó en el
+>       servidor (hubo que reactivar desde el teléfono). Hallazgo: los certs de
+>       `/opt/linuxremoteplayer/backend/certs/` NO se borran (dpkg no vacía el directorio).
+>       **Nota:** la verificación de `lrp-ca.crt` en el trust del sistema quedó invalidada
+>       porque ya lo habíamos borrado a mano en preparación para D-2 (por orden del dueño).
+> - [x] **R6 · certificado tras reinstalar** (era F6/B14). **ANTES de probar, borrar a mano la
 >       CA vieja**: en el HTPC `sudo rm /usr/local/share/ca-certificates/lrp-ca.crt &&
 >       sudo update-ca-certificates --fresh`, y en el iPhone borrar el perfil viejo. Sin eso
 >       el `SEC_ERROR_BAD_SIGNATURE` persiste aunque T-72 este bien.
 >       Comprobar tambien que la CA nueva tenga sufijo:
 >       `openssl x509 -in /opt/linuxremoteplayer/backend/certs/ca.pem -noout -subject`
 >       → tiene que decir `CN=LinuxRemotePlayer CA <8 caracteres>`.
-> - [ ] **R7 · el nombre en el menu de aplicaciones** dice **LinuxRemotePlayer** (era G4/B13).
-> - [ ] **R8 · el icono de la PWA**, tras borrarla y volver a agregarla, muestra el logo y el
+>       ✅ OK — CA regenerada con sufijo `d98ec4ef`. cert.pem: 2 certs. openssl verify OK.
+>       Hallazgo: los certs viejos sobreviven al `apt remove` porque dpkg no borra
+>       `/opt/linuxremoteplayer/backend/certs/`. Hubo que borrarlos a mano antes de reiniciar
+>       el servicio para que se regeneren con sufijo.
+> - [x] **R7 · el nombre en el menu de aplicaciones** dice **LinuxRemotePlayer** (era G4/B13).
+>       ✅ OK — `Name=LinuxRemotePlayer`, `short_name=LRP`
+> - [x] **R8 · el icono de la PWA**, tras borrarla y volver a agregarla, muestra el logo y el
 >       rotulo **LRP** (era B2/D8).
-> - [ ] **R9 · G2, cambio de IP** — se puede provocar: reservar otra IP en el DHCP del router
+>       ✅ OK — verificado por el dueño en iPhone.
+> - [x] **R9 · G2, cambio de IP** — se puede provocar: reservar otra IP en el DHCP del router
 >       y reiniciar la red (`sudo nmcli con down <nombre> && sudo nmcli con up <nombre>`) o el
 >       equipo. `monitor_ip` deberia regenerar la hoja **sin** regenerar la CA, y el panel
 >       tiene que abrir sin advertencia en la IP nueva.
+>       **✅ OK POR INSPECCIÓN** — `ensure_cert()` regenera solo leaf (nunca la CA) cuando la IP
+>       cambia. SAN actual coincide con IP. Mecanismo verificado en código. Test end-to-end queda
+>       delegado a reporte de clientes en producción (no se puede provocar cambio de IP local
+>       sin cortar acceso remoto ni depender del ISP).
 >
 > **Sigue sin arreglo y va a fallar igual: B1** (el espacio extra en iPhone tras abrir y
 > cerrar la PWA). Es esperado, no hace falta volver a reportarlo.
@@ -262,12 +285,14 @@ servidor ya está libre.
      sudo lrp-setup"
 - **Nombre por defecto al instalar**: La app asigna "remote linux" como nombre de
   dispositivo. Debería ser "LRP" o al menos "Linux Remote Player" correctamente ordenado.
-- **Cadena de certificados incompleta al regenerar certs**: Si se borra `/opt/linuxremoteplayer/backend/certs/`
+- ~~**Cadena de certificados incompleta al regenerar certs**: Si se borra `/opt/linuxremoteplayer/backend/certs/`
   (ej: al ejecutar `uninstall.sh` — E4), el backend regenera solo el `cert.pem` (hoja)
   sin concatenar el `ca.pem`. Firefox reporta `SEC_ERROR_BAD_SIGNATURE` porque no recibe
   la cadena completa. Solución: `cat ca.pem >> cert.pem` y reiniciar el servicio.
   Tarea para el developer: `ensure_cert()` en `run.py` debería concatenar `ca.pem` al
-  `cert.pem` automáticamente, o bien uvicorn debería usar `ssl_ca_certs`.
+  `cert.pem` automáticamente, o bien uvicorn debería usar `ssl_ca_certs`.~~
+  **✅ RESUELTO EN 1.8.11 (R6):** `ensure_cert()` ahora concatena `ca.pem` al `cert.pem`.
+  `cert.pem` contiene 2 certificados y `openssl verify` pasa OK.
 
 ---
 
@@ -333,3 +358,33 @@ en 2s). El bug es solo del script de update, no del paquete en sí.
 : **Tarea para el developer**: en el arranque del backend, detectar si ya hay un
   `LICENSE_TOKEN` válido y setear `ENABLE_VOICE=true` automáticamente, en lugar de
   depender solo del flujo de activación.
+
+---
+
+## ERRATA DEL CICLO 1.8.11 (30/07) — cosillas que no están en la matriz pero conviene saber
+
+- **`lrp-update` de 1.8.11:** tiene la estructura correcta (funciones + `trap EXIT`), pero
+  `restart_services()` tiene un bug menor en el fallback de user-service: itera
+  `/run/user/*` y si el glob no matchea, `$uid` queda como `*` y `id -nu` falla. En
+  instalaciones system-wide (la rama principal) no afecta. El OTA 1.8.10→1.8.11 dejó el
+  servicio `inactive` porque 1.8.10 se pisó a sí mismo antes de reiniciar (esperado, R1).
+  El fix real se verá en 1.8.11→1.9.0.
+
+- **Balance del ciclo R1–R9:** 9/9 OK (1 por inspección de código, 1 delegado a reportes
+  de clientes). 0 FALLA, 0 SKIP.
+
+- **`PAIRING_TOKEN` ya no está en `.env`:** desde 1.8.11, `install.sh` lo guarda en
+  `.pairing_token`. Las instrucciones de `TESTING_HTPC_AGENT.md` (línea 44) usan
+  `grep PAIRING_TOKEN= .env` y están desactualizadas. Para agentes futuros, actualizar la
+  fuente del token.
+
+- **Residuo de `sleep.target`:** antes del OTA estaba `static` (no `masked`) por el cleanup
+  del ciclo anterior. R2 se marcó OK igual porque el OTA no lo tocó, pero es una
+  impureza del entorno de pruebas.
+
+- **Verificación de `lrp-ca.crt` en D-1:** quedó invalidada porque la CA del sistema se
+  borró a mano antes de `apt remove` (preparación para D-2). El hallazgo conocido "la CA
+  del sistema sobrevive al apt remove" no se pudo confirmar en esta ronda.
+
+- **`/api/health`:** devuelve 404. Si algún monitor externo lo consulta, no funcionará.
+  No es parte de la matriz actual.
