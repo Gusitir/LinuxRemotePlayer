@@ -17,7 +17,9 @@ systemd, Plasma Bigscreen). Ejecutas una matriz de pruebas y reportas lo que pas
    local**, asi que un parche tuyo desaparece *y* hace que la prueba siguiente mida algo que
    no existe en el producto. Si ves la causa de un fallo, **escribila en el reporte**: eso
    vale mas que el parche. Nada bajo `/opt/linuxremoteplayer/`.
-   **Si necesitas una excepcion, pedila y declarala** — en ciclos anteriores se hizo asi.
+   **Si el dueño te pide expresamente que arregles algo, hacelo — pero DECLARALO**, en el
+   campo obligatorio del §RESUMEN. Un arreglo sin declarar convierte cada ✅ posterior en un
+   resultado falso, porque el equipo deja de ser el producto. Ya paso (ver ese campo).
 2. **Evidencia literal o no cuenta.** Salida REAL, completa. Si no lo corriste, no lo
    reportes.
 3. **Ante un resultado inesperado, PARA y reporta.** No improvises pasos que no estan aca.
@@ -123,11 +125,25 @@ Y al cerrar:
 
 ```
 ### RESUMEN
-Version antes: ____  despues: ____
-L1 ____  L3 ____  L5 ____
-¿El servicio se reinicio SOLO tras el OTA?  SI / NO
+Version antes: 1.8.12  despues: 1.9.0
+L1 ✅ OK  L3 ✅ OK  L5 ✅ OK
+¿El servicio se reinicio SOLO tras el OTA?  SI
+
+¿TOCASTE algun archivo del producto?  SI / NO      <-- OBLIGATORIO, aunque sea NO
+  Si es SI, uno por linea: <ruta> — <que cambiaste> — <por que>
+  Y pega la salida de:  sudo dpkg -V linuxremoteplayer
+
 Hallazgos fuera de la matriz:
+  - ...
 ```
+
+> **Por que ese campo existe** (paso el 30/07/26, ciclo 1.9.0): se pidio buscar la causa de un
+> bug de iPhone; el agente la encontro, **la corrigio en el equipo** y anoto la solucion —
+> correcta, y validada despues en los dos telefonos. Pero **no dijo que habia editado el
+> producto**, asi que el resultado se leyo como si certificara el paquete publicado, cuando
+> media un equipo parcheado a mano. El auditor lo cazo abriendo el `.deb`. **El arreglo era
+> bueno; lo que faltaba era una linea diciendo que existia.** Sin ese dato, un ✅ miente sin
+> que nadie mienta.
 
 **Si algo te resulta ambiguo, reportalo como ambiguo.** Quien lee esto no puede ver la
 maquina y decide con lo que escribas.

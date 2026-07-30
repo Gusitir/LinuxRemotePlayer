@@ -31,20 +31,24 @@ historia:           CONTEXT.md + git log
   **Se cierra publicando 1.9.1**, que es la primera tarea de la sesion siguiente.
 
 
-- **B1 · el HUD se corre en iPhone — ARREGLADO en T-77, SIN PROBAR en device.** Sigue aca
-  porque el arreglo no esta verificado. *Causa:* al volver del segundo plano iOS reporta la
-  altura ANTERIOR en el instante en que disparan `pageshow`/`visibilitychange`; los listeners
-  ya estaban, lo que faltaba era **no leer el valor de inmediato**. Ahora se re-lee tres
-  veces (ya, al frame, a los 300ms).
-  **Si tras probarlo el espacio sigue:** el siguiente paso es eliminar `--app-h` y confiar en
-  `100dvh` — mas limpio, pero puede reabrir el problema de viewport que ese mecanismo vino a
-  resolver en el ciclo v1.7. **Decision del dueño: si hace falta otra pasada, la definitiva
-  es la 1.9.1.** Se cierra con **TESTING §L2**, en iPhone 8+ Y 12 (se comportaban distinto).
+- **B1 · el HUD se corre en iPhone — CAUSA CONFIRMADA Y ARREGLO PROBADO, pero NO EMBARCADO.**
+  *La causa real es `viewport-fit=cover`* (`frontend/index.html:6`): con `cover` + `theme-color`,
+  iOS **duplica `safe-area-inset-top` al REABRIR** la PWA — por eso el bug no salia en el
+  primer arranque sino tras varios. **Sacar `cover` lo resuelve**, validado en iPhone 8+ y 12.
+  *Lo hallo el agente del HTPC el 30/07 y lo aplico AL EQUIPO, no al repo* (TESTING §L2).
+  **T-77 no era el arreglo:** re-leia la altura tres veces (`updateAppHeightSettled`, nacio
+  ahi); viajo en 1.9.0 y no alcanzo. **La hipotesis vieja —matar `--app-h` e ir a `100dvh`—
+  QUEDA DESCARTADA:** era mas cara y arriesgaba reabrir el viewport que se arreglo en v1.7.
+  **Cierra con T-79 en 1.9.1** + repetir §L2 sobre el `.deb`, no sobre el equipo parcheado.
+  *Auditado abriendo el `.deb`: `viewport-fit=cover` PRESENTE en el paquete publicado.*
 
 ## N — SIGUIENTE (orden estricto)
 
-1. **N1 · probar 1.9.0 en device** — `TESTING.md`, ciclo L1..L5. **L2 es el unico que decide
-   algo**: si B1 quedo resuelto. El agente del HTPC cubre L1/L3/L5; L2 y L4 son del dueño.
+1. **N1 · PUBLICAR 1.9.1** — el ciclo de campo del 30/07 ya corrio: L1/L3/L5 OK, y L2 dio la
+   causa de B1 pero **sobre un HTPC parcheado a mano**, asi que no certifica nada publicado.
+   La 1.9.1 tiene que llevar **T-78** (B18, el boton de actualizar — ya en `main`, sin
+   release) **+ T-79** (B1, sacar `viewport-fit=cover`). Despues **repetir §L2 sobre el
+   `.deb`** en los dos iPhone. Hasta entonces el HTPC mide codigo que no es el producto.
 2. **N2 · el repo YA ES PRIVADO (30/07) — falta cerrar la deuda de PLAN.md §T-57**, que se
    iba a verificar ANTES y quedo para despues. Pendiente y en orden de riesgo:
    **(a) que Vercel siga desplegando.** Si dejo de hacerlo y no se nota, **el canal OTA se
@@ -56,8 +60,9 @@ historia:           CONTEXT.md + git log
 3. **N3 · lo comercial:** C9 (que support@ ENVIE sin caer en spam) → C5 (capturas de 1.9.0,
    las que ve Paddle) → **T-51 Paddle** (alta, producto $5, webhook, compra real + refund;
    arrastra B1b y H11) → T-55 docs.
-4. **N4 · v1.9.1:** PH17 skins · PH20 demo web · D11 boton de modo oscuro · D12 iconos
-   borrosos · H19 el QR que lleva a "Offline".
+4. **N4 · lo que NO entra en 1.9.1** (sale despues; 1.9.1 es solo T-78+T-79): PH17 skins ·
+   PH20 demo web · D11 boton de modo oscuro · D12 iconos borrosos · H19 el QR "Offline" ·
+   H21 el `theme-color` de iOS 16+.
 
 ## HECHO — fase v1.9 (todo auditado APTO; evidencia en git log)
 
@@ -117,6 +122,11 @@ Lo unico que el proximo agente no puede re-derivar de git:
   la URL completa, asi que no matchea el precache de `/` y el service worker devuelve texto
   plano 503. *Fix:* `{ ignoreSearch: true }`. **Y en el mismo bloque falta un `else` tras el
   timeout de 3s: si el cache falla ahi, la promesa nunca se resuelve.**
+- **H21 · el `theme-color` no se actualiza en vivo en iOS >=16** (iPhone 12): al cambiar de
+  tema hay que cerrar y reabrir la PWA. En iPhone 8+ (iOS <16) si funciona. Lo reescribe
+  `app.js:174`; Safari 16+ no re-evalua ese meta. Sin workaround conocido. **Aparecio al
+  sacar `viewport-fit=cover`** (T-79): sin `cover`, el `theme-color` pasa a pintar la barra
+  de estado, asi que recien ahi se nota. Marginal, NO bloquea el lanzamiento.
 - **H12** el numero de version sale del backend y la interfaz del cache del SW: pueden
   discrepar sin aviso. Prioridad baja.
 - **H1** cold-start de voz: dejo de reproducirse, no se hace keep-alive.

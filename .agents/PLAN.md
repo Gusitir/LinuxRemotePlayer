@@ -261,6 +261,23 @@ Killer feature: multijugador — cada teléfono conectado = un mando (sin hardwa
       extra del APK premium
 - [ ] Gate: misma licencia Pro única
 
+# T-79: B1 — sacar `viewport-fit=cover` (nace 2026-07-30; estado vivo en CURRENT §B1)
+
+Un solo atributo en `frontend/index.html:6`. **La causa y el arreglo ya estan validados en
+campo** (iPhone 8+ y 12, TESTING §L2) — lo que falta es embarcarlo: se probo sobre el HTPC
+parcheado a mano y nunca entro al repo.
+
+**Radio de impacto auditado el 30/07** — sin `cover`, `env(safe-area-inset-*)` pasa a 0.
+Los cinco usos degradan limpio, por eso el cambio es de bajo riesgo:
+- `index.html:23` `body padding: env(R/B/L)` → 0. Correcto: sin `cover` iOS ya insetea el
+  viewport, y sumar padding encima es JUSTO lo que duplicaba el inset.
+- `index.html:24` y `:26` `.app-header padding-top: max(env(top), 8px|20px)` → cae al `max()`.
+- `index.html:38` `.drawer` (`fixed; inset:0`) → 0, ya queda dentro del area segura.
+- `index.html:162` `calc(1rem + env(bottom))` → `1rem`.
+
+Va en **1.9.1 junto con T-78**. Al cerrar: **repetir §L2 sobre el `.deb`**, no sobre el HTPC.
+Efecto colateral conocido y aceptado: **H21** (el `theme-color` no refresca en vivo en iOS 16+).
+
 # T-57: PRIVATIZAR EL REPO — YA SE APRETO EL BOTON (2026-07-30)
 <!-- Estado vivo y decision: CURRENT §C7. Aca esta el detalle operativo. -->
 
