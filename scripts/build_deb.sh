@@ -110,58 +110,82 @@ chmod 755 /usr/local/bin/lrp-setup
 # Create lrp-update wrapper
 cat <<'INNEREOF' > /usr/local/bin/lrp-update
 #!/bin/bash
+# ATENCION AL QUE EDITE ESTE SCRIPT --------------------------------------------
+# Todo el cuerpo vive dentro de funciones y la ultima linea es  main "$@"; exit $?
+# Eso NO es estilo: es lo unico que impide un bug real. Este script llama a
+# `apt-get install --reinstall`, y el postinst de ese paquete REESCRIBE este mismo
+# archivo. Bash lee los scripts por posicion de byte, asi que si el codigo estuviera
+# suelto, al volver del apt bash retomaria en un offset del archivo NUEVO, leeria un
+# fragmento a mitad de palabra y moriria antes de reiniciar el servicio. Paso de
+# verdad en el OTA 1.8.9->1.8.10: quedo `inactive (dead)`.
+# Con funciones, bash parsea el archivo entero ANTES de ejecutar.
+# El `; exit $?` va en la MISMA linea que main a proposito: asi bash ya lo tiene
+# parseado antes de que el archivo cambie. Si lo pasas a la linea de abajo, el bug vuelve.
+# ------------------------------------------------------------------------------
 
-if [ -z "$LRP_DETACHED" ] && command -v systemd-run >/dev/null; then
-    exec systemd-run --collect --unit=lrp-update-job --setenv=LRP_DETACHED=1 /usr/local/bin/lrp-update
-fi
-
-exec >>/tmp/lrp-update.log 2>&1
-
-set -e
-export DEBIAN_FRONTEND=noninteractive
-MANIFEST_URL="${UPDATE_MANIFEST_URL:-https://www.linuxremoteplayer.com/latest.json}"
-echo "Checking $MANIFEST_URL for updates..."
-LATEST_JSON=$(curl -fsSL "$MANIFEST_URL")
-VERSION=$(echo "$LATEST_JSON" | grep -o '"version"\s*:\s*"[^"]*"' | cut -d'"' -f4)
-DEB_URL=$(echo "$LATEST_JSON" | grep -o '"deb_url"\s*:\s*"[^"]*"' | cut -d'"' -f4)
-SHA256=$(echo "$LATEST_JSON" | grep -o '"sha256"\s*:\s*"[^"]*"' | cut -d'"' -f4)
-
-cd /tmp
-echo "Downloading $DEB_URL..."
-# Snap-packaged curl cannot write files outside $HOME (error 23). Fall back to wget.
-if ! curl -fsSL -o "linuxremoteplayer_${VERSION}_all.deb" "$DEB_URL" 2>/dev/null; then
-    echo "[!] curl no pudo escribir el archivo (¿curl de snap?). Intentando con wget..."
-    wget -qO "linuxremoteplayer_${VERSION}_all.deb" "$DEB_URL"
-fi
-if [ ! -s "linuxremoteplayer_${VERSION}_all.deb" ]; then
-    echo "[!] ERROR: no se pudo descargar la actualización. Instala el curl real: sudo apt install curl"
-    exit 1
-fi
-
-echo "$SHA256 linuxremoteplayer_${VERSION}_all.deb" | sha256sum -c -
-
-apt-get install -y --reinstall "./linuxremoteplayer_${VERSION}_all.deb"
-
-# Restart services depending on mode
-systemctl daemon-reload || true
-if [ -f /etc/systemd/system/linuxremoteplayer.service ]; then
-    systemctl enable linuxremoteplayer.service || true
-    systemctl restart linuxremoteplayer.service || true
-else
-    # find user services
-    for d in /run/user/*; do
-        if [ -d "$d" ]; then
-            uid=$(basename "$d")
-            user_home=$(eval echo "~$(id -nu "$uid")")
-            if [ -f "$user_home/.config/systemd/user/linuxremoteplayer.service" ]; then
-                sudo -u "#$uid" XDG_RUNTIME_DIR="$d" systemctl --user daemon-reload || true
-                sudo -u "#$uid" XDG_RUNTIME_DIR="$d" systemctl --user enable linuxremoteplayer.service || true
-                sudo -u "#$uid" XDG_RUNTIME_DIR="$d" systemctl --user restart linuxremoteplayer.service || true
+restart_services() {
+    local rc=$?
+    echo "[i] Asegurando que el servicio quede levantado (rc=$rc)..."
+    systemctl daemon-reload || true
+    if [ -f /etc/systemd/system/linuxremoteplayer.service ]; then
+        systemctl enable linuxremoteplayer.service || true
+        systemctl restart linuxremoteplayer.service || true
+    else
+        for d in /run/user/*; do
+            if [ -d "$d" ]; then
+                uid=$(basename "$d")
+                user_home=$(eval echo "~$(id -nu "$uid")")
+                if [ -f "$user_home/.config/systemd/user/linuxremoteplayer.service" ]; then
+                    sudo -u "#$uid" XDG_RUNTIME_DIR="$d" systemctl --user daemon-reload || true
+                    sudo -u "#$uid" XDG_RUNTIME_DIR="$d" systemctl --user enable linuxremoteplayer.service || true
+                    sudo -u "#$uid" XDG_RUNTIME_DIR="$d" systemctl --user restart linuxremoteplayer.service || true
+                fi
             fi
-        fi
-    done
-fi
+        done
+    fi
+    return $rc
+}
 
+main() {
+    if [ -z "$LRP_DETACHED" ] && command -v systemd-run >/dev/null; then
+        exec systemd-run --collect --unit=lrp-update-job --setenv=LRP_DETACHED=1 /usr/local/bin/lrp-update
+    fi
+
+    exec >>/tmp/lrp-update.log 2>&1
+
+    # El servicio se reinicia SIEMPRE, salga como salga la actualizacion. Un fallo
+    # bajando el .deb no puede dejar al usuario sin control remoto.
+    trap restart_services EXIT
+
+    set -e
+    export DEBIAN_FRONTEND=noninteractive
+    MANIFEST_URL="${UPDATE_MANIFEST_URL:-https://www.linuxremoteplayer.com/latest.json}"
+    echo "Checking $MANIFEST_URL for updates..."
+    LATEST_JSON=$(curl -fsSL "$MANIFEST_URL")
+    VERSION=$(echo "$LATEST_JSON" | grep -o '"version"\s*:\s*"[^"]*"' | cut -d'"' -f4)
+    DEB_URL=$(echo "$LATEST_JSON" | grep -o '"deb_url"\s*:\s*"[^"]*"' | cut -d'"' -f4)
+    SHA256=$(echo "$LATEST_JSON" | grep -o '"sha256"\s*:\s*"[^"]*"' | cut -d'"' -f4)
+
+    cd /tmp
+    echo "Downloading $DEB_URL..."
+    # Snap-packaged curl cannot write files outside $HOME (error 23). Fall back to wget.
+    if ! curl -fsSL -o "linuxremoteplayer_${VERSION}_all.deb" "$DEB_URL" 2>/dev/null; then
+        echo "[!] curl no pudo escribir el archivo (¿curl de snap?). Intentando con wget..."
+        wget -qO "linuxremoteplayer_${VERSION}_all.deb" "$DEB_URL"
+    fi
+    if [ ! -s "linuxremoteplayer_${VERSION}_all.deb" ]; then
+        echo "[!] ERROR: no se pudo descargar la actualización. Instala el curl real: sudo apt install curl"
+        exit 1
+    fi
+
+    echo "$SHA256 linuxremoteplayer_${VERSION}_all.deb" | sha256sum -c -
+
+    apt-get install -y --reinstall "./linuxremoteplayer_${VERSION}_all.deb"
+
+    echo "[+] Paquete $VERSION instalado. El trap se encarga del reinicio."
+}
+
+main "$@"; exit $?
 INNEREOF
 chmod 755 /usr/local/bin/lrp-update
 
