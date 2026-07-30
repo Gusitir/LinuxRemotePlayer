@@ -131,6 +131,12 @@ Este archivo es el CONTRATO, no el diario: cada KB de acá lo paga TODA sesión 
   sigue) → se puede inspeccionar rutas/middlewares sin device. Los briefs que corran
   backend nombran esa ruta (en T-63 se reportó "no verificable" por usar el equivocado).
 - **Builds del `.deb` SOLO en clon WSL NATIVO** (clonado desde origin dentro de `~`, no `/mnt`).
+- **UN SOLO CLON COMMITEA: el de Windows.** El clon WSL existe para construir el `.deb` y
+  se sincroniza con `git pull`; NO se commitea ahí salvo el commit del release, que necesita
+  el binario. Si no, salen commits hermanos del mismo padre y los clones divergen — paso en
+  T-60 (costo: un release publicado a medias) y volvio a pasar en T-69 y T-70. **Cada brief
+  dice en que clon se trabaja.** Si aparecen dos hashes para una tarea, ya divergio: se
+  pushea el auditado y el otro clon hace `git reset --hard origin/main`.
 - Guard CSS (`scripts/check_css_sync.py`) corre en `build_deb.sh` y ABORTA si hay clase CSS
   usada sin definir (cazó deriva real en T-29). Solo detecta usada-sin-definir, NO al revés:
   el CSS muerto no lo caza nadie.

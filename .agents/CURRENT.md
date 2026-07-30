@@ -44,6 +44,40 @@ historia:            CONTEXT.md + git log
   reglas udev y liberaria la licencia de todos los dispositivos**. Es T-19 otra vez, y es
   exactamente lo que mide **TESTING E1**.
 
+## B9..B13 — LO QUE ENCONTRO EL TEST DE 1.8.10 EN DEVICE (2026-07-29)
+
+El release de prueba 1.8.10 se publico y se probo por OTA. **Encontro un bug que habria
+golpeado a TODOS los clientes el dia del lanzamiento** — esa sola razon justifico la
+estrategia de sacar un build de prueba antes de 1.9.0.
+
+- **B9 ⛔⛔ · el OTA dejaba el servicio MUERTO. ARREGLADO en T-70, sin probar en device.**
+  *Causa (no era la obvia):* `lrp-update` llama a `apt-get install --reinstall`, y el
+  postinst de ese paquete **reescribe `/usr/local/bin/lrp-update`** — el archivo que bash
+  esta leyendo. Bash lee por posicion de byte: retoma en un offset del archivo NUEVO, cae a
+  mitad de palabra, ejecuta el fragmento `start`, y `set -e` lo mata ANTES del
+  `systemctl restart`. *Fix:* todo el cuerpo en funciones + `main "$@"; exit $?` en la
+  MISMA linea (bash parsea el archivo entero antes de ejecutar) + `trap` que reinicia el
+  servicio en toda salida. **Probado empiricamente**: el patron viejo se detiene en silencio
+  y devuelve exit 0; el nuevo llega al final.
+  **OJO al planificar: el fix NO puede reparar la actualizacion que lo entrega.** Un equipo
+  en <=1.8.10 usa su `lrp-update` roto para instalar la siguiente version, asi que sufre el
+  bug una vez mas. El OTA que tiene que verse verde antes de lanzar es **1.8.11 → 1.9.0**.
+- **B10 ⛔ · la voz no se enciende si la licencia ya estaba activa antes del update.**
+  `ENABLE_VOICE` solo se escribe dentro de `activate_license`; quien ya era Pro nunca pasa
+  por ese flujo. *Fix:* al arrancar el backend, si hay `LICENSE_TOKEN` valido y
+  `ENABLE_VOICE` **no existe** en el `.env`, ponerlo en true. **No debe pisar un `false`
+  explicito** o se rompe D10 (el usuario no podria apagar la voz nunca).
+- **B11 ⛔ · cadena de certificados incompleta.** `run.py:210` pasa `ssl_certfile=CERT_FILE`
+  (la hoja sola) y nunca concatena `ca.pem` ni usa `ssl_ca_certs`. Funcionaba porque
+  `install.sh` mete el CA en el trust store; al regenerar certs (uninstall→reinstall) deja
+  de coincidir y Firefox tira `SEC_ERROR_BAD_SIGNATURE`.
+- **B12 · `apt remove` deja las credenciales en disco.** `lrp-cleanup.sh` libera la licencia
+  en el servidor pero el `.env` conserva el `LICENSE_TOKEN` **y el `PAIRING_TOKEN`**: al
+  reinstalar re-reclama la key sola y no se puede probar la mudanza. *Fix:* borrar el `.env`.
+- **B13 · el `.desktop` dice "Remote Linux Player"** (`build_deb.sh:40`). T-66 no lo cazo
+  porque **el brief acoto la busqueda a `frontend/` y `website/`** — el nombre tambien vivia
+  en `scripts/`. Es la leccion de "auditar REFERENCIAS" incumplida al escribir el alcance.
+
 ## N — SIGUIENTE (orden estricto)
 
 1. **N1 · el dueño ejecuta TESTING.md sobre 1.8.9** (§A §B §C §D §F §G; §E necesita 1.9.0).
