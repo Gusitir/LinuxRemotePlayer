@@ -6,8 +6,8 @@
      el dia que TESTING §E pase. El detalle de cada auditoria esta en git log, no aca. -->
 
 ```yaml
-version_publicada:   1.8.9    # LIVE desde 2026-07-26 (T-60). sha 890211c8…bf87c
-version_en_curso:    1.9.0    # CODIGO COMPLETO Y AUDITADO, sin construir ni publicar
+version_publicada:   1.8.10   # LIVE desde 2026-07-29 (T-69). Build DE PRUEBA, no lanzamiento
+version_en_curso:    1.9.0    # falta T-73, despues construir 1.8.11 y probar el OTA
 dominio:             https://www.linuxremoteplayer.com  # sirviendo desde Vercel
 alias_vercel:        linux-remote-player.vercel.app     # VIVO a proposito: canal OTA del parque 1.8.x
 correo_soporte:      support@linuxremoteplayer.com      # buzon real (Namecheap Private Email)
@@ -20,9 +20,11 @@ docs_humanos:        docs/ARCHITECTURE.md (la forma) + docs/DEVELOPING.md (como 
 historia:            CONTEXT.md + git log
 ```
 
-> **Lo mas importante que hay que entender al entrar:** el codigo de v1.9.0 esta terminado
-> y auditado, pero **no existe ningun `.deb` de 1.9.0 y la matriz de TESTING nunca se corrio**.
-> Todo lo pendiente cuelga de eso, no de escribir mas codigo.
+> **Lo mas importante que hay que entender al entrar:** la matriz de TESTING **YA SE CORRIO**
+> sobre el build de prueba 1.8.10 (29/07) y encontro 6 bugs, uno de ellos catastrofico: el
+> OTA dejaba el servicio muerto en todos los dispositivos. Cinco ya estan arreglados
+> (T-70..T-72) y el sexto es T-73. **Ninguno de esos arreglos se probo en device todavia.**
+> El proximo paso es un build 1.8.11 y volver a correr el OTA — ver §N.
 
 ## B — BLOQUEANTES
 
@@ -62,35 +64,59 @@ estrategia de sacar un build de prueba antes de 1.9.0.
   **OJO al planificar: el fix NO puede reparar la actualizacion que lo entrega.** Un equipo
   en <=1.8.10 usa su `lrp-update` roto para instalar la siguiente version, asi que sufre el
   bug una vez mas. El OTA que tiene que verse verde antes de lanzar es **1.8.11 → 1.9.0**.
-- **B10 ⛔ · la voz no se enciende si la licencia ya estaba activa antes del update.**
-  `ENABLE_VOICE` solo se escribe dentro de `activate_license`; quien ya era Pro nunca pasa
-  por ese flujo. *Fix:* al arrancar el backend, si hay `LICENSE_TOKEN` valido y
-  `ENABLE_VOICE` **no existe** en el `.env`, ponerlo en true. **No debe pisar un `false`
-  explicito** o se rompe D10 (el usuario no podria apagar la voz nunca).
-- **B11 ⛔ · cadena de certificados incompleta.** `run.py:210` pasa `ssl_certfile=CERT_FILE`
-  (la hoja sola) y nunca concatena `ca.pem` ni usa `ssl_ca_certs`. Funcionaba porque
-  `install.sh` mete el CA en el trust store; al regenerar certs (uninstall→reinstall) deja
-  de coincidir y Firefox tira `SEC_ERROR_BAD_SIGNATURE`.
+- **B10 ⛔ · la voz no se encendia si la licencia ya estaba activa antes del update.
+  ARREGLADO en T-71.** `ENABLE_VOICE` solo se escribia dentro de `activate_license`; quien
+  ya era Pro nunca volvia a pasar por ese flujo. *Fix:* al arrancar, si hay `LICENSE_TOKEN`
+  y `ENABLE_VOICE` **no existe** en el `.env`, se pone en true. **Nunca pisa un `false`
+  explicito** — eso es el usuario apagandola (D10), y esta cubierto por un test.
+- **B11 ⛔ · cadena de certificados incompleta. ARREGLADO en T-71.** `run.py` pasaba a uvicorn
+  solo la hoja. `ensure_full_chain()` concatena el `ca.pem`, es idempotente (verificado con
+  6 llamadas seguidas) y se invoca donde se configura uvicorn, **no dentro de `ensure_cert`**:
+  esa funcion retorna temprano cuando el cert ya existe, asi que ahi adentro jamas repararia
+  una instalacion ya rota. *Ojo:* esto NO era la causa del `SEC_ERROR_BAD_SIGNATURE` — ver B14.
 - **B12 · `apt remove` deja las credenciales en disco.** `lrp-cleanup.sh` libera la licencia
   en el servidor pero el `.env` conserva el `LICENSE_TOKEN` **y el `PAIRING_TOKEN`**: al
-  reinstalar re-reclama la key sola y no se puede probar la mudanza. *Fix:* borrar el `.env`.
+  reinstalar re-reclama la key sola y no se puede probar la mudanza. *Fix (T-73):* borrarlo,
+  **al final del script** — el paso 1 lee ese mismo `.env` para liberar la licencia, y
+  borrarlo antes dejaria el slot del dispositivo ocupado para siempre.
 - **B13 · el `.desktop` dice "Remote Linux Player"** (`build_deb.sh:40`). T-66 no lo cazo
   porque **el brief acoto la busqueda a `frontend/` y `website/`** — el nombre tambien vivia
   en `scripts/`. Es la leccion de "auditar REFERENCIAS" incumplida al escribir el alcance.
+- **B14 · una reinstalacion rompe los telefonos ya emparejados. ARREGLADO en T-72.**
+  *El sintoma:* Firefox tira `SEC_ERROR_BAD_SIGNATURE` tras desinstalar y reinstalar.
+  *Por que NO era falta de cadena* (esa fue una conclusion apresurada del auditor, corregida
+  al investigar): `uninstall.sh:60` borra `certs/` y con eso **destruye la CA**; al
+  reinstalar, `run.py` creaba otra con **el mismo nombre fijo** `/CN=LinuxRemotePlayer CA`
+  pero otra llave. El navegador, que guardo la vieja, encuentra una CA con ESE nombre e
+  intenta validar con la llave equivocada. Por eso el error dice "firma invalida" y no
+  "emisor desconocido": es **colision de nombre**, y mandar la cadena completa no la arregla
+  porque al navegador no le falta un dato, le sobra el dato viejo.
+  *Fix:* sufijo unico por instalacion tomado de `/etc/machine-id` (con respaldo `uuid4`), y
+  `install.sh` borra la entrada "LRP CA" previa antes de agregar la nueva (`certutil -A`
+  acumula, no reemplaza). **Verificado con openssl real**: CA `…CA dfd25b14`, hoja con la IP
+  intacta, y `openssl verify` OK sobre la cadena.
+  *No repara lo ya roto:* los navegadores y el iPhone que guardaron la CA vieja necesitan
+  que se borre a mano una vez. Despues de eso el peor caso pasa a ser "emisor desconocido",
+  que el usuario si puede aceptar.
 
 ## N — SIGUIENTE (orden estricto)
 
-1. **N1 · el dueño ejecuta TESTING.md sobre 1.8.9** (§A §B §C §D §F §G; §E necesita 1.9.0).
-   Nada lo bloquea y es el camino critico: lo que falle tiene que entrar en el MISMO .deb.
-   Antes: poner el HTPC en el 1.8.9 **publicado** (el que tiene es un build de prueba).
-2. **N2 · corregir la web AL PUBLICAR v1.9.0, no antes** (parte de T-56). La web vende los
-   temas como Pro y T-62 ya los libero en codigo: cambiarlas antes haria mentir a la web al
-   reves para todo el que tenga 1.8.9.
+1. **N1 · terminar T-73** (B12 + B13 + D8). Es lo ultimo que falta de codigo.
+2. **N2 · construir y publicar 1.8.11, otro build de PRUEBA.** Cinco arreglos criticos
+   (T-70..T-72) no se probaron en device y **ninguno se puede probar sin un `.deb`**.
+   **Contar con que ESTE OTA deje el servicio muerto otra vez**: el equipo esta en 1.8.10 y
+   usa su `lrp-update` roto para instalar. Se levanta a mano (`systemctl start
+   linuxremoteplayer`) y se sigue. **El OTA que tiene que verse verde es 1.8.11 → 1.9.0.**
+3. **N3 · re-correr en device sobre 1.8.11:** §A1 (OTA) · §E1-E5 (desinstalar: ahora el
+   `.env` tiene que desaparecer) · §C+D1 (la voz sin tocar el `.env` a mano) · §F6 y §G4
+   (certificado tras reinstalar, y el nombre en el menu de aplicaciones).
+   **Antes de §F6: borrar a mano la CA vieja** del sistema y del iPhone, o el
+   `SEC_ERROR_BAD_SIGNATURE` va a persistir aunque T-72 este bien (ver B14).
+4. **N4 · corregir la web AL PUBLICAR v1.9.0, no antes.** La web vende los temas como Pro y
+   T-62 ya los libero en codigo; cambiarlas antes haria mentir a la web al reves.
    Lineas: `website/index.html:148,254,299` + `website/en/index.html:148,256,301`.
-3. **N3 · T-56, armar el release v1.9.0.** Absorbe N2 y la decision de `short_name` (ver D8).
-   Sigue §PROCESO DE RELEASE de AGENTS.md. **Ojo: el clon WSL nativo esta desactualizado** —
-   hay que traerle T-62..T-66 antes de construir.
-4. **N4** → T-51 Paddle (alta, producto $5, webhook, compra real + refund; arrastra H11) →
+5. **N5 · T-56, el release v1.9.0.** Absorbe N4. Sigue §PROCESO DE RELEASE de AGENTS.md.
+6. **N6** → T-51 Paddle (alta, producto $5, webhook, compra real + refund; arrastra H11) →
    T-55 docs (absorbe T-43/T-44) → T-57 privatizar.
 
 ## HECHO (fase v1.9 — todas auditadas APTO; evidencia en git log)
@@ -100,7 +126,11 @@ ES+EN LIVE · **T-58** identidad app↔web · **T-59+T-60** release 1.8.9 public
 **T-61** dominio + `support@` en la web · **T-62** skins liberadas · **T-63** doc de FastAPI
 oculta · **T-64** apt remove limpia · **T-65** URLs de maquina al dominio · **T-66** pulido
 pre-Paddle (cierra H7, H8a, B1b) · **T-67** (`21f552a`) instalador · **T-68**
-(`c2df1b3`+`6dea973`) voz automatica y enlace de compra (cierra B4, B7, B8).
+(`c2df1b3`+`6dea973`) voz automatica y enlace de compra (cierra B4, B7, B8) ·
+**T-69** (`f36bee9`) **release 1.8.10 de prueba, PUBLICADO** · **T-70** (`2f2b6b2`)
+`lrp-update` a prueba de auto-reescritura (cierra B9) · **T-71** (`168259c`) voz al arrancar
++ cadena de certificados (cierra B10, B11) · **T-72** (`0238bb0`) CA con nombre unico
+(cierra B14).
 
 Lo unico que el proximo agente no puede re-derivar de git:
 - **T-46..T-50 se validaron sobre un build de prueba, NO sobre un .deb publicado** →
