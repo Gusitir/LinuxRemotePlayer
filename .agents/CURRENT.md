@@ -45,8 +45,14 @@ historia:           CONTEXT.md + git log
 
 1. **N1 · probar 1.9.0 en device** — `TESTING.md`, ciclo L1..L5. **L2 es el unico que decide
    algo**: si B1 quedo resuelto. El agente del HTPC cubre L1/L3/L5; L2 y L4 son del dueño.
-2. **N2 · privatizar el repo** — **que verificar ANTES: PLAN.md §T-57.** El OTA no se rompe
-   (lo sirve Vercel), pero si Vercel deja de desplegar y no se nota, el canal se congela.
+2. **N2 · el repo YA ES PRIVADO (30/07) — falta cerrar la deuda de PLAN.md §T-57**, que se
+   iba a verificar ANTES y quedo para despues. Pendiente y en orden de riesgo:
+   **(a) que Vercel siga desplegando.** Si dejo de hacerlo y no se nota, **el canal OTA se
+   congela**. *Test gratis:* el proximo push (aunque solo toque `.agents/`) dispara deploy —
+   `website/vercel.json` es solo `cleanUrls`, sin Ignored Build Step. Mirar el dashboard.
+   **(b) el clon WSL del release** va a pedir credenciales: resolverlo ANTES de un release,
+   no en medio. En Windows ya andan (Git Credential Manager, probado con `git ls-remote`).
+   **(c) `scripts/bootstrap.sh` ya da 404** — pero no lo ofrece la web (H6), daño real cero.
 3. **N3 · lo comercial:** C9 (que support@ ENVIE sin caer en spam) → C5 (capturas de 1.9.0,
    las que ve Paddle) → **T-51 Paddle** (alta, producto $5, webhook, compra real + refund;
    arrastra B1b y H11) → T-55 docs.
@@ -119,7 +125,9 @@ Lo unico que el proximo agente no puede re-derivar de git:
 - **H4** falta intent "volumen al maximo" (hoy sube 1 paso).
 - **H5** `showInstallScreen` usa `hidden` pero `#app-ui` tiene `.flex` (gana el autor);
   `showPairingScreen` lo esquiva con `style.display`. Unificar.
-- **H6** `bootstrap.sh` es legacy y muere con el repo privado: borrarlo en T-57.
+- **H6** `bootstrap.sh` YA murio (repo privado desde el 30/07): su `REPO_URL` da 404. No lo
+  ofrece `website/` —solo lo nombran README y CHANGELOG—, asi que no rompe a nadie. Borrarlo
+  con su mencion en el README. Va en T-57 §(c).
 - **H20 · el correo del cliente con su clave** (`stripe-webhook`) ya dice el nombre correcto,
   pero **eso no surte efecto hasta redesplegar la Edge Function**. Va con T-51.
 
@@ -135,4 +143,7 @@ Lo unico que el proximo agente no puede re-derivar de git:
 - [ ] **C6** `supabase functions deploy send-feedback --no-verify-jwt` (desde v1.5).
 - [ ] **C3** wallpapers de las skins nuevas (PH17/v1.9.1, no bloquea). Para Gato/Perro mandar
       **el TILE** (~400x400), no el pantallazo: tilear ya esta soportado y pesa ~30KB vs ~170KB.
-- [ ] **C7** privatizar el repo al lanzar — **que verificar antes: PLAN.md §T-57.**
+- [~] **C7** repo privatizado el 30/07 — **el boton se apreto, la verificacion no.** Sigue
+      abierto por §CICLO regla 4 (cerrar ≠ haber editado): se cierra cuando (a) Vercel
+      demuestre que sigue desplegando, (b) el clon WSL clone sin trabarse y (c) muera
+      `bootstrap.sh`. Detalle en **N2**.

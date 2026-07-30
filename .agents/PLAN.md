@@ -261,8 +261,13 @@ Killer feature: multijugador — cada teléfono conectado = un mando (sin hardwa
       extra del APK premium
 - [ ] Gate: misma licencia Pro única
 
-# T-57: PRIVATIZAR EL REPO — que verificar ANTES de apretar el boton
-<!-- Estado vivo y decision: CURRENT. Aca esta el detalle operativo. -->
+# T-57: PRIVATIZAR EL REPO — YA SE APRETO EL BOTON (2026-07-30)
+<!-- Estado vivo y decision: CURRENT §C7. Aca esta el detalle operativo. -->
+
+> **EL REPO YA ES PRIVADO** (el dueño lo privatizo el 2026-07-30, ANTES de correr estos
+> chequeos). Lo de abajo dejo de ser "que verificar antes" y paso a ser **deuda a verificar
+> AHORA**. Comprobado el mismo dia: `git ls-remote origin` responde desde el clon Windows,
+> asi que las credenciales locales (Git Credential Manager) siguen sirviendo.
 
 Verificado 2026-07-29. **El OTA NO se rompe**: `latest.json` y el `.deb` se sirven de Vercel,
 no de GitHub. Pero hay tres cosas que si:
@@ -272,16 +277,17 @@ no de GitHub. Pero hay tres cosas que si:
    re-autoriza la app de GitHub. **Si esto falla y no se nota, el canal OTA se congela.**
 2. **El clon WSL del release** (`git clone <origin> ~/lrp-release`, §PROCESO DE RELEASE paso 2)
    va a pedir credenciales. Resolverlo ANTES, no en medio de un release.
-3. **`scripts/bootstrap.sh` muere** (H6): clona desde GitHub y va a dar 404 para todos.
-   Borrarlo en la misma tarea, no dejarlo publicado roto.
+3. **`scripts/bootstrap.sh` YA ESTA ROTO** (H6): su `REPO_URL` (linea 8) apunta al repo, que
+   ahora da 404 para cualquiera. **Verificado 2026-07-30:** lo nombran solo `README.md` y
+   `CHANGELOG.md` — **nada en `website/`**, asi que el sitio publico no lo ofrece y el daño
+   real es cero. Borrarlo igual, con su mencion en el README.
 - Dato menor: `backend/.env.example:15` trae `GITHUB_REPO=Gusitir/LinuxRemotePlayer` y
-  **ningun codigo lo lee** — variable muerta, sacarla de paso.
-- **4. El push pasa a ser del dueño A PARTIR de 1.9.0, no antes.** Durante 1.8.x sigue
-  vigente §CICLO paso 2 tal cual: Gemini commitea Y pushea. Cuando cambie hay que editar
-  ese paso: Gemini termina con el **hash del commit local**, el auditor audita ESE commit
-  (nunca el working tree — trampa de T-64) y recien con APTO pushea el dueño.
-  *(Los briefs de T-69 y T-70 pidieron "no pushear" por adelantado; fue un error de tiempo
-  del auditor, no un cambio de contrato.)*
+  **ningun codigo lo lee** (verificado 2026-07-30: solo aparece ahi y en este PLAN) —
+  variable muerta, sacarla de paso.
+- **4. El push del dueño YA RIGE, y el reparto quedo distinto al previsto aca.** Lo que se
+  planeaba —Gemini commitea local y el auditor audita ESE commit— **no es lo que se
+  decidio**: Gemini no commitea nada y entrega arbol sucio. **El contrato vigente esta en
+  AGENTS.md §ROLES y §CICLO; no lo repitas aca.**
 
 # PH0: SUPERFICIE DE VERIFICACION [propuesta 2026-07-28, SIN adoptar — decide el dueño]
 

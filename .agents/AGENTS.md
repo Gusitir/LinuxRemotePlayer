@@ -1,5 +1,5 @@
 # AGENTS.md — LEE ESTO PRIMERO
-<!-- TAMAÑO REAL: 14173 bytes — PASADO el techo de 12KB (§FORMATO). Medido 2026-07-30.
+<!-- TAMAÑO REAL: 14205 bytes — PASADO el techo de 12KB (§FORMATO). Medido 2026-07-30.
      Entró a la sesión ya en 13204; el cambio de roles sumó ~625 y las tres compactaciones
      hechas no alcanzaron. Bajarlo exige una pasada del SUPERVISOR (Fable 5), no un retoque.
      Se declara porque mentirle al techo es peor que pasarlo. -->
@@ -81,12 +81,13 @@ es telegráfico — la ambigüedad obliga a releer y sale más cara que lo que a
    **"STOP — T-NN listo para auditoría"**. La entrega es un **árbol de trabajo sucio**.
    > **Un árbol solo se audita cuando el ejecutor lo soltó**: auditar mientras Gemini seguía
    > editando ya dio un falso NO APTO. El dueño confirma el STOP; recién ahí mira el auditor.
-   > (La regla vieja anclaba en `git log <hash>..origin/main` porque Gemini commiteaba — ya
-   > no. Lo que sobrevive: **nunca se arranca por lo que dice el reporte**.)
+   > (Antes anclaba en `git log <hash>..origin/main`; lo que sobrevive de esa regla es que
+   > **nunca se arranca por lo que dice el reporte**.)
 3. **Claude** RE-EJECUTA los checks contra el repo real (NO confía en el paste — ya pasó 3
    veces que se reportó evidencia que nunca corrió) y dictamina **APTO** o **NO APTO con
    causa raíz**. Con APTO **commitea él**: `git add` SELECTIVO (JAMÁS `git add .`), un commit
-   por `[T-NN]`, y avisa al dueño para que pushee. La auditoría incluye SIEMPRE:
+   por `[T-NN]`, **sin trailer `Co-Authored-By`** (el repo no lo usa), y avisa al dueño para
+   que pushee. La auditoría incluye SIEMPRE:
    - **Qué archivos tocó DE VERDAD** (`git status --porcelain`), no lo que dice el reporte.
    - **Auditoría de REFERENCIAS, no solo de comportamiento.** Si la tarea renombró un id,
      una ruta o un asset, grepear TODO el repo por referencias viejas — incluida la web,
