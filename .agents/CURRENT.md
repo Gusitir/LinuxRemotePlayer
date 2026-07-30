@@ -150,6 +150,12 @@ no de GitHub. Pero hay tres cosas que si:
    Borrarlo en la misma tarea, no dejarlo publicado roto.
 - Dato menor: `backend/.env.example:15` trae `GITHUB_REPO=Gusitir/LinuxRemotePlayer` y
   **ningun codigo lo lee** — variable muerta, sacarla de paso.
+- **4. El push pasa a ser del dueño A PARTIR de 1.9.0, no antes.** Durante 1.8.x sigue
+  vigente §CICLO paso 2 tal cual: Gemini commitea Y pushea. Cuando cambie hay que editar
+  ese paso: Gemini termina con el **hash del commit local**, el auditor audita ESE commit
+  (nunca el working tree — trampa de T-64) y recien con APTO pushea el dueño.
+  *(Los briefs de T-69 y T-70 pidieron "no pushear" por adelantado; fue un error de tiempo
+  del auditor, no un cambio de contrato.)*
 
 ## H — HALLAZGOS ABIERTOS (no bloquean)
 
