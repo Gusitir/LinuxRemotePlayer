@@ -1,6 +1,6 @@
 {
-  "version": "1.8.12",
-  "deb_url": "https://www.linuxremoteplayer.com/downloads/linuxremoteplayer_1.8.12_all.deb",
-  "sha256": "5f0d6358e1b7f0972a1dffc6ac586bf6030a3c1f18709cb43a1188fed0ac9080",
-  "notes": "Build de prueba: desinstalar deja el equipo limpio de certificados, claves y credenciales."
+  "version": "1.9.0",
+  "deb_url": "https://www.linuxremoteplayer.com/downloads/linuxremoteplayer_1.9.0_all.deb",
+  "sha256": "3395738aa6ae1479171dbdeeb8dc6ea180c71656a53af34a7f66ea1516a40b3b",
+  "notes": "Temas gratuitos para todos, voz que se activa al registrar la licencia, y actualizaciones e instalacion mas confiables."
 }

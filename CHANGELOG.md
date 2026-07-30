@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2026-07-30
+
+### Added
+- **Los cuatro temas (Day, Night, Café y Anime) ahora son gratuitos** para todos.
+- **La voz con IA se activa sola al registrar la licencia**, y se puede desactivar cuando se quiera.
+
+### Fixed
+- **Las actualizaciones ya no dejan el servicio caido.**
+- **Reinstalar ya no rompe la conexion con los telefonos emparejados.**
+- **Desinstalar deja el equipo limpio**: se eliminan certificados, claves y credenciales.
+- **La instalacion ya no se interrumpe a mitad de camino** y avisa el paso que falta.
+- **En iPhone, la pantalla ya no se desplaza** al reabrir la aplicacion.
+- La documentacion tecnica del servidor deja de ser accesible en la red local.
+
 ## [1.8.12] - 2026-07-30
 
 ### Fixed
