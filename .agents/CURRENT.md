@@ -49,13 +49,14 @@ historia:           CONTEXT.md + git log
    La 1.9.1 tiene que llevar **T-78** (B18, el boton de actualizar — ya en `main`, sin
    release) **+ T-79** (B1, sacar `viewport-fit=cover`). Despues **repetir §L2 sobre el
    `.deb`** en los dos iPhone. Hasta entonces el HTPC mide codigo que no es el producto.
-2. **N2 · el repo YA ES PRIVADO (30/07) — falta cerrar la deuda de PLAN.md §T-57**, que se
-   iba a verificar ANTES y quedo para despues. Pendiente y en orden de riesgo:
-   **(a) que Vercel siga desplegando.** Si dejo de hacerlo y no se nota, **el canal OTA se
-   congela**. *Test gratis:* el proximo push (aunque solo toque `.agents/`) dispara deploy —
-   `website/vercel.json` es solo `cleanUrls`, sin Ignored Build Step. Mirar el dashboard.
-   **(b) el clon WSL del release** va a pedir credenciales: resolverlo ANTES de un release,
-   no en medio. En Windows ya andan (Git Credential Manager, probado con `git ls-remote`).
+2. **N2 · el repo YA ES PRIVADO (30/07) — deuda de PLAN.md §T-57, casi cerrada:**
+   **(a) Vercel ✅ CERRADO 30/07** — deployo sin problema tras privatizar. El canal OTA vive.
+   **(b) el clon WSL ⚠️ TRAMPA ACTIVA.** El helper de credenciales esta en el config **LOCAL**
+   de `~/lrp-release`, no en el global (`git config --global --get credential.helper` = NADA).
+   El clon existente anda, **pero §PROCESO paso 2 manda clon FRESCO y ese nace sin config y
+   falla**: `fatal: could not read Username for 'https://github.com'`. Se cierra con
+   `git config --global credential.helper '/mnt/c/Program\ Files/Git/.../git-credential-manager.exe'`
+   (no guarda secretos: usa el GCM de Windows, ya probado desde WSL contra el repo privado).
    **(c) `scripts/bootstrap.sh` ya da 404** — pero no lo ofrece la web (H6), daño real cero.
 3. **N3 · lo comercial:** C9 (que support@ ENVIE sin caer en spam) → C5 (capturas de 1.9.0,
    las que ve Paddle) → **T-51 Paddle** (alta, producto $5, webhook, compra real + refund;
@@ -153,7 +154,6 @@ Lo unico que el proximo agente no puede re-derivar de git:
 - [ ] **C6** `supabase functions deploy send-feedback --no-verify-jwt` (desde v1.5).
 - [ ] **C3** wallpapers de las skins nuevas (PH17/v1.9.1, no bloquea). Para Gato/Perro mandar
       **el TILE** (~400x400), no el pantallazo: tilear ya esta soportado y pesa ~30KB vs ~170KB.
-- [~] **C7** repo privatizado el 30/07 — **el boton se apreto, la verificacion no.** Sigue
-      abierto por §CICLO regla 4 (cerrar ≠ haber editado): se cierra cuando (a) Vercel
-      demuestre que sigue desplegando, (b) el clon WSL clone sin trabarse y (c) muera
-      `bootstrap.sh`. Detalle en **N2**.
+- [~] **C7** repo privatizado el 30/07. **(a) Vercel ✅ verificado** (deployo con el repo ya
+      privado). Falta **(b)** el `credential.helper` global en WSL — sin eso el clon fresco
+      del release se cuelga — y **(c)** borrar `bootstrap.sh`. Detalle en **N2**.
