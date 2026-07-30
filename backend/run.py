@@ -95,6 +95,29 @@ def cert_identity():
         return None, None
 
 
+def ensure_full_chain() -> None:
+    """B11: uvicorn envia tal cual lo que haya en ssl_certfile. Con la hoja sola, un cliente
+    que no tenga la CA instalada -o que la tenga vieja porque se regeneraron los
+    certificados- recibe SEC_ERROR_BAD_SIGNATURE. Hay que servir hoja + CA, en ese orden.
+    Idempotente: si el archivo ya trae los dos certificados, no hace nada."""
+    try:
+        if not os.path.exists(CERT_FILE) or not os.path.exists(CA_CERT_FILE):
+            return
+        with open(CERT_FILE, "r") as f:
+            body = f.read()
+        if body.count("BEGIN CERTIFICATE") >= 2:
+            return
+        with open(CA_CERT_FILE, "r") as f:
+            ca = f.read()
+        if not body.endswith("\n"):
+            body += "\n"
+        with open(CERT_FILE, "w") as f:
+            f.write(body + ca)
+        logger.info("Cadena de certificados completada (ca.pem concatenado a cert.pem).")
+    except Exception as e:
+        logger.warning(f"No se pudo completar la cadena de certificados: {e}")
+
+
 def ensure_cert(ip, fqdn):
     """Generate/refresh CA and self-signed leaf cert. Returns True if HTTPS is ready."""
     os.makedirs(CERT_DIR, exist_ok=True)
@@ -206,6 +229,10 @@ if __name__ == "__main__":
                 logger.error(f"Could not read .pairing_token file: {e}")
 
     if https_ok:
+        # Se llama ACA y no dentro de ensure_cert() a proposito: ensure_cert retorna
+        # temprano cuando el certificado ya existe y la IP no cambio, asi que una
+        # instalacion que ya quedo con la hoja sola nunca se repararia. Aca corre siempre.
+        ensure_full_chain()
         kwargs["ssl_keyfile"] = KEY_FILE
         kwargs["ssl_certfile"] = CERT_FILE
         if token:

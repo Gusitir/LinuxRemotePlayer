@@ -59,6 +59,28 @@ def voice_enabled() -> bool:
     servicio -- que es justo lo que dejaba al cliente sin microfono."""
     return os.getenv("ENABLE_VOICE", "false").lower() == "true"
 
+
+def _autoenable_voice_for_existing_license() -> None:
+    """B10: la voz solo se encendia dentro de /api/license/activate. Quien ya era Pro
+    antes de actualizar nunca vuelve a pasar por ese flujo y se quedaba sin microfono.
+    SOLO actua si ENABLE_VOICE no existe en el .env: un `false` explicito es el usuario
+    apagandola a proposito (decision D10) y no se pisa NUNCA."""
+    if os.getenv("ENABLE_VOICE") is not None:
+        return
+    if not os.getenv("LICENSE_TOKEN"):
+        return
+    try:
+        env_file = os.path.abspath(os.path.join(os.path.dirname(__file__), ".env"))
+        if os.path.exists(env_file):
+            set_key(env_file, "ENABLE_VOICE", "true")
+        os.environ["ENABLE_VOICE"] = "true"
+        logger.info("Licencia presente y ENABLE_VOICE sin definir: voz activada.")
+    except Exception as e:
+        logger.warning(f"No se pudo activar la voz automaticamente: {e}")
+
+
+_autoenable_voice_for_existing_license()
+
 import audio
 logger.info(f"Audio backend selected: {audio.get_audio_backend() or 'None (uinput fallback)'}")
 
