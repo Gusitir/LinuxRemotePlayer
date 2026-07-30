@@ -38,13 +38,32 @@ fi
 # 4. Devolver la suspension del sistema (install.sh la enmascara con LRP_NOSLEEP)
 systemctl unmask sleep.target suspend.target hibernate.target hybrid-sleep.target >/dev/null 2>&1
 
-# 5. Borrar el .env. VA ULTIMO A PROPOSITO: el paso 1 lo lee para sacar el LICENSE_TOKEN
-#    y liberar la licencia en el servidor. Si se borrara antes, la licencia quedaria
-#    ocupada para siempre y el usuario perderia su slot.
-#    Se borra porque guarda DOS credenciales -- LICENSE_TOKEN y PAIRING_TOKEN -- y una
-#    desinstalacion no puede dejarlas en el disco. Ademas, mientras el token siguiera ahi,
-#    una reinstalacion re-reclamaba la licencia sola.
+# 5. Borrar todo lo que se genero en tiempo de ejecucion.
+#    VA ULTIMO A PROPOSITO: el paso 1 lee el .env para sacar el LICENSE_TOKEN y liberar la
+#    licencia en el servidor. Si se borrara antes, la licencia quedaria ocupada para siempre
+#    y el usuario perderia su slot de dispositivo.
+#
+#    Que se lleva y por que:
+#      .env            -> el LICENSE_TOKEN. Mientras siguiera ahi, una reinstalacion
+#                         re-reclamaba la licencia sola y no se podia probar la mudanza.
+#      .pairing_token  -> la credencial de emparejamiento. OJO: NO vive en el .env, aunque
+#                         el comentario viejo de este script decia lo contrario. auth.py la
+#                         lee de este archivo (lo escribe install.sh), asi que borrar solo
+#                         el .env la dejaba intacta.
+#      certs/          -> incluye ca.key y key.pem, o sea CLAVES PRIVADAS. Hasta 1.8.11 solo
+#                         las borraba uninstall.sh, asi que `apt remove` -- el camino que
+#                         recomienda la documentacion -- las dejaba en el disco.
 rm -f "$BACKEND_DIR/.env" 2>/dev/null
+rm -f "$BACKEND_DIR/.pairing_token" 2>/dev/null
+rm -rf "$BACKEND_DIR/certs" 2>/dev/null
+
+# 6. Sacar la CA del almacen de confianza del sistema. install.sh la instala ahi y ningun
+#    script la quitaba: quedaba una autoridad certificadora de confianza instalada despues
+#    de desinstalar el producto.
+if [ -f /usr/local/share/ca-certificates/lrp-ca.crt ]; then
+    rm -f /usr/local/share/ca-certificates/lrp-ca.crt 2>/dev/null
+    update-ca-certificates --fresh >/dev/null 2>&1
+fi
 
 echo "[+] LRP: limpieza completada."
 exit 0
