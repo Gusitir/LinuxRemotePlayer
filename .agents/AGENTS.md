@@ -1,4 +1,8 @@
 # AGENTS.md — LEE ESTO PRIMERO
+<!-- TAMAÑO REAL: 14173 bytes — PASADO el techo de 12KB (§FORMATO). Medido 2026-07-30.
+     Entró a la sesión ya en 13204; el cambio de roles sumó ~625 y las tres compactaciones
+     hechas no alcanzaron. Bajarlo exige una pasada del SUPERVISOR (Fable 5), no un retoque.
+     Se declara porque mentirle al techo es peor que pasarlo. -->
 
 Sos un agente de IA trabajando en **LinuxRemotePlayer**. Este archivo es el punto de
 entrada canónico: describe cómo trabajamos. Es estable — si el proceso cambia, se edita acá.
@@ -36,9 +40,8 @@ es telegráfico — la ambigüedad obliga a releer y sale más cara que lo que a
 - **Al compactar, VERIFICÁ cada ítem contra el código** antes de copiarlo. Compactar es
   la oportunidad de matar hallazgos ya resueltos, no de arrastrarlos otra vez.
 - **Todo número afirmado se mide con un comando INMEDIATAMENTE antes de escribirlo** — en
-  briefs, en estos .md y en los mensajes de commit. Falló 5 veces en un solo día
-  (2026-07-27): conteos de brief, un grep que matcheaba su propio comentario, y commits
-  declarando un techo cumplido sin medirlo. Los números de línea se mueven: re-grepear.
+  briefs, en estos .md y en los commits. Falló 5 veces en un día (2026-07-27), incluido un
+  grep que matcheaba su propio comentario. Los números de línea se mueven: re-grepear.
 - **Destino antes de escribir.** Análisis, specs y mercado nacen en PLAN o un anexo;
   CURRENT recibe SOLO el puntero (caso D7→§MERCADO: dos commits de mudanza).
 - **Los commits de `.agents/` van por CHECKPOINT** (un dictamen de auditoría, un cierre de
@@ -47,12 +50,15 @@ es telegráfico — la ambigüedad obliga a releer y sale más cara que lo que a
   otro navegador) NO se da por bueno: se escribe como ítem en TESTING.md.
 
 ## ROLES
-- **Ejecutor = Gemini 3.5 Flash.** Hace TODO lo operativo: editar código, correr comandos,
-  commits, push, builds, releases, deploy. Chat FRESCO por tarea → necesita brief COMPLETO
-  y spoon-fed (modelo chico, sin contexto previo → cero ambigüedad).
-- **Planificador/Auditor = Claude Opus 5.** Diseña el plan, escribe los briefs para Gemini,
-  AUDITA cada entrega contra el repo real. Ejecuta solo correcciones muy chicas y los
-  commits de `.agents/`+docs; el código es de Gemini.
+- **Ejecutor = Gemini 3.5 Flash.** Edita el código, corre comandos, builds, deploy. Chat
+  FRESCO por tarea → necesita brief COMPLETO y spoon-fed (modelo chico, sin contexto previo
+  → cero ambigüedad). **NO commitea ni pushea** (cambio del dueño, 2026-07-30) — con UNA
+  excepción: el commit del release, que lleva el `.deb` y sale del clon WSL (§ENTORNO).
+- **Planificador/Auditor = Claude Opus 5.** Diseña el plan, escribe los briefs, AUDITA cada
+  entrega contra el repo real y **hace TODOS los commits**: `.agents/`+docs y también el
+  código que escribió Gemini. Escribe código solo en correcciones muy chicas — el código
+  sigue siendo de Gemini, para que el auditor no termine auditando lo suyo.
+- **El push es del dueño, siempre y a mano** (2026-07-30). Ningún agente pushea.
 - **Supervisor de flujo = Claude Fable 5** (rol creado por el dueño 2026-07-27). NO ejecuta
   tareas ni escribe briefs: revisa que el flujo cumpla este contrato, caza derivas y datos
   rancios entre archivos, y es el ÚNICO que promueve lecciones a reglas en este archivo.
@@ -71,15 +77,17 @@ es telegráfico — la ambigüedad obliga a releer y sale más cara que lo que a
 ## CICLO POR TAREA  (una tarea [T-NN] = un commit = un checkpoint de auditoría)
 1. **Claude** escribe el brief: objetivo, archivos, cambios EXACTOS (old→new), comandos de
    verificación, mensaje de commit, y "PARÁ ante error/duda y reportá".
-2. **Gemini** ejecuta, verifica con **evidencia REAL pegada**, hace `git add` SELECTIVO
-   (JAMÁS `git add .`), commitea, pushea, y termina con **"STOP — T-NN listo para auditoría"**.
-   > **Un push sin ese bloque NO es una entrega** (T-64 llegó a main sin evidencia; se
-   > detectó solo por un hash desconocido). **El auditor empieza SIEMPRE por
-   > `git log <ultimo-hash-auditado>..origin/main`**, nunca por lo que dice el reporte.
-3. **Claude** RE-EJECUTA los checks contra el repo/commit real (NO confía en el paste — ya
-   pasó 3 veces que se reportó evidencia que nunca corrió) y dictamina **APTO** o **NO APTO
-   con causa raíz**. Recién con APTO se avanza. La auditoría incluye SIEMPRE:
-   - **Qué archivos toca el commit** (`git show --stat`), no solo que el commit exista.
+2. **Gemini** ejecuta, verifica con **evidencia REAL pegada**, NO commitea, y termina con
+   **"STOP — T-NN listo para auditoría"**. La entrega es un **árbol de trabajo sucio**.
+   > **Un árbol solo se audita cuando el ejecutor lo soltó**: auditar mientras Gemini seguía
+   > editando ya dio un falso NO APTO. El dueño confirma el STOP; recién ahí mira el auditor.
+   > (La regla vieja anclaba en `git log <hash>..origin/main` porque Gemini commiteaba — ya
+   > no. Lo que sobrevive: **nunca se arranca por lo que dice el reporte**.)
+3. **Claude** RE-EJECUTA los checks contra el repo real (NO confía en el paste — ya pasó 3
+   veces que se reportó evidencia que nunca corrió) y dictamina **APTO** o **NO APTO con
+   causa raíz**. Con APTO **commitea él**: `git add` SELECTIVO (JAMÁS `git add .`), un commit
+   por `[T-NN]`, y avisa al dueño para que pushee. La auditoría incluye SIEMPRE:
+   - **Qué archivos tocó DE VERDAD** (`git status --porcelain`), no lo que dice el reporte.
    - **Auditoría de REFERENCIAS, no solo de comportamiento.** Si la tarea renombró un id,
      una ruta o un asset, grepear TODO el repo por referencias viejas — incluida la web,
      el README y la doc de usuario. (En T-58 el código estaba perfecto y la web seguía
@@ -98,17 +106,16 @@ es telegráfico — la ambigüedad obliga a releer y sale más cara que lo que a
 
 ## REGLAS DE ORO
 - Evidencia = salida literal pegada. Si no lo corriste, no lo reportes. El auditor re-corre.
-- `git add` selectivo. Un commit por tarea `[T-NN]`. Gemini PARA ante duda/error y reporta;
-  NO improvisa en código que corre en el device. Nada se cierra hasta que Claude audita.
+- Gemini PARA ante duda/error y reporta; NO improvisa en código que corre en el device.
+  Nada se commitea ni se cierra hasta que Claude audita.
 - Al cerrar sesión (o antes de quedarte sin tokens): actualizá **CONTEXT.md** — el
   próximo agente arranca de ahí.
 
 ## CÓDIGO DE TERCEROS — CONTAMINACIÓN DE LICENCIA (regla dura)
-LRP se publica bajo **Elastic 2.0 y se vende**; el copyleft (GPL/AGPL/LGPL) es
-incompatible — derivar obliga a liberar todo, mata el modelo de negocio. **Y acá el riesgo
-es peor que en un proyecto normal: casi todo el código lo escribió una IA.** Si un agente
-lee un repo copyleft y después produce código parecido en esa área, no queda NADIE que
-pueda declarar que no hubo derivación.
+LRP se publica bajo **Elastic 2.0 y se vende**; el copyleft (GPL/AGPL/LGPL) es incompatible
+— derivar obliga a liberar todo y mata el negocio. **Acá el riesgo es peor que en un proyecto
+normal: casi todo el código lo escribió una IA** — si un agente lee un repo copyleft y
+después produce código parecido, no queda NADIE que pueda declarar que no hubo derivación.
 
 - **NUNCA metas código copyleft en el contexto de un agente que toca código de LRP** — ni
   pegado en el chat, ni clonado, ni leído con una herramienta.
@@ -120,12 +127,14 @@ pueda declarar que no hubo derivación.
   en PLAN.md §MERCADO, decisión en CURRENT §D7.
 
 ## GOBIERNO DE ESTE ARCHIVO (supervisor de flujo, 2026-07-27)
-Este archivo es el CONTRATO, no el diario: cada KB de acá lo paga TODA sesión futura.
-- Las lecciones del día se escriben en **CONTEXT.md**; solo el supervisor las promueve acá,
-  y solo si cambian conducta. Una regla que no cambia lo que alguien haría no es regla.
-- Los incidentes se citan en UNA línea con su ID; el detalle vive en CONTEXT o en git.
-- Techo propio: el de §FORMATO (≤12KB). Regla nueva que no entra → se compacta una vieja,
-  sin perder el porqué, que es lo único irreemplazable.
+El CONTRATO, no el diario: cada KB de acá lo paga TODA sesión futura.
+- Las lecciones van a **CONTEXT.md**; solo el supervisor las promueve acá, y solo si cambian
+  conducta. Una regla que no cambia lo que alguien haría no es regla. Los incidentes se citan
+  en UNA línea con su ID; el detalle vive en CONTEXT o en git.
+- Techo propio (≤12KB, §FORMATO). Regla nueva que no entra → se compacta una vieja sin perder
+  el porqué, que es lo único irreemplazable.
+- **Un cambio de rol dictado por el dueño NO es una lección**: se escribe en el momento
+  (§ROLES), sin esperar al supervisor.
 
 ## ENTORNO (crítico — romper esto = builds/edits corruptos)
 - **El mount WSL `/mnt/...` TRUNCA archivos grandes (~40KB):** app.js (~1500 líneas) y main.py
@@ -137,9 +146,10 @@ Este archivo es el CONTRATO, no el diario: cada KB de acá lo paga TODA sesión 
   sigue) → se puede inspeccionar rutas/middlewares sin device. Los briefs que corran
   backend nombran esa ruta (en T-63 se reportó "no verificable" por usar el equivocado).
 - **Builds del `.deb` SOLO en clon WSL NATIVO** (clonado desde origin dentro de `~`, no `/mnt`).
-- **UN SOLO CLON COMMITEA: el de Windows.** El clon WSL existe para construir el `.deb` y
-  se sincroniza con `git pull`; NO se commitea ahí salvo el commit del release, que necesita
-  el binario. Si no, salen commits hermanos del mismo padre y los clones divergen — paso en
+- **UN SOLO CLON COMMITEA: el de Windows** — y ahí commitea CLAUDE. El clon WSL existe para
+  construir el `.deb` y se sincroniza con `git pull`; NO se commitea ahí salvo el commit del
+  release, que necesita el binario y **lo hace Gemini** (única excepción, §ROLES). Si no,
+  salen commits hermanos del mismo padre y los clones divergen — paso en
   T-60 (costo: un release publicado a medias) y volvio a pasar en T-69 y T-70. **Cada brief
   dice en que clon se trabaja.** Si aparecen dos hashes para una tarea, ya divergio: se
   pushea el auditado y el otro clon hace `git reset --hard origin/main`.
@@ -153,13 +163,14 @@ Este archivo es el CONTRATO, no el diario: cada KB de acá lo paga TODA sesión 
   (`1.8.9 < 1.9.0` ✓). No soporta sufijos tipo `-rc`: usar solo `X.Y.Z` numérico.
 
 ## PROCESO DE RELEASE  (el brief de cada release lo detalla)
-1. Repo Windows: `git push origin main`. 2. Clon fresco WSL nativo `git clone <origin> ~/lrp-release`.
+1. **Dueño** pushea main desde el repo Windows. 2. Clon fresco WSL nativo `git clone <origin> ~/lrp-release`.
 3. Bump `VERSION` + `CHANGELOG.md`. 4. `bash scripts/build_deb.sh` → `dist/*.deb` + `.sha256`.
 5. Verificar el .deb ANTES de publicar (`dpkg-deb -x`: sw.js=lrp-<ver>, app.js no truncado, sha256).
 6. Mover .deb + .sha256 a `website/downloads/` (borrar anterior) + actualizar `website/latest.json`.
-7. Commit `[T-NN] Release vX.Y.Z` → STOP. 8. **Claude audita el .deb real** (sha256 TRIPLE-match
-   latest.json==.deb==.sha256; sw.js versionado; app.js íntegro). 9. Con APTO → push → Vercel
-   deploya → repo Windows `git pull`. 10. **Dueño**: prueba OTA (hoy actualiza al cerrar/reabrir
+7. **Gemini** commitea `[T-NN] Release vX.Y.Z` en WSL (única excepción, §ROLES) → STOP.
+8. **Claude audita el .deb real** (sha256 TRIPLE-match latest.json==.deb==.sha256; sw.js
+   versionado; app.js íntegro). 9. Con APTO → **el dueño pushea** → Vercel deploya → repo
+   Windows `git pull`. 10. **Dueño**: prueba OTA (hoy actualiza al cerrar/reabrir
    la PWA — aceptado) + regresión `TESTING.md` si cambió código.
 
 ## STACK / DATOS FIJOS
