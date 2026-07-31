@@ -291,14 +291,16 @@ no de GitHub. Pero hay tres cosas que si:
 1. **Vercel — ✅ CERRADO 30/07.** Deployo sin problema con el repo ya privado; el canal OTA
    no se congelo. (Cualquier push sirve de prueba: `website/vercel.json` es solo `cleanUrls`,
    sin Ignored Build Step, asi que todo push dispara build.)
-2. **El clon WSL del release — ⚠️ TRAMPA, medida el 30/07.** El helper de credenciales existe
-   pero **solo en el config LOCAL de `~/lrp-release`**; el global esta vacio. Por eso el clon
-   viejo funciona y engaña: **§PROCESO paso 2 manda clon FRESCO, y ese falla** con
-   `fatal: could not read Username for 'https://github.com'`. Un `git clone` interactivo se
-   queda esperando usuario y contraseña — y GitHub ya no acepta contraseña.
-   **Fix (una vez, no guarda secretos):** en WSL,
-   `git config --global credential.helper '/mnt/c/Program\ Files/Git/mingw64/bin/git-credential-manager.exe'`
-   Reusa el GCM de Windows. Probado desde WSL contra el repo privado: `git ls-remote` responde.
+2. **El clon WSL del release — ✅ CERRADO 30/07.** Era una TRAMPA y por eso vale como leccion:
+   el helper existia **solo en el config LOCAL de `~/lrp-release`**, con el global vacio. El
+   clon viejo funcionaba y daba falsa sensacion de resuelto, mientras que **§PROCESO paso 2
+   manda clon FRESCO, que nace sin config y falla** con
+   `fatal: could not read Username for 'https://github.com'` — y en interactivo se cuelga
+   esperando una contraseña que GitHub ya no acepta, en medio de un release.
+   **Aplicado:** en WSL, `git config --global credential.helper` apuntando al
+   `git-credential-manager.exe` de Windows (reusa el GCM; no guarda secretos nuevos).
+   **Verificado reproduciendo el paso 2**, no leyendo: `git clone --depth 1` fresco entro sin
+   pedir nada. *Leccion: un config local que funciona puede tapar un global que no existe.*
 3. **`scripts/bootstrap.sh` YA ESTA ROTO** (H6): su `REPO_URL` (linea 8) apunta al repo, que
    ahora da 404 para cualquiera. **Verificado 2026-07-30:** lo nombran solo `README.md` y
    `CHANGELOG.md` — **nada en `website/`**, asi que el sitio publico no lo ofrece y el daño

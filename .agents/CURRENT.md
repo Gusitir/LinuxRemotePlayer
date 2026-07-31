@@ -51,12 +51,11 @@ historia:           CONTEXT.md + git log
    `.deb`** en los dos iPhone. Hasta entonces el HTPC mide codigo que no es el producto.
 2. **N2 · el repo YA ES PRIVADO (30/07) — deuda de PLAN.md §T-57, casi cerrada:**
    **(a) Vercel ✅ CERRADO 30/07** — deployo sin problema tras privatizar. El canal OTA vive.
-   **(b) el clon WSL ⚠️ TRAMPA ACTIVA.** El helper de credenciales esta en el config **LOCAL**
-   de `~/lrp-release`, no en el global (`git config --global --get credential.helper` = NADA).
-   El clon existente anda, **pero §PROCESO paso 2 manda clon FRESCO y ese nace sin config y
-   falla**: `fatal: could not read Username for 'https://github.com'`. Se cierra con
-   `git config --global credential.helper '/mnt/c/Program\ Files/Git/.../git-credential-manager.exe'`
-   (no guarda secretos: usa el GCM de Windows, ya probado desde WSL contra el repo privado).
+   **(b) el clon WSL ✅ CERRADO 30/07.** Era una trampa: el helper estaba solo en el config
+   LOCAL de `~/lrp-release`, asi que el clon viejo andaba y el FRESCO del paso 2 fallaba con
+   `fatal: could not read Username for 'https://github.com'`. Se puso el helper en el
+   **global** de WSL (apunta al GCM de Windows; no guarda secretos nuevos). **Verificado
+   reproduciendo el paso 2:** `git clone --depth 1` fresco entro sin pedir credenciales.
    **(c) `scripts/bootstrap.sh` ya da 404** — pero no lo ofrece la web (H6), daño real cero.
 3. **N3 · lo comercial:** C9 (que support@ ENVIE sin caer en spam) → C5 (capturas de 1.9.0,
    las que ve Paddle) → **T-51 Paddle** (alta, producto $5, webhook, compra real + refund;
@@ -154,6 +153,5 @@ Lo unico que el proximo agente no puede re-derivar de git:
 - [ ] **C6** `supabase functions deploy send-feedback --no-verify-jwt` (desde v1.5).
 - [ ] **C3** wallpapers de las skins nuevas (PH17/v1.9.1, no bloquea). Para Gato/Perro mandar
       **el TILE** (~400x400), no el pantallazo: tilear ya esta soportado y pesa ~30KB vs ~170KB.
-- [~] **C7** repo privatizado el 30/07. **(a) Vercel ✅ verificado** (deployo con el repo ya
-      privado). Falta **(b)** el `credential.helper` global en WSL — sin eso el clon fresco
-      del release se cuelga — y **(c)** borrar `bootstrap.sh`. Detalle en **N2**.
+- [~] **C7** repo privatizado el 30/07. **(a) Vercel ✅** y **(b) credenciales WSL ✅**, los dos
+      verificados el 30/07. Solo falta **(c)**: borrar `bootstrap.sh`. Detalle en **N2**.
