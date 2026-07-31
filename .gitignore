@@ -234,3 +234,5 @@ imagen*.jpeg
 imagen*.jpg
 log_instalacion*
 reporte-error-instalacion.md
+# Capturas crudas del dueño: las publicadas viven en website/screenshots/
+.agents/capturas/

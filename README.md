@@ -8,8 +8,13 @@ A plug & play remote-control ecosystem for Linux HTPCs: a mobile PWA client talk
 
 ---
 
-## Screenshot Placeholder
-![App Logo Preview](website/icon-512.png)
+## Screenshots
+
+| The remote | App drawer | Voice command |
+| :---: | :---: | :---: |
+| ![Main remote screen: app row, touchpad, voice button and media controls](website/screenshots/000_principal.webp) | ![App drawer with streaming apps and auto-detected system apps](website/screenshots/001_apps.webp) | ![A voice command being recorded, with example phrases](website/screenshots/006_voicecommand.webp) |
+
+*Real screenshots from v1.9.1. All four themes (Day, Night, Café, Anime) ship free.*
 
 ---
 
@@ -21,7 +26,7 @@ A plug & play remote-control ecosystem for Linux HTPCs: a mobile PWA client talk
 * **Resilient connection** — ping/pong heartbeat, reconnect-on-wake, exponential backoff, and an actionable troubleshooting banner when something is wrong.
 * **Self-healing HTTPS** — local two-tier CA (`ca.pem` + leaf certs) regenerated automatically for the current IP and `hostname.local` (mDNS via avahi). Install the CA once on your phone and never see a warning again.
 * **Secure pairing** — no unauthenticated mode. A pairing token is auto-provisioned and delivered as a one-tap link at install time.
-* **Voice intent engine** *(license-gated)* — speech-to-text plus LLM intent parsing in the cloud (Together AI by default: Whisper-large-v3 + Qwen2.5-7B-Instruct; configurable to any OpenAI-compatible STT/LLM provider).
+* **Voice intent engine** *(license-gated)* — speech-to-text plus LLM intent parsing, in Spanish or English. **The HTPC holds no AI provider keys:** it calls our `ai-proxy` Edge Function, which validates licence, device and daily quota server-side before reaching the model provider (Together AI: Whisper-large-v3 + Qwen2.5-7B-Instruct).
 
 ---
 
@@ -49,7 +54,7 @@ A plug & play remote-control ecosystem for Linux HTPCs: a mobile PWA client talk
         +------------v---+   +-----v------------------+
         | input_emulator |   |      ai_pipeline       |
         | uinput virtual |   | ASR + LLM intent       |
-        | mouse/keyboard |   | (cloud or local)       |
+        | mouse/keyboard |   | (via ai-proxy)         |
         +----------------+   +------------------------+
 ```
 
@@ -69,7 +74,9 @@ Run the setup script. When asked "¿Esta PC está dedicada a la TV?", answer **S
 
 ## Licensing & Voice Activation
 
-While basic touchpad and keyboard control are 100% free and open-source, the **Voice Intent Engine** requires a personal license key.
+Touchpad, keyboard, streaming apps, system apps and **all four themes** are free, forever. Only the **Voice Intent Engine** requires a personal licence key ($5, one-time).
+
+> Note on wording: this project is **source-available under the Elastic License 2.0**, not open source. See [License](#license) below.
 
 1. Buy a license from the [Official Website](https://www.linuxremoteplayer.com/).
 2. You will receive a code `LRP-XXXX-XXXX-XXXX` instantly in your email.
@@ -116,7 +123,7 @@ https://<hostname>.local:8000/?token=<token>   or   https://<ip>:8000/?token=<to
 | TLS errors in the PWA | Open `https://<ip>:8000` in the phone *browser* | Re-accept the cert, or install the CA from `/api/ca` once. |
 | "No autorizado" | WS closes with code 1008 | Enter the token from `backend/.pairing_token` in Ajustes. |
 | Buttons do nothing | `curl -k https://127.0.0.1:8000/api/debug` | `evdev_available` must be `true`; ensure your user is in the `input` group and reboot. |
-| Service down | `systemctl --user status linuxremoteplayer` | Logs: `journalctl --user -u linuxremoteplayer -n 100`. |
+| Service down | Appliance mode: `systemctl status linuxremoteplayer`. Desktop mode: add `--user` | Logs: same command with `journalctl -u ... -n 100`. |
 
 More detail in the project's internal test plan (`.agents/TESTING.md`).
 
@@ -124,7 +131,7 @@ More detail in the project's internal test plan (`.agents/TESTING.md`).
 
 ## Configuration
 
-All backend options live in `backend/.env` (see [`backend/.env.example`](backend/.env.example)): voice on/off, cloud vs local AI endpoints, pairing token override, log level.
+All backend options live in `backend/.env` (see [`backend/.env.example`](backend/.env.example)): voice on/off, ai-proxy URL, pairing token override, log level.
 
 ---
 
@@ -133,7 +140,7 @@ All backend options live in `backend/.env` (see [`backend/.env.example`](backend
 ```
 ├── backend/            FastAPI server: input emulation, kiosk launcher, AI pipeline, licensing
 │   ├── main.py         WebSocket + HTTP controllers and endpoints
-│   ├── ai_pipeline.py  Cloud STT + LLM intent parsing (Together / OpenAI-compatible)
+│   ├── ai_pipeline.py  Thin client of the ai-proxy Edge Function (no provider keys here)
 │   ├── input_emulator.py  Virtual mouse / keyboard / gamepad via uinput
 │   ├── kiosk.py        Firefox kiosk launcher + window management
 │   ├── discovery.py    Native .desktop app discovery
@@ -144,7 +151,7 @@ All backend options live in `backend/.env` (see [`backend/.env.example`](backend
 ├── frontend/           PWA client (index.html, app.js, sw.js, status.html, CSS, icons, fonts)
 ├── scripts/            Operational scripts (install / update / uninstall, build_deb, CSS guard)
 │   └── dev/            One-shot asset-generation tools (icons, fonts) — not shipped in the .deb
-├── supabase/functions/ Edge Functions (stripe-webhook, validate-license, send-feedback)
+├── supabase/functions/ Edge Functions (ai-proxy, validate-license, stripe-webhook, send-feedback)
 ├── website/            Marketing pages + install.sh + downloads/ (.deb) + latest.json — deployed on Vercel
 ├── CHANGELOG.md        Semantic version release log
 └── VERSION             Current release version
