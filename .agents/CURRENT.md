@@ -46,9 +46,10 @@ historia:           CONTEXT.md + git log
 
 ## N — SIGUIENTE (orden estricto)
 
-1. **N1 · PUBLICAR 1.9.1 — el codigo YA ESTA, solo falta construir y publicar.** En `main`,
-   sin release: **T-78** (B18, el boton de actualizar) y **T-79** (B1, `viewport-fit=cover`,
-   auditado APTO 30/07). Falta **T-80** (limpieza de T-57 §c) y el release en si.
+1. **N1 · PUBLICAR 1.9.1 — no queda codigo por escribir, solo construir y publicar.** Los
+   tres cambios estan en `main` auditados APTO: **T-78** (B18, el boton de actualizar),
+   **T-79** (B1, `viewport-fit=cover`) y **T-80** (limpieza). El release en si sigue
+   §PROCESO DE RELEASE; el clon fresco de WSL ya autentica contra el repo privado.
    Despues, **repetir §L2 sobre el `.deb`** en los dos iPhone — el ciclo de campo del 30/07
    dio L1/L3/L5 OK, pero su L2 midio un HTPC parcheado a mano y no certifica un paquete.
    Hasta que 1.9.1 este instalada, **el HTPC mide codigo que no es el producto**.
@@ -59,7 +60,8 @@ historia:           CONTEXT.md + git log
    `fatal: could not read Username for 'https://github.com'`. Se puso el helper en el
    **global** de WSL (apunta al GCM de Windows; no guarda secretos nuevos). **Verificado
    reproduciendo el paso 2:** `git clone --depth 1` fresco entro sin pedir credenciales.
-   **(c) `scripts/bootstrap.sh` ya da 404** — pero no lo ofrece la web (H6), daño real cero.
+   **(c) `bootstrap.sh` ✅ CERRADO 30/07** (T-80): borrado junto con su mencion en el README y
+   la variable muerta `GITHUB_REPO`. **T-57 queda cerrado entero.**
 3. **N3 · lo comercial:** C9 (que support@ ENVIE sin caer en spam) → C5 (capturas de 1.9.0,
    las que ve Paddle) → **T-51 Paddle** (alta, producto $5, webhook, compra real + refund;
    arrastra B1b y H11) → T-55 docs.
@@ -138,9 +140,11 @@ Lo unico que el proximo agente no puede re-derivar de git:
 - **H4** falta intent "volumen al maximo" (hoy sube 1 paso).
 - **H5** `showInstallScreen` usa `hidden` pero `#app-ui` tiene `.flex` (gana el autor);
   `showPairingScreen` lo esquiva con `style.display`. Unificar.
-- **H6** `bootstrap.sh` YA murio (repo privado desde el 30/07): su `REPO_URL` da 404. No lo
-  ofrece `website/` —solo lo nombran README y CHANGELOG—, asi que no rompe a nadie. Borrarlo
-  con su mencion en el README. Va en T-57 §(c).
+- ~~**H6** `bootstrap.sh`~~ **CERRADO en T-80 (30/07)**: borrado con su mencion en el README y
+  con `GITHUB_REPO`. *Dato que aparecio al auditarlo:* se venia empaquetando en el `.deb`
+  (`build_deb.sh` copia `scripts/` entera y su lista de exclusiones nunca lo incluyo), asi
+  que vivia en `/opt/linuxremoteplayer/scripts/` de cada usuario. `dpkg` lo borra al
+  actualizar a 1.9.1.
 - **H20 · el correo del cliente con su clave** (`stripe-webhook`) ya dice el nombre correcto,
   pero **eso no surte efecto hasta redesplegar la Edge Function**. Va con T-51.
 
@@ -156,5 +160,5 @@ Lo unico que el proximo agente no puede re-derivar de git:
 - [ ] **C6** `supabase functions deploy send-feedback --no-verify-jwt` (desde v1.5).
 - [ ] **C3** wallpapers de las skins nuevas (PH17/v1.9.1, no bloquea). Para Gato/Perro mandar
       **el TILE** (~400x400), no el pantallazo: tilear ya esta soportado y pesa ~30KB vs ~170KB.
-- [~] **C7** repo privatizado el 30/07. **(a) Vercel ✅** y **(b) credenciales WSL ✅**, los dos
-      verificados el 30/07. Solo falta **(c)**: borrar `bootstrap.sh`. Detalle en **N2**.
+- [x] **C7** repo privatizado el 30/07 y **CERRADO ENTERO** el mismo dia: (a) Vercel sigue
+      desplegando, (b) el clon fresco de WSL autentica, (c) `bootstrap.sh` borrado (T-80).
