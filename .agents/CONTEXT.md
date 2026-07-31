@@ -50,13 +50,24 @@ viven SOLO en el §BLOQUE PARA EL AGENTE, que se le entrega tal cual porque ese 
 el repo. El reporte del ciclo va FUERA de ese bloque: adentro, el ciclo siguiente le
 entregaria los resultados del anterior como si fueran su guion.
 
-**T-82 puso el sitio y el README al dia** (no se tocaban desde 1.8.0), antes de que Paddle
-mire. Se saco la promesa de "video de demostracion en camino" —ese video se cancelo, la demo
-interactiva va a 1.9.2— y en su lugar hay una galeria real. El README decia que el control
-basico es **open source**: no lo es, es source-available bajo Elastic 2.0.
-*Metodologico:* WebFetch **no ejecuta JavaScript**, asi que mostro el fallback estatico del
-bloque de descarga y me hizo declarar un 404 en vivo que no existia. Para verificar una
-pagina con JS hay que usar el navegador.
+**T-82 y T-83 dejaron el sitio listo para Paddle** (no se tocaba desde 1.8.0). Se saco la
+promesa de "video de demostracion en camino" —cancelado, la demo va a 1.9.2— y nacieron los
+terminos de venta. El README decia que el control basico es **open source**: no lo es, es
+source-available bajo Elastic 2.0. *Metodologico:* **WebFetch no ejecuta JavaScript**, asi
+que mostro un fallback estatico y me hizo declarar un 404 en vivo que no existia — para
+verificar una pagina con JS, navegador.
+
+**PARA EL SUPERVISOR — AGENTS.md sigue fuera de techo (13923 vs 12288).** Se hizo la poda
+MECANICA (redundancia, sin tocar reglas) y quedo declarado en su cabecera. Lo que falta es un
+juicio que el auditor no deberia tomar solo, porque es sobre el proceso del que forma parte:
+**decidir que reglas ya no cambian conducta.** Candidatas que dejo marcadas, sin borrar:
+- §CICLO paso 2, el parentesis que explica el ancla VIEJA (`git log <hash>..origin/main`).
+  Es arqueologia de una regla que ya no existe; sobrevive solo la frase que importa.
+- §ENTORNO, `py_compile` / `node --check` con python de Windows, y la nota de
+  `is_newer_version`: **ambas se vuelven redundantes cuando aterrice PH0** (capa 1 y capa 2
+  las convierten en un comando y en un test). Borrar DESPUES de que exista `verify.sh`.
+- §CICLO paso 5 (registrar una T-NN en su plan de fase): los planes de fase estan archivados
+  y el estado vive en CURRENT; verificar si todavia le cambia la vida a alguien.
 
 ## Sesiones anteriores (comprimidas)
 
@@ -77,11 +88,10 @@ pagina con JS hay que usar el navegador.
   `docs/DEVELOPING.md`. **Leccion:** cuando la mayoria del codigo lo escribio una IA, NADIE
   tiene el diseño en la cabeza; un colaborador humano es un TERCER ROL bajo el mismo contrato.
 - **2026-07-24 · identidad visual + spec Skins 2.0.** **Vigente:** el marcado historico asume
-  fondo OSCURO, asi que la skin clara lo rompia — se resolvio con un bloque PUENTE en
-  `skins.css`, y **toda clase neutra nueva hay que puentearla** o el tema claro se rompe otra
-  vez. Verificar en un motor no es verificar (`<symbol>` bajo `display:none` rompe `<use>` en
-  WebKit, y la PWA corre en Safari iOS). PH17 especificada: NO son paletas, cambian que
-  botones existen y donde.
+  fondo OSCURO — hay un bloque PUENTE en `skins.css` y **toda clase neutra nueva hay que
+  puentearla** o el tema claro se rompe. Verificar en un motor no es verificar (`<symbol>`
+  bajo `display:none` rompe `<use>` en WebKit, y la PWA corre en Safari iOS). PH17: NO son
+  paletas, cambian que botones existen y donde.
 - **2026-07-20 · v1.7.8 + fase v1.8.** Limpieza pre-lanzamiento cerrada: T-32 auditoria de
   secretos (0 fugas en 145 commits), purga de IA legacy, README+web factuales, 1.8.0 LIVE.
   T-39 (partir `main.py`) DIFERIDO. **Leccion del dueño:** el README a actualizar es el de la

@@ -321,7 +321,56 @@ no de GitHub. Pero hay tres cosas que si:
   decidio**: Gemini no commitea nada y entrega arbol sucio. **El contrato vigente esta en
   AGENTS.md §ROLES y §CICLO; no lo repitas aca.**
 
-# PH0: SUPERFICIE DE VERIFICACION [propuesta 2026-07-28, SIN adoptar — decide el dueño]
+# CORREO: sacar `support@` de spam (analisis 2026-07-31; estado vivo en CURRENT §C9)
+
+**Antes de diagnosticar, repetir la prueba.** La que detecto el problema tenia asunto `test`
+y cuerpo `test`: eso **es** un patron de spam y lo marcan filtros mucho mas laxos que Gmail.
+Puede estar menos roto de lo que parece. Reprobar con un correo realista (asunto tipo "Tu
+clave de LinuxRemotePlayer", saludo, clave, enlace al dominio propio, firma).
+
+Lo que Gmail pesa, en orden:
+1. **Autenticacion.** SPF y DKIM ya estan. **Lo que probablemente falta es DMARC** — desde
+   2024 Gmail lo exige en serio. Un `_dmarc` con `p=none` ya mejora y ademas manda reportes.
+2. **Alineacion.** El `From:` visible tiene que coincidir con el dominio que firma DKIM. Si
+   el proveedor firma con el suyo y se muestra `@linuxremoteplayer.com`, no alinea.
+3. **Reputacion.** El dominio es nuevo, sin historial. Se gana con volumen bajo y constante y
+   con interaccion positiva: que abran, respondan y marquen "No es spam".
+4. **Contenido.** Texto + HTML, pocos enlaces, sin acortadores, sin mayusculas gritadas.
+
+Herramienta: **mail-tester.com** da puntaje y dice exactamente que falta.
+
+**Descartado por el dueño (D15): subdominios.** La recomendacion tecnica habitual es mandar
+lo transaccional desde un subdominio para aislar la reputacion del correo humano. No hay
+acceso ni interes. **Alternativa si algun dia hace falta aislar: otra cuenta de correo.**
+
+**Lo ya hecho:** `gracias.html` avisa de revisar spam y de marcar "No es spam" (T-83). Es
+mitigacion honesta, no arreglo: un porcentaje real de compradores no va a buscar en spam.
+
+# PH0: SUPERFICIE DE VERIFICACION — ✅ ADOPTADA 2026-07-31
+
+**Cuatro capas, de barata a cara.** El orden importa: lo que fallo de verdad (el actualizador
+que se reescribia a si mismo, un archivo truncado por `/mnt`, un 6/6 falso sobre un equipo
+parcheado, la web anunciando 1.8.0) **no lo hubiera cazado ninguna VM**. Son errores baratos
+de detectar y carisimos de sufrir.
+
+1. **Gates (horas).** `scripts/verify.sh`: `py_compile`, `node --check`, `bash -n`, el guard
+   de CSS **+ asserts propios**: `sw.js` versionado, `latest.json` == `VERSION`, que no
+   reaparezca `viewport-fit=cover`, que no quede ningun `PLACEHOLDER` en un build de release.
+2. **Unitarios de logica pura (un dia).** `is_newer_version` es el caso testigo: compara
+   tuplas, no soporta sufijos, y **decide si cada cliente recibe cada actualizacion**. Se
+   prueba en cinco lineas. Idem cuota y licencia.
+3. **Smoke del paquete en contenedor (un dia).** Docker/Debian: instalar el `.deb`, verificar
+   que el postinst corre, que el servicio queda instalado y que los archivos estan. Caza
+   regresiones de empaquetado en segundos, sin VM.
+4. **Laboratorio de VMs (idea del dueño).** Lo unico que prueba systemd real, `uinput`,
+   sesion grafica y Plasma. **Ahi vive la cobertura multi-distro: construirlo cuando arranque
+   esa pista (v2.0), no antes.**
+
+**Rama + CI.** Dejar de trabajar directo sobre `main`: rama de desarrollo, PR, y CI corriendo
+las capas 1 y 2 en cada push. Elimina el modo de falla "alguien tenia que acordarse".
+*Verificar el cupo de minutos vigente para repos privados antes de dimensionarlo.*
+
+## Lo que decia la propuesta original (2026-07-28)
 
 Viene de revisar la skill `agents-workflow` (repo aparte). **Nada de esto se implemento**;
 queda registrado para que la evaluacion no se pierda con el chat.
