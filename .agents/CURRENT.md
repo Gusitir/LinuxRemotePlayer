@@ -18,38 +18,31 @@ docs_humanos:       docs/ARCHITECTURE.md + docs/DEVELOPING.md
 historia:           CONTEXT.md + git log
 ```
 
-> **Al entrar, lo que hay que saber:** **la 1.9.1 esta PUBLICADA y VIVA** (30/07). El repo ya
-> es PRIVADO y T-57 cerro entero. **No queda codigo por escribir en la fase v1.9.** Lo unico
-> pendiente de ingenieria es **probar 1.9.1 en device** (§TESTING, M2 = B1 en los dos
-> iPhone); despues, lo comercial.
+> **Al entrar, lo que hay que saber:** **la 1.9.1 esta PUBLICADA, VIVA y CERTIFICADA EN
+> DEVICE** (30/07, 6/6 en TESTING). El repo ya es PRIVADO y T-57 cerro entero. **No queda
+> NINGUN bloqueante tecnico ni codigo pendiente en la fase v1.9.** Todo lo que sigue es
+> comercial: que `support@` envie, capturas, y el alta de Paddle.
 
 ## B — BLOQUEANTES
 
-- ~~**B18 · el boton "Actualizar"**~~ **CERRADO 30/07 con la 1.9.1**, que lleva T-78.
-  *Ojo con el rezago:* un equipo que TODAVIA este en 1.9.0 arrastra el bug, asi que su
-  primera actualizacion puede fallar si quedo un `/tmp/lrp-update.log` ajeno. Salida:
-  `sudo rm -f /tmp/lrp-update.log` y reintentar. De 1.9.1 en adelante no se repite.
+**NINGUNO.** B1 y B18 cerraron el 30/07 con la 1.9.1, certificada en device (TESTING 6/6).
 
-
-- **B1 · el HUD se corre en iPhone — CAUSA CONFIRMADA Y ARREGLO PROBADO, pero NO EMBARCADO.**
-  *La causa real es `viewport-fit=cover`* (`frontend/index.html:6`): con `cover` + `theme-color`,
-  iOS **duplica `safe-area-inset-top` al REABRIR** la PWA — por eso el bug no salia en el
-  primer arranque sino tras varios. **Sacar `cover` lo resuelve**, validado en iPhone 8+ y 12.
-  *Lo hallo el agente del HTPC el 30/07 y lo aplico AL EQUIPO, no al repo* (TESTING §L2).
-  **T-77 no era el arreglo:** re-leia la altura tres veces (`updateAppHeightSettled`, nacio
-  ahi); viajo en 1.9.0 y no alcanzo. **La hipotesis vieja —matar `--app-h` e ir a `100dvh`—
-  QUEDA DESCARTADA:** era mas cara y arriesgaba reabrir el viewport que se arreglo en v1.7.
-  **T-79 YA VIAJO: la 1.9.1 publicada lleva el arreglo** (auditado abriendo el `.deb`: la
-  etiqueta viewport sale sin `cover`). **Es el UNICO bloqueante que queda, y lo unico que
-  falta es probarlo: §TESTING M2, en iPhone 8+ y 12.** No se cierra antes, porque todo lo
-  probado hasta hoy fue un equipo parcheado a mano y nunca un paquete.
+Lo unico que no se re-deriva de git, en una linea cada uno:
+- **B1 era `viewport-fit=cover`**, no la altura que re-leia T-77. El porque completo esta
+  **comentado en `frontend/index.html`**, que es donde lo va a leer quien quiera "ordenarlo"
+  y volver a ponerlo. Detalle y radio de impacto: **PLAN.md §T-79**.
+- **B18 era menos grave de lo que creiamos:** solo dispara si `/tmp/lrp-update.log` ya existe
+  y no es escribible por el usuario del servicio (alguien corrio `sudo lrp-update` a mano
+  antes de T-77). **En una instalacion nueva nunca habria fallado.** Analisis: **TESTING
+  §NOTA DEL AUDITOR**. Salida en un equipo aun en 1.9.0: `sudo rm -f /tmp/lrp-update.log`.
+- **La regla que salio de todo esto:** una prueba de device solo vale si ANTES se probo que
+  el equipo ES el paquete — el ciclo 1.9.0 dio ✅ sobre un equipo parcheado a mano. Hoy eso
+  es un item con `dpkg -V` (TESTING §M3), no un recordatorio.
 
 ## N — SIGUIENTE (orden estricto)
 
-1. **N1 · PROBAR 1.9.1 EN DEVICE — `TESTING.md`, ciclo M1..M5.** Es lo unico de ingenieria
-   que queda. **M2 es el que decide** (B1 en iPhone 8+ y 12) y **M3 lo habilita**: verifica
-   que el OTA piso el parche manual, porque sin eso M2 vuelve a medir un equipo trucado.
-   El agente del HTPC cubre M1/M3/M4/M5; M2 es del dueño.
+1. ~~**N1 · probar 1.9.1 en device**~~ **HECHO 30/07: 6/6 OK, ciclo cerrado y auditado.**
+   **No queda NADA de ingenieria en la fase v1.9.** Lo que sigue es todo comercial.
 2. **N2 · el repo YA ES PRIVADO (30/07) — deuda de PLAN.md §T-57, casi cerrada:**
    **(a) Vercel ✅ CERRADO 30/07** — deployo sin problema tras privatizar. El canal OTA vive.
    **(b) el clon WSL ✅ CERRADO 30/07.** Era una trampa: el helper estaba solo en el config

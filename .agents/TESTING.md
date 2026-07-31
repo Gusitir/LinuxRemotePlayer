@@ -2,8 +2,8 @@
 
 ```yaml
 doc_id:      TESTING_v1.9.1
-estado:      SIN EJECUTAR
-instalado:   el HTPC viene de 1.9.0 (PARCHEADO A MANO — ver M3)
+estado:      COMPLETADO (30/07/26) — todos los items OK, ciclo cerrado
+instalado:   1.9.1 (via OTA desde el boton de la app)
 publicado:   1.9.1 — LIVE, verificado contra el dominio el 30/07
 ejecutan:    agente del HTPC (shell) + el dueño (iPhone)
 cerrados:    archive/TESTING_v1.9.0.md — NO reusar. Su L2 dio ✅ sobre un equipo
@@ -41,7 +41,7 @@ Pasa si: queda en **1.9.1** y el servicio sigue **active**.
 > instalar su propia correccion. *Salida:* `sudo rm -f /tmp/lrp-update.log` y reintentar.
 > **Anotalo si pasa** — confirma B18 en vivo. De 1.9.1 en adelante no deberia repetirse.
 
-- [ ] **M1**
+- [x] **M1** ✅ 1.9.1 + active — OTA desde el botón de la app, sin error 500 (B18 no se manifestó)
 
 ## ⛔ M2 · B1 — el HUD ya no se corre en iPhone, AHORA sobre el paquete  📱 el dueño
 
@@ -58,8 +58,8 @@ Pasa si: **nunca** aparece una banda extra bajo la barra de estado y **los boton
 siguen accesibles**. En **los dos telefonos**: el 8+ ocultaba botones, el 12 solo mostraba
 el espacio.
 
-- [ ] **M2 · iPhone 8+**
-- [ ] **M2 · iPhone 12**
+- [x] **M2 · iPhone 8+**  ✅
+- [x] **M2 · iPhone 12**  ✅
 
 ## ⛔ M3 · El equipo ya no esta parcheado a mano  🤖 agente
 **Sin esto, M2 no vale** — habilita a M2, no es un tramite. El HTPC quedo con `index.html` y
@@ -67,13 +67,13 @@ el espacio.
 Pasa si: `dpkg -V` **no devuelve nada** y la etiqueta viewport viene **sin
 `viewport-fit=cover` de fabrica**, no parcheada.
 
-- [ ] **M3**
+- [x] **M3** ✅ dpkg -V sin salida, viewport sin `viewport-fit=cover` (comentario del paquete)
 
 ## M4 · El boton "Actualizar" ya no depende de `/tmp`  🤖 agente
 Pasa si: no queda ninguna referencia a `/tmp/lrp-update.log` en el backend (T-78) y el log
 del actualizador vive en `/var/log` con la salida del OTA de M1 (T-77).
 
-- [ ] **M4**
+- [x] **M4** ✅ sin referencias a /tmp en backend, log en /var/log con salida del OTA
 
 ## M5 · Regresion minima  🤖 agente + 📱 dueño
 🤖 Pasa si: health OK, licencia **activa**, voz **encendida**, **docs 404**, los dos targets
@@ -82,7 +82,8 @@ de suspension **masked**, la CA con sufijo y `verify` en **OK**.
 📱 El dueño, 5 minutos de uso normal: touchpad, teclado, lanzar una app, un comando de voz,
 cambiar de tema. Solo se busca que nada se haya roto.
 
-- [ ] **M5**
+- [x] **M5** ✅ shell: health OK, licencia activa, voz true, docs 404, targets masked, CA d98ec4ef, verify OK
+  ✅ Dueño: 5 minutos de uso normal, todo OK
 
 ---
 
@@ -100,13 +101,57 @@ cambiar de tema. Solo se busca que nada se haya roto.
 ## RESULTADOS
 
 ```
-Fecha:  __/__/__     Version antes: 1.9.0   despues: 1.9.1
-M1 __  M2(8+) __  M2(12) __  M3 __  M4 __  M5 __
-¿B1 CERRADO?  (solo si M2 pasa en los DOS telefonos Y M3 dio sin salida)
+Fecha:  30/07/26     Version antes: 1.9.0   despues: 1.9.1
+M1 ✅  M2(8+) ✅  M2(12) ✅  M3 ✅  M4 ✅  M5 ✅
+¿B1 CERRADO?  SI — M2 pasó en los DOS telefonos y M3 dio sin salida
+Veredicto: 1.9.1 certificado — B1 cerrado sobre el paquete REAL
 ```
 
 Volcar cada **[FALLA]** con su salida literal. Claude confirma causa raiz en el codigo antes
 de convertirla en tarea.
+
+## REPORTE DEL AGENTE DEL HTPC (30/07/26)
+
+<!-- Va ACA, FUERA del bloque que se le copia al agente: si vive adentro, el ciclo
+     siguiente le entrega los resultados del anterior como si fueran su guion. -->
+
+```
+### RESUMEN — ciclo 1.9.1, cerrado
+Version antes: 1.9.0  despues: 1.9.1
+M1 OK  M2(8+) OK  M2(12) OK  M3 OK  M4 OK  M5 OK
+¿El servicio se reinicio SOLO tras el OTA?  SI — journalctl mostro el mensaje del
+    updater y el servicio quedo active sin intervencion
+¿Hubo error 500 en M1 (bug conocido de 1.9.0)?  NO — el OTA se disparo desde el
+    boton de la app en el iPhone y completo sin incidentes
+¿TOCASTE algun archivo del producto?  NO
+  (las ediciones manuales de `index.html`/`sw.js` del ciclo 1.9.0 las piso el OTA
+   de M1 — M3 lo confirma: dpkg -V sin salida, el equipo vuelve a ser el paquete)
+Hallazgos fuera de la matriz:
+  - B18 no se manifesto en este OTA. (La explicacion que dio el agente estaba
+    invertida; la correcta esta abajo, en la NOTA DEL AUDITOR.)
+  - El boton "Actualizar" de la app mostro "Actualizando" y la app se desconecto y
+    reconecto sola tras el reinicio — flujo de cliente completo OK, sin B18.
+  - Desvio declarado: el OTA de M1 se disparo desde el boton de la app, no con el
+    `curl` de la matriz. Es el mismo endpoint y ademas probo el camino real del
+    cliente de punta a punta.
+```
+
+> ### NOTA DEL AUDITOR (30/07) — por que B18 no se disparo
+> El agente lo atribuyo a que `/tmp/lrp-update.log` era **root-owned** y por eso el backend
+> "pudo abrirlo". **Es al reves**, y conviene dejarlo derecho porque cambia la gravedad:
+> - El backend corre como **usuario normal** (`install.sh`: `User=$TARGET_USER`), no root.
+> - La 1.9.0 hacia `open("/tmp/lrp-update.log", "a")` — **append exige ESCRITURA**.
+> - Un archivo de root en modo 0644 **no** es escribible por ese usuario: si hubiera sido de
+>   root, el `open()` habria lanzado y **el 500 SI habria ocurrido**. Que no ocurriera prueba
+>   lo contrario: el archivo era del usuario del servicio, o no existia.
+> - Y con el archivo **inexistente** `open(...,"a")` lo **crea** y funciona (`/tmp` es
+>   escribible por todos), asi que en un equipo nuevo B18 **nunca** se habria manifestado.
+>
+> **Conclusion: B18 solo se dispara si el archivo YA existe y no es escribible por el
+> usuario del servicio** — tipicamente porque alguien corrio `sudo lrp-update` a mano
+> ANTES de T-77, cuando el script escribia ese log como root. Eso explica de una que el
+> dueño lo sufriera y el HTPC no. **El resto del reporte es solido**: declaro el campo
+> obligatorio, declaro el desvio, y M3 sostiene a M2.
 
 ---
 ---
@@ -270,6 +315,8 @@ Hallazgos fuera de la matriz:
 > media un equipo parcheado a mano. El auditor lo cazo abriendo el `.deb`. **El arreglo era
 > bueno; lo que faltaba era una linea diciendo que existia.** Sin ese dato, un ✅ miente sin
 > que nadie mienta.
+
+---
 
 ## LO QUE NO PODES PROBAR — es del dueño, con el iPhone
 
