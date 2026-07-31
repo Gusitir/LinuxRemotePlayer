@@ -3,7 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <!-- HYG-01 rationale: remote-control UI requires disabling user-zoom so that double-taps on buttons and dragging on touchpad does not accidentally scale the browser layout. -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <!-- B1/T-79: SIN viewport-fit=cover, A PROPOSITO. Con `cover`, iOS duplicaba
+         safe-area-inset-top al REABRIR la PWA: la barra superior bajaba y tapaba
+         los botones (iPhone 8+) o dejaba una franja muerta (iPhone 12). Por eso
+         el bug no aparecia en el primer arranque sino tras varios. Sin `cover` la
+         pagina se renderiza dentro de las safe areas nativas de iOS y
+         env(safe-area-inset-*) pasa a valer 0, que es el valor correcto: los
+         paddings que lo usan tienen max(...) con fallback. NO lo vuelvas a agregar. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>LinuxRemotePlayer</title>
     <link rel="manifest" href="manifest.json">
     <!-- Coincide con la skin 'day' (por defecto); app.js lo actualiza al cambiar de skin. -->
