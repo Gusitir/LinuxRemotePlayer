@@ -50,7 +50,7 @@ es telegráfico — la ambigüedad obliga a releer y sale más cara que lo que a
   otro navegador) NO se da por bueno: se escribe como ítem en TESTING.md.
 
 ## ROLES
-- **Ejecutor = Gemini 3.5 Flash.** Edita el código, corre comandos, builds, deploy. Chat
+- **Ejecutor = Gemini 3.6 Flash.** Edita el código, corre comandos, builds, deploy. Chat
   FRESCO por tarea → necesita brief COMPLETO y spoon-fed (modelo chico, sin contexto previo
   → cero ambigüedad). **NO commitea ni pushea** (cambio del dueño, 2026-07-30) — con UNA
   excepción: el commit del release, que lleva el `.deb` y sale del clon WSL (§ENTORNO).
