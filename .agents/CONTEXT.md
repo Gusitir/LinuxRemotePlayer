@@ -51,8 +51,10 @@ T-69/T-74/T-76 los tres builds de prueba.
 
 **El agente del HTPC (DeepSeek via opencode) funciono muy bien:** declaro sus excepciones en
 vez de ocultarlas, marco como contaminada una prueba propia en lugar de darla por buena, y
-construyo un retest mejor que el del guion. Sus instrucciones estan en
-`TESTING_HTPC_AGENT.md`, autocontenidas.
+construyo un retest mejor que el del guion. Sus instrucciones vivian en
+`TESTING_HTPC_AGENT.md`; **desde el ciclo 1.9.1 son el §BLOQUE PARA EL AGENTE de
+`TESTING.md`** (se fusionaron: el mismo id de test llego a significar cosas distintas en
+cada archivo). El viejo esta en `archive/TESTING_HTPC_AGENT_v1.9.0.md`.
 
 **LA 1.9.0 QUEDO PUBLICADA (30/07)** — T-77 arreglo B1 y el log, y T-56 la construyo,
 auditada contra el `.deb` real (16 checks) y verificada en vivo, incluida la web, que ya no

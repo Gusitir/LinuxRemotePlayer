@@ -66,8 +66,8 @@ es telegráfico — la ambigüedad obliga a releer y sale más cara que lo que a
 - **Agente del HTPC (hoy DeepSeek vía opencode, en la máquina de pruebas).** Config,
   diagnóstico y **ejecución de la matriz de test por shell**; JAMÁS código. Un arreglo suyo
   lo pisa el próximo OTA *y* hace que la prueba siguiente mida algo que no existe en el
-  producto — por eso reporta la causa en vez de corregirla. Instrucciones autocontenidas:
-  **`.agents/TESTING_HTPC_AGENT.md`** (no lee el resto del repo). Lo que necesita el
+  producto — por eso reporta la causa en vez de corregirla. Se le entrega el **§BLOQUE PARA
+  EL AGENTE de `TESTING.md`**, autocontenido (no lee el repo). Lo que necesita el
   teléfono no lo puede ver: eso queda para el dueño y se declara, nunca se da por bueno.
 - **Dueño (Agustín).** Relaya briefs a Gemini y pega evidencia a Claude. Hace lo que ningún
   modelo puede: probar en el device real, screenshots, rotar llaves, aprobar releases.
