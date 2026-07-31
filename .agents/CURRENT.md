@@ -78,10 +78,14 @@ Lo unico que el proximo agente NO puede re-derivar:
   `grep -rn PLACEHOLDER-PADDLE` lista lo pendiente. Se completa en T-51.
 - **H20 · el correo del cliente con su clave** (`stripe-webhook`) ya dice el nombre correcto,
   pero **no surte efecto hasta redesplegar la Edge Function**. Va con T-51.
-- **H19 · el QR lleva a una pagina "Offline".** El QR trae `?token=…` y `caches.match` compara
-  la URL completa, asi que no matchea el precache de `/` y el service worker devuelve texto
-  plano 503. *Fix:* `{ ignoreSearch: true }`. **Y en el mismo bloque falta un `else` tras el
-  timeout de 3s: si el cache falla ahi, la promesa nunca se resuelve.**
+- **H19 · el QR lleva a "Offline" — SIGUE ABIERTO** (re-verificado 2026-07-31 en el codigo;
+  el dueño lo creia corregido). El QR codifica `…/?token=…` (`main.py:370`) y **ninguna de las
+  tres `caches.match` de `sw.js` usa `ignoreSearch`**, asi que no matchea el precache de `/`.
+  **Por que parece arreglado:** con red buena el `fetch` resuelve antes del timeout de 3s y el
+  SW nunca toca el cache; **solo falla con el backend lento o caido**, que es cuando importa.
+  *Fix:* `{ ignoreSearch: true }` **+ el `else` que falta en `sw.js:34`** — hoy, si el timeout
+  salta y el cache falla, la promesa NUNCA resuelve y la pagina queda colgada (la rama del
+  `catch`, linea 51, si tiene su `else`; la del timeout no).
 - **H21 · el `theme-color` no se actualiza en vivo en iOS >=16** (iPhone 12): al cambiar de
   tema hay que cerrar y reabrir la PWA. En iPhone 8+ (iOS <16) si funciona. Lo reescribe
   `app.js:174`; Safari 16+ no re-evalua ese meta. **Aparecio al sacar `viewport-fit=cover`**
@@ -92,11 +96,12 @@ Lo unico que el proximo agente NO puede re-derivar:
 - **H2** Whisper alucina con silencio → descartar audios <~1s antes de facturar.
 - **H3** el OTA actualiza al cerrar/reabrir la PWA, no sola. Aceptado.
 - **H4** falta intent "volumen al maximo" (hoy sube 1 paso).
-- **H5** `showInstallScreen` usa `hidden` pero `#app-ui` tiene `.flex` (gana el autor);
-  `showPairingScreen` lo esquiva con `style.display`. Unificar.
-- **H22 · la «×» de borrar/ocultar esta SIEMPRE visible** en cada icono de app
-  (`app.js:788-802`, sin modo edicion). Sale en todas las capturas del sitio. Es ruido
-  visual en la primera impresion del producto; conviene esconderla tras un modo edicion.
+- **H5 · a la proxima version** (decision del dueño 31/07). `showInstallScreen` usa `hidden`
+  pero `#app-ui` tiene `.flex` (gana el autor); `showPairingScreen` lo esquiva con
+  `style.display`. Dos mecanismos para lo mismo: uno de los dos va a fallar en algun estado.
+- **H22 · a la proxima version** (decision del dueño 31/07): la «×» de borrar/ocultar esta
+  SIEMPRE visible en cada icono (`app.js:788-802`, sin modo edicion). Sale en todas las
+  capturas del sitio. No bloquea Paddle, pero es ruido visual en la primera impresion.
 
 ## C — CHECKLIST DEL DUEÑO
 
