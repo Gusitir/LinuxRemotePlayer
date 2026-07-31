@@ -39,16 +39,19 @@ historia:           CONTEXT.md + git log
   **T-77 no era el arreglo:** re-leia la altura tres veces (`updateAppHeightSettled`, nacio
   ahi); viajo en 1.9.0 y no alcanzo. **La hipotesis vieja —matar `--app-h` e ir a `100dvh`—
   QUEDA DESCARTADA:** era mas cara y arriesgaba reabrir el viewport que se arreglo en v1.7.
-  **Cierra con T-79 en 1.9.1** + repetir §L2 sobre el `.deb`, no sobre el equipo parcheado.
-  *Auditado abriendo el `.deb`: `viewport-fit=cover` PRESENTE en el paquete publicado.*
+  **T-79 YA ESTA EN `main` (auditado APTO 30/07)** — falta que viaje: se cierra cuando 1.9.1
+  este publicada Y se repita **§L2 sobre el `.deb`**, en los dos iPhone. Ojo con el atajo:
+  lo probado hasta ahora fue un equipo parcheado a mano, no un paquete.
+  *Auditado abriendo el `.deb`: `viewport-fit=cover` PRESENTE en el paquete 1.9.0 publicado.*
 
 ## N — SIGUIENTE (orden estricto)
 
-1. **N1 · PUBLICAR 1.9.1** — el ciclo de campo del 30/07 ya corrio: L1/L3/L5 OK, y L2 dio la
-   causa de B1 pero **sobre un HTPC parcheado a mano**, asi que no certifica nada publicado.
-   La 1.9.1 tiene que llevar **T-78** (B18, el boton de actualizar — ya en `main`, sin
-   release) **+ T-79** (B1, sacar `viewport-fit=cover`). Despues **repetir §L2 sobre el
-   `.deb`** en los dos iPhone. Hasta entonces el HTPC mide codigo que no es el producto.
+1. **N1 · PUBLICAR 1.9.1 — el codigo YA ESTA, solo falta construir y publicar.** En `main`,
+   sin release: **T-78** (B18, el boton de actualizar) y **T-79** (B1, `viewport-fit=cover`,
+   auditado APTO 30/07). Falta **T-80** (limpieza de T-57 §c) y el release en si.
+   Despues, **repetir §L2 sobre el `.deb`** en los dos iPhone — el ciclo de campo del 30/07
+   dio L1/L3/L5 OK, pero su L2 midio un HTPC parcheado a mano y no certifica un paquete.
+   Hasta que 1.9.1 este instalada, **el HTPC mide codigo que no es el producto**.
 2. **N2 · el repo YA ES PRIVADO (30/07) — deuda de PLAN.md §T-57, casi cerrada:**
    **(a) Vercel ✅ CERRADO 30/07** — deployo sin problema tras privatizar. El canal OTA vive.
    **(b) el clon WSL ✅ CERRADO 30/07.** Era una trampa: el helper estaba solo en el config

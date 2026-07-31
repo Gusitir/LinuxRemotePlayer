@@ -261,7 +261,14 @@ Killer feature: multijugador — cada teléfono conectado = un mando (sin hardwa
       extra del APK premium
 - [ ] Gate: misma licencia Pro única
 
-# T-79: B1 — sacar `viewport-fit=cover` (nace 2026-07-30; estado vivo en CURRENT §B1)
+# T-79: B1 — sacar `viewport-fit=cover` ✅ HECHO Y AUDITADO APTO (2026-07-30, `5371086`)
+
+<!-- Cerrado en codigo. B1 NO se cierra hasta que 1.9.1 este publicada y §L2 se repita sobre
+     el .deb: lo probado en campo fue un equipo parcheado a mano. Estado vivo: CURRENT §B1.
+     Auditoria: diff de 8+/1-, archivo integro (71514->72060 bytes, cierra en </html>, el
+     mount /mnt no lo trunco), meta byte a byte identico menos el atributo, los 5 usos de
+     safe-area intactos, y ninguna otra referencia a viewport-fit en el repo. -->
+
 
 Un solo atributo en `frontend/index.html:6`. **La causa y el arreglo ya estan validados en
 campo** (iPhone 8+ y 12, TESTING §L2) — lo que falta es embarcarlo: se probo sobre el HTPC
