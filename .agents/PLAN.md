@@ -267,6 +267,16 @@ Un solo atributo en `frontend/index.html:6`. **La causa y el arreglo ya estan va
 campo** (iPhone 8+ y 12, TESTING §L2) — lo que falta es embarcarlo: se probo sobre el HTPC
 parcheado a mano y nunca entro al repo.
 
+**Alcance CONFIRMADO con `dpkg -V linuxremoteplayer` (30/07), no de memoria.** Salieron DOS
+archivos alterados en el HTPC: `frontend/index.html` **y `frontend/sw.js`**. El segundo **NO
+entra en T-79**: era el cache-bust necesario para que el iPhone dejara de recibir el
+`index.html` cacheado y la prueba midiera algo. `sw.js:1` es `const CACHE = 'lrp-__LRP_VERSION__'`
+y `build_deb.sh:52` lo sustituye al construir (`:53` aborta si queda sin versionar), asi que
+**el bump a 1.9.1 lo regenera solo**. Replicarlo a mano seria un error.
+
+Linea final verificada en el equipo donde funciono:
+`<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">`
+
 **Radio de impacto auditado el 30/07** — sin `cover`, `env(safe-area-inset-*)` pasa a 0.
 Los cinco usos degradan limpio, por eso el cambio es de bajo riesgo:
 - `index.html:23` `body padding: env(R/B/L)` → 0. Correcto: sin `cover` iOS ya insetea el
