@@ -142,7 +142,7 @@ All backend options live in `backend/.env` (see [`backend/.env.example`](backend
 │   ├── run.py          HTTPS self-healing, local CA, entrypoint
 │   └── requirements.txt
 ├── frontend/           PWA client (index.html, app.js, sw.js, status.html, CSS, icons, fonts)
-├── scripts/            Operational scripts (install / update / uninstall / bootstrap, build_deb, CSS guard)
+├── scripts/            Operational scripts (install / update / uninstall, build_deb, CSS guard)
 │   └── dev/            One-shot asset-generation tools (icons, fonts) — not shipped in the .deb
 ├── supabase/functions/ Edge Functions (stripe-webhook, validate-license, send-feedback)
 ├── website/            Marketing pages + install.sh + downloads/ (.deb) + latest.json — deployed on Vercel
