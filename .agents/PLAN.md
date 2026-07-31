@@ -1,5 +1,5 @@
 # LinuxRemotePlayer — Development Plan
-<!-- Archivo GRANDE (~41KB). NO leerlo entero: usá el indice y saltá con `grep -n "^# PH17"`.
+<!-- Archivo GRANDE (43 KB al 2026-07-30). NO leerlo entero: usá el indice y saltá con `grep -n "^# PH17"`.
      Estado vivo -> CURRENT.md. Ciclo de pruebas vivo -> TESTING.md. -->
 
 ## INDICE (fase · estado · dónde)
@@ -8,14 +8,16 @@
 |---|---|---|
 | PH1..PH9 | scaffold, kiosk, IA cloud, installer, seguridad, HTTPS+PWA, rediseño UI, licencias backend | ✅ DONE — **saltar** |
 | PH10 | monetización (Stripe) | ⚠️ obsoleta: se migró a **Paddle**, ver CURRENT §D1 |
-| PH11..PH13 | polish, distribución, anti-clon | parcial / vigente |
+| PH11 | polish | parcial / vigente |
+| PH12 | distribución (.deb, install.sh, landing) | ✅ DONE — **saltar** |
+| PH13 | anti-clon | ✅ lo esencial hecho: repo PRIVADO (T-57) + Elastic 2.0 + ai-proxy |
 | PH14..PH14e | ciclos v1.6/v1.7 y su testing | ✅ DONE — **saltar** |
 | PH-WEB | rediseño del sitio | ✅ hecho en T-53 (v1.9) |
 | PH-LICENCIAS | activación por dispositivo | ✅ hecho en T-46..T-49 |
 | PH-ANTIABUSO | cap 512KB, kill-switch, cuota | ✅ hecho en T-46..T-48 |
 | PH-PRICING | modelo de precio | decidido, ver CURRENT §D3 |
-| **PH17** | **Theme Packs / Skins 2.0** | **v1.9.1 — especificada, sin código** |
-| **PH20** | **Demo interactiva en la web (minijuego)** | **v1.9.1 — especificada, sin código** |
+| **PH17** | **Theme Packs / Skins 2.0** | **post-1.9.1 — especificada, sin código** |
+| **PH20** | **Demo interactiva en la web** | **v1.9.2 — reemplaza al video, que se canceló** |
 | PH19 | Voz 2.0 (asistente ampliado) | v2.0 — diseñada |
 | PH15 | APK Android | v2.1 |
 | PH16 | Archivos / disco virtual | v2.2 |
@@ -23,7 +25,7 @@
 | MERCADO | proyectos vecinos (LinuxPlay) + colision de nombre | contexto, decision en CURRENT §D7 |
 | **PH0** | **superficie de verificacion (un comando = todos los gates)** | **propuesta, SIN adoptar — decide el dueño** |
 
-Orden comercial vigente: **v1.9 lanzamiento → v1.9.1 skins + demo web → v2.0 skins Pro +
+Orden comercial vigente: **v1.9 LANZADA (1.9.1) → Paddle → v1.9.2 demo web + skins → v2.0 skins Pro +
 Voz 2.0 → v2.1 APK → v2.2 archivos → v2.3 gamepad**.
 PH20 depende de PH17 (ver PH20 §DEPENDENCIA): si la demo sale primero, hereda la deuda.
 
@@ -59,21 +61,16 @@ rediseño de la UI, remediacion) se entregaron antes de la v1.8 y viven en
 - [ ] Add backend/certs/ to .gitignore
 - [ ] Tests (pytest) + on-hardware evdev injection test
 
-# PH12: DISTRIBUTION
-- [ ] Build a .deb (use fpm) with a postinst that runs the install.sh logic (venv, systemd, uinput, cert); declare deps (python3-venv, chromium, ufw, openssl)
-- [ ] Install-from-web one-liner: host install.sh and run via `curl -fsSL <url> | bash`
-- [ ] Landing page on Vercel (download .deb + install command + docs; LATER Stripe checkout)
-- [ ] The phone client needs NO app store (PWA "add to home screen"); the .deb only installs the SERVER on the Linux HTPC
-- [ ] Avoid Flatpak/Snap: their sandbox blocks uinput / systemd / launching browsers (bad fit for this app)
+# PH12: DISTRIBUTION — ✅ DONE (entregada en v1.8/v1.9; se deja el porque, no el checklist)
+<!-- El .deb, el one-liner `curl | sudo bash` desde el dominio propio y la landing en Vercel
+     estan vivos y auditados. Vigente de esta fase: NO empaquetar en Flatpak/Snap — su
+     sandbox bloquea uinput/systemd/lanzar navegadores, que es exactamente lo que hace LRP. -->
 
-# PH13: CODE PROTECTION / ANTI-CLONE
-- [ ] Make the GitHub repo PRIVATE; distribute the built artifact (.deb), not the source repo
-- [ ] Replace LICENSE with a proprietary/commercial license (current one may be open/GPL — revisit before selling)
-- [ ] Compile the Python backend (Nuitka -> binary, or PyInstaller) and ship the binary in the .deb instead of .py
-- [ ] Minify/obfuscate frontend JS (deterrent only — PWA JS is always visible in the browser)
-- [ ] NEVER ship API keys (NVIDIA/OpenRouter/Supabase service) in the client; route AI through a proxy server you control
-- [ ] REAL protection is server-side: license activation against your server + AI/premium gated by license. Copying the client yields a useless shell without your cloud.
-- [ ] Reality: client-side code can't be fully hidden; move the value (AI, premium, license) to your server.
+# PH13: CODE PROTECTION / ANTI-CLONE — ✅ lo esencial HECHO (2026-07-30)
+<!-- Repo PRIVADO (T-57), LICENSE = Elastic 2.0, y la voz pasa por ai-proxy: el device no
+     tiene llaves. Compilar el backend y ofuscar el JS siguen SIN hacer y son deterrentes,
+     no proteccion. La proteccion real es server-side y ya esta: copiar el cliente da una
+     cascara inutil sin la nube. -->
 
 # PH14: v1.6.0 — BUGS HTPC + BRAVE + HARDENING — ✅ RELEASED 2026-07-14
 - [x] G-01..G-13 + correcciones C-01..C-10 + G-17/G-18 (auditadas por Claude)
@@ -91,15 +88,9 @@ rediseño de la UI, remediacion) se entregaron antes de la v1.8 y viven en
       A3+A6+D2+D4), layout 16:9, tooltip, favicons, icono iOS, UX nav-mode
 - [x] G-15/G-16 por fin diagnosticados (iPhone 8 Plus iOS18 Safari + capturas)
 
-# PH14d: v1.7.1 — CORRECCIONES DEL TESTING (plan: .agents/PLAN_GEMINI_v1.7.1.md)
-- [ ] T-01 [CRÍTICO] certutil no-interactivo + policies.json antes del bloque NSS
-- [ ] T-02 flujo final del install orientado a PIN + investigar ?token=
-- [ ] T-03 bootstrap encadena lrp-setup | T-04 UFW OpenSSH fallback
-- [ ] T-05 [ALTO] layout pantallas cortas 16:9 | T-06 tooltip tour | T-07 nav-mode UX
-- [ ] T-08 latencia en HUD | T-09 favicons | T-10 apple-touch-icon 180x180
-- [ ] T-11 (dueño) activar voz en HTPC (config, no bug)
-- [ ] T-12 Release v1.7.1 -> prueba REAL del botón OTA (H3) -> luego J1/J2
-- [ ] (dueño) deploy send-feedback; Stripe LIVE; dominio + Resend
+# PH14d: v1.7.1 — ✅ CERRADA (los T-01..T-12 se entregaron en el ciclo v1.7.1..v1.7.7)
+<!-- Los checkboxes de abajo quedaron sin marcar y son RUIDO: el estado real de ese ciclo
+     esta en CONTEXT (2026-07-17..20) y en git. Detalle: archive/PLAN_GEMINI_v1.7.1.md. -->
 
 # ROADMAP COMERCIAL (decidido con el dueño 2026-07-17)
 # Monetización: UNA licencia Pro lifetime cubre TODO lo premium (voz, APK, archivos,

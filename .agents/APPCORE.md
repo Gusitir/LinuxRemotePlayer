@@ -3,8 +3,8 @@
 
 # DIRECTORIES
 - /backend/: FastAPI (Python). /frontend/: PWA estática (vanilla JS, sin build).
-- /scripts/: install, build_deb, update, uninstall, lrp-cleanup, bootstrap(legacy, muere
-  con el repo privado) + check_css_sync.py (guard, corre en el build).
+- /scripts/: install, build_deb, update, uninstall, lrp-cleanup + check_css_sync.py (guard,
+  corre en el build). *`bootstrap.sh` murio en T-80 al privatizarse el repo.*
 - /website/: Vercel — landing ES+EN, install.sh, /downloads (.deb), latest.json (canal OTA).
 - /supabase/functions/: Edge Functions (ai-proxy, validate-license, stripe-webhook[legacy],
   send-feedback). **Editarlas en el repo NO las despliega.**

@@ -1,22 +1,19 @@
 # AGENTS.md — LEE ESTO PRIMERO
-<!-- TAMAÑO REAL: 14205 bytes — PASADO el techo de 12KB (§FORMATO). Medido 2026-07-30.
-     Entró a la sesión ya en 13204; el cambio de roles sumó ~625 y las tres compactaciones
-     hechas no alcanzaron. Bajarlo exige una pasada del SUPERVISOR (Fable 5), no un retoque.
-     Se declara porque mentirle al techo es peor que pasarlo. -->
+<!-- TAMAÑO REAL: 13923 bytes vs techo 12288 (§FORMATO), medido 2026-07-30. Esta pasada
+     recorto ~1100 y a la vez sumo contrato (roles nuevos, credenciales WSL, reglas 6 y del
+     agente del HTPC). Lo que queda son PORQUES: recortar mas pierde la causa, que es lo
+     unico irreemplazable. Bajarlo de verdad es trabajo del SUPERVISOR (§GOBIERNO). -->
 
 Sos un agente de IA trabajando en **LinuxRemotePlayer**. Este archivo es el punto de
 entrada canónico: describe cómo trabajamos. Es estable — si el proceso cambia, se edita acá.
 
-## ORDEN DE LECTURA AL ARRANCAR (una sesión nueva, en este orden)
-1. **Este archivo (AGENTS.md)** — roles, ciclo de trabajo, entorno, release.
-2. **CONTEXT.md** — resumen compactado de dónde quedó el AGENTE ANTERIOR (handoff entre
-   sesiones/modelos; si te cambian de agente, acá está el estado del chat previo).
-3. **CURRENT.md** — estado ACTUAL: versión publicada, fase/tarea activa, pendientes.
-4. **APPCORE.md** — mapa del código: qué vive dónde. Leerlo ANTES de grepear; ahorra
-   media hora de exploración a ciegas.
-Después, según necesites: **PLAN.md** (roadmap PH-NN + specs de fase) y **TESTING.md**
-(matriz del ciclo vivo). Los planes de fase cerrados viven en `archive/`.
-> Si este puntero de fase nombra una versión ya publicada, está rancio: creele a CURRENT.
+## ORDEN DE LECTURA AL ARRANCAR (sesión nueva, en este orden)
+1. **AGENTS.md** (este) — roles, ciclo, entorno, release.
+2. **CONTEXT.md** — dónde quedó el agente ANTERIOR (handoff entre sesiones/modelos).
+3. **CURRENT.md** — estado ACTUAL: versión publicada, fase activa, pendientes.
+4. **APPCORE.md** — mapa del código. Leerlo ANTES de grepear; ahorra media hora a ciegas.
+Después, si hace falta: **PLAN.md** (roadmap PH-NN + specs) y **TESTING.md** (ciclo vivo).
+Los planes de fase cerrados viven en `archive/`; `design/` son propuestas de v2.0.
 
 ## FORMATO DE LOS ARCHIVOS .agents/ (los escribe una IA para que los lea otra IA)
 El ÚNICO archivo del humano es **TESTING.md** (él marca resultados). Los demás son de
@@ -31,21 +28,21 @@ es telegráfico — la ambigüedad obliga a releer y sale más cara que lo que a
 - **IDs estables** por ítem (B1, D4, H7, T-58) para citarlos desde otros archivos.
 - **Cabecera YAML** en los archivos de estado: los hechos duros arriba, en un bloque que
   se parsea de un vistazo, antes de la prosa.
-- **Techos de tamaño.** CURRENT ≤8KB, CONTEXT ≤8KB, APPCORE ≤10KB, AGENTS ≤12KB. Al
-  pasarse: compactar YA — y si no se puede sin perder porqués, anotar el número REAL en la
-  cabecera del archivo (mentirle al techo es peor que pasarlo). Un archivo grande
-  (PLAN.md, ~41KB) lleva ÍNDICE arriba y se navega con `grep -n "^# PH17"`, no se lee entero.
+- **Techos.** CURRENT ≤8KB, CONTEXT ≤8KB, APPCORE ≤10KB, AGENTS ≤12KB. Al pasarse: compactar
+  YA; si no se puede sin perder porqués, anotar el número REAL en la cabecera (mentirle al
+  techo es peor que pasarlo). PLAN.md es grande a propósito: lleva ÍNDICE y se navega con
+  `grep -n "^# PH17"`, no se lee entero.
 - **Rotación.** Fase cerrada → `archive/`. En CONTEXT solo la última sesión va completa;
   las anteriores se comprimen a ≤4 líneas dejando decisiones vigentes y lecciones.
-- **Al compactar, VERIFICÁ cada ítem contra el código** antes de copiarlo. Compactar es
-  la oportunidad de matar hallazgos ya resueltos, no de arrastrarlos otra vez.
+- **Al compactar, VERIFICÁ cada ítem contra el código.** Es la oportunidad de matar hallazgos
+  ya resueltos, no de arrastrarlos otra vez.
 - **Todo número afirmado se mide con un comando INMEDIATAMENTE antes de escribirlo** — en
   briefs, en estos .md y en los commits. Falló 5 veces en un día (2026-07-27), incluido un
   grep que matcheaba su propio comentario. Los números de línea se mueven: re-grepear.
-- **Destino antes de escribir.** Análisis, specs y mercado nacen en PLAN o un anexo;
-  CURRENT recibe SOLO el puntero (caso D7→§MERCADO: dos commits de mudanza).
-- **Los commits de `.agents/` van por CHECKPOINT** (un dictamen de auditoría, un cierre de
-  sesión), no por retoque: el 2026-07-27 hubo ~12 commits de docs y 3 se corregían entre sí.
+- **Destino antes de escribir.** Análisis, specs y mercado nacen en PLAN; CURRENT recibe SOLO
+  el puntero (caso D7→§MERCADO: dos commits de mudanza).
+- **Los commits de `.agents/` van por CHECKPOINT** (un dictamen, un cierre de sesión), no por
+  retoque: el 2026-07-27 hubo ~12 commits de docs y 3 se corregían entre sí.
 - **Declará lo no verificable.** Lo que no se puede comprobar sin hardware (device, iOS,
   otro navegador) NO se da por bueno: se escribe como ítem en TESTING.md.
 
@@ -59,18 +56,17 @@ es telegráfico — la ambigüedad obliga a releer y sale más cara que lo que a
   código que escribió Gemini. Escribe código solo en correcciones muy chicas — el código
   sigue siendo de Gemini, para que el auditor no termine auditando lo suyo.
 - **El push es del dueño, siempre y a mano** (2026-07-30). Ningún agente pushea.
-- **Supervisor de flujo = Claude Fable 5** (rol creado por el dueño 2026-07-27). NO ejecuta
-  tareas ni escribe briefs: revisa que el flujo cumpla este contrato, caza derivas y datos
-  rancios entre archivos, y es el ÚNICO que promueve lecciones a reglas en este archivo.
-  Se lo invoca al cerrar sesión o cuando el dueño siente que el flujo se desvía.
-- **Agente del HTPC (hoy DeepSeek vía opencode, en la máquina de pruebas).** Config,
-  diagnóstico y **ejecución de la matriz de test por shell**; JAMÁS código. Un arreglo suyo
-  lo pisa el próximo OTA *y* hace que la prueba siguiente mida algo que no existe en el
-  producto — por eso reporta la causa en vez de corregirla. Se le entrega el **§BLOQUE PARA
-  EL AGENTE de `TESTING.md`**, autocontenido (no lee el repo). Lo que necesita el
-  teléfono no lo puede ver: eso queda para el dueño y se declara, nunca se da por bueno.
-- **Dueño (Agustín).** Relaya briefs a Gemini y pega evidencia a Claude. Hace lo que ningún
-  modelo puede: probar en el device real, screenshots, rotar llaves, aprobar releases.
+- **Supervisor de flujo = Claude Fable 5.** NO ejecuta tareas ni escribe briefs: revisa que el
+  flujo cumpla este contrato, caza derivas y datos rancios entre archivos, y es el ÚNICO que
+  promueve lecciones a reglas acá. Se lo invoca al cerrar sesión o si el flujo se desvía.
+- **Agente del HTPC (DeepSeek vía opencode, en la máquina de pruebas).** Config, diagnóstico
+  y **ejecución de la matriz por shell**; JAMÁS código. Un arreglo suyo lo pisa el próximo OTA
+  *y* hace que la prueba siguiente mida algo que no existe en el producto — por eso reporta la
+  causa. Si el dueño le pide arreglar, lo DECLARA (campo obligatorio del reporte): un arreglo
+  sin declarar volvió falso un 6/6 entero. Se le entrega el **§BLOQUE PARA EL AGENTE de
+  `TESTING.md`**, autocontenido (no lee el repo). Lo del teléfono no lo puede ver: es del dueño.
+- **Dueño (Agustín).** Relaya briefs a Gemini, pega evidencia a Claude y **pushea**. Hace lo
+  que ningún modelo puede: probar en el device real, capturas, rotar llaves, aprobar releases.
 - **Al cambiar el modelo de un rol, esta sección se actualiza EN EL MOMENTO** (quedó
   "Opus 4.8" escrito durante sesiones enteras de Opus 5).
 
@@ -96,14 +92,15 @@ es telegráfico — la ambigüedad obliga a releer y sale más cara que lo que a
    - **Doc vs código.** Lo que la doc de usuario promete tiene que hacerlo el código.
      (Así apareció que `apt remove` incumple 4 de las 5 promesas de `docs.html`.)
    - En un release, auditar el **artefacto** (`dpkg-deb -x` del .deb real), no el commit.
-4. **Cerrar ≠ haber editado.** Un B/H/C se cierra recién cuando el EFECTO queda verificado
-   de punta a punta; si falta un paso del dueño (device, DNS, buzón), el ítem queda EN
-   CURSO con puntero al checklist. (B1 se marcó "cerrada" con la web corregida mientras el
-   buzón de soporte seguía sin existir.)
-5. **Una T-NN nacida fuera del plan de fase se registra en ese plan AL CREARLA** (una línea
-   con puntero a CURRENT basta). T-60..T-65 fueron invisibles para su plan de fase una sesión
-   entera, y ese plan termino archivado sin un solo checkbox marcado: el estado real vivia
-   en CURRENT. Si el plan de fase deja de reflejar la realidad, se archiva — no se arrastra.
+4. **Cerrar ≠ haber editado.** Un B/H/C se cierra recién cuando el EFECTO queda verificado de
+   punta a punta; si falta un paso del dueño (device, DNS, buzón), queda EN CURSO con puntero
+   al checklist. (B1 se marcó "cerrada" con la web corregida y el buzón aún sin existir.)
+5. **Una T-NN nacida fuera del plan de fase se registra en ese plan AL CREARLA** (basta una
+   línea con puntero a CURRENT). T-60..T-65 fueron invisibles para su plan una sesión entera,
+   y ese plan se archivó sin un checkbox marcado: el estado real vivía en CURRENT. Un plan
+   que deja de reflejar la realidad se archiva — no se arrastra.
+6. **Una prueba de device solo vale si ANTES se probó que el equipo ES el paquete**
+   (`dpkg -V` sin salida). El ciclo 1.9.0 dio 6/6 sobre un equipo parcheado a mano.
 
 ## REGLAS DE ORO
 - Evidencia = salida literal pegada. Si no lo corriste, no lo reportes. El auditor re-corre.
@@ -142,18 +139,19 @@ El CONTRATO, no el diario: cada KB de acá lo paga TODA sesión futura.
   salen CORTADOS si se leen/editan por `/mnt` → falsos errores, `git status` engañoso, .deb
   ROTO. Editar/leer archivos grandes con herramientas NATIVAS (harness / Windows), nunca `/mnt`.
 - `py_compile` / `node --check` / `pyflakes` con python/node de **Windows** (nativo) = OK.
-- **Backend en Windows: usar `backend/.venv/Scripts/python.exe`** (el python pelado no
-  tiene fastapi/segno). Con el venv, `main.py` SE IMPORTA en Windows ("evdev not found" y
-  sigue) → se puede inspeccionar rutas/middlewares sin device. Los briefs que corran
-  backend nombran esa ruta (en T-63 se reportó "no verificable" por usar el equivocado).
+- **Backend en Windows: `backend/.venv/Scripts/python.exe`** (el python pelado no tiene
+  fastapi/segno). Con el venv, `main.py` SE IMPORTA en Windows ("evdev not found" y sigue) →
+  se inspeccionan rutas/middlewares sin device. En T-63 se reportó "no verificable" por usar
+  el equivocado: los briefs que corran backend nombran esa ruta.
 - **Builds del `.deb` SOLO en clon WSL NATIVO** (clonado desde origin dentro de `~`, no `/mnt`).
-- **UN SOLO CLON COMMITEA: el de Windows** — y ahí commitea CLAUDE. El clon WSL existe para
-  construir el `.deb` y se sincroniza con `git pull`; NO se commitea ahí salvo el commit del
-  release, que necesita el binario y **lo hace Gemini** (única excepción, §ROLES). Si no,
-  salen commits hermanos del mismo padre y los clones divergen — paso en
-  T-60 (costo: un release publicado a medias) y volvio a pasar en T-69 y T-70. **Cada brief
-  dice en que clon se trabaja.** Si aparecen dos hashes para una tarea, ya divergio: se
-  pushea el auditado y el otro clon hace `git reset --hard origin/main`.
+- **UN SOLO CLON COMMITEA: el de Windows** — y ahí commitea CLAUDE. El WSL solo construye el
+  `.deb` y se sincroniza con `git pull`; ahí únicamente commitea Gemini el release, que lleva
+  el binario (§ROLES). Si no, salen commits hermanos del mismo padre y los clones divergen —
+  pasó en T-60 (un release publicado a medias) y otra vez en T-69/T-70. **Cada brief dice en
+  qué clon se trabaja.** Dos hashes para una tarea = ya divergió: se pushea el auditado y el
+  otro hace `git reset --hard origin/main`.
+- **Credenciales en WSL:** el `credential.helper` global apunta al GCM de Windows. Sin eso el
+  clon FRESCO del release se cuelga pidiendo usuario (el repo es privado).
 - Guard CSS (`scripts/check_css_sync.py`) corre en `build_deb.sh` y ABORTA si hay clase CSS
   usada sin definir (cazó deriva real en T-29). Solo detecta usada-sin-definir, NO al revés:
   el CSS muerto no lo caza nadie.
@@ -164,19 +162,18 @@ El CONTRATO, no el diario: cada KB de acá lo paga TODA sesión futura.
   (`1.8.9 < 1.9.0` ✓). No soporta sufijos tipo `-rc`: usar solo `X.Y.Z` numérico.
 
 ## PROCESO DE RELEASE  (el brief de cada release lo detalla)
-1. **Dueño** pushea main desde el repo Windows. 2. Clon fresco WSL nativo `git clone <origin> ~/lrp-release`.
-3. Bump `VERSION` + `CHANGELOG.md`. 4. `bash scripts/build_deb.sh` → `dist/*.deb` + `.sha256`.
-5. Verificar el .deb ANTES de publicar (`dpkg-deb -x`: sw.js=lrp-<ver>, app.js no truncado, sha256).
-6. Mover .deb + .sha256 a `website/downloads/` (borrar anterior) + actualizar `website/latest.json`.
+1. **Dueño** pushea main. 2. Clon FRESCO WSL nativo en `~`. 3. Bump `VERSION` + `CHANGELOG.md`.
+4. `bash scripts/build_deb.sh` → `dist/*.deb` + `.sha256`. 5. **Verificar el .deb ANTES de
+publicar** (`dpkg-deb -x`: sw.js=lrp-<ver>, app.js íntegro, VERSION correcta). 6. Mover .deb
++ .sha256 a `website/downloads/` (borrar el anterior) + actualizar `website/latest.json`.
 7. **Gemini** commitea `[T-NN] Release vX.Y.Z` en WSL (única excepción, §ROLES) → STOP.
-8. **Claude audita el .deb real** (sha256 TRIPLE-match latest.json==.deb==.sha256; sw.js
-   versionado; app.js íntegro). 9. Con APTO → **el dueño pushea** → Vercel deploya → repo
-   Windows `git pull`. 10. **Dueño**: prueba OTA (hoy actualiza al cerrar/reabrir
-   la PWA — aceptado) + regresión `TESTING.md` si cambió código.
+8. **Claude audita el ARTEFACTO del commit** (sha256 TRIPLE-match latest.json==.deb==.sha256).
+9. Con APTO → **el dueño pushea** → Vercel deploya → el clon Windows hace `git pull` ANTES de
+que Claude commitee nada, o divergen. 10. **Dueño**: prueba OTA + `TESTING.md` si cambió código.
 
 ## STACK / DATOS FIJOS
-- Repo: github.com/Gusitir/LinuxRemotePlayer — **PÚBLICO hoy; se privatiza en v1.9** (Elastic 2.0
-  permite privado; el moat real es el gating server-side + ai-proxy, no el secreto del código).
+- Repo: github.com/Gusitir/LinuxRemotePlayer — **PRIVADO** desde 2026-07-30. El moat real es
+  el gating server-side + ai-proxy, no el secreto del código.
 - OTA: la PWA lee `website/latest.json` (Vercel); el `.deb` se sirve de `website/downloads/`.
 - Voz producción (validada 2026-07-19): Together AI — STT `openai/whisper-large-v3` +
   LLM `Qwen/Qwen2.5-7B-Instruct-Turbo`. Llaves SOLO en el `.env` del HTPC y del PC dev

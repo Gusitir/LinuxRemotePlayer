@@ -4,139 +4,95 @@
      decisiones vigentes y lecciones de proceso. Lo operativo del dia vive en CURRENT.md;
      el detalle esta en git log. Techo del archivo: ~8KB. -->
 
-## 2026-07-30 · Claude Opus 5 — el ciclo de correcciones cerro; no quedan bloqueantes tecnicos
+## 2026-07-30 (b) · Claude Opus 5 — la fase v1.9 CIERRA: 1.9.1 publicada y certificada
 
-**Arranca aca el chat nuevo.** `.agents` quedo limpio a proposito para esto: se archivo todo
-lo cerrado y CURRENT bajo de 18.6KB a 8.3KB.
+**Se termino la ingenieria del lanzamiento.** Lo unico pendiente para vender es Paddle.
 
-**Lo que paso, en una linea:** se sacaron TRES builds de prueba (1.8.10, 1.8.11, 1.8.12)
-antes de la comercial, y **esa decision del dueño salvo el lanzamiento**.
+**Cambio de contrato (decision del dueño):** **Gemini ya no commitea ni pushea.** Edita
+codigo y para en STOP con el arbol sucio; **Claude audita y commitea**; **el push es del
+dueño, a mano**. Unica excepcion: el commit del release, que lleva el `.deb` y sale del clon
+WSL. Eso obligo a reemplazar el ancla de auditoria: antes se auditaban COMMITS
+(`git log <hash>..origin/main`), ahora se audita el **arbol**, y por eso el dueño confirma el
+STOP antes de que el auditor mire — auditar un arbol que el ejecutor sigue tocando ya produjo
+un falso NO APTO. Lo que sobrevive de la regla vieja: **nunca se arranca por lo que dice el
+reporte**. *El ejecutor paso a Gemini 3.6 Flash.*
 
-**Por que.** El primer build de prueba destapo que **cada actualizacion dejaba el servicio
-MUERTO**. El actualizador llama a `apt-get install`, y el paquete **reescribe ese mismo
-archivo mientras corre**; bash lee por posicion de byte, retomaba en el archivo nuevo a mitad
-de palabra y moria antes del `systemctl restart`. Si 1.8.10 hubiera sido el lanzamiento,
-**cada comprador habria perdido el control remoto en su primera actualizacion**, y solo se
-recuperaba por SSH. Se arreglo envolviendo el script en funciones (bash lo parsea entero
-antes de ejecutar) con `main "$@"; exit $?` en la MISMA linea.
-*El porque completo esta comentado en el codigo, no lo repitas en los .md.*
+**El hallazgo mas caro del dia, y la razon de que exista TESTING §M3.** El ciclo de pruebas
+de 1.9.0 dio 6/6 con B1 ✅ en los dos iPhone. **Era falso.** El agente del HTPC habia
+encontrado la causa real de B1 —`viewport-fit=cover`, no la altura que re-leia T-77—, la
+**aplico al equipo** y anoto la solucion, pero **no declaro que habia editado el producto**.
+El auditor lo cazo **abriendo el `.deb` publicado** en vez de creerle al reporte: el atributo
+seguia ahi. *El arreglo era bueno; lo que faltaba era una linea diciendo que existia.*
+**Consecuencias permanentes:** el formato del reporte tiene ahora un campo OBLIGATORIO
+("¿tocaste algun archivo del producto? SI/NO" + `dpkg -V`), y la matriz tiene **M3**, que
+verifica con `dpkg -V` que el equipo ES el paquete **antes** de que la prueba de iPhone
+cuente. Sin eso, un ✅ miente sin que nadie mienta.
 
-**El fix no podia probarse solo:** el equipo usaba el actualizador roto para instalar su
-propia correccion, asi que hicieron falta dos builds mas. **Cerro verde el 30/07.**
+**Correccion de un analisis del agente que quedaba en el registro:** atribuyo que B18 no se
+disparara a que el log de `/tmp` era de root. Es al reves — el backend corre como usuario
+normal (`User=$TARGET_USER`) y abria en modo append, que exige ESCRITURA; si fuera de root
+habria fallado. **B18 solo dispara si el archivo YA existe y no es escribible por el usuario
+del servicio**, o sea si alguien corrio `sudo lrp-update` a mano antes de T-77. **En una
+instalacion nueva nunca habria fallado: ningun comprador lo habria visto.**
 
-**Auditadas APTO en esta sesion:** T-67 instalador · T-68 voz automatica + enlace de compra ·
-T-70 el OTA ya no mata el servicio · T-71 voz al arrancar + cadena de certificados · T-72 CA
-con nombre unico · T-73 nombres y `.env` · T-75 apt remove borra claves y CA del sistema ·
-T-69/T-74/T-76 los tres builds de prueba.
+**Repo PRIVADO, T-57 cerrado entero.** (a) Vercel siguio desplegando. (b) *La trampa:* el
+`credential.helper` existia solo en el config **LOCAL** de `~/lrp-release`, con el global
+vacio — el clon viejo funcionaba y tapaba el problema, mientras que el clon **fresco** que
+manda el paso 2 del release fallaba con `could not read Username`. Se puso el helper en el
+global de WSL (reusa el GCM de Windows, sin secretos nuevos) y se verifico **reproduciendo un
+`git clone` fresco**. *Leccion: un config local que funciona puede tapar un global que no
+existe.* (c) murio `bootstrap.sh` — y al auditarlo aparecio que **se venia empaquetando en el
+`.deb`** y vivia en el equipo de cada usuario.
 
-**Lecciones de proceso — las tres ya son reglas en AGENTS.md:**
-1. *Un guard en un brief vale lo que cuesta escribirlo.* El paso 0 de un release paro a
-   Gemini cuando su requisito no estaba mergeado, y evito publicar un build a medias.
-2. *Auditar reproduciendo, no leyendo.* El bug del actualizador se confirmo simulando un
-   script que se reescribe a si mismo: el patron viejo **se detiene en silencio y devuelve
-   exit 0**. Leer el diff nunca habria mostrado eso.
-3. *Un plan de fase que deja de reflejar la realidad se archiva.* `PLAN_v1.9.md` termino con
-   18 tareas abiertas y 0 cerradas mientras 30 estaban hechas: el estado real vivia en
-   CURRENT. Arrastrarlo era peor que no tenerlo.
+**Los dos archivos de testing se fusionaron en uno.** Tenian el mismo id (`L5`) significando
+cosas distintas: es la regla de "un dato, un archivo" materializandose. Ahora los comandos
+viven SOLO en el §BLOQUE PARA EL AGENTE, que se le entrega tal cual porque ese agente no lee
+el repo. El reporte del ciclo va FUERA de ese bloque: adentro, el ciclo siguiente le
+entregaria los resultados del anterior como si fueran su guion.
 
-**Errores propios que valen mas que los aciertos:**
-- Se dio B12 por cerrado creyendo que el `PAIRING_TOKEN` vivia en el `.env`. **Vive en
-  `.pairing_token`**, asi que la credencial seguia en disco tras desinstalar. Lo destapo el
-  agente del HTPC.
-- Se diagnostico el error de certificado como "falta la cadena". Era otra cosa: al
-  desinstalar se **destruia la CA** y al reinstalar nacia otra con **el mismo nombre**; el
-  navegador tenia el dato viejo, no le faltaba uno. Mandar la cadena no lo arreglaba.
-- Un brief acoto una busqueda a dos carpetas y dejo el nombre invertido en `scripts/` y en
-  **el correo que recibe el cliente con su clave**.
-
-**El agente del HTPC (DeepSeek via opencode) funciono muy bien:** declaro sus excepciones en
-vez de ocultarlas, marco como contaminada una prueba propia en lugar de darla por buena, y
-construyo un retest mejor que el del guion. Sus instrucciones vivian en
-`TESTING_HTPC_AGENT.md`; **desde el ciclo 1.9.1 son el §BLOQUE PARA EL AGENTE de
-`TESTING.md`** (se fusionaron: el mismo id de test llego a significar cosas distintas en
-cada archivo). El viejo esta en `archive/TESTING_HTPC_AGENT_v1.9.0.md`.
-
-**LA 1.9.0 QUEDO PUBLICADA (30/07)** — T-77 arreglo B1 y el log, y T-56 la construyo,
-auditada contra el `.deb` real (16 checks) y verificada en vivo, incluida la web, que ya no
-vende como Pro los cuatro temas que son gratis.
-
-**Estado al cerrar:** el codigo de la fase v1.9 esta TERMINADO. Falta **probar 1.9.0 en
-device** — sobre todo **L2, que es B1 en los dos iPhone: es el unico arreglo del ciclo que
-no se pudo verificar**. Despues privatizar (PLAN.md §T-57) y lo comercial: que `support@`
-ENVIE sin caer en spam, capturas de 1.9.0, y el alta de Paddle.
-
-**Lo ultimo de la sesion, y la leccion mas cara:** el dueño toco "Actualizar" en la app y
-dio error. La causa era H18, que **yo habia declarado "no peligroso"** tras verificar solo el
-`exec` del script. Faltaba mirar que `backend/main.py` abria ESE MISMO archivo antes de
-lanzar el actualizador: si pertenecia a otro usuario, el endpoint devolvia 500 y el boton
-fallaba sin lanzar nada. *Un mismo recurso tocado desde dos lados solo se entiende mirando
-los dos.* Lo arreglo T-78 — y Gemini encontro que el endpoint del panel de la TV tenia el
-bug identico, fuera del alcance del brief.
-**Consecuencia: la 1.9.0 publicada arrastra ese bug (B18). La 1.9.1 es lo primero de la
-sesion siguiente**, y ya iba a hacer falta si B1 necesitaba otra pasada.
-
-*Sobre B1:* la causa no era que faltaran listeners —ya estaban— sino que **iOS reporta la
-altura anterior en el instante en que disparan**. Si el arreglo no alcanza, el siguiente
-paso es eliminar `--app-h` y confiar en `100dvh`, con el riesgo de reabrir el problema de
-viewport que ese mecanismo resolvio en v1.7. La definitiva seria la 1.9.1.
+**T-82 puso el sitio y el README al dia** (no se tocaban desde 1.8.0), antes de que Paddle
+mire. Se saco la promesa de "video de demostracion en camino" —ese video se cancelo, la demo
+interactiva va a 1.9.2— y en su lugar hay una galeria real. El README decia que el control
+basico es **open source**: no lo es, es source-available bajo Elastic 2.0.
+*Metodologico:* WebFetch **no ejecuta JavaScript**, asi que mostro el fallback estatico del
+bloque de descarga y me hizo declarar un 404 en vivo que no existia. Para verificar una
+pagina con JS hay que usar el navegador.
 
 ## Sesiones anteriores (comprimidas)
 
+- **2026-07-30 (a) · el ciclo de correcciones cerro y se publico 1.9.0.** Tres builds de
+  prueba antes de la comercial **salvaron el lanzamiento**: el primero destapo que cada
+  actualizacion dejaba el servicio MUERTO (el paquete reescribia el script mientras corria;
+  bash lee por posicion de byte). Se arreglo envolviendolo en funciones. **Vigente:** el
+  `PAIRING_TOKEN` vive en `.pairing_token`, NO en el `.env`; y una CA reinstalada con el
+  mismo nombre confunde al navegador — no era falta de cadena.
 - **2026-07-28 · dominio, correo y pulido pre-Paddle.** T-66 corrigio el nombre del producto,
-  que estaba INVERTIDO en 8 lugares — se descubrio al preparar las capturas para Paddle, que
-  lo iban a fotografiar. De ahi la regla de orden: *pulir → release → capturas → Paddle*.
-  **Saga del correo, tres lecciones:** publicar una direccion no prueba que exista un buzon,
-  y que el buzon exista no prueba que lo que mande llegue; en Namecheap los MX y los TXT son
-  bloques SEPARADOS; y cuando entre Resend su include va en el MISMO registro SPF — dos
-  registros fallan en ambos. **iOS ignora los iconos del manifest**: solo lee
-  `apple-touch-icon`, y necesita PNG sin canal alfa.
-  **Skill `agents-workflow` revisada (repo aparte, sin implementar):** adoptar la superficie
-  de verificacion de PH0 (un comando = todos los gates); NO adoptar la ejecucion delegada,
-  porque multiplica las entregas sin multiplicar la matriz de test, que es el cuello real.
-
-- **2026-07-27 · se publico 1.8.9 y se cerro el codigo de v1.9.0** (T-60..T-65). Llevaba tres
-  dias construido y auditado **sin pushear**, con dos clones divergidos. **Vigente:** el alias
-  `vercel.app` **no se apaga nunca** (los 1.8.x lo tienen grabado); `LRP_DEV` y no `LRP_MODE`
-  para la doc de FastAPI. Nace PH20. Las lecciones del dia estan en **AGENTS.md** (§CICLO,
-  §FORMATO y §CÓDIGO DE TERCEROS), que es donde se aplican.
+  INVERTIDO en 8 lugares. De ahi el orden: *pulir → release → capturas → Paddle*. Publicar
+  una direccion no prueba que exista buzon, y que el buzon exista no prueba que lo que mande
+  llegue. **iOS ignora los iconos del manifest**: solo lee `apple-touch-icon`, PNG sin alfa.
+- **2026-07-27 · se publico 1.8.9 y se cerro el codigo de v1.9.0.** Llevaba tres dias
+  construido y auditado **sin pushear**, con dos clones divergidos. **Vigente:** el alias
+  `vercel.app` **no se apaga nunca** (los 1.8.x lo tienen grabado); `LRP_DEV` y no `LRP_MODE`.
 - **2026-07-24 (b) · documentacion para humanos.** Nacen `docs/ARCHITECTURE.md` y
-  `docs/DEVELOPING.md`. **Leccion:** `APPCORE.md` es un indice de agentes y vive donde ningun
-  humano mira; cuando la mayoria del codigo lo escribio una IA, NADIE tiene el diseño en la
-  cabeza, asi que un colaborador humano es un TERCER ROL bajo el mismo contrato.
-  **Formato:** se sigue en Markdown, NO se migra a HTML. **Skill** (repo aparte): el flujo es
-  LIVE -> repo, nunca al reves; correr su install.sh pisaria la version LIVE.
-
-- **2026-07-24 · identidad visual + release 1.8.9 + spec Skins 2.0.** T-58 alineo las skins
-  con la paleta del sitio y rehizo el logo. **Leccion tecnica que sigue viva:** el marcado
-  historico asume fondo OSCURO, asi que la skin clara lo rompia; se resolvio con un bloque
-  PUENTE en `skins.css` — toda clase neutra nueva hay que puentearla o el tema claro se
-  rompe otra vez. **Lecciones de auditoria (ya en AGENTS.md):** auditar REFERENCIAS y no
-  solo comportamiento (la web seguia publicitando los temas viejos); la doc y el marketing
-  entran en el radio de impacto (asi salio B2); y verificar en un motor no es verificar
-  (`<symbol>` bajo `display:none` rompe `<use>` en WebKit y la PWA corre en Safari iOS) —
-  lo que no se puede probar sin hardware se DECLARA y va a TESTING.
-  PH17 (Theme Packs, v1.9.1) especificada: NO son paletas, cambian que botones existen y
-  donde; `data-layout` separado de `data-skin` para que la matriz de QA no explote.
-
-- **2026-07-20 · v1.7.8 + fase v1.8.** v1.7.8 aceptada por el dueño como "vendible". Fase
-  v1.8 (limpieza pre-lanzamiento) CERRADA: T-32 auditoria de secretos (0 fugas en 145
-  commits), T-33 purga IA legacy, T-34..T-37 limpieza, T-40/T-41 README+web factuales,
-  T-45 release 1.8.0 LIVE y validado en device. T-39 (partir main.py) DIFERIDO.
-  **Leccion del dueño:** NO borrar AGENTS.md ni CONTEXT.md; el README a actualizar es el
-  de la RAIZ (GitHub), no uno dentro de .agents.
-- **2026-07-17..20 · ciclo v1.7.1..v1.7.7.** Testing intensivo triado → 29 tareas y 8
-  releases verificadas en vivo. Sagas cerradas: OTA (cgroup suicide / prerm / gate),
-  voz end-to-end, PWA auto-actualizable (SW versionado por build), viewport iOS.
-  Stack de voz ratificado: whisper-large-v3 + Qwen2.5-7B-Turbo (Together).
-  **Incidentes de proceso → reglas:** falso NO APTO por auditar el working tree mientras
-  el ejecutor editaba (→ auditar COMMITS tras el STOP, regla 11); 3 veces se reporto
-  evidencia sin correr el comando (→ el auditor re-ejecuta siempre). El guard CSS cazo su
-  primera deriva real. Nacio la skill global `agents-workflow` + el contrato de archivos.
-- **2026-07-17 · reanudacion.** v1.7.0 (Firefox) publicada. Se elimino el TESTING.md de la
-  raiz (obsoleto: Chromium + git clone) y nacio `.agents/TESTING.md`. Planes cerrados →
-  `archive/`. Se identifico ai-proxy como el bloqueante de la venta de voz.
-- **2026-07-13 · planificacion.** Auditoria del v1.5 contra git; nacio el formato
-  "Gemini programa / Claude planifica y audita" con criterios de aceptacion por tarea.
+  `docs/DEVELOPING.md`. **Leccion:** cuando la mayoria del codigo lo escribio una IA, NADIE
+  tiene el diseño en la cabeza; un colaborador humano es un TERCER ROL bajo el mismo contrato.
+- **2026-07-24 · identidad visual + spec Skins 2.0.** **Vigente:** el marcado historico asume
+  fondo OSCURO, asi que la skin clara lo rompia — se resolvio con un bloque PUENTE en
+  `skins.css`, y **toda clase neutra nueva hay que puentearla** o el tema claro se rompe otra
+  vez. Verificar en un motor no es verificar (`<symbol>` bajo `display:none` rompe `<use>` en
+  WebKit, y la PWA corre en Safari iOS). PH17 especificada: NO son paletas, cambian que
+  botones existen y donde.
+- **2026-07-20 · v1.7.8 + fase v1.8.** Limpieza pre-lanzamiento cerrada: T-32 auditoria de
+  secretos (0 fugas en 145 commits), purga de IA legacy, README+web factuales, 1.8.0 LIVE.
+  T-39 (partir `main.py`) DIFERIDO. **Leccion del dueño:** el README a actualizar es el de la
+  RAIZ (GitHub), no uno dentro de `.agents`.
+- **2026-07-17..20 · ciclo v1.7.1..v1.7.7.** 29 tareas y 8 releases verificadas en vivo.
+  Sagas cerradas: OTA, voz end-to-end, PWA auto-actualizable, viewport iOS. Stack de voz
+  ratificado: whisper-large-v3 + Qwen2.5-7B-Turbo (Together). **Incidentes → reglas:** falso
+  NO APTO por auditar mientras el ejecutor editaba; 3 veces se reporto evidencia sin correr
+  el comando (→ el auditor re-ejecuta SIEMPRE). Nacio el contrato de archivos `.agents`.
+- **2026-07-13 · planificacion.** Nacio el formato "Gemini programa / Claude planifica y
+  audita" con criterios de aceptacion por tarea.
 
 ## INIT · 2026-06-24
 PC con Linux controlada por una PWA movil via WebSocket. La IA pesada va a la nube; nada
