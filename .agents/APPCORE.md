@@ -1,5 +1,12 @@
-# APPCORE — mapa del código (re-sincronizado 2026-07-30 contra el repo, base v1.8.12)
+# APPCORE — mapa del código (re-sincronizado 2026-07-31 contra el repo, base v1.9.1)
 # Índice para AGENTES. Leerlo ANTES de grepear. La doc para humanos es docs/ARCHITECTURE.md.
+# Conteos de líneas RE-MEDIDOS el 31/07: los diez estaban viejos y dos archivos distintos
+# declaraban el mismo número. Si los tocás, medí ANTES de escribir (AGENTS §FORMATO).
+#
+# CONVENCIÓN DE ANCLAS: los pares tipo `T-70/B9` son HISTÓRICOS. El **T-NN** es el ancla
+# durable y se encuentra en `git log --oneline --grep "T-70"`. El B/H es el hallazgo que lo
+# origino y **ya esta CERRADO: no lo busques en CURRENT**, que solo lista lo abierto.
+# Estan para explicar POR QUE ese codigo es asi, no para que sigas el puntero.
 
 # DIRECTORIES
 - /backend/: FastAPI (Python). /frontend/: PWA estática (vanilla JS, sin build).
@@ -43,11 +50,11 @@
   Handler endurecido (T-26): target contra SUGGESTED_KIOSKS_MAP, media key contra whitelist.
 
 # CRITICAL FILES
-- backend/main.py (876 ln): endpoints + WS + PinManager + SUGGESTED_KIOSKS + MEDIA_KEYS.
-- backend/auth.py (80 ln): verify_access; licencia por Edge Function con cache de gracia 72h.
+- backend/main.py (1013 ln): endpoints + WS + PinManager + SUGGESTED_KIOSKS + MEDIA_KEYS.
+- backend/auth.py (89 ln): verify_access; licencia por Edge Function con cache de gracia 72h.
   **PAIRING_TOKEN: lee el env y si no está cae a `backend/.pairing_token`** (lo escribe
   install.sh). NO vive en el .env — creerlo costó dar B12 por cerrado sin estarlo.
-- backend/run.py (228 ln): HTTPS self-healing. CA de dos niveles: `ca.pem` **con sufijo único
+- backend/run.py (262 ln): HTTPS self-healing. CA de dos niveles: `ca.pem` **con sufijo único
   por máquina** (`/etc/machine-id[:8]`, respaldo uuid4 — T-72/B14: sin eso, reinstalar creaba
   otra CA con el MISMO nombre y los navegadores daban SEC_ERROR_BAD_SIGNATURE) + hoja por
   IP/FQDN. `ensure_full_chain()` concatena ca.pem al cert.pem (idempotente) y se llama donde
@@ -63,33 +70,34 @@
   Stack validado: whisper-large-v3 + Qwen2.5-7B-Turbo (Together).
 - backend/.env(.example): ENABLE_VOICE (lo enciende la activación de licencia, no el usuario),
   KEYBOARD_LAYOUT, LRP_MODE, LICENSE_*, BUY_URL (vacío, PLACEHOLDER-PADDLE), LRP_DEV=false.
-- frontend/app.js (1447 ln): WS client (backoff, reconnect-on-wake, RTT HUD). Voz
+- frontend/app.js (1583 ln): WS client (backoff, reconnect-on-wake, RTT HUD). Voz
   push-to-talk (micHeld anti-carrera, failsafe 8s, mime dinámico webm→mp4 iOS).
   **DEFAULT_SKIN, no FREE_SKIN**: las 4 skins son GRATIS desde T-62; `isLicensed` ya solo
-  gatea la VOZ. updateAppHeight → `--app-h` (**ver B1**).
-- frontend/index.html (426 ln): status-bar `default` + .app-header con safe-area.
+  gatea la VOZ. updateAppHeight → `--app-h` (el porque, y por que NO vuelve
+  `viewport-fit=cover`, esta comentado en `frontend/index.html`; detalle en PLAN §T-79).
+- frontend/index.html (457 ln): status-bar `default` + .app-header con safe-area.
   Onboarding solo PIN. Selector de temas SIN candados.
 - frontend/sw.js: CACHE = 'lrp-__LRP_VERSION__' (build_deb inyecta la versión → cada release
   invalida la caché). network-first shell, cache-first assets.
   **Trampa conocida:** `caches.match` compara la URL COMPLETA, así que un `?token=` no
   matchea el precache y devuelve "Offline" (bug del QR, sin arreglar).
-- frontend/tailwind-lite.css (283 ln): subset a mano. Guard check_css_sync.py ABORTA el build
+- frontend/tailwind-lite.css (931 ln): subset a mano. Guard check_css_sync.py ABORTA el build
   si hay clase usada sin definir. NO detecta CSS muerto (al revés).
-- frontend/skins.css (283 ln): 4 skins por `data-skin`. **Bloque PUENTE al final**: el
+- frontend/skins.css (299 ln): 4 skins por `data-skin`. **Bloque PUENTE al final**: el
   marcado histórico asume fondo OSCURO, así que toda clase neutra nueva hay que puentearla
   o la skin clara se rompe.
-- scripts/build_deb.sh (206 ln): empaqueta, inyecta VERSION en sw.js, corre el guard CSS,
+- scripts/build_deb.sh (248 ln): empaqueta, inyecta VERSION en sw.js, corre el guard CSS,
   embebe lrp-setup / lrp-update / sudoers / postinst / prerm.
   **lrp-update: TODO en funciones y `main "$@"; exit $?` en la MISMA línea** — el postinst
   reescribe ese archivo mientras corre y bash lee por offset de byte; sin eso el OTA dejaba
   el servicio MUERTO (T-70/B9). Lleva `trap` que reinicia pase lo que pase.
   **prerm: la limpieza SOLO con `$1 = "remove"`** — dpkg lo invoca también en `upgrade` y ahí
   borraría las reglas del sistema de todos los equipos (T-64, trampa de T-19).
-- scripts/lrp-cleanup.sh (60 ln): limpieza NO interactiva, **sin `set -e`, siempre `exit 0`**
+- scripts/lrp-cleanup.sh (69 ln): limpieza NO interactiva, **sin `set -e`, siempre `exit 0`**
   (un fallo suyo jamás puede abortar un `apt remove`). La comparten prerm y uninstall.sh.
   Libera licencia → udev → ufw → unmask sleep → borra `.env`, `.pairing_token`, `certs/` y la
   CA del sistema. **El borrado va ÚLTIMO: el primer paso lee el .env para liberar la licencia.**
-- scripts/install.sh (336 ln): modo 1|2 → LRP_MODE; LRP_NOSLEEP → mask sleep/suspend;
+- scripts/install.sh (385 ln): modo 1|2 → LRP_MODE; LRP_NOSLEEP → mask sleep/suspend;
   instala firefox + deps; policies.json (uBlock + CA + EME); **CA al trust del sistema y al
   NSS de Firefox, borrando antes la entrada previa** (T-72); UFW con OpenSSH primero.
 - website/install.sh: `curl | sudo bash`. **NO usar `exec < /dev/tty`**: bash lee el script

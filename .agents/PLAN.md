@@ -309,13 +309,11 @@ no de GitHub. Pero hay tres cosas que si:
    `git-credential-manager.exe` de Windows (reusa el GCM; no guarda secretos nuevos).
    **Verificado reproduciendo el paso 2**, no leyendo: `git clone --depth 1` fresco entro sin
    pedir nada. *Leccion: un config local que funciona puede tapar un global que no existe.*
-3. **`scripts/bootstrap.sh` YA ESTA ROTO** (H6): su `REPO_URL` (linea 8) apunta al repo, que
-   ahora da 404 para cualquiera. **Verificado 2026-07-30:** lo nombran solo `README.md` y
-   `CHANGELOG.md` — **nada en `website/`**, asi que el sitio publico no lo ofrece y el daño
-   real es cero. Borrarlo igual, con su mencion en el README.
-- Dato menor: `backend/.env.example:15` trae `GITHUB_REPO=Gusitir/LinuxRemotePlayer` y
-  **ningun codigo lo lee** (verificado 2026-07-30: solo aparece ahi y en este PLAN) —
-  variable muerta, sacarla de paso.
+3. **`scripts/bootstrap.sh` — ✅ BORRADO en T-80** (junto con su mencion en el README y la
+   variable muerta `GITHUB_REPO`). Clonaba desde GitHub, asi que al privatizar quedaba en 404.
+   *Dato que aparecio al auditarlo:* **se venia empaquetando en el `.deb`** — `build_deb.sh`
+   copia `scripts/` entera y su lista de exclusiones nunca lo incluyo —, o sea que vivia en
+   `/opt/linuxremoteplayer/scripts/` de cada usuario. `dpkg` lo borra al actualizar a 1.9.1.
 - **4. El push del dueño YA RIGE, y el reparto quedo distinto al previsto aca.** Lo que se
   planeaba —Gemini commitea local y el auditor audita ESE commit— **no es lo que se
   decidio**: Gemini no commitea nada y entrega arbol sucio. **El contrato vigente esta en
@@ -426,11 +424,11 @@ control remoto en Linux, y nadie ocupo el nicho del sillon. Eso juega a favor.
 
 **Riesgo real #1 — licencia.** GPL-2.0 contra nuestro Elastic 2.0 comercial. La regla dura
 y el POR QUE (codigo mayoritariamente escrito por IA = imposible probar no-derivacion
-despues) viven en **AGENTS.md §CODIGO DE TERCEROS**. Su codigo no se lee ni se pega en el
+despues) viven en **AGENTS.md §CÓDIGO DE TERCEROS**. Su codigo no se lee ni se pega en el
 contexto de ningun agente que toque LRP.
 
 **Riesgo real #2 — colision de nombre.** "LinuxPlay" vs "LinuxRemotePlayer". Su repo es de
-feb-2025 con SEO acumulado; el nuestro se privatiza en T-57 y arranca de cero. NO se
+feb-2025 con SEO acumulado; el nuestro **ya es privado** (T-57) y arranca de cero. NO se
 rebrandea (D2 cerrado, dominio ya comprado, reabrirlo cuesta mas de lo que rinde). Se
 mitiga: apoyarse en el dominio propio y en "LRP", y que la web hable del problema del
 sillon/HTPC y no de "remote player" generico — ahi no competimos por la misma busqueda.
@@ -666,7 +664,8 @@ De los 17 controles actuales, **quedan 8 + micrófono**; se ocultan 7.
   `setSkin()`, `<span class="btn-label">` en todos los controles (ocultas), `#mic-row`
   a toggle de clase. Behavior-neutral y auditable por separado.
 - **v1.9.1b — layout `senior` + skins gatos y perros.** Barato, riesgo bajo, abre un
-  mercado nuevo. Resolver C2/C3/C4/C6 antes.
+  mercado nuevo. Resolver antes las CRITICAS DE DISEÑO C2/C3/C4/C6 **de esta misma seccion**
+  — no confundir con el checklist del dueño de CURRENT §C, que es otro espacio de nombres.
 - **v1.9.2 — layout `radial` + skin neon/cyber.** Es un motor de layout con el riesgo
   del presupuesto vertical; no debe compartir release con senior.
 

@@ -106,4 +106,4 @@ juicio que el auditor no deberia tomar solo, porque es sobre el proceso del que 
 
 ## INIT · 2026-06-24
 PC con Linux controlada por una PWA movil via WebSocket. La IA pesada va a la nube; nada
-de inferencia local. Repo inicializado, scaffolding fase 1.
+de inferencia local.

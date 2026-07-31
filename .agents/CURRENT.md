@@ -1,7 +1,6 @@
 # CURRENT — estado vivo
 <!-- Formato: AGENTS.md §FORMATO. IDs (D/H/C) son anclas: citalos, no copies el texto.
-     Limpieza 2026-07-30 (2da): cerro la fase v1.9 entera. Todo lo cerrado salio de aca;
-     el detalle vive en git log, en PLAN.md y en los comentarios del codigo. -->
+     Lo cerrado NO vive aca: esta en git log, en PLAN.md y en comentarios del codigo. -->
 
 ```yaml
 version_publicada:  1.9.1    # COMERCIAL. Auditada contra el .deb real y verificada VIVA
@@ -18,9 +17,10 @@ docs_humanos:       docs/ARCHITECTURE.md + docs/DEVELOPING.md
 historia:           CONTEXT.md + git log
 ```
 
-> **Al entrar:** **no queda ingenieria pendiente.** 1.9.1 publicada, viva y certificada en
-> device; repo privado; sitio, README y terminos al dia (T-82/T-83). **Lo unico que falta
-> para vender es el alta en Paddle** (§N).
+> **Al entrar:** **no queda ingenieria que BLOQUEE la venta** — si quedan hallazgos abiertos,
+> todos agendados a v1.9.2 (§N2, §H). 1.9.1 publicada, viva y certificada en device; repo
+> privado; sitio, README y terminos al dia (T-82/T-83). **Lo unico que falta para vender es
+> el alta en Paddle** (§N1).
 
 ## B — BLOQUEANTES
 
@@ -33,7 +33,7 @@ historia:           CONTEXT.md + git log
    T-83 sumo los terminos, que era la unica objecion previsible.
 2. **N2 · v1.9.2 — correcciones. Nada de esto bloquea a Paddle:** C9 · C6 · H12 · H19 · H5 ·
    H22 · D6 (demo web).
-3. **N3 · T-55** — la doc de usuario, con el flujo de compra ya real.
+3. **N3 · T-55** — doc de usuario, con el flujo de compra real.
 4. **N4 · PH0 ADOPTADA (31/07): la superficie de verificacion.** Cuatro capas + rama y CI —
    **detalle en PLAN.md §PH0**. Arrancar por las dos primeras: son horas y matan la clase de
    error que ya mordio. **Hoy no hay UN SOLO test automatico.**
@@ -56,8 +56,8 @@ Lo unico que el proximo agente NO puede re-derivar:
 - **D1 · pagos: PADDLE.** Stripe no opera para vendedores en Ecuador; PayPal plan B; Ko-fi
   para donaciones. Validacion = compra real $5 + refund. **Paddle REVISA el sitio antes de
   aprobar** → web, dominio, capturas y terminos van ANTES del alta.
-- **D2 · nombre: LinuxRemotePlayer**; **"LRP"** es el `short_name` del manifest.
-- **D3 · precio:** Pro unico $5 lifetime. Suscripcion recien con Voz 2.0.
+- **D2 · nombre: LinuxRemotePlayer**; **"LRP"** es el `short_name` del manifest. · **D3 ·
+  precio:** Pro unico $5 lifetime; suscripcion recien con Voz 2.0.
 - **D4 · las 7 skins van GRATIS**, son el gancho; el Pro se vendera con skins ADICIONALES en
   v2.0. Las 4 que existen ya estan libres; las otras 3 son PH17. Falta del dueño: wallpapers.
 - **D5 · Voz 2.0 a v2.0** (PLAN.md §PH19).
@@ -81,7 +81,7 @@ Lo unico que el proximo agente NO puede re-derivar:
 
 ## H — HALLAZGOS ABIERTOS (no bloquean)
 
-- **H11 · `PLACEHOLDER-PADDLE`**: `grep -rn PLACEHOLDER-PADDLE` lista lo pendiente. T-51.
+- **H11** `grep -rn PLACEHOLDER-PADDLE` lista lo pendiente. Se llena en T-51.
 - **H20 · el correo con la clave** (`stripe-webhook`) ya dice el nombre correcto, pero **no
   surte efecto hasta redesplegar la Edge Function**. Va con T-51.
 - **H19 · el QR "Offline" — SIGUE ABIERTO** (re-verificado en codigo 31/07; se lo creia
