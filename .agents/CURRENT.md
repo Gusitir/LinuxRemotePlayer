@@ -4,31 +4,31 @@
      salio de aca. El detalle de cada auditoria esta en git log. -->
 
 ```yaml
-version_publicada:  1.9.0    # COMERCIAL. Publicada 2026-07-30, auditada contra el .deb real
+version_publicada:  1.9.1    # COMERCIAL. Publicada 2026-07-30, auditada contra el .deb real
+                             # y verificada VIVA: el dominio sirve latest.json con su sha256
 dominio:            https://www.linuxremoteplayer.com
 alias_vercel:       linux-remote-player.vercel.app   # VIVO a proposito: canal OTA del parque viejo
 correo_soporte:     support@linuxremoteplayer.com    # buzon real; falta probar que envia (C9)
-fase_activa:        v1.9 CERRADA en codigo (T-46..T-77 + T-56). Falta probar 1.9.0 y lo comercial
+fase_activa:        v1.9 CERRADA en codigo (T-46..T-81). Falta probar 1.9.1 en device y lo comercial
 repo:               publico; se privatiza al lanzar (PLAN.md §T-57)
 licencia:           Elastic 2.0
 ultima_sesion:      2026-07-30
-pruebas_device:     TESTING.md (ciclo 1.9.0, SIN EJECUTAR — L2 es el que importa)
+pruebas_device:     TESTING.md (ciclo 1.9.1, SIN EJECUTAR — M2 es el unico que decide)
 docs_humanos:       docs/ARCHITECTURE.md + docs/DEVELOPING.md
 historia:           CONTEXT.md + git log
 ```
 
-> **Al entrar, lo que hay que saber:** **la 1.9.0 esta PUBLICADA** (30/07) y es la version
-> comercial. El ciclo de correcciones cerro completo tras tres builds de prueba, y el codigo
-> de la fase v1.9 esta terminado. **Lo que falta no es programar:** probar 1.9.0 en device
-> (§TESTING, sobre todo L2 = B1 en los dos iPhone), privatizar el repo, y lo comercial.
+> **Al entrar, lo que hay que saber:** **la 1.9.1 esta PUBLICADA y VIVA** (30/07). El repo ya
+> es PRIVADO y T-57 cerro entero. **No queda codigo por escribir en la fase v1.9.** Lo unico
+> pendiente de ingenieria es **probar 1.9.1 en device** (§TESTING, M2 = B1 en los dos
+> iPhone); despues, lo comercial.
 
 ## B — BLOQUEANTES
 
-- **B18 · la 1.9.0 PUBLICADA tiene el bug del boton "Actualizar"** (H18). Se arreglo en
-  **T-78, que NO viajo en ese `.deb`**. Un equipo con 1.9.0 y un `/tmp/lrp-update.log` ajeno
-  vera "Error al aplicar actualización" y no podra actualizarse desde la app.
-  *Salida manual mientras tanto:* `sudo rm -f /tmp/lrp-update.log`, o `sudo lrp-update`.
-  **Se cierra publicando 1.9.1**, que es la primera tarea de la sesion siguiente.
+- ~~**B18 · el boton "Actualizar"**~~ **CERRADO 30/07 con la 1.9.1**, que lleva T-78.
+  *Ojo con el rezago:* un equipo que TODAVIA este en 1.9.0 arrastra el bug, asi que su
+  primera actualizacion puede fallar si quedo un `/tmp/lrp-update.log` ajeno. Salida:
+  `sudo rm -f /tmp/lrp-update.log` y reintentar. De 1.9.1 en adelante no se repite.
 
 
 - **B1 · el HUD se corre en iPhone — CAUSA CONFIRMADA Y ARREGLO PROBADO, pero NO EMBARCADO.**
@@ -39,20 +39,17 @@ historia:           CONTEXT.md + git log
   **T-77 no era el arreglo:** re-leia la altura tres veces (`updateAppHeightSettled`, nacio
   ahi); viajo en 1.9.0 y no alcanzo. **La hipotesis vieja —matar `--app-h` e ir a `100dvh`—
   QUEDA DESCARTADA:** era mas cara y arriesgaba reabrir el viewport que se arreglo en v1.7.
-  **T-79 YA ESTA EN `main` (auditado APTO 30/07)** — falta que viaje: se cierra cuando 1.9.1
-  este publicada Y se repita **§L2 sobre el `.deb`**, en los dos iPhone. Ojo con el atajo:
-  lo probado hasta ahora fue un equipo parcheado a mano, no un paquete.
-  *Auditado abriendo el `.deb`: `viewport-fit=cover` PRESENTE en el paquete 1.9.0 publicado.*
+  **T-79 YA VIAJO: la 1.9.1 publicada lleva el arreglo** (auditado abriendo el `.deb`: la
+  etiqueta viewport sale sin `cover`). **Es el UNICO bloqueante que queda, y lo unico que
+  falta es probarlo: §TESTING M2, en iPhone 8+ y 12.** No se cierra antes, porque todo lo
+  probado hasta hoy fue un equipo parcheado a mano y nunca un paquete.
 
 ## N — SIGUIENTE (orden estricto)
 
-1. **N1 · PUBLICAR 1.9.1 — no queda codigo por escribir, solo construir y publicar.** Los
-   tres cambios estan en `main` auditados APTO: **T-78** (B18, el boton de actualizar),
-   **T-79** (B1, `viewport-fit=cover`) y **T-80** (limpieza). El release en si sigue
-   §PROCESO DE RELEASE; el clon fresco de WSL ya autentica contra el repo privado.
-   Despues, **repetir §L2 sobre el `.deb`** en los dos iPhone — el ciclo de campo del 30/07
-   dio L1/L3/L5 OK, pero su L2 midio un HTPC parcheado a mano y no certifica un paquete.
-   Hasta que 1.9.1 este instalada, **el HTPC mide codigo que no es el producto**.
+1. **N1 · PROBAR 1.9.1 EN DEVICE — `TESTING.md`, ciclo M1..M5.** Es lo unico de ingenieria
+   que queda. **M2 es el que decide** (B1 en iPhone 8+ y 12) y **M3 lo habilita**: verifica
+   que el OTA piso el parche manual, porque sin eso M2 vuelve a medir un equipo trucado.
+   El agente del HTPC cubre M1/M3/M4/M5; M2 es del dueño.
 2. **N2 · el repo YA ES PRIVADO (30/07) — deuda de PLAN.md §T-57, casi cerrada:**
    **(a) Vercel ✅ CERRADO 30/07** — deployo sin problema tras privatizar. El canal OTA vive.
    **(b) el clon WSL ✅ CERRADO 30/07.** Era una trampa: el helper estaba solo en el config
@@ -71,6 +68,8 @@ historia:           CONTEXT.md + git log
 
 ## HECHO — fase v1.9 (todo auditado APTO; evidencia en git log)
 
+**T-78** el boton de actualizar no depende de `/tmp` · **T-79** B1: fuera `viewport-fit=cover`
+(la causa real) · **T-80** muere `bootstrap.sh` + `GITHUB_REPO` · **T-81** release 1.9.1 ·
 **T-46..T-50** ai-proxy, anti-abuso y licencia de 1 dispositivo · **T-53** sitio ES+EN ·
 **T-58** identidad app↔web · **T-59..T-61** release 1.8.9 publicado + dominio propio ·
 **T-62** skins gratis · **T-63** doc de FastAPI cerrada · **T-64** apt remove limpia ·
