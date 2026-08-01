@@ -324,13 +324,50 @@ actualiza jamas** → Firefox sin parchear durante años en la sala → **que es
 nivel 3 que el dueño dijo que SI le preocupa**. Y ademas LRP perderia el canal para arreglar lo
 que ya construyo.
 
-**Propuesta: TRES canales, cada uno haciendo lo que sabe.**
-1. **ISO versionada** para instalar. Sin OTA de ISO: no se reinstala el sistema por la red.
-2. **`unattended-upgrades` de Debian, limitado al repositorio de SEGURIDAD.** Paquete estandar,
-   cero codigo propio, y **es literalmente lo que el dueño pidio**: "actualizaciones estables de
-   sistema criticas". El repo de seguridad no trae cambios de funcionalidad, asi que la
-   propiedad de "sin sorpresas" se conserva.
-3. **El OTA de LRP que ya existe** para la app — con la firma de B19 puesta.
+**Propuesta: TRES NIVELES, y el mas importante NO tiene boton.**
+
+| que | como | quien lo ve |
+|---|---|---|
+| **Seguridad del sistema** | automatico, silencioso, en segundo plano (`unattended-upgrades` limitado al repo de SEGURIDAD) | **nadie** |
+| **LRP** | el boton que ya existe, con la firma de B19 puesta | el usuario, si quiere |
+| **Salto de version de Debian** | nunca automatico, nunca desde el boton | solo con ISO nueva |
+
+**La propiedad Firestick no viene de que el boton haga todo: viene de que no hace falta boton.**
+El usuario nunca se entera de que su navegador se parcho anoche. Y el nivel 1 es literalmente lo
+que el dueño pidio —"actualizaciones estables de sistema criticas"—: el repo de seguridad no
+trae cambios de funcionalidad, asi que "sin sorpresas" se conserva.
+
+## Por que NO acoplar "un solo boton" que actualice LRP + sistema
+Idea que el dueño propuso y se descarto tras analizarla:
+- **Radios de daño incomparables.** LRP = reinstalar UN paquete propio y probado. `apt upgrade`
+  completo = kernel, systemd, drivers y Firefox de una. Si sale mal, la maquina puede no
+  arrancar — **y la usuaria no tiene teclado**. *Precedente: el OTA que dejaba el servicio
+  muerto era UN paquete; el mismo modo de falla con un kernel adentro es otra cosa.*
+- **Ritmos distintos.** Un LRP del martes no debe arrastrar un kernel; un parche de Firefox no
+  debe esperar al proximo release de LRP.
+- **Tiempo percibido.** El boton se espera en segundos. Un upgrade completo son cientos de MB y
+  varios minutos — en el Q8300 con disco mecanico, bastantes — con la tele sin responder.
+- **Lo mas grave: la reversion.** Volver atras un `.deb` es viable (se guarda el anterior).
+  **Revertir un `apt upgrade` completo en Debian, en la practica, no se puede.**
+
+## Malentendido que libera la mitad del problema
+*"Actualizar LRP deberia llamar a actualizar dependencias"* — **eso YA pasa**:
+`apt install ./paquete.deb` resuelve e instala lo declarado en `Depends:`.
+**Actualizar dependencias NO es actualizar el sistema.** Lo primero ya esta; lo segundo es lo que
+no conviene atar al boton.
+*(Relacionado: el `.deb` declara `build-essential`, o sea que le mete un compilador entero a cada
+usuario. En un electrodomestico pesa mas que en un escritorio. Anotado en BUGS §menores.)*
+
+## Correccion a "una sola ISO siempre"
+**Una ISO por GENERACION de Debian, no una por version de LRP** — o sea, una **cada ~2 años**,
+cuando sale una Debian mayor. Con eso:
+- **Casi no se mantienen ISOs.**
+- **Las instalaciones existentes NUNCA hacen el salto grande en caliente**, que es el que rompe
+  maquinas: siguen recibiendo parches de seguridad durante los ~5 años de soporte de esa Debian.
+- **Cambiar de base = ISO nueva**, instalacion limpia, sin migracion riesgosa.
+
+**Ahi las ISOs versionadas ganan su lugar: no como canal de actualizacion, sino como GENERACIONES
+DE PRODUCTO.**
 
 ---
 
