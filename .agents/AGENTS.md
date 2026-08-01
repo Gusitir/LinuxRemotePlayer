@@ -1,5 +1,5 @@
 # AGENTS.md — LEE ESTO PRIMERO
-<!-- TAMAÑO REAL: 14144 bytes vs techo 12288 (§FORMATO), medido 2026-07-30. Esta pasada
+<!-- TAMAÑO REAL: 14312 bytes vs techo 12288 (§FORMATO), medido 2026-07-30. Esta pasada
      recorto ~1100 y a la vez sumo contrato (roles nuevos, credenciales WSL, reglas 6 y del
      agente del HTPC). Lo que queda son PORQUES: recortar mas pierde la causa, que es lo
      unico irreemplazable. Bajarlo de verdad es trabajo del SUPERVISOR (§GOBIERNO). -->
@@ -15,6 +15,8 @@ entrada canónico: describe cómo trabajamos. Es estable — si el proceso cambi
 Después, si hace falta: **BUGS.md** (bugs abiertos y cerrados, con su resolución) ·
 **USER.md** (lo que SOLO puede hacer el dueño: infra, cuentas, comandos, contrato) ·
 **PLAN.md** (roadmap + specs) · **TESTING.md** (ciclo vivo).
+**IDEAS.md** es pensamiento de diseño con NADA decidido: no genera tareas y **no se lee para
+trabajar**. Cuando una idea se decide, se muda a PLAN y se borra de ahí.
 Los planes de fase cerrados viven en `archive/`; `design/` son propuestas de v2.0.
 
 ## FORMATO DE LOS ARCHIVOS .agents/ (los escribe una IA para que los lea otra IA)
