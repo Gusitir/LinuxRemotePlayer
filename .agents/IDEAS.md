@@ -233,7 +233,108 @@ la imagen no la va a salvar.**
 
 ---
 
-# 5 · El brazo mas barato del ecosistema, que casi se pasa por alto
+## Sesiones, contraseñas y "capar" el sistema
+
+**El autologin es la parte facil.** Un unico usuario sin privilegios, sin sudo (salvo la regla
+angosta de `lrp-update` que ya existe), y **el concepto de contraseña desaparece de la vista**.
+*Consecuencia a decir en voz alta:* sin contraseña, **acceso fisico = acceso total**, y queda
+descartado el cifrado de disco (pediria clave al arrancar). Un Firestick es igual. Es un
+intercambio consciente.
+
+**Capas para acotar el daño**, de la que mas rinde a la que menos: (1) **sin sudo** — la que mas
+protege: sin escalada, el daño se limita a la carpeta personal · (2) sin terminal al alcance **y
+deshabilitar el cambio de terminal virtual** (`Ctrl+Alt+F2`, el agujero que se olvida) ·
+(3) **AppArmor**, que Debian ya trae, para acotar Firefox y el backend · (4) **raiz de solo
+lectura**, que es *la* propiedad que hace sentir indestructible al AndroidTV.
+
+**Tension:** la capa 4 es justo la que Debian NO da de fabrica (se aproxima con overlay sobre la
+raiz, artesanal). Se eligio Debian por el hardware viejo, y la propiedad mas admirada del
+AndroidTV viene de la inmutabilidad. **Ese pedazo hay que construirlo a mano en vez de heredarlo.**
+
+**Reencuadre que ordena todo:** la simplicidad del Firestick **no viene de estar capado, viene de
+que no hay nada que configurar**. El capado es consecuencia del modelo de producto, no la causa
+de la simplicidad. **El objetivo no es quitar capacidades: es que no haga falta verlas nunca** —
+"guiar sin guiar" aplicado al sistema operativo.
+
+## Arquitectura: DOS usuarios, no uno
+- **Usuario del televisor:** autologin, sin contraseña, sin sudo, sin terminal. Es el que arranca.
+- **Usuario dueño:** con contraseña, alcanzable por SSH o terminal virtual. Solo para emergencias.
+
+Da "mi mama no puede romperlo" **y** "el dueño puede arreglarlo" sin contradiccion. **Es la misma
+forma que la salida de emergencia por token de emparejamiento: el que sabe tiene una puerta, el
+que no sabe ni la ve.**
+
+## MODELO DE AMENAZA — DECIDIDO por el dueño (31/07)
+- **Nivel 1 · usuario sin conocimiento que rompe por accidente → SI se defiende.** Es el objetivo.
+- **Nivel 2 · alguien con intencion destructiva → NO es responsabilidad del producto.** Tarde o
+  temprano lo logra por mas trabas que se pongan; esa prevencion es del dueño del equipo.
+- **Nivel 3 · acceso fisico → NO preocupa** (hasta un Firestick cae). **Pero SI preocupa el
+  atacante REMOTO o un virus.**
+
+**Consecuencia del nivel 3, y es la que mas manda:** la superficie remota real es **Firefox
+navegando la web** en una maquina que emula teclado a nivel kernel, y **el canal de
+actualizacion** — que es literalmente B19. *Un aparato que vive años en una sala con un
+navegador sin parchear es exactamente como te comprometen de forma remota.* Esto **choca de
+frente con la idea de "ISO versionada sin OTA"** (ver abajo).
+
+---
+
+# 5 · ISO: esfuerzo, desafios y como se actualiza
+
+## El esfuerzo real, con calibracion honesta
+El dueño pidio no pensar en tiempos de desarrollo humano porque se usan herramientas con IA.
+**Justo: la IA comprime la parte MAS CHICA de este trabajo.** Un proyecto de ISO casi no es
+escribir codigo; es **integracion, arranque y hardware**: grabar USB, bootear, observar, corregir
+— ciclos que requieren **una persona frente a la maquina** y no se paralelizan.
+
+*Precedente propio:* el bug del actualizador necesito **tres builds de prueba** y un humano en el
+HTPC. Una ISO tiene MAS de eso, no menos.
+
+**Forma realista del esfuerzo:**
+- **Primera ISO booteable con LRP preinstalado:** rapido, dias con `live-build`. **Es la parte
+  engañosa: el primer 80% sale volando.**
+- **Autologin + sesion dedicada + cero teclado despues de instalar:** mas, pero tratable.
+- **Que ande en hardware que no tenes:** *la cola larga, y no termina nunca.*
+
+## Desafios concretos
+1. **Instalar EXIGE teclado y mouse, y no se puede evitar.** No se particiona un disco desde el
+   telefono. *Pero encaja con la observacion de campo del propio dueño:* se necesitan al
+   instalar y despues estorban. **Aceptarlo en vez de pelearlo.** Se minimiza con un instalador
+   automatizado (preseed) que tome el disco entero sin preguntas.
+2. **Nunca borrar un disco en silencio.** Hace falta UNA confirmacion explicita, si o si.
+3. **Secure Boot:** una ISO propia con modulos propios puede no arrancar donde este activado.
+   Irrelevante en el Q8300 (pre-UEFI), relevante en maquinas mas nuevas.
+4. **Firmware no libre**, sobre todo WiFi. Los instaladores actuales de Debian ya lo incluyen,
+   lo que resuelve la mayor parte.
+5. **Obligaciones de redistribucion.** Distribuir una ISO derivada de Debian **es distribuir
+   binarios GPL**: aparecen obligaciones de disponibilidad de fuentes. Para paquetes sin
+   modificar, apuntar a los repos de Debian suele alcanzar; **si se MODIFICA un paquete GPL, hay
+   que publicar su fuente.** LRP sigue siendo Elastic 2.0 como paquete aparte — **agregar no es
+   derivar** —, pero la obligacion existe y hay que conocerla (AGENTS §CÓDIGO DE TERCEROS).
+6. **Peso y hosting.** Una ISO son ~1-2 GB. **Vercel no sirve para eso.** Hace falta hosting real,
+   espejos o torrent. Es infraestructura nueva y costo recurrente.
+
+## ACTUALIZACION: el voto del dueño (ISO versionada SIN OTA) tiene un problema
+**No son alternativas: responden preguntas distintas.**
+- **ISO versionada = como se OBTIENE el sistema la primera vez.** Correcto, y va.
+- **OTA = como se mantiene al dia una maquina YA instalada.**
+
+**Si fuera solo ISO:** cada actualizacion exige presencia fisica, un USB y reinstalar → **nadie
+actualiza jamas** → Firefox sin parchear durante años en la sala → **que es exactamente el
+nivel 3 que el dueño dijo que SI le preocupa**. Y ademas LRP perderia el canal para arreglar lo
+que ya construyo.
+
+**Propuesta: TRES canales, cada uno haciendo lo que sabe.**
+1. **ISO versionada** para instalar. Sin OTA de ISO: no se reinstala el sistema por la red.
+2. **`unattended-upgrades` de Debian, limitado al repositorio de SEGURIDAD.** Paquete estandar,
+   cero codigo propio, y **es literalmente lo que el dueño pidio**: "actualizaciones estables de
+   sistema criticas". El repo de seguridad no trae cambios de funcionalidad, asi que la
+   propiedad de "sin sorpresas" se conserva.
+3. **El OTA de LRP que ya existe** para la app — con la firma de B19 puesta.
+
+---
+
+# 6 · El brazo mas barato del ecosistema, que casi se pasa por alto
 
 El dueño menciono al pasar **control profesional: diapositivas y comandos programables**.
 **Eso es la misma emulacion de entrada que ya existe, con otro HUD y un modo de macros.** Cero
