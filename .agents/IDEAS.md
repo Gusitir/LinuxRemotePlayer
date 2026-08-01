@@ -157,7 +157,94 @@ produccion probada**. Eso ya empezo: PH0 quedo adoptada.
 
 ---
 
-# 4 · Posicionamiento
+# 4 · ISO propia con LRP preinstalado
+
+**Aclaracion del dueño:** no habla de una distro de cero, sino de **una ISO personalizada
+sobre bases existentes**, con lo justo y necesario, apuntada a que **un equipo viejo levante
+un HTPC** y no se rompa con cada actualizacion.
+
+## "Hacer una distro" esconde cuatro proyectos distintos
+| nivel | que es | esfuerzo | quien mantiene el sistema |
+|---|---|---|---|
+| 1 | instalador automatizado (preseed de Debian) | dias | Debian |
+| 2 | **ISO propia desde una base** (`live-build`, `archiso`) | semanas | el dueño las integraciones |
+| 3 | **imagen inmutable, atomica, con reversion** | alto, pero hay frameworks | el dueño la imagen, upstream la base |
+| 4 | distro de verdad: paqueteria, repos, kernel | equipo, años | **descartado** |
+
+## La conexion que importa: el nivel 3 responde el problema del OTA
+El dueño describio querer *"sin sorpresas, sin actualizaciones que rompan algo"*. **Eso es la
+definicion de un sistema por imagenes e inmutable**: raiz de solo lectura, el sistema entero se
+actualiza como unidad atomica, y si falla **revierte al reiniciar**. Es lo que hacen SteamOS,
+Bazzite y ChimeraOS — que el propio dueño habia nombrado antes sin notar que ya respondian.
+
+**Su idea de ISO y su meta de "OTA a prueba de fallos" (§3) son el MISMO problema con la misma
+solucion.** Hay frameworks que construyen imagenes personalizadas sobre bases atomicas
+definiendolas casi como un `Containerfile`, con la build en CI; Bazzite empezo asi. **Investigar
+esa familia antes de pensar en algo propio.**
+
+## La disyuntiva REAL de la base — hay que elegirla a conciencia
+- **Debian** → maxima compatibilidad de hardware, **todavia soporta 32 bits**, ciclos largos,
+  base gigante, y ya es su plataforma. **Pero actualizaciones convencionales: sin reversion.**
+- **Familia atomica (Fedora Atomic / imagenes tipo uBlue)** → **da la reversion que quiere**,
+  pero es **solo 64 bits** y su piso de hardware es mas nuevo.
+
+**No se puede tener las dos cosas.** Maxima compatibilidad con equipos viejos y actualizaciones
+atomicas tiran para lados opuestos. Decidir cual duele menos ANTES de construir nada.
+
+## Restricciones tecnicas que ya fijan el terreno
+LRP necesita **`uinput`, systemd, PipeWire/Pulse y Firefox**. Eso descarta de entrada Alpine y
+similares con musl (rompe supuestos de Python y binarios) y cualquier base sin systemd (Devuan).
+Las candidatas serias quedan en la **familia Debian** (incluidas MX, antiX, Q4OS, LMDE) o la
+**familia atomica de Fedora**.
+
+## El techo que NO lo pone el sistema operativo
+**En un HTPC el cuello de botella suele ser la decodificacion de video, no la CPU.** Una maquina
+sin decodificacion por hardware de h264/h265 va a trabarse con 1080p en el navegador **por mas
+liviano que sea el sistema**. Un equipo de 2008 puede correr la interfaz de LRP perfecto y aun
+asi no reproducir YouTube en 1080p. **Aligerar el sistema tiene un piso que no depende del
+sistema.** Probar esto TEMPRANO, con el hardware objetivo real.
+
+## Lo que hay que saber antes de meterse
+- **Una ISO es superficie de SOPORTE, no una funcion.** Hoy, si a alguien no le anda el WiFi, el
+  problema es de Debian. Con imagen propia, *"no me levanta en mi laptop vieja"* es un ticket
+  propio. **Ironia:** el hardware viejo con pocos recursos es justo el de peor soporte de
+  drivers. El publico objetivo es el peor caso de soporte.
+- **Cambia lo que se vende.** De una app de $5 a proveedor de sistema. La gente espera parches de
+  seguridad por años; abandonarlo deja gente con un aparato conectado y sin actualizar.
+- **La critica a Plasma Bigscreen es correcta, la conclusion no se sigue.** Es cierto que arrastra
+  medio KDE y no es apto para consumo masivo. Pero entre eso y "hago una distro" hay un escalon:
+  **una sesion curada sobre una base existente** da el 90% del beneficio sin ser dueño del SO.
+- **La comparacion con Firestick es una trampa.** Funciona porque Amazon subsidia hardware y tiene
+  acuerdos de contenido. Competir ahi es competir en hardware, retail y contenido. **La ventaja
+  propia es la opuesta y es mejor: ellos venden un aparato nuevo, LRP hace util el que ya esta
+  tirado.**
+
+## La version sana de la idea
+> **Una imagen reproducible y opinada que convierte una PC vieja en un electrodomestico LRP**,
+> construida sobre una base existente, con actualizaciones atomicas y reversion.
+
+Encaja con el ecosistema: **LRP-para-cualquier-distro** (la app, que ya existe) y
+**LRP-appliance** (la imagen llave en mano). Dos productos, un motor.
+
+## SECUENCIA — importa
+**Va DESPUES del modo dedicado (§1), no antes.** La sesion propia es el paso previo natural: si
+esa sesion funciona bien sobre una base existente, la imagen es empaquetarla. **Si no funciona,
+la imagen no la va a salvar.**
+
+---
+
+# 5 · El brazo mas barato del ecosistema, que casi se pasa por alto
+
+El dueño menciono al pasar **control profesional: diapositivas y comandos programables**.
+**Eso es la misma emulacion de entrada que ya existe, con otro HUD y un modo de macros.** Cero
+sistema operativo, cero soporte de hardware nuevo, cero distro.
+
+Y le habla a un publico que **paga mas que el usuario de sala**. Puede ser el brazo mas rentable
+del ecosistema y el mas barato de construir. **Pensarlo en paralelo, no despues.**
+
+---
+
+# 6 · Posicionamiento
 
 **El modo dedicado de verdad es probablemente el mejor diferenciador comercial**, porque es
 exactamente lo que las apps de control remoto NO hacen: ellas asumen que hay alguien manejando
