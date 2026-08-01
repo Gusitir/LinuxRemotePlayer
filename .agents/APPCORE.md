@@ -17,7 +17,7 @@
   send-feedback). **Editarlas en el repo NO las despliega.**
 - /.agents/: contexto IA. /docs/: para humanos. /.agents/archive/: fases cerradas, NO reusar.
 
-# ENDPOINTS backend/main.py (876 líneas · gate entre paréntesis)
+# ENDPOINTS backend/main.py (1013 líneas · gate entre paréntesis)
 - **Doc automática APAGADA** (T-63/H9): /docs, /redoc, /openapi.json solo existen con
   `LRP_DEV=true`. NO usar LRP_MODE para esto: `desktop` es modo de usuario, no de dev.
 - Pairing: /api/pairing-pin (local) · POST /api/pair (LAN sin auth; PIN 6 dígitos un solo
