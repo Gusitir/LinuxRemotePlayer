@@ -354,7 +354,9 @@ pueden volver a publicar actualizaciones** para el parque instalado; recuperarse
 cada usuario instale a mano un `.deb` con la clave nueva. Copia offline en DOS lugares, y
 ninguno es el repo ni el proveedor de nube.
 
-## Capa 2 — el destino: repositorio APT firmado
+## Capa 2 — el destino: repositorio APT firmado  **[decidido: v2.0.0]**
+*El dueño ya lo tenia en mente: registrar la app en APT es el camino natural de una app de
+Linux, y de paso resuelve la firma con maquinaria estandar. Va a v2.0.0.*
 La respuesta canonica de Debian: publicar un repo APT con su `Release` firmado con GPG. `apt`
 hace toda la verificacion con maquinaria probada y **no se escribe una linea de cripto
 propia**; el usuario actualiza con `apt upgrade`. Un repo APT son **archivos estaticos**, asi

@@ -1,5 +1,5 @@
 # AGENTS.md — LEE ESTO PRIMERO
-<!-- TAMAÑO REAL: 13923 bytes vs techo 12288 (§FORMATO), medido 2026-07-30. Esta pasada
+<!-- TAMAÑO REAL: 14144 bytes vs techo 12288 (§FORMATO), medido 2026-07-30. Esta pasada
      recorto ~1100 y a la vez sumo contrato (roles nuevos, credenciales WSL, reglas 6 y del
      agente del HTPC). Lo que queda son PORQUES: recortar mas pierde la causa, que es lo
      unico irreemplazable. Bajarlo de verdad es trabajo del SUPERVISOR (§GOBIERNO). -->
@@ -12,7 +12,9 @@ entrada canónico: describe cómo trabajamos. Es estable — si el proceso cambi
 2. **CONTEXT.md** — dónde quedó el agente ANTERIOR (handoff entre sesiones/modelos).
 3. **CURRENT.md** — estado ACTUAL: versión publicada, fase activa, pendientes.
 4. **APPCORE.md** — mapa del código. Leerlo ANTES de grepear; ahorra media hora a ciegas.
-Después, si hace falta: **PLAN.md** (roadmap PH-NN + specs) y **TESTING.md** (ciclo vivo).
+Después, si hace falta: **BUGS.md** (bugs abiertos y cerrados, con su resolución) ·
+**USER.md** (lo que SOLO puede hacer el dueño: infra, cuentas, comandos, contrato) ·
+**PLAN.md** (roadmap + specs) · **TESTING.md** (ciclo vivo).
 Los planes de fase cerrados viven en `archive/`; `design/` son propuestas de v2.0.
 
 ## FORMATO DE LOS ARCHIVOS .agents/ (los escribe una IA para que los lea otra IA)
@@ -28,7 +30,8 @@ es telegráfico — la ambigüedad obliga a releer y sale más cara que lo que a
 - **IDs estables** por ítem (B1, D4, H7, T-58) para citarlos desde otros archivos.
 - **Cabecera YAML** en los archivos de estado: los hechos duros arriba, en un bloque que
   se parsea de un vistazo, antes de la prosa.
-- **Techos.** CURRENT ≤8KB, CONTEXT ≤8KB, APPCORE ≤10KB, AGENTS ≤12KB. Al pasarse: compactar
+- **Techos.** CURRENT ≤8KB, CONTEXT ≤8KB, APPCORE ≤10KB, AGENTS ≤12KB. **BUGS.md y USER.md
+  NO tienen techo**: son registros, crecen a propósito. Al pasarse: compactar
   YA; si no se puede sin perder porqués, anotar el número REAL en la cabecera (mentirle al
   techo es peor que pasarlo). PLAN.md es grande a propósito: lleva ÍNDICE y se navega con
   `grep -n "^# PH17"`, no se lee entero.

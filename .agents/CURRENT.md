@@ -1,9 +1,7 @@
 # CURRENT — estado vivo
-<!-- Formato: AGENTS.md §FORMATO. IDs (D/H/C) son anclas: citalos, no copies el texto.
-     Lo cerrado NO vive aca: esta en git log, en PLAN.md y en comentarios del codigo.
-     TAMAÑO REAL: 9703 bytes vs techo 8192. Crecio el 31/07 con la auditoria externa
-     (B19 + H23/H24/H25). Ya se movio el analisis a PLAN y se compacto §HECHO y §D;
-     lo que queda son los PORQUES de hallazgos abiertos. Se declara, no se miente. -->
+<!-- Formato: AGENTS.md §FORMATO. IDs son anclas: citalos, no copies el texto.
+     ESTE archivo = estado de la version en curso. Los bugs viven en BUGS.md y las tareas
+     del dueño en USER.md; aca solo se los CITA. Lo cerrado esta en git log y en PLAN.md. -->
 
 ```yaml
 version_publicada:  1.9.1    # COMERCIAL. Auditada contra el .deb real y verificada VIVA
@@ -11,19 +9,21 @@ version_publicada:  1.9.1    # COMERCIAL. Auditada contra el .deb real y verific
 dominio:            https://www.linuxremoteplayer.com
 alias_vercel:       linux-remote-player.vercel.app   # VIVO a proposito: canal OTA del parque viejo
 correo_soporte:     support@linuxremoteplayer.com    # recibe y ENVIA; cae en spam (C9)
-fase_activa:        v1.9 CERRADA (T-46..T-82). Solo queda lo COMERCIAL: Paddle
+fase_activa:        v1.9.1 LANZADA. **v1.9.2 = la que habilita COBRAR** (B19 + paddle-webhook)
 repo:               PRIVADO desde el 30/07; T-57 cerrado entero
 licencia:           Elastic 2.0 (source-available, NO open source — dicho asi en el README)
-ultima_sesion:      2026-07-30
+ultima_sesion:      2026-07-31
 pruebas_device:     TESTING.md — ciclo 1.9.1 EJECUTADO Y APTO (6/6)
 docs_humanos:       docs/ARCHITECTURE.md + docs/DEVELOPING.md
+bugs:               BUGS.md — abiertos y cerrados, SIN techo
+tareas_del_dueño:   USER.md — infra, cuentas, comandos y el contrato de quien hace que
 historia:           CONTEXT.md + git log
 ```
 
-> **Al entrar:** **no queda ingenieria que BLOQUEE la venta** — si quedan hallazgos abiertos,
-> todos agendados a v1.9.2 (§N2, §H). 1.9.1 publicada, viva y certificada en device; repo
-> privado; sitio, README y terminos al dia (T-82/T-83). **Lo unico que falta para vender es
-> el alta en Paddle** (§N1).
+> **Al entrar: NO SE COBRA hasta cerrar B19** (el OTA da root sin firma; lo hallo una
+> auditoria externa el 31/07). El alta en Paddle se puede PEDIR ya —el sitio esta listo: 1.9.1
+> publicada y certificada en device, repo privado, capturas reales, terminos en dos idiomas—
+> pero **la primera venta espera a la 1.9.2**, que es la que firma el OTA.
 
 ## B — BLOQUEANTES
 
@@ -85,54 +85,17 @@ intente "ordenarlo" y revertirlos. No los copies aca.
 - **D15 · nada de subdominios de correo** (decision del dueño, 31/07): no tiene acceso ni los
   quiere. Si algun dia hace falta aislar reputacion, se crea **otra cuenta de correo**.
 
-## H — HALLAZGOS ABIERTOS (no bloquean)
+## H — HALLAZGOS
 
-- **H11** `grep -rn PLACEHOLDER-PADDLE` lista lo pendiente. Se llena en T-51.
-- **H20 · el correo con la clave** (`stripe-webhook`) ya dice el nombre correcto, pero **no
-  surte efecto hasta redesplegar la Edge Function**. Va con T-51.
-- **H19 · el QR "Offline" — SIGUE ABIERTO** (re-verificado en codigo 31/07; se lo creia
-  corregido). El QR codifica `…/?token=…` (`main.py:370`) y **ninguna `caches.match` de
-  `sw.js` usa `ignoreSearch`**. *Parece arreglado porque con red buena el `fetch` gana al
-  timeout de 3s y el SW nunca toca el cache; falla solo con el backend caido.* Fix:
-  `ignoreSearch: true` **+ el `else` que falta en `sw.js:34`** (hoy la promesa no resuelve
-  nunca y la pagina queda colgada; la rama del `catch`, :51, si lo tiene).
-- **H21 · el `theme-color` no refresca en vivo en iOS >=16** (iPhone 12; en 8+ si): hay que
-  cerrar y reabrir la PWA. Lo reescribe `app.js:174` y Safari 16+ no re-evalua ese meta.
-  Aparecio al sacar `viewport-fit=cover` (T-79), que es cuando el `theme-color` pasa a pintar
-  la barra de estado.
-- **H12 · a v1.9.2.** La version sale del backend y la interfaz del cache del SW: divergen
-  sin aviso cuando la PWA nunca se cierra. *Fix propuesto:* al conectar, comparar ambas y si
-  difieren forzar `skipWaiting` + recarga — de paso cierra H3 casi entero.
-- **H1** cold-start de voz sin keep-alive · **H2** Whisper alucina con silencio → descartar
-  audios <~1s antes de facturar · **H3** el OTA actualiza al cerrar/reabrir la PWA (aceptado)
-  · **H4** falta "volumen al maximo".
-- **H5 · a v1.9.2.** `showInstallScreen` usa `hidden` pero `#app-ui` tiene `.flex` (gana el
-  autor); `showPairingScreen` lo esquiva con `style.display`. Dos mecanismos para lo mismo:
-  uno va a fallar en algun estado.
-- **H23 · la app promete "Temas Pro" que hoy no existen** (`frontend/index.html:408`) y
-  **contradice los terminos**, que declaran los 4 temas gratis (`isLicensed` solo gatea la
-  voz). Existiran en 1.9.3 y v2.0, pero hoy es falso para quien paga: que el texto diga la
-  verdad de cada momento. *Auditor externo.*
-- **H24 · el boton de compra de la app contradice el diseño declarado.** `app.js:239` tiene
-  fallback duro a la home y `#buy-license-btn` no se oculta nunca, mientras `main.py:453` dice
-  "vacio a proposito". `status.html` si respeta la regla. *Auditor externo.*
-- **H25 · la app muestra el token de EMPAREJAMIENTO como si fuera la clave de licencia**
-  (`app.js:217-218`, `Clave: LRP-xxxx••••`). No es la licencia —esa nunca se guarda en el
-  cliente— y ademas expone 8 caracteres del secreto de emparejamiento. *Auditor externo.*
-- **H22 · a v1.9.2.** La «×» de borrar/ocultar esta SIEMPRE visible en cada icono
-  (`app.js:788-802`, sin modo edicion). Sale en todas las capturas. Ruido visual en la
-  primera impresion; no bloquea Paddle.
+**Se mudaron a `BUGS.md`** (31/07), que no tiene techo y registra abiertos y cerrados con su
+resolucion. Aca no se duplican: se citan por id.
+
+**Agendados a v1.9.2:** B19 + B19b (firma del OTA) · H23 (el texto de "Temas Pro") · H24 ·
+H25 · H19 · H12 · H5 · H22. **Sin fecha:** H21 y los menores. **Con Paddle:** H11, H20.
 
 ## C — CHECKLIST DEL DUEÑO
 
-- [~] **C9 · a v1.9.2.** `support@` ENVIA y llega, pero **cae en spam**. *Empezar por repetir
-      la prueba: la que lo detecto tenia asunto y cuerpo `test`, que ya es patron de spam.*
-      **Analisis completo y que mirar: PLAN.md §CORREO.** Trampa: cuando entre Resend su
-      include va en el MISMO registro SPF — dos registros fallan en ambos.
-- [ ] **C6 · a v1.9.2**, y cambia de forma: el feedback va a **tabla de Supabase**, no a
-      correo (D14). El deploy sigue pendiente desde v1.5: **el boton lleva cuatro versiones
-      muerto** sin que nadie lo notara — lo que pasa con lo que solo vive en un checklist.
-- [ ] **C3** wallpapers de las skins nuevas (PH17, no bloquea). Para Gato/Perro mandar
-      **el TILE** (~400x400), no el pantallazo: tilear ya esta soportado y pesa ~30KB vs ~170KB.
-- [x] **C1** push 1.8.9 · [x] **C2** dominio + `support@` · [x] **C8** el buzon RECIBE ·
-      [x] **C7** repo privado + T-57 cerrado · [x] **C5** capturas de 1.9.1 ya publicadas (T-82)
+**Se mudo a `USER.md`** (31/07), junto con los comandos y el contrato de quien puede hacer que.
+Pendiente ahi: **U1** capa 0 de B19 (2FA y bloqueo del dominio, ~20 min, sin codigo) · **U2**
+alta en Paddle · **U3** C9 el correo fuera de spam · **U4** desplegar `send-feedback` ·
+**U5** wallpapers.

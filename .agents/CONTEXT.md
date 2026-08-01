@@ -4,73 +4,63 @@
      decisiones vigentes y lecciones de proceso. Lo operativo del dia vive en CURRENT.md;
      el detalle esta en git log. Techo del archivo: ~8KB. -->
 
-## 2026-07-30 (b) · Claude Opus 5 — la fase v1.9 CIERRA: 1.9.1 publicada y certificada
+## 2026-07-31 · Claude Opus 5 — auditoria externa: aparece B19 y cambia el plan
 
-**Se termino la ingenieria del lanzamiento.** Lo unico pendiente para vender es Paddle.
+**Lo que hay que saber al entrar: NO SE COBRA hasta cerrar B19.** El alta en Paddle se puede
+pedir ya (el sitio esta listo), pero la primera venta espera a la 1.9.2.
 
-**Cambio de contrato (decision del dueño):** **Gemini ya no commitea ni pushea.** Edita
-codigo y para en STOP con el arbol sucio; **Claude audita y commitea**; **el push es del
-dueño, a mano**. Unica excepcion: el commit del release, que lleva el `.deb` y sale del clon
-WSL. Eso obligo a reemplazar el ancla de auditoria: antes se auditaban COMMITS
-(`git log <hash>..origin/main`), ahora se audita el **arbol**, y por eso el dueño confirma el
-STOP antes de que el auditor mire — auditar un arbol que el ejecutor sigue tocando ya produjo
-un falso NO APTO. Lo que sobrevive de la regla vieja: **nunca se arranca por lo que dice el
-reporte**. *El ejecutor paso a Gemini 3.6 Flash.*
+**Se lanzo un auditor externo** (Opus 5, sin contexto de la sesion, solo lectura) y **valio la
+pena**: encontro tres cosas que no estaban en ninguna lista. La grave es **B19 — el OTA da
+root sin firma**: `lrp-update` corre como root y verifica el `.deb` contra un sha256 que sale
+del MISMO origen, o sea que detecta corrupcion pero no hostilidad. Quien tome Vercel, el
+registrador o el DNS ejecuta root en la maquina de cada cliente. *Calibracion propia sobre su
+reporte: dijo "desatendido" y verifique que **no hay timer ni cron**; hace falta que el usuario
+toque "Actualizar" — pero la app le avisa que hay version nueva.* Plan en **PLAN §OTA-FIRMA**.
+Tambien H23 (la app promete "Temas Pro" que no existen y **contradice los terminos
+publicados**), H24 y H25. Todo en **BUGS.md**.
 
-**El hallazgo mas caro del dia, y la razon de que exista TESTING §M3.** El ciclo de pruebas
-de 1.9.0 dio 6/6 con B1 ✅ en los dos iPhone. **Era falso.** El agente del HTPC habia
-encontrado la causa real de B1 —`viewport-fit=cover`, no la altura que re-leia T-77—, la
-**aplico al equipo** y anoto la solucion, pero **no declaro que habia editado el producto**.
-El auditor lo cazo **abriendo el `.deb` publicado** en vez de creerle al reporte: el atributo
-seguia ahi. *El arreglo era bueno; lo que faltaba era una linea diciendo que existia.*
-**Consecuencias permanentes:** el formato del reporte tiene ahora un campo OBLIGATORIO
-("¿tocaste algun archivo del producto? SI/NO" + `dpkg -V`), y la matriz tiene **M3**, que
-verifica con `dpkg -V` que el equipo ES el paquete **antes** de que la prueba de iPhone
-cuente. Sin eso, un ✅ miente sin que nadie mienta.
+**Dos archivos nuevos, por decision del dueño.** **`USER.md`**: lo que solo puede hacer el
+dueño —infra, cuentas, comandos— y el contrato de quien hace que ("solo yo pusheo, solo yo
+escribo en Supabase"). **`BUGS.md`**: registro de bugs abiertos y cerrados con su resolucion,
+**sin techo**, arrancando desde 1.9.x. *Efecto lateral que importa:* §H y §C salieron de
+CURRENT, que bajo de 9703 a 6446 y volvio a entrar en su techo sin perder un solo porque.
+**Regla implicita: los registros no se duplican, se citan por id.**
 
-**Correccion de un analisis del agente que quedaba en el registro:** atribuyo que B18 no se
-disparara a que el log de `/tmp` era de root. Es al reves — el backend corre como usuario
-normal (`User=$TARGET_USER`) y abria en modo append, que exige ESCRITURA; si fuera de root
-habria fallado. **B18 solo dispara si el archivo YA existe y no es escribible por el usuario
-del servicio**, o sea si alguien corrio `sudo lrp-update` a mano antes de T-77. **En una
-instalacion nueva nunca habria fallado: ningun comprador lo habria visto.**
+**Plan de versiones nuevo:** **1.9.2 es la que habilita cobrar** (firma del OTA +
+`paddle-webhook` + las correcciones) · **1.9.3** skin PREVIEW PRO, y recien ahi vuelve a ser
+cierto el texto de "Temas Pro" · **v2.0** skins Pro, accesibilidad, multi-distro, Voz 2.0 y
+**registrar la app en un repositorio APT firmado**, que ademas resuelve B19 con maquinaria
+estandar. **PH0 ADOPTADA**: hoy no hay un solo test automatico.
 
-**Repo PRIVADO, T-57 cerrado entero.** (a) Vercel siguio desplegando. (b) *La trampa:* el
-`credential.helper` existia solo en el config **LOCAL** de `~/lrp-release`, con el global
-vacio — el clon viejo funcionaba y tapaba el problema, mientras que el clon **fresco** que
-manda el paso 2 del release fallaba con `could not read Username`. Se puso el helper en el
-global de WSL (reusa el GCM de Windows, sin secretos nuevos) y se verifico **reproduciendo un
-`git clone` fresco**. *Leccion: un config local que funciona puede tapar un global que no
-existe.* (c) murio `bootstrap.sh` — y al auditarlo aparecio que **se venia empaquetando en el
-`.deb`** y vivia en el equipo de cada usuario.
+**T-82 y T-83** dejaron el sitio listo para Paddle (no se tocaba desde 1.8.0): capturas reales
+de 1.9.1, changelog al dia, terminos de venta en los dos idiomas, y **fuera la promesa de
+"video de demostracion en camino"** — el video se cancelo. El README decia que el control
+basico es **open source**: no lo es, es source-available bajo Elastic 2.0.
 
-**Los dos archivos de testing se fusionaron en uno.** Tenian el mismo id (`L5`) significando
-cosas distintas: es la regla de "un dato, un archivo" materializandose. Ahora los comandos
-viven SOLO en el §BLOQUE PARA EL AGENTE, que se le entrega tal cual porque ese agente no lee
-el repo. El reporte del ciclo va FUERA de ese bloque: adentro, el ciclo siguiente le
-entregaria los resultados del anterior como si fueran su guion.
+**Limpieza a fondo de `.agents`,** con hallazgos que valen como leccion: los **diez conteos de
+lineas de APPCORE estaban mal**, y dos archivos distintos declaraban el mismo numero — o sea
+que se copio en vez de medirse. PLAN afirmaba que `bootstrap.sh` esta roto cuando ya se habia
+borrado, y que el repo "se privatiza" cuando ya era privado.
 
-**T-82 y T-83 dejaron el sitio listo para Paddle** (no se tocaba desde 1.8.0). Se saco la
-promesa de "video de demostracion en camino" —cancelado, la demo va a 1.9.2— y nacieron los
-terminos de venta. El README decia que el control basico es **open source**: no lo es, es
-source-available bajo Elastic 2.0. *Metodologico:* **WebFetch no ejecuta JavaScript**, asi
-que mostro un fallback estatico y me hizo declarar un 404 en vivo que no existia — para
-verificar una pagina con JS, navegador.
-
-**PARA EL SUPERVISOR — AGENTS.md sigue fuera de techo (13923 vs 12288).** Se hizo la poda
-MECANICA (redundancia, sin tocar reglas) y quedo declarado en su cabecera. Lo que falta es un
-juicio que el auditor no deberia tomar solo, porque es sobre el proceso del que forma parte:
-**decidir que reglas ya no cambian conducta.** Candidatas que dejo marcadas, sin borrar:
-- §CICLO paso 2, el parentesis que explica el ancla VIEJA (`git log <hash>..origin/main`).
-  Es arqueologia de una regla que ya no existe; sobrevive solo la frase que importa.
-- §ENTORNO, `py_compile` / `node --check` con python de Windows, y la nota de
-  `is_newer_version`: **ambas se vuelven redundantes cuando aterrice PH0** (capa 1 y capa 2
-  las convierten en un comando y en un test). Borrar DESPUES de que exista `verify.sh`.
-- §CICLO paso 5 (registrar una T-NN en su plan de fase): los planes de fase estan archivados
-  y el estado vive en CURRENT; verificar si todavia le cambia la vida a alguien.
+**Tres errores propios, que valen mas que los aciertos:**
+1. Declare un **404 en vivo** en el boton de descarga que no existia: **WebFetch no ejecuta
+   JavaScript**, asi que vi el fallback estatico. *Para verificar una pagina con JS, navegador.*
+2. Corregi diez conteos de APPCORE y **se me escapo un undecimo**, porque el regex exigia el
+   parentesis pegado. Peor: **verifique con un grep con la misma forma que el arreglo**, asi
+   que me confirmo solo lo que ya habia cambiado. *Un check moldeado sobre el propio fix no
+   verifica nada.* Lo encontro el auditor.
+3. El primer auditor **murio sin entregar informe** por quedarse sin presupuesto. El segundo
+   llevo instruccion explicita: si te queda poco margen, para y escribi con lo que tengas.
 
 ## Sesiones anteriores (comprimidas)
 
+- **2026-07-30 (b) · cierra la fase v1.9: se publico 1.9.1 y quedo certificada en device.**
+  **Cambio de contrato:** Gemini ya no commitea ni pushea (entrega arbol sucio), Claude audita
+  y commitea, el push es del dueño. **La leccion mas cara:** el ciclo de 1.9.0 dio 6/6 con B1
+  en verde sobre un equipo **parcheado a mano** por el agente de pruebas, que no declaro haber
+  editado el producto; se detecto abriendo el `.deb`. De ahi el campo obligatorio del reporte y
+  **TESTING §M3**. **Vigente:** un config LOCAL que funciona puede tapar un global que no
+  existe (credenciales de WSL); el detalle de B1 y B18 esta en BUGS.md.
 - **2026-07-30 (a) · el ciclo de correcciones cerro y se publico 1.9.0.** Tres builds de
   prueba antes de la comercial **salvaron el lanzamiento**: el primero destapo que cada
   actualizacion dejaba el servicio MUERTO (el paquete reescribia el script mientras corria;
