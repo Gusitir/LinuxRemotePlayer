@@ -1,6 +1,9 @@
 # CURRENT — estado vivo
 <!-- Formato: AGENTS.md §FORMATO. IDs (D/H/C) son anclas: citalos, no copies el texto.
-     Lo cerrado NO vive aca: esta en git log, en PLAN.md y en comentarios del codigo. -->
+     Lo cerrado NO vive aca: esta en git log, en PLAN.md y en comentarios del codigo.
+     TAMAÑO REAL: 9703 bytes vs techo 8192. Crecio el 31/07 con la auditoria externa
+     (B19 + H23/H24/H25). Ya se movio el analisis a PLAN y se compacto §HECHO y §D;
+     lo que queda son los PORQUES de hallazgos abiertos. Se declara, no se miente. -->
 
 ```yaml
 version_publicada:  1.9.1    # COMERCIAL. Auditada contra el .deb real y verificada VIVA
@@ -24,38 +27,43 @@ historia:           CONTEXT.md + git log
 
 ## B — BLOQUEANTES
 
-**NINGUNO.**
+- **B19 · el OTA da root sin firma. NO cobrar antes de cerrarlo.** El sha256 sale del MISMO
+  origen que el `.deb`, asi que detecta corrupcion pero no hostilidad: quien tome Vercel, el
+  registrador o el DNS ejecuta **root** en la maquina de cada cliente. *Calibracion: no hay
+  timer, hace falta que el usuario toque "Actualizar" — pero la app le avisa que hay version
+  nueva.* **Analisis y las tres capas del arreglo: PLAN.md §OTA-FIRMA.** Va en 1.9.2.
+  *Lo hallo el auditor externo; no estaba en ninguna lista.*
 
 ## N — SIGUIENTE (orden estricto)
 
-1. **N1 · T-51 Paddle — LO UNICO que falta para vender.** Alta, producto $5, webhook, compra
-   real + refund. Arrastra **H11** y **H20**. *El sitio ya esta listo:* T-82 lo puso al dia y
-   T-83 sumo los terminos, que era la unica objecion previsible.
-2. **N2 · v1.9.2 — correcciones. Nada de esto bloquea a Paddle:** C9 · C6 · H12 · H19 · H5 ·
-   H22 · D6 (demo web).
+1. **N1 · T-51 Paddle** — alta y revision. El sitio ya esta listo (T-82/T-83). **Ojo: el alta
+   se puede pedir ya, pero NO se cobra hasta cerrar B19.** Arrastra **H11** y **H20**.
+2. **N2 · v1.9.2 — la version que habilita cobrar.** Lleva: **B19 (firma del OTA)** ·
+   **`paddle-webhook`** (se escribe cuando Paddle apruebe: se limpio el de Stripe a proposito,
+   NO es un olvido) · **H23** (el texto de "Temas Pro") · **C9** · **C6** · **H12** · **H19** ·
+   **H5** · **H22** · **D6** demo web · pagina de gracias en INGLES (los terminos en ingles ya
+   existen: `website/en/terms.html`).
+   **Su ciclo de pruebas es el mas grande hasta hoy:** instalacion LIMPIA + OTA +
+   desinstalacion completa (TESTING §CICLO 1.9.2).
 3. **N3 · T-55** — doc de usuario, con el flujo de compra real.
 4. **N4 · PH0 ADOPTADA (31/07): la superficie de verificacion.** Cuatro capas + rama y CI —
    **detalle en PLAN.md §PH0**. Arrancar por las dos primeras: son horas y matan la clase de
    error que ya mordio. **Hoy no hay UN SOLO test automatico.**
-5. **N5 · v2.0 NO se empieza hasta ver clientes** (D13).
+5. **N5 · v1.9.3:** una skin **PREVIEW PRO** tomada de `design/skins2`, como anticipo de v2.0.
+   Recien ahi vuelve a ser cierto el texto de "Temas Pro" en la app (H23).
+6. **N6 · v2.0 NO se empieza hasta ver clientes** (D13): skins Pro + skins de ACCESIBILIDAD +
+   soporte multi-distro + voz ampliada.
 
 ## HECHO — fase v1.9
 
-**T-46..T-82, todo auditado APTO.** El detalle esta en `git log`; no se repite aca.
-Lo unico que el proximo agente NO puede re-derivar:
-
-- **Tres builds de prueba antes de la comercial salvaron el lanzamiento:** el primero destapo
-  que cada actualizacion dejaba el servicio muerto.
-- **Los porques de T-70, T-72 y T-79 estan COMENTADOS EN EL CODIGO**, que es donde los lee
-  quien intente "ordenarlo" y revertirlos. No los copies aca.
-- **Una prueba de device solo vale si ANTES se probo que el equipo ES el paquete** (el ciclo
-  1.9.0 dio ✅ sobre uno parcheado a mano). Hoy es un item con `dpkg -V`: TESTING §M3.
+**T-46..T-83, todo auditado APTO.** Detalle en `git log`; lecciones en CONTEXT (30/07).
+**Los porques de T-70, T-72 y T-79 estan COMENTADOS EN EL CODIGO** — ahi los lee quien
+intente "ordenarlo" y revertirlos. No los copies aca.
 
 ## D — DECISIONES VIGENTES (no re-litigar)
 
-- **D1 · pagos: PADDLE.** Stripe no opera para vendedores en Ecuador; PayPal plan B; Ko-fi
-  para donaciones. Validacion = compra real $5 + refund. **Paddle REVISA el sitio antes de
-  aprobar** → web, dominio, capturas y terminos van ANTES del alta.
+- **D1 · pagos: PADDLE.** Stripe no opera en Ecuador; PayPal plan B; Ko-fi donaciones.
+  Validacion = compra real $5 + refund. **Paddle REVISA el sitio antes de aprobar.**
 - **D2 · nombre: LinuxRemotePlayer**; **"LRP"** es el `short_name` del manifest. · **D3 ·
   precio:** Pro unico $5 lifetime; suscripcion recien con Voz 2.0.
 - **D4 · las 7 skins van GRATIS**, son el gancho; el Pro se vendera con skins ADICIONALES en
@@ -68,14 +76,12 @@ Lo unico que el proximo agente NO puede re-derivar:
 - **D9/D10 · la voz se enciende sola al activar la licencia** y se puede apagar; el arranque
   **nunca** pisa un `false` explicito.
 - **D11/D12 · boton de modo oscuro en el HUD e iconos de apps borrosos → v2.0** (estetica).
-- **D13 · v2.0 NO arranca hasta ver clientes reales** (31/07); mientras, SOLO correcciones
-  1.9.x. *Por que:* junta tres apuestas distintas —skins (ingreso), multi-distro (alcance),
-  voz (retencion)— y en un solo release la matriz de prueba se multiplica; la 1.9.0, mucho
-  mas chica, necesito TRES builds. **Se entrega por pistas, empezando por skins, que cobra.**
-- **D14 · el feedback va a una TABLA de Supabase, NO por correo** (31/07). 1 por dia **por
-  dispositivo** (por IP no: una casa comparte IP) y **server-side**, que el cliente se saltea.
-  *Por que no correo:* si sale del mismo dominio que las claves, **una queja de spam degrada
-  la entrega de las claves**, que es el correo del que depende la venta.
+- **D13 · v2.0 NO arranca hasta ver clientes** (31/07); mientras, SOLO 1.9.x. *Por que:* junta
+  skins (ingreso), multi-distro (alcance) y voz (retencion), y en un solo release la matriz se
+  multiplica; la 1.9.0, mas chica, necesito TRES builds. **Por pistas, skins primero.**
+- **D14 · el feedback va a TABLA de Supabase, NO por correo** (31/07). 1/dia **por dispositivo**
+  (por IP no: una casa comparte IP) y **server-side**. *Por que:* del mismo dominio que las
+  claves, **una queja de spam degrada la entrega de las claves**, de la que depende la venta.
 - **D15 · nada de subdominios de correo** (decision del dueño, 31/07): no tiene acceso ni los
   quiere. Si algun dia hace falta aislar reputacion, se crea **otra cuenta de correo**.
 
@@ -97,12 +103,22 @@ Lo unico que el proximo agente NO puede re-derivar:
 - **H12 · a v1.9.2.** La version sale del backend y la interfaz del cache del SW: divergen
   sin aviso cuando la PWA nunca se cierra. *Fix propuesto:* al conectar, comparar ambas y si
   difieren forzar `skipWaiting` + recarga — de paso cierra H3 casi entero.
-- **H1** cold-start de voz: dejo de reproducirse, no se hace keep-alive. · **H2** Whisper
-  alucina con silencio → descartar audios <~1s antes de facturar. · **H3** el OTA actualiza al
-  cerrar/reabrir la PWA (aceptado; lo aliviaria H12). · **H4** falta "volumen al maximo".
+- **H1** cold-start de voz sin keep-alive · **H2** Whisper alucina con silencio → descartar
+  audios <~1s antes de facturar · **H3** el OTA actualiza al cerrar/reabrir la PWA (aceptado)
+  · **H4** falta "volumen al maximo".
 - **H5 · a v1.9.2.** `showInstallScreen` usa `hidden` pero `#app-ui` tiene `.flex` (gana el
   autor); `showPairingScreen` lo esquiva con `style.display`. Dos mecanismos para lo mismo:
   uno va a fallar en algun estado.
+- **H23 · la app promete "Temas Pro" que hoy no existen** (`frontend/index.html:408`) y
+  **contradice los terminos**, que declaran los 4 temas gratis (`isLicensed` solo gatea la
+  voz). Existiran en 1.9.3 y v2.0, pero hoy es falso para quien paga: que el texto diga la
+  verdad de cada momento. *Auditor externo.*
+- **H24 · el boton de compra de la app contradice el diseño declarado.** `app.js:239` tiene
+  fallback duro a la home y `#buy-license-btn` no se oculta nunca, mientras `main.py:453` dice
+  "vacio a proposito". `status.html` si respeta la regla. *Auditor externo.*
+- **H25 · la app muestra el token de EMPAREJAMIENTO como si fuera la clave de licencia**
+  (`app.js:217-218`, `Clave: LRP-xxxx••••`). No es la licencia —esa nunca se guarda en el
+  cliente— y ademas expone 8 caracteres del secreto de emparejamiento. *Auditor externo.*
 - **H22 · a v1.9.2.** La «×» de borrar/ocultar esta SIEMPRE visible en cada icono
   (`app.js:788-802`, sin modo edicion). Sale en todas las capturas. Ruido visual en la
   primera impresion; no bloquea Paddle.

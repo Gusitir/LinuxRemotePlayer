@@ -16,17 +16,18 @@
 | PH-LICENCIAS | activación por dispositivo | ✅ hecho en T-46..T-49 |
 | PH-ANTIABUSO | cap 512KB, kill-switch, cuota | ✅ hecho en T-46..T-48 |
 | PH-PRICING | modelo de precio | decidido, ver CURRENT §D3 |
-| **PH17** | **Theme Packs / Skins 2.0** | **post-1.9.1 — especificada, sin código** |
-| **PH20** | **Demo interactiva en la web** | **v1.9.2 — reemplaza al video, que se canceló** |
+| **PH17** | **Theme Packs / Skins 2.0** | **v2.0 · un PREVIEW PRO sale en v1.9.3** |
+| **PH20** | **Demo interactiva en la web** | **v1.9.2 — reemplaza al video, cancelado** |
 | PH19 | Voz 2.0 (asistente ampliado) | v2.0 — diseñada |
 | PH15 | APK Android | v2.1 |
 | PH16 | Archivos / disco virtual | v2.2 |
 | PH18 | Modo gamepad | v2.3 |
 | MERCADO | proyectos vecinos (LinuxPlay) + colision de nombre | contexto, decision en CURRENT §D7 |
-| **PH0** | **superficie de verificacion (un comando = todos los gates)** | **propuesta, SIN adoptar — decide el dueño** |
+| **PH0** | **superficie de verificacion (un comando = todos los gates)** | **✅ ADOPTADA 31/07** |
 
-Orden comercial vigente: **v1.9 LANZADA (1.9.1) → Paddle → v1.9.2 demo web + skins → v2.0 skins Pro +
-Voz 2.0 → v2.1 APK → v2.2 archivos → v2.3 gamepad**.
+Orden comercial vigente (31/07): **v1.9.1 LANZADA → alta en Paddle → v1.9.2 (firma del OTA
+§OTA-FIRMA + paddle-webhook + correcciones; ES LA QUE HABILITA COBRAR) → v1.9.3 skin PREVIEW
+PRO → v2.0 skins Pro + accesibilidad + multi-distro + Voz 2.0 → v2.1 APK → v2.2 archivos**.
 PH20 depende de PH17 (ver PH20 §DEPENDENCIA): si la demo sale primero, hereda la deuda.
 
 ## ✅ FASES COMPLETADAS — archivadas
@@ -318,6 +319,56 @@ no de GitHub. Pero hay tres cosas que si:
   planeaba —Gemini commitea local y el auditor audita ESE commit— **no es lo que se
   decidio**: Gemini no commitea nada y entrega arbol sucio. **El contrato vigente esta en
   AGENTS.md §ROLES y §CICLO; no lo repitas aca.**
+
+# OTA-FIRMA: cerrar B19 (analisis 2026-07-31; estado vivo en CURRENT §B19)
+
+**El problema en una frase:** el sha256 y el `.deb` vienen del MISMO origen. Verificar uno
+contra el otro solo prueba que la descarga no se corrompio en transito; si alguien controla
+que sirve el dominio, controla los dos. Quien tome la cuenta de Vercel, la del registrador o
+el DNS, ejecuta **root** en la maquina de cada cliente.
+
+*Calibracion:* **no hay timer ni cron** (verificado). Hace falta que el usuario toque
+"Actualizar" — pero la app le avisa que hay version nueva, asi que lo va a tocar. No es
+"toda la flota al instante"; es "todos los que actualicen despues del compromiso".
+
+## Capa 0 — hoy, sin codigo
+2FA en Vercel Y en el registrador · bloqueo de transferencia + renovacion automatica del
+dominio · borrar tokens de despliegue sin usar. No arregla el diseño; baja la probabilidad a
+casi cero mientras llega el arreglo.
+
+## Capa 1 — v1.9.2: firma separada sobre `latest.json`
+La propiedad que hace falta es UNA: **la clave privada nunca toca Vercel ni el repo.** Vive
+offline. Asi, comprometer el hosting deja de alcanzar para falsificar una version.
+1. Par **ed25519** generado una vez. La publica se empaqueta en el `.deb`; la privada se queda
+   en la maquina del dueño.
+2. En cada release se firma `latest.json` offline y se publica `latest.json.sig` al lado.
+3. `lrp-update` **verifica la firma ANTES de descargar nada**. Si no valida, aborta.
+
+Se usa `openssl` porque **ya es dependencia** del instalador (certificados); `minisign` es mas
+limpio pero suma un binario en la maquina del cliente.
+**CAVEAT:** los flags de firma raw ed25519 cambiaron entre OpenSSL 1.1.1 (Debian 11) y 3.x
+(Debian 12+). **Probar en la distro objetivo antes de embarcar** — es justo la clase de
+comando que "parece bien" y falla en silencio.
+**RIESGO QUE INTRODUCE, aceptado a ojos abiertos:** si se pierde la clave privada, **no se
+pueden volver a publicar actualizaciones** para el parque instalado; recuperarse exige que
+cada usuario instale a mano un `.deb` con la clave nueva. Copia offline en DOS lugares, y
+ninguno es el repo ni el proveedor de nube.
+
+## Capa 2 — el destino: repositorio APT firmado
+La respuesta canonica de Debian: publicar un repo APT con su `Release` firmado con GPG. `apt`
+hace toda la verificacion con maquinaria probada y **no se escribe una linea de cripto
+propia**; el usuario actualiza con `apt upgrade`. Un repo APT son **archivos estaticos**, asi
+que Vercel puede servirlo igual que hoy. Costo: reestructurar la publicacion (`aptly` o
+`reprepro`) y cambiar el flujo del OTA. **Cuando haya volumen, no antes.**
+
+## Endurecimientos baratos que van con la capa 1
+- **Angostar el sudoers:** hoy es `%input ALL=(root) NOPASSWD`, o sea CUALQUIER miembro del
+  grupo `input`. Debe ser el usuario del servicio.
+- **`mktemp -d`** en vez de `/tmp/linuxremoteplayer_<ver>_all.deb`: el nombre predecible en
+  directorio compartido habilita la ventana TOCTOU entre `sha256sum -c` y `apt-get install`.
+  (`systemd-run --collect` **no** activa `PrivateTmp` por defecto.)
+- **Verificar el nombre del paquete** en los campos de control antes de instalar, para que un
+  `.deb` legitimo pero DISTINTO no se cuele.
 
 # CORREO: sacar `support@` de spam (analisis 2026-07-31; estado vivo en CURRENT §C9)
 

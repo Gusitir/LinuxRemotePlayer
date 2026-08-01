@@ -153,6 +153,33 @@ Hallazgos fuera de la matriz:
 > dueño lo sufriera y el HTPC no. **El resto del reporte es solido**: declaro el campo
 > obligatorio, declaro el desvio, y M3 sostiene a M2.
 
+## PROXIMO CICLO — v1.9.2 (SIN ESCRIBIR AUN; esto es el encargo)
+
+**Es el ciclo mas grande hasta hoy y el primero que NO puede ejecutar un agente.**
+
+*Por que sin agente:* lo que hay que medir es **la experiencia de un comprador**, y un agente
+con shell no la vive — no ve la advertencia del certificado en el telefono, no espera a que
+aparezca el PIN en la TV, no siente cuando algo tarda demasiado. **Lo corre el dueño, a mano,
+en una maquina VIRGEN**, y anota lo que le resulte confuso aunque funcione.
+
+Tres caminos, ninguno cubierto por el ciclo 1.9.1 (que solo midio una ACTUALIZACION sobre un
+equipo ya instalado y licenciado — lo detecto el auditor externo el 31/07):
+
+1. **INSTALACION LIMPIA, el camino del primer comprador.** Maquina sin LRP nunca instalado:
+   `curl -fsSL https://www.linuxremoteplayer.com/install.sh | sudo bash` → responder el modo →
+   aceptar el certificado en el telefono → ver el PIN en la TV → emparejar → instalar la PWA →
+   **pegar una clave de licencia por PRIMERA vez** → un comando de voz.
+   *Anotar el tiempo total y cada punto donde dudo.*
+2. **OTA de 1.9.1 → 1.9.2**, con la **firma nueva** (B19) ya activa: debe verificar y aplicar.
+   **Y la prueba que importa: un `latest.json` con firma INVALIDA tiene que ABORTAR** sin
+   descargar. Si acepta, la firma no sirve para nada.
+3. **DESINSTALACION COMPLETA:** `apt remove` → verificar que no queden servicio, reglas udev,
+   regla UFW, certificados, CA en el trust del sistema, `.env` ni `.pairing_token`; y que la
+   licencia quede LIBERADA para activarla en otra maquina.
+
+Cuando se escriba la matriz, el §BLOQUE PARA EL AGENTE cubre solo lo verificable por shell del
+punto 3; **los puntos 1 y 2 son del dueño y no se delegan.**
+
 ---
 ---
 
