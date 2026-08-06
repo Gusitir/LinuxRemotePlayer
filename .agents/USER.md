@@ -51,22 +51,23 @@ probabilidad a casi cero mientras llega la firma en 1.9.2.
 > **NO cobrarle a nadie hasta cerrar B19.** El alta y la revision se pueden pedir ya; la
 > primera venta espera a que la 1.9.2 firme el OTA.
 
-### U2b · Plugin de Paddle para Claude Code  (instalado 31/07, activo desde la sesion siguiente)
-El dueño instalo un plugin de Paddle en el cliente de Claude Code:
+### U2b · Plugin de Paddle para Claude Code — **NO INSTALADO** (intento fallido 31/07)
+Se intento y **NO se pudo**: el cliente respondio `"/plugin isn't available in this
+environment"`. **No asumas que existe tooling de Paddle.**
 
 ```
 /plugin marketplace add anthropics/claude-plugins-community
 /plugin install paddle@claude-community
 ```
 
-> **Se escriben en el PROMPT de Claude Code, no en la terminal** — un agente no puede
-> ejecutarlos. Quedan activos al abrir un chat nuevo.
+> Se escriben en el **PROMPT de Claude Code**, no en la terminal — ningun agente puede
+> ejecutarlos. En esta superficie el comando no existe; **reintentar desde una sesion
+> interactiva de `claude` en terminal**, que es donde suele estar disponible.
 
-**Para el agente que tome T-51:** puede existir tooling de Paddle disponible. **Verifica que
-expone antes de asumir capacidades**; no des por hecho que hace algo sin comprobarlo.
-**Precaucion:** el marketplace lo hospeda Anthropic pero **los plugins son de la comunidad**.
-Este proyecto maneja webhooks de pago y claves de licencia: **revisar el plugin antes de
-darle credenciales reales de Paddle** (§CONTRATO — las llaves son del dueño, nunca del chat).
+**Si algun dia queda activo, para el agente que tome T-51:** verifica que expone ANTES de
+asumir capacidades. **Precaucion:** el marketplace lo hospeda Anthropic pero **los plugins son
+de la comunidad**, y este proyecto maneja webhooks de pago y claves de licencia — revisarlo
+antes de darle credenciales reales (§CONTRATO: las llaves son del dueño, nunca del chat).
 
 ### U3 · C9 — sacar `support@` de spam  (a 1.9.2)
 - [ ] **Repetir la prueba primero.** La que detecto el problema tenia asunto `test` y cuerpo
