@@ -1,101 +1,72 @@
 # CURRENT — estado vivo
-<!-- Formato: AGENTS.md §FORMATO. IDs son anclas: citalos, no copies el texto.
-     ESTE archivo = estado de la version en curso. Los bugs viven en BUGS.md y las tareas
-     del dueño en USER.md; aca solo se los CITA. Lo cerrado esta en git log y en PLAN.md. -->
 
 ```yaml
-version_publicada:  1.9.1    # COMERCIAL. Auditada contra el .deb real y verificada VIVA
-                             # (el dominio sirve latest.json con su sha256) + 6/6 en device
-dominio:            https://www.linuxremoteplayer.com
-alias_vercel:       linux-remote-player.vercel.app   # VIVO a proposito: canal OTA del parque viejo
-correo_soporte:     support@linuxremoteplayer.com    # recibe y ENVIA; cae en spam (C9)
-fase_activa:        v1.9.1 LANZADA. **v1.9.2 = la que habilita COBRAR** (B19 + paddle-webhook)
-repo:               PRIVADO desde el 30/07; T-57 cerrado entero
-licencia:           Elastic 2.0 (source-available, NO open source — dicho asi en el README)
-ultima_sesion:      2026-07-31
-pruebas_device:     TESTING.md — ciclo 1.9.1 EJECUTADO Y APTO (6/6)
-docs_humanos:       docs/ARCHITECTURE.md + docs/DEVELOPING.md
-bugs:               BUGS.md — abiertos y cerrados, SIN techo
-tareas_del_dueño:   USER.md — infra, cuentas, comandos y el contrato de quien hace que
-historia:           CONTEXT.md + git log
+version_publicada: 1.9.1
+estado_codigo: estable y certificado en campo; todavía usa nube, licencia y Supabase
+vision_aprobada: inferencia 100% local, sin premium ni pagos
+transicion: diseñada en PLAN.md; todavía no implementada
+fase_activa: redefinición de flujo y preparación del laboratorio local
+repo: privado; main local está 6 commits por delante de origin/main
+dominio: https://www.linuxremoteplayer.com
+pruebas_publicadas: TESTING.md — ciclo 1.9.1 cerrado 6/6
+ultima_actualizacion_docs: 2026-08-11
 ```
 
-> **Al entrar: NO SE COBRA hasta cerrar B19** (el OTA da root sin firma; lo hallo una
-> auditoria externa el 31/07). El alta en Paddle se puede PEDIR ya —el sitio esta listo: 1.9.1
-> publicada y certificada en device, repo privado, capturas reales, terminos en dos idiomas—
-> pero **la primera venta espera a la 1.9.2**, que es la que firma el OTA.
+## VERDAD OPERATIVA
 
-## B — BLOQUEANTES
+Hay dos estados que no deben mezclarse:
 
-- **B19 · el OTA da root sin firma. NO cobrar antes de cerrarlo.** El sha256 sale del MISMO
-  origen que el `.deb`, asi que detecta corrupcion pero no hostilidad: quien tome Vercel, el
-  registrador o el DNS ejecuta **root** en la maquina de cada cliente. *Calibracion: no hay
-  timer, hace falta que el usuario toque "Actualizar" — pero la app le avisa que hay version
-  nueva.* **Analisis y las tres capas del arreglo: PLAN.md §OTA-FIRMA.** Va en 1.9.2.
-  *Lo hallo el auditor externo; no estaba en ninguna lista.*
+1. **LRP 1.9.1 real:** voz por Together/Supabase, licencia Pro, BUY_URL y textos comerciales.
+2. **Destino aprobado:** voz e interpretación locales, todas las funciones libres, sin Paddle,
+   sin activación y con Patreon únicamente como apoyo voluntario.
 
-## N — SIGUIENTE (orden estricto)
+Hasta que una tarea auditada cambie el código, la primera descripción sigue siendo la verdad
+del producto instalado. Ningún documento de usuario se actualiza como si la migración ya existiera.
 
-1. **N1 · T-51 Paddle** — alta y revision. El sitio ya esta listo (T-82/T-83). **Ojo: el alta
-   se puede pedir ya, pero NO se cobra hasta cerrar B19.** Arrastra **H11** y **H20**.
-2. **N2 · v1.9.2 — la version que habilita cobrar.** Lleva: **B19 (firma del OTA)** ·
-   **`paddle-webhook`** (se escribe cuando Paddle apruebe: se limpio el de Stripe a proposito,
-   NO es un olvido) · **H23** (el texto de "Temas Pro") · **C9** · **C6** · **H12** · **H19** ·
-   **H5** · **H22** · **D6** demo web · pagina de gracias en INGLES (los terminos en ingles ya
-   existen: `website/en/terms.html`).
-   **Su ciclo de pruebas es el mas grande hasta hoy:** instalacion LIMPIA + OTA +
-   desinstalacion completa (TESTING §CICLO 1.9.2).
-3. **N3 · T-55** — doc de usuario, con el flujo de compra real.
-4. **N4 · PH0 ADOPTADA (31/07): la superficie de verificacion.** Cuatro capas + rama y CI —
-   **detalle en PLAN.md §PH0**. Arrancar por las dos primeras: son horas y matan la clase de
-   error que ya mordio. **Hoy no hay UN SOLO test automatico.**
-5. **N5 · v1.9.3:** una skin **PREVIEW PRO** tomada de `design/skins2`, como anticipo de v2.0.
-   Recien ahi vuelve a ser cierto el texto de "Temas Pro" en la app (H23).
-6. **N6 · v2.0 NO se empieza hasta ver clientes** (D13): skins Pro + skins de ACCESIBILIDAD +
-   soporte multi-distro + voz ampliada.
+## SIGUIENTE
 
-## HECHO — fase v1.9
+1. El dueño establece el nuevo flujo de trabajo y los roles.
+2. Crear una rama/laboratorio separado; `main` conserva 1.9.1 estable.
+3. Medir STT local en español e inglés: Whisper multilingüe `base` y `small` cuantizados,
+   con `whisper.cpp` como primera referencia y sherpa-onnx como alternativa.
+4. Validar Needle 2 en Linux x86-64: runtime, licencia, memoria, latencia, confianza y precisión
+   con un corpus propio de órdenes LRP.
+5. Elegir hardware mínimo a partir de evidencia; candidato provisional: x86-64 + AVX2.
+6. Diseñar la migración sin nube y recién entonces trocearla en tareas.
+7. Corregir B19 antes de publicar cualquier siguiente versión: el OTA actual sigue sin firma.
 
-**T-46..T-83, todo auditado APTO.** Detalle en `git log`; lecciones en CONTEXT (30/07).
-**Los porques de T-70, T-72 y T-79 estan COMENTADOS EN EL CODIGO** — ahi los lee quien
-intente "ordenarlo" y revertirlos. No los copies aca.
+## DECISIONES VIGENTES
 
-## D — DECISIONES VIGENTES (no re-litigar)
+- **D16 — local-first:** audio, STT, interpretación, historial y acciones permanecen en el HTPC.
+- **D17 — sin premium:** no habrá funciones bloqueadas, licencias, cuotas comerciales ni compras.
+- **D18 — financiación:** Patreon será apoyo voluntario y nunca desbloqueará funciones.
+- **D19 — seguridad:** ningún modelo obtiene Bash, sudo ni comandos libres. Solo emite acciones
+  declaradas; Python valida esquema, confianza, permisos y contexto antes de ejecutar.
+- **D20 — idioma:** el STT inicial debe funcionar en español; inglés también forma parte del
+  producto objetivo. SenseVoice-Small queda descartado porque no soporta español.
+- **D21 — hardware:** se abandona el Core2Quad Q8300 como objetivo. El mínimo definitivo sale
+  de benchmarks, no de una generación o cifra imaginada.
+- **D22 — dos productos:** LRP seguirá instalable en distribuciones Linux. La imagen HTPC sobre
+  Debian será un proyecto hermano posterior, no el laboratorio de la voz local.
+- **D23 — estabilidad:** no se elimina la nube de 1.9.1 antes de demostrar que el pipeline local
+  iguala el flujo actual en precisión, latencia y recuperación ante fallos.
+- **D24 — datos:** sin telemetría remota obligatoria. Historial y diagnósticos serán locales;
+  cualquier exportación futura requerirá una acción explícita del usuario.
 
-- **D1 · pagos: PADDLE.** Stripe no opera en Ecuador; PayPal plan B; Ko-fi donaciones.
-  Validacion = compra real $5 + refund. **Paddle REVISA el sitio antes de aprobar.**
-- **D2 · nombre: LinuxRemotePlayer**; **"LRP"** es el `short_name` del manifest. · **D3 ·
-  precio:** Pro unico $5 lifetime; suscripcion recien con Voz 2.0.
-- **D4 · las 7 skins van GRATIS**, son el gancho; el Pro se vendera con skins ADICIONALES en
-  v2.0. Las 4 que existen ya estan libres; las otras 3 son PH17. Falta del dueño: wallpapers.
-- **D5 · Voz 2.0 a v2.0** (PLAN.md §PH19).
-- **D6 · demo interactiva** (PLAN.md §PH20) — **a v1.9.2**; reemplaza al video, cancelado.
-  Reglas duras: etiqueta de SIMULACION visible y CERO red.
-- **D7 · `Techlm77/LinuxPlay` no es competencia** (GPL-2.0, streaming de escritorio; LRP no
-  transmite video). NO se rebrandea. Analisis: PLAN.md §MERCADO. Su codigo NO entra aca.
-- **D9/D10 · la voz se enciende sola al activar la licencia** y se puede apagar; el arranque
-  **nunca** pisa un `false` explicito.
-- **D11/D12 · boton de modo oscuro en el HUD e iconos de apps borrosos → v2.0** (estetica).
-- **D13 · v2.0 NO arranca hasta ver clientes** (31/07); mientras, SOLO 1.9.x. *Por que:* junta
-  skins (ingreso), multi-distro (alcance) y voz (retencion), y en un solo release la matriz se
-  multiplica; la 1.9.0, mas chica, necesito TRES builds. **Por pistas, skins primero.**
-- **D14 · el feedback va a TABLA de Supabase, NO por correo** (31/07). 1/dia **por dispositivo**
-  (por IP no: una casa comparte IP) y **server-side**. *Por que:* del mismo dominio que las
-  claves, **una queja de spam degrada la entrega de las claves**, de la que depende la venta.
-- **D15 · nada de subdominios de correo** (decision del dueño, 31/07): no tiene acceso ni los
-  quiere. Si algun dia hace falta aislar reputacion, se crea **otra cuenta de correo**.
+## BLOQUEANTES Y RIESGOS
 
-## H — HALLAZGOS
+- **B19:** el actualizador instala como root y confía en un hash servido por el mismo origen.
+  La gratuidad no reduce el riesgo. Ver BUGS.md y PLAN §GATE-OTA.
+- **A1:** aún no existe benchmark del pipeline completo en hardware objetivo.
+- **A2:** Needle 2 es muy nuevo; sus métricas publicadas por el autor no sustituyen pruebas LRP.
+- **A3:** automatizar sitios mediante CDP/BiDi es frágil y expone sesiones si el puerto sale de
+  localhost. MPRIS y acciones deterministas tienen prioridad.
+- **A4:** la distribución y actualización de modelos añade tamaño, compatibilidad y licencias.
 
-**Se mudaron a `BUGS.md`** (31/07), que no tiene techo y registra abiertos y cerrados con su
-resolucion. Aca no se duplican: se citan por id.
+## NO HACER TODAVÍA
 
-**Agendados a v1.9.2:** B19 + B19b (firma del OTA) · H23 (el texto de "Temas Pro") · H24 ·
-H25 · H19 · H12 · H5 · H22. **Sin fecha:** H21 y los menores. **Con Paddle:** H11, H20.
-
-## C — CHECKLIST DEL DUEÑO
-
-**Se mudo a `USER.md`** (31/07), junto con los comandos y el contrato de quien puede hacer que.
-Pendiente ahi: **U1** capa 0 de B19 (2FA y bloqueo del dominio, ~20 min, sin codigo) · **U2**
-alta en Paddle · **U3** C9 el correo fuera de spam · **U4** desplegar `send-feedback` ·
-**U5** wallpapers.
+- No borrar Paddle, Supabase, Together, licencias ni términos del código por partes.
+- No prometer públicamente “100% local” antes de una release que lo cumpla.
+- No elegir un modelo por una tabla de Gemini o por benchmarks de otro hardware.
+- No comenzar la ISO antes de validar modo dedicado, motor local y actualización firmada.
+- No leer `design/` ni convertir IDEAS en tareas sin decisión expresa del dueño.
