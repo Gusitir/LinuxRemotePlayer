@@ -238,3 +238,5 @@ reporte-error-instalacion.md
 .agents/capturas/
 # Informes y logs efímeros del workflow de tres niveles
 .work/
+# Worktrees locales de fases; cada rama se audita e integra por separado
+.worktrees/

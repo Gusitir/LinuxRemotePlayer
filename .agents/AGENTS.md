@@ -28,6 +28,7 @@ El flujo de tres niveles, gates, ramas y `agy.exe` vive en `WORKFLOW.md`.
 | TESTING | Único archivo que completa el humano; pruebas reales del ciclo. |
 | IDEAS | Posibilidades no decididas. No crear tareas desde aquí. |
 | WORKFLOW | Tres niveles, autoridad, gates, ramas, evidencia e invocación de Obreros. |
+| PLAN_PH21 | Spec y gates de la fase STT activa. Al cerrar se mueve a `archive/`. |
 
 Un dato debe tener un hogar. Otros archivos lo citan por ID; no lo copian. Conservar el porqué,
 no la cronología completa: git ya conserva lo que pasó.

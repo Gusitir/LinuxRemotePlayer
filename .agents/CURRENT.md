@@ -6,7 +6,7 @@ estado_codigo: estable y certificado en campo; todavía usa nube, licencia y Sup
 vision_aprobada: inferencia 100% local, sin premium ni pagos
 version_objetivo: 2.0.0
 transicion: toda la nueva visión se entrega junta en 2.0.0; todavía no implementada
-fase_activa: workflow de tres niveles adoptado; próximo paso abrir primera fase de 2.0.0
+fase_activa: PH21 laboratorio STT — G0 abierto; Ingeniero de fase por iniciar
 repo: privado; main local tiene commits sin push (verificar cantidad con git al iniciar)
 dominio: https://www.linuxremoteplayer.com
 pruebas_publicadas: TESTING.md — ciclo 1.9.1 cerrado 6/6
@@ -26,8 +26,8 @@ del producto instalado. Ningún documento de usuario se actualiza como si la mig
 
 ## SIGUIENTE
 
-1. Crear rama/worktree de integración y abrir PH21 con G0; `main` conserva 1.9.1 estable.
-2. El Arquitecto crea un Ingeniero Codex nuevo para PH21; éste valida `agy.exe` con smoke test.
+1. Crear rama/worktree de integración y PH21; `main` conserva 1.9.1 estable.
+2. El Arquitecto crea un Ingeniero Codex nuevo para PH21; éste entrega G1 y valida `agy.exe`.
 3. Medir STT local en español e inglés: Whisper multilingüe `base` y `small` cuantizados,
    con `whisper.cpp` como primera referencia y sherpa-onnx como alternativa.
 4. Validar Needle 2 en Linux x86-64: runtime, licencia, memoria, latencia, confianza y precisión

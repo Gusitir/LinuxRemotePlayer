@@ -34,6 +34,10 @@ Obrero Gemini 3.6 Flash High fresco por tarea mediante `agy.exe`. El Ingeniero a
 hace sus commits; el Arquitecto audita fases, integra y es el único que modifica `.agents`.
 Contrato, gates, ramas, evidencia y comando verificado: `WORKFLOW.md`.
 
+**PH21 abierta:** el Arquitecto fijó G0 en `PLAN_PH21.md`: benchmark STT reproducible, Whisper
+base/small obligatorios, corpus ES/EN, licencias, métricas y separación estricta del producto
+1.9.1. El Ingeniero debe producir G1 y un smoke test de `agy.exe` antes de lanzar Obreros.
+
 ## Sesiones anteriores — vigencia condensada
 
 - **2026-07-31:** auditor externo descubrió B19: OTA root sin firma. Sigue abierto y bloquea
