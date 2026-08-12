@@ -45,14 +45,17 @@ No corrige B19, pero reduce exposición mientras se implementa la firma.
 - [ ] El Q8300 puede usarse como dato exploratorio, pero no como objetivo ni gate.
 - [ ] Ejecutar personalmente las pruebas de percepción: ruido de TV, espera, errores y recuperación.
 
-### U4 — retirada futura de servicios
+### U4 — corte de servicios para el lanzamiento 2.0.0
 
-Solo después de que PH23 sea APTO:
+Solo después de que PH23 sea APTO y siguiendo el brief de PH24:
 
 - [ ] Retirar/desplegar cambios de Supabase según el brief auditado.
 - [ ] Revocar llaves de Together y otros proveedores que ya no se necesiten.
+- [ ] Retirar los servicios Supabase de keys, licencias, activaciones y proxy de IA.
 - [ ] Cancelar o cerrar Paddle si se creó alguna cuenta/configuración.
 - [ ] Verificar que no queden cobros, webhooks ni datos de clientes pendientes.
+- [ ] Confirmar el corte después de desplegar la web 2.0; no apagar antes los servicios que
+  todavía necesite la 1.9.1 durante la transición.
 
 ### U5 — soporte por correo
 

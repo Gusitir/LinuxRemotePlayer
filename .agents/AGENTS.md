@@ -38,6 +38,8 @@ no la cronología completa: git ya conserva lo que pasó.
 - 1.9.1 todavía usa nube/licencia. No describir intención futura como código existente.
 - La app multi-distro y la futura imagen Debian son proyectos relacionados pero separados.
 - Ningún modelo recibe shell, sudo, rutas libres ni texto ejecutable.
+- Toda esta transición se entrega como **2.0.0**, incluyendo web ES/EN y retirada de los
+  servicios Supabase de keys/licencias/IA. No describirlos como limpieza posterior.
 
 ## ROLES
 

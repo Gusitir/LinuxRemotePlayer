@@ -12,7 +12,7 @@ PLAN/CURRENT. No tiene techo. Los bugs previos a 1.9.x viven en git y `archive/`
 `lrp-update` instala como root un `.deb` y comprueba un sha256 servido por el mismo origen.
 Detecta corrupción, no un origen comprometido. Quien controle Vercel/DNS/dominio puede entregar
 un paquete y un hash hostiles. No existe timer: el usuario debe pulsar Actualizar, pero la app
-lo invita a hacerlo. Plan: PLAN §GATE-OTA.
+lo invita a hacerlo. Plan: PLAN §GATE-OTA. Debe cerrarse en 2.0.0 antes de publicarla.
 
 ## B19b — TOCTOU y nombre predecible en `/tmp`
 
@@ -24,7 +24,8 @@ un `mktemp` root-only y mantener identificado el mismo inode/artefacto hasta ins
 **Abierto por decisión D16-D18; todavía no es un defecto de 1.9.1.**
 
 Backend, frontend, sitio y Supabase contienen Together, `ai-proxy`, licencias, compra, cuotas y
-textos Paddle. Se resuelve como migración coordinada en PH24, no borrando referencias aisladas.
+textos Paddle. Se resuelve como migración coordinada de 2.0.0 en PH24, incluida la web y la
+retirada del servicio Supabase de keys/IA; no borrando referencias aisladas.
 
 Incluye los hallazgos antes separados:
 

@@ -25,6 +25,10 @@ Esta sesión solo reescribió `.agents/`; no modificó producto. **1.9.1 todaví
 y se conserva estable hasta demostrar el reemplazo. El próximo paso es que el dueño establezca
 el flujo de trabajo; luego se crea un laboratorio aislado y se mide antes de implementar.
 
+**Aclaración posterior del dueño:** toda la nueva visión es **LinuxRemotePlayer 2.0.0**. El
+lanzamiento incluye también el rediseño de la web y la retirada de los servicios Supabase de
+keys, licencias y proxy de IA. No son tareas post-2.0 ni releases intermedias.
+
 ## Sesiones anteriores — vigencia condensada
 
 - **2026-07-31:** auditor externo descubrió B19: OTA root sin firma. Sigue abierto y bloquea

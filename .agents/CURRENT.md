@@ -4,8 +4,9 @@
 version_publicada: 1.9.1
 estado_codigo: estable y certificado en campo; todavía usa nube, licencia y Supabase
 vision_aprobada: inferencia 100% local, sin premium ni pagos
-transicion: diseñada en PLAN.md; todavía no implementada
-fase_activa: redefinición de flujo y preparación del laboratorio local
+version_objetivo: 2.0.0
+transicion: toda la nueva visión se entrega junta en 2.0.0; todavía no implementada
+fase_activa: preparación del flujo de desarrollo de 2.0.0
 repo: privado; main local está 6 commits por delante de origin/main
 dominio: https://www.linuxremoteplayer.com
 pruebas_publicadas: TESTING.md — ciclo 1.9.1 cerrado 6/6
@@ -33,7 +34,9 @@ del producto instalado. Ningún documento de usuario se actualiza como si la mig
    con un corpus propio de órdenes LRP.
 5. Elegir hardware mínimo a partir de evidencia; candidato provisional: x86-64 + AVX2.
 6. Diseñar la migración sin nube y recién entonces trocearla en tareas.
-7. Corregir B19 antes de publicar cualquier siguiente versión: el OTA actual sigue sin firma.
+7. Corregir B19 dentro de 2.0.0 antes de publicarla: el OTA actual sigue sin firma.
+8. Rediseñar la web ES/EN para 2.0.0 y retirar Paddle/Pro/licencias en el mismo lanzamiento.
+9. Retirar los servicios Supabase de keys, validación y proxy de IA antes de publicar 2.0.0.
 
 ## DECISIONES VIGENTES
 
@@ -52,6 +55,10 @@ del producto instalado. Ningún documento de usuario se actualiza como si la mig
   iguala el flujo actual en precisión, latencia y recuperación ante fallos.
 - **D24 — datos:** sin telemetría remota obligatoria. Historial y diagnósticos serán locales;
   cualquier exportación futura requerirá una acción explícita del usuario.
+- **D25 — versión:** la nueva arquitectura completa se publica como **2.0.0**. No habrá una
+  release intermedia que anuncie la nueva visión con piezas cloud/comerciales todavía activas.
+- **D26 — corte coordinado:** web, aplicación, documentación y servicios Supabase de
+  keys/licencias/IA cambian juntos al lanzar 2.0.0. Hasta entonces, 1.9.1 permanece factual.
 
 ## BLOQUEANTES Y RIESGOS
 

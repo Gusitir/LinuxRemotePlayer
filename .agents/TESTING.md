@@ -4,6 +4,7 @@
 baseline: 1.9.1
 baseline_estado: APTO 6/6 en campo, 2026-07-30
 proximo_ciclo: no abierto; espera selección de STT y flujo de trabajo
+release_objetivo: 2.0.0
 ejecuta_device: dueño; un agente puede diagnosticar por shell pero no sustituir experiencia
 formato: "[OK] / [FALLA: descripción] / [NO VERIFICABLE: motivo]"
 ```
@@ -28,7 +29,7 @@ nueva arquitectura: mide nube/licencia y una actualización sobre un equipo exis
 4. Una prueba de device solo vale si antes `dpkg -V` confirma que el equipo es el paquete.
 5. El auditor convierte fallas en bugs únicamente después de confirmar causa raíz.
 
-## MATRIZ QUE DEBERÁ EXISTIR ANTES DE REEMPLAZAR 1.9.1
+## MATRIZ QUE DEBERÁ APROBAR LINUXREMOTEPLAYER 2.0.0
 
 ### TST-L1 — benchmark STT
 
@@ -55,6 +56,8 @@ nueva arquitectura: mide nube/licencia y una actualización sobre un equipo exis
 - Instalación limpia sin cuenta, licencia ni clave.
 - Upgrade desde 1.9.1 conserva pairing, apps, skins y configuración.
 - Clave vieja no bloquea ni exige acción.
+- Web ES/EN no ofrece compra, licencia ni servicio cloud y presenta correctamente Patreon.
+- Las funciones Supabase de keys/licencias/IA ya no son necesarias ni reciben tráfico de 2.0.0.
 - Desinstalación completa retira servicio, permisos, modelos, cachés y certificados propios.
 
 ### TST-L5 — OTA seguro

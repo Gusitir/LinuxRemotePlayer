@@ -2,6 +2,7 @@
 
 ```yaml
 base_estable: 1.9.1
+release_objetivo: 2.0.0
 destino: voz e interpretación locales; sin premium, pagos ni dependencia operativa de nube
 estado: arquitectura aprobada; implementación no iniciada
 regla: ninguna fase se convierte en tareas T-NN antes de medir sus prerequisitos
@@ -16,7 +17,7 @@ regla: ninguna fase se convierte en tareas T-NN antes de medir sus prerequisitos
 | PH21 | Laboratorio STT local | Siguiente |
 | PH22 | Needle 2 y contrato de acciones | Pendiente de PH21 |
 | PH23 | Pipeline local integrado | Pendiente |
-| PH24 | Retirada coordinada de nube/licencias/pagos | Pendiente de equivalencia funcional |
+| PH24 | Corte 2.0: app + web + Supabase sin licencias/nube | Obligatorio antes del release |
 | PH25 | Calidad, CI y soporte multi-distro | Pendiente |
 | PH26 | Modos escritorio/dedicado completos | Diseño futuro |
 | PH27 | Imagen Debian para HTPC | Proyecto hermano posterior |
@@ -141,18 +142,31 @@ precisión/latencia en el hardware mínimo.
 
 # PH24 — retirar nube, licencias y pagos
 
-Una sola migración coordinada; no dejar estados híbridos invisibles.
+Esta fase forma parte del **release 2.0.0**. Una sola migración coordinada; no publicar estados
+híbridos ni tratar la web/Supabase como limpieza posterior.
 
 - [ ] Backend: retirar validación de licencia, proxy cloud, cuotas y activación.
 - [ ] Frontend: retirar compra, clave, plan, takeover y gates; voz disponible localmente.
-- [ ] Supabase: archivar funciones/esquema de IA/licencias; el dueño realiza deploy/retirada.
-- [ ] Website ES/EN: retirar Paddle, precio, premium y términos de venta; explicar privacidad local.
+- [ ] Supabase: retirar de producción los servicios de keys, validación, activaciones, cuotas y
+  proxy de IA; el dueño ejecuta la operación y revoca secretos después de verificar el corte.
+- [ ] Website ES/EN: rediseñar para 2.0, retirar Paddle, precio, premium y términos de venta;
+  presentar voz local, requisitos reales, privacidad y Patreon.
 - [ ] Añadir Patreon como apoyo voluntario sin beneficios funcionales.
 - [ ] README, docs, changelog, uninstall y `.env.example` coherentes.
 - [ ] Definir licencia futura del proyecto en una decisión separada; “sin premium” no implica
   automáticamente cambiar Elastic 2.0 ni hacer público el repo.
 - [ ] Política para usuarios de 1.9.1 con claves existentes: migración automática, sin perder
   configuración ni exigir intervención.
+- [ ] Gate de lanzamiento: ninguna ruta instalada, página pública ni servicio desplegado depende
+  de una key/licencia Supabase para usar LRP 2.0.0.
+
+## Gate final de 2.0.0
+
+- PH21–PH23 aprobadas con evidencia.
+- GATE-OTA aprobado, incluida firma inválida y rollback.
+- PH24 completa en código, web ES/EN, documentación y producción Supabase.
+- Instalación limpia, upgrade 1.9.1 → 2.0.0, operación sin internet y desinstalación aprobadas.
+- Artefacto 2.0.0 y sitio público describen exactamente el mismo producto.
 
 # PH25 — calidad y multi-distro
 
@@ -188,4 +202,5 @@ hasta una decisión expresa del dueño.
 - Port de Windows: viable, solo ante demanda sostenida.
 - Skins 2.0, gamepad, archivos y demo web: ideas válidas, sin prioridad hasta estabilizar la
   nueva base local.
-- El antiguo roadmap Paddle/Pro/1.9.2/1.9.3 queda superado. La historia permanece en git.
+- El antiguo roadmap Paddle/Pro/1.9.2/1.9.3 queda superado. Todo el cambio aprobado converge en
+  **2.0.0**; la historia permanece en git.

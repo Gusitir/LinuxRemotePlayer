@@ -3,6 +3,7 @@
 ```yaml
 reindexado: 2026-08-11
 estado: código publicado cloud/licensed; destino local todavía no implementado
+release_destino: 2.0.0
 backend_main: 1013 líneas
 frontend_app: 1583 líneas
 ```
@@ -52,7 +53,7 @@ frontend_app: 1583 líneas
 - `lrp-cleanup.sh`: cleanup best-effort, siempre exit 0; lee configuración antes de borrarla.
 - `website/install.sh`: `curl | sudo bash`; no reemplazar stdin con `/dev/tty`.
 
-## NUBE/COMERCIAL QUE PH24 DEBE RETIRAR COORDINADAMENTE
+## NUBE/COMERCIAL QUE 2.0.0 DEBE RETIRAR COORDINADAMENTE
 
 - Backend: `auth.py`, `ai_pipeline.py`, endpoints/estado de licencia, BUY_URL y flags de voz.
 - Frontend: IndexedDB/localStorage de licencia, UI de compra/activación/takeover y gates.
@@ -61,6 +62,8 @@ frontend_app: 1583 líneas
 - Configuración/desinstalador: LICENSE_*, AI_PROXY_URL, BUY_URL y cachés.
 
 No borrar una sola capa y dejar las demás: produciría UI, migraciones o documentación falsas.
+El rediseño de `website/` y la retirada en producción de los servicios Supabase de keys/IA son
+gates del lanzamiento 2.0.0, no mantenimiento posterior.
 
 ## FRONTERAS DEL DESTINO LOCAL — NO EXISTEN AÚN
 
