@@ -12,6 +12,7 @@ estado vivo está en CURRENT.md.
 
 Después, solo según la tarea: `BUGS.md`, `USER.md`, `PLAN.md`, `TESTING.md`.
 `IDEAS.md` no genera trabajo. `design/` y `archive/` no se leen salvo orden expresa.
+El flujo de tres niveles, gates, ramas y `agy.exe` vive en `WORKFLOW.md`.
 
 ## CONTRATO DE ARCHIVOS
 
@@ -26,6 +27,7 @@ Después, solo según la tarea: `BUGS.md`, `USER.md`, `PLAN.md`, `TESTING.md`.
 | USER | Infraestructura y acciones exclusivas del dueño. Sin techo. |
 | TESTING | Único archivo que completa el humano; pruebas reales del ciclo. |
 | IDEAS | Posibilidades no decididas. No crear tareas desde aquí. |
+| WORKFLOW | Tres niveles, autoridad, gates, ramas, evidencia e invocación de Obreros. |
 
 Un dato debe tener un hogar. Otros archivos lo citan por ID; no lo copian. Conservar el porqué,
 no la cronología completa: git ya conserva lo que pasó.
@@ -43,25 +45,25 @@ no la cronología completa: git ya conserva lo que pasó.
 
 ## ROLES
 
-- **Dueño:** decide producto, prueba dispositivos, opera cuentas y hace todo `git push`.
-- **Planificador/auditor:** diseña, escribe briefs, verifica evidencia y hace commits aprobados.
-- **Ejecutor:** implementa una tarea autocontenida y entrega árbol sucio con STOP; no commitea.
-- **Agente del HTPC:** ejecuta diagnóstico/matriz; no modifica producto salvo orden expresa y
-  siempre declara el cambio.
+- **Arquitecto:** Codex del chat principal. Planea/audita fases, integra y es el único agente que
+  actualiza `.agents`.
+- **Ingeniero:** Codex nuevo por fase, orquestado por el Arquitecto. Divide/audita tareas, prueba,
+  desbloquea y commitea entregas aptas.
+- **Obrero:** Gemini 3.6 Flash High fresco por tarea mediante `agy.exe`; edita y verifica, pero no
+  commitea, pushea, cambia arquitectura ni lee `.agents`.
+- **Dueño:** decide producto, prueba devices, opera cuentas y hace todo push.
+- **Agente HTPC:** diagnóstico/matriz; no modifica producto salvo orden y declaración explícita.
 
-**Los modelos concretos para estos roles se definirán al establecer el nuevo flujo.** No asumir
-que siguen siendo Gemini/Claude ni delegar hasta que CURRENT lo registre. Ningún agente pushea y
-ningún commit lleva `Co-Authored-By`.
+Contrato completo: `WORKFLOW.md`. Ningún commit lleva `Co-Authored-By`.
 
-## CICLO POR TAREA
+## CICLO POR TAREA — RESUMEN
 
-1. Una tarea `[T-NN]` tiene objetivo, alcance, archivos, cambio esperado, verificaciones,
-   criterios de aceptación y mensaje de commit.
-2. El ejecutor para ante duda/error, pega evidencia literal y termina `STOP — T-NN listo para auditoría`.
-3. El auditor espera el STOP, revisa el árbol real, repite checks y audita referencias/documentación.
-4. Con APTO: `git add` selectivo, un commit por tarea. Nunca `git add .` ni `git add -A`.
-5. El dueño hace push manual.
-6. Device/hardware no verificable se añade a TESTING; no se declara aprobado por inspección.
+1. Arquitecto abre fase/G0 y crea Ingeniero.
+2. Ingeniero crea brief/G1 y lanza Obrero fresco.
+3. Obrero entrega STOP; Ingeniero repite checks y decide G2/commit selectivo.
+4. Ingeniero integra la fase/G3; Arquitecto audita rango e informe/G4.
+5. Arquitecto actualiza `.agents`; dueño hace push manual.
+6. Device/hardware no verificable va a TESTING; no se aprueba por inspección.
 
 El auditor audita commits o un árbol soltado explícitamente, nunca mientras otro agente edita.
 Una prueba de device solo vale si `dpkg -V` confirma primero que el equipo representa el paquete.

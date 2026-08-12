@@ -29,6 +29,11 @@ el flujo de trabajo; luego se crea un laboratorio aislado y se mide antes de imp
 lanzamiento incluye también el rediseño de la web y la retirada de los servicios Supabase de
 keys, licencias y proxy de IA. No son tareas post-2.0 ni releases intermedias.
 
+**Workflow adoptado:** Arquitecto Codex (este chat) → un Ingeniero Codex nuevo por fase → un
+Obrero Gemini 3.6 Flash High fresco por tarea mediante `agy.exe`. El Ingeniero audita tareas y
+hace sus commits; el Arquitecto audita fases, integra y es el único que modifica `.agents`.
+Contrato, gates, ramas, evidencia y comando verificado: `WORKFLOW.md`.
+
 ## Sesiones anteriores — vigencia condensada
 
 - **2026-07-31:** auditor externo descubrió B19: OTA root sin firma. Sigue abierto y bloquea

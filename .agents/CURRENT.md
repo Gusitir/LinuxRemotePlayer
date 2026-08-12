@@ -6,8 +6,8 @@ estado_codigo: estable y certificado en campo; todavía usa nube, licencia y Sup
 vision_aprobada: inferencia 100% local, sin premium ni pagos
 version_objetivo: 2.0.0
 transicion: toda la nueva visión se entrega junta en 2.0.0; todavía no implementada
-fase_activa: preparación del flujo de desarrollo de 2.0.0
-repo: privado; main local está 6 commits por delante de origin/main
+fase_activa: workflow de tres niveles adoptado; próximo paso abrir primera fase de 2.0.0
+repo: privado; main local tiene commits sin push (verificar cantidad con git al iniciar)
 dominio: https://www.linuxremoteplayer.com
 pruebas_publicadas: TESTING.md — ciclo 1.9.1 cerrado 6/6
 ultima_actualizacion_docs: 2026-08-11
@@ -26,8 +26,8 @@ del producto instalado. Ningún documento de usuario se actualiza como si la mig
 
 ## SIGUIENTE
 
-1. El dueño establece el nuevo flujo de trabajo y los roles.
-2. Crear una rama/laboratorio separado; `main` conserva 1.9.1 estable.
+1. Crear rama/worktree de integración y abrir PH21 con G0; `main` conserva 1.9.1 estable.
+2. El Arquitecto crea un Ingeniero Codex nuevo para PH21; éste valida `agy.exe` con smoke test.
 3. Medir STT local en español e inglés: Whisper multilingüe `base` y `small` cuantizados,
    con `whisper.cpp` como primera referencia y sherpa-onnx como alternativa.
 4. Validar Needle 2 en Linux x86-64: runtime, licencia, memoria, latencia, confianza y precisión
@@ -59,6 +59,9 @@ del producto instalado. Ningún documento de usuario se actualiza como si la mig
   release intermedia que anuncie la nueva visión con piezas cloud/comerciales todavía activas.
 - **D26 — corte coordinado:** web, aplicación, documentación y servicios Supabase de
   keys/licencias/IA cambian juntos al lanzar 2.0.0. Hasta entonces, 1.9.1 permanece factual.
+- **D27 — workflow:** tres niveles: Arquitecto Codex por proyecto, Ingeniero Codex fresco por
+  fase y Obrero Gemini 3.6 Flash High fresco por tarea mediante `agy.exe`. El Ingeniero audita
+  tareas/commits; el Arquitecto audita fases/gates y controla `.agents`. Ver WORKFLOW.md.
 
 ## BLOQUEANTES Y RIESGOS
 
