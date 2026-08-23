@@ -107,3 +107,18 @@ El fix `.gitattributes` quedó incluido en `8e27512`; 29 tests pasaron después 
 T-121 queda bloqueado únicamente por la evidencia HTPC del dueño (`TST-BETA-CHANNEL-001`). Los
 clones externos `lrp-t118-build-3`, `lrp-t118-integrated-1` y `t120-native-20260822-5` quedan sin
 cleanup autorizado. Este registro no emite veredicto humano.
+
+## 2026-08-23 · HANDOFF session close
+
+`main`/`origin/main` están sincronizados en `4c28d41`; `codex/beta-foundation`/origin en `4bdf5da`.
+Vercel reportó `success` en `2026-08-23T05:07:01Z`. Stable `1.9.1` y beta `1.99.1` permanecen
+verificadas; el beta `.deb` coincide con SHA
+`8d4a19834eca05eda0e3f8b9c77817e6baaa19fb1bd823e30b5a726b6cb9c894`.
+
+T-121 queda bloqueado por `TST-BETA-CHANNEL-001` automatizable con autorización del dueño y
+`TST-BETA-HUMAN-001` humano. `TST-BETA-UPDATE-002` queda diferido y no bloquea. Persisten sin
+cleanup autorizado los clones `lrp-t118-build-3`, `lrp-t118-integrated-1` y `t120-native-20260822-5`.
+Sesiones persistentes: control `ses_fd89e5f9effeFg15Lq7OKDlxu3`, producto
+`ses_fd89e2891ffePR5nRqlGsyeKHw`, Workers `ses_fd84c189dffeo3efi7lMZtZ6HS` y
+`ses_fd82b70b4ffe1xKKtLCNow4QzW`, DeepSeek del Arquitecto `ses_fd31148adffeGMmtU9XqM9OYqG`.
+Sin veredicto humano nuevo; el Arquitecto audita y decide después de recibir ambas capsules.
