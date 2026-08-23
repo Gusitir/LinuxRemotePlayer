@@ -54,3 +54,39 @@ base/small obligatorios, corpus ES/EN, licencias, métricas y separación estric
 
 PWA móvil controla una PC Linux por WebSocket. La premisa original decía que la IA pesada iba
 a la nube; D16 reemplaza esa premisa, pero no cambia retroactivamente el código de 1.9.1.
+
+## 2026-08-21 · adopción agents-workflow v3
+
+MAINTAIN adoptó la semántica v3 en el plano de control. `AGENTS.md` es la autoridad de roles,
+assurance `Standard`, reglas durables, gates, separación y orquestación; `CURRENT.md` solo mantiene
+estado vivo; `INDEX.md` posee navegación; `TESTING.md` contiene únicamente checks humanos o no
+disponibles; los planes poseen scope/tareas; `APPCORE.md` conserva arquitectura estable verificada.
+
+Se corrigió D27: el workflow vigente usa dos Ingenieros persistentes `gpt-5.6 LUNA` con esfuerzo
+`MAX`; TERRA/SOL están prohibidos; cada Ingeniero tiene hasta 2 slots LUNA-MAX y el total global
+es 4, siempre con autorización del Arquitecto. DeepSeek V4 Flash High queda reservado al
+Arquitecto para hasta 2 fixes diminutos posteriores a auditoría. No se usaron Obreros en MAINTAIN.
+
+CAVEMAN queda durable para Arquitecto, Ingenieros y Obreros: sin saludos ni relleno; salida breve,
+técnica, factual y accionable. PH21 permanece activa con G0 `APTO` y G1 `pendiente`; el siguiente
+job es el global `REINDEX`. El snapshot histórico de TESTING queda en `archive/`.
+
+## 2026-08-21 · D28 — betas opt-in y pruebas directas
+
+El dueño reemplazó el laboratorio físico como gate previo por betas instalables. Stable 1.9.1 no
+debe descubrirlas: conserva su manifiesto y botón actuales. La única inscripción beta será el
+comando curl de una página pública mínima; una beta instalada persiste su canal, consulta un
+manifiesto separado y recibe solo actualizaciones beta-a-beta.
+
+Las versiones técnicas siguen `X.Y.Z`: `1.99.1`, `1.99.2`, etc.; `2.0.0` queda para estable. Cada
+modelo se validará dentro de una beta con 18 comandos —12 ES y 6 EN— en lugar de exigir primero el
+corpus físico de 60 audios. PH21 se conserva como tooling reutilizable, no como gate.
+
+B19 es un riesgo aceptado por el dueño para estas betas opt-in sin publicidad porque no hay base de
+usuarios anunciada. No se declara resuelto: firma, downgrade y rollback siguen bloqueando la
+promoción estable 2.0.0. Needle 2 permanece previsto para sustituir la interpretación cloud tras
+elegir STT; Python mantiene PolicyEngine y los modelos nunca ejecutan shell.
+
+**Aprobación D28:** el dueño aprobó el plan beta y ordenó `RUN THE LOOP` el 2026-08-21. Diseño
+canónico SHA-256: `2bc3ec3cfac39a205c4a16c0d1f06b85f388d040e34a0d2290e3dd0f9c552f7d`.
+La aprobación habilita T-117; no autoriza push, deploy, release ni operaciones destructivas.

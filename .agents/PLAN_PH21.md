@@ -1,5 +1,8 @@
 # PH21 — laboratorio STT local
 
+> Fuente legacy de G0. No es el plan activo v3. Su draft v3 fue superseded por
+> [`PLAN_v1.99-beta-foundation.md`](PLAN_v1.99-beta-foundation.md); el tooling PH21 se conserva.
+
 ```yaml
 fase: PH21
 release: 2.0.0

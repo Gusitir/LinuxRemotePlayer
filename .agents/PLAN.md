@@ -1,5 +1,9 @@
 # LinuxRemotePlayer — plan de transición local
 
+> Roadmap de arquitectura. La ejecución inmediata cambió a betas opt-in; el plan activo es
+> [`PLAN_v1.99-beta-foundation.md`](PLAN_v1.99-beta-foundation.md). PH21 queda como tooling
+> reutilizable y deja de ser gate previo a integrar modelos en betas.
+
 ```yaml
 base_estable: 1.9.1
 release_objetivo: 2.0.0
@@ -13,8 +17,12 @@ regla: ninguna fase se convierte en tareas T-NN antes de medir sus prerequisitos
 | Fase | Objetivo | Estado |
 |---|---|---|
 | PH1–PH20 | Historia hasta 1.9.1 | Cerrada o superada; detalle en git y archive/ |
-| GATE-OTA | Firma y actualización recuperable | Obligatorio antes de publicar otra versión |
-| PH21 | Laboratorio STT local | Siguiente |
+| BETA-FOUNDATION | Canal opt-in, página mínima y OTA beta-a-beta | Plan activo pendiente de aprobación |
+| BETA-STT | Modelos probados en betas con checklist 12 ES + 6 EN | Después de BETA-FOUNDATION |
+| BETA-NEEDLE | Interpretación local con Needle 2 + PolicyEngine | Después de elegir STT |
+| BETA-OFFLINE | Retirada coordinada de nube/licencias | Antes de 2.0.0 estable |
+| GATE-OTA | Firma y actualización recuperable | Obligatorio antes de 2.0.0 estable |
+| PH21 | Laboratorio STT local | Tooling existente, no gate; draft superseded |
 | PH22 | Needle 2 y contrato de acciones | Pendiente de PH21 |
 | PH23 | Pipeline local integrado | Pendiente |
 | PH24 | Corte 2.0: app + web + Supabase sin licencias/nube | Obligatorio antes del release |
@@ -43,7 +51,7 @@ regla: ninguna fase se convierte en tareas T-NN antes de medir sus prerequisitos
 **B19 sigue siendo el riesgo estructural principal.** El hash y el paquete provienen del mismo
 servidor; un compromiso del origen puede instalar código hostil como root.
 
-Antes de cualquier release nueva:
+Antes de promover `2.0.0` al canal estable:
 
 - [ ] Firma criptográfica separada del manifiesto/artefacto.
 - [ ] Clave pública embebida en el paquete; clave privada offline y fuera de Vercel/GitHub.
