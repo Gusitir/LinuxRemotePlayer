@@ -61,6 +61,24 @@ let lastSuggestedKiosks = [];
 let buyUrl = 'https://www.linuxremoteplayer.com/';
 let isLicensed = false;
 let latestUpdateVersion = null;
+let channel = 'stable';
+
+function renderChannel(value) {
+    channel = value === 'beta' ? 'beta' : 'stable';
+    document.documentElement.dataset.lrpChannel = channel;
+
+    let channelEl = document.getElementById('channel-text');
+    if (!channelEl) {
+        channelEl = document.createElement('span');
+        channelEl.id = 'channel-text';
+        channelEl.className = 'text-xs text-gray-400 ml-2';
+        const versionEl = document.getElementById('version-text');
+        if (versionEl && versionEl.parentNode) {
+            versionEl.parentNode.appendChild(channelEl);
+        }
+    }
+    if (channelEl) channelEl.textContent = `Canal ${channel}`;
+}
 
 function toast(message) {
     const el = document.createElement('div');
@@ -237,6 +255,7 @@ async function fetchConfig() {
             const data = await res.json();
             hostname = data.hostname || '';
             buyUrl = data.buy_url || 'https://www.linuxremoteplayer.com/';
+            renderChannel(data.channel);
 
             const verText = document.getElementById('version-text');
             if (verText) verText.textContent = `Versión ${data.version || '1.0.0'}`;
