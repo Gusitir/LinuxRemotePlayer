@@ -134,7 +134,7 @@ restart_services() {
         for d in /run/user/*; do
             if [ -d "$d" ]; then
                 uid=$(basename "$d")
-                user_home=$(eval echo "~$(id -nu "$uid")")
+                user_home=$(getent passwd "$(id -nu "$uid")" | cut -d: -f6)
                 if [ -f "$user_home/.config/systemd/user/linuxremoteplayer.service" ]; then
                     sudo -u "#$uid" XDG_RUNTIME_DIR="$d" systemctl --user daemon-reload || true
                     sudo -u "#$uid" XDG_RUNTIME_DIR="$d" systemctl --user enable linuxremoteplayer.service || true
@@ -164,7 +164,24 @@ main() {
 
     set -e
     export DEBIAN_FRONTEND=noninteractive
-    MANIFEST_URL="${UPDATE_MANIFEST_URL:-https://www.linuxremoteplayer.com/latest.json}"
+    ENV_FILE=/opt/linuxremoteplayer/backend/.env
+    CHANNEL="stable"
+    if [ -f "$ENV_FILE" ]; then
+        CHANNEL=$(awk '
+            match($0, /^[[:space:]]*LRP_CHANNEL[[:space:]]*=/) {
+                value = substr($0, RSTART + RLENGTH)
+                sub(/^[[:space:]]*/, "", value)
+                sub(/[[:space:]]*$/, "", value)
+                channel = value
+            }
+            END { print (channel == "beta" ? "beta" : "stable") }
+        ' "$ENV_FILE")
+    fi
+    if [ "$CHANNEL" = "beta" ]; then
+        MANIFEST_URL="https://www.linuxremoteplayer.com/beta/latest.json"
+    else
+        MANIFEST_URL="https://www.linuxremoteplayer.com/latest.json"
+    fi
     echo "Checking $MANIFEST_URL for updates..."
     LATEST_JSON=$(curl -fsSL "$MANIFEST_URL")
     VERSION=$(echo "$LATEST_JSON" | grep -o '"version"\s*:\s*"[^"]*"' | cut -d'"' -f4)
