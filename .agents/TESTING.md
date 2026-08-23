@@ -9,8 +9,12 @@ format: "[OK] / [FAIL: reason] / [SKIP: reason]"
 
 ## REQUIRED CHECKS
 
-- TST-BETA-CHANNEL-001 [SKIP: requiere evidencia del dueño en HTPC de instalación por curl,
-  reinicio, actualización beta-a-beta y separación stable/beta; bloquea cierre de BETA-FOUNDATION.]
+- TST-BETA-CHANNEL-001 [SKIP: requiere evidencia del dueño en HTPC: curl instala 1.99.1,
+  `dpkg -V`, VERSION 1.99.1, `LRP_CHANNEL=beta`, restart/health, `/api/config` channel beta,
+  `/api/update/check` current/latest 1.99.1 sin update y stable `/latest.json` 1.9.1.]
+- TST-BETA-UPDATE-002 [SKIP: requiere futura beta 1.99.2 para probar 1.99.1->1.99.2 preservando
+  canal/config/servicio; diferido y no bloquea BETA-FOUNDATION porque el plan exige lectura del
+  manifiesto beta, no una build futura.]
 - TST-BETA-MODEL-001 [SKIP: milestone BETA-STT no iniciado; cada beta/modelo requiere 12 comandos
   ES y 6 EN con resultado, latencia percibida, fallo/rechazo y estado offline.]
 - TST-DEVICE-001 [SKIP: device real no disponible; bloquea validación de instalación limpia,

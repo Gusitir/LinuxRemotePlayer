@@ -2,15 +2,13 @@
 
 ```yaml
 version: 3
-updated_at: 2026-08-22T23:48:04-05:00
+updated_at: 2026-08-22T23:52:24-05:00
 source_commit: 8e27512
 product_branch_head: 4bdf5da
 dirty: true
 dirty_items:
-  - .agents/CURRENT.md (final state integration)
-  - .agents/TESTING.md (TST-BETA-CHANNEL-001 update; TST-PACKAGE-001 removed)
-  - .agents/CONTEXT.md (append-only deployment record)
-  - .agents/INDEX.md (metadata update)
+  - .agents/CURRENT.md (RUN THE LOOP control correction)
+  - .agents/TESTING.md (TST-BETA checks correction)
   - .agents/design/skins2/lochi.png (pre-existing untracked)
 assurance: Standard
 active_job: RUN THE LOOP
@@ -23,8 +21,9 @@ next_action: Owner runs public curl on HTPC and records TST-BETA-CHANNEL-001
 
 ## Blockers
 
-- T-121 remains blocked only on owner HTPC evidence: install by public curl, restart, beta-a-beta
-  update and stable/beta separation.
+- T-121 remains blocked on owner HTPC evidence for TST-BETA-CHANNEL-001.
+- TST-BETA-UPDATE-002 is deferred until 1.99.2 and does not block BETA-FOUNDATION closure because
+  the plan requires beta-manifest reading, not a future beta build.
 - Cleanup of external WSL audit clones is not authorized.
 
 ## Fresh evidence
@@ -50,4 +49,5 @@ next_action: Owner runs public curl on HTPC and records TST-BETA-CHANNEL-001
 
 ## Open findings
 
-- Owner must execute and record `TST-BETA-CHANNEL-001` on the HTPC.
+- Owner must execute and record `TST-BETA-CHANNEL-001` on the HTPC. `TST-BETA-UPDATE-002` is
+  deferred and not a BETA-FOUNDATION blocker.
