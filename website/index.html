@@ -3,408 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LinuxRemotePlayer — El control remoto para tu TV con Linux</title>
-    <meta name="description" content="Convierte tu PC con Linux en la Smart TV de la casa. Control total desde el teléfono: touchpad, teclado, apps de streaming y comandos de voz que toda la familia sabe usar.">
-
-    <!-- Open Graph -->
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="LinuxRemotePlayer — El control remoto para tu TV con Linux">
-    <meta property="og:description" content="Convierte tu PC con Linux en la Smart TV de la casa. Control desde el teléfono: touchpad, teclado, apps y comandos de voz.">
-    <meta property="og:image" content="https://www.linuxremoteplayer.com/screenshots/000_principal.webp">
-
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:title" content="LinuxRemotePlayer — El control remoto para tu TV con Linux">
-    <meta property="twitter:description" content="Convierte tu PC con Linux en la Smart TV de la casa. Control desde el teléfono: touchpad, teclado, apps y comandos de voz.">
-    <meta property="twitter:image" content="https://www.linuxremoteplayer.com/screenshots/000_principal.webp">
-
+    <title>LinuxRemotePlayer beta</title>
+    <meta name="description" content="Canal beta opt-in de LinuxRemotePlayer antes de 2.0.0.">
     <link rel="alternate" hreflang="es" href="https://www.linuxremoteplayer.com/">
     <link rel="alternate" hreflang="en" href="https://www.linuxremoteplayer.com/en/">
     <link rel="icon" type="image/png" href="icon-192.png">
     <link rel="stylesheet" href="style.css">
     <script src="site.js"></script>
-    <!-- PLACEHOLDER-PADDLE: los botones de compra se conectan al checkout de Paddle en T-51 -->
-    <!-- PLACEHOLDER-KOFI: el enlace de donaciones se conecta al crear la cuenta Ko-fi -->
 </head>
-<body>
-
+<body class="beta-landing">
     <header>
         <div class="nav-inner">
-            <a href="index.html" class="brand">
+            <div class="brand">
                 <img src="icon-192.png" alt="Logo de LinuxRemotePlayer">
                 <span>LinuxRemotePlayer</span>
                 <span class="lrp">LRP</span>
-            </a>
-            <nav>
-                <a href="#instalacion">Instalación</a>
-                <a href="#precio">Precio</a>
-                <a href="#apoyo">Apoyá</a>
-                <a href="#faq">FAQ</a>
-                <a href="docs.html">Documentación</a>
-                <a href="changelog.html">Novedades</a>
-                <a href="en/index.html" title="English version">EN</a>
-            </nav>
-            <a href="#instalacion" class="btn btn-green">Instalar gratis</a>
+            </div>
+            <a class="btn btn-outline" href="/en/">EN</a>
         </div>
     </header>
 
-    <!-- HERO -->
-    <section class="hero">
-        <div class="glow glow-green" style="top:-80px; left:-140px; width:520px; height:520px;"></div>
-        <div>
-            <span class="kicker">Para el HTPC del salón</span>
-            <h1>Tu PC con Linux, convertida en la TV de la casa. <span class="voz">El control: tu teléfono.</span></h1>
-            <p class="subtitle">Touchpad, teclado y tus apps de streaming en un toque. Y con la voz, poner
-            YouTube es decir «pon YouTube» — para que la tele la use toda la familia,
-            no solo quien la instaló.</p>
-            <div class="hero-ctas">
-                <a href="#instalacion" class="btn btn-green btn-big">Instalar gratis</a>
-                <a href="#precio" class="btn btn-violet btn-big">Ver Pro — $5 único</a>
-            </div>
-            <p class="trust-line"><span><b>Funciona en tu red local</b></span> · <span>sin cuentas ni rastreo</span> · <span>el control básico es gratis</span></p>
-        </div>
-        <div class="visual">
-            <div class="phone">
-                <img src="screenshots/000_principal.webp" alt="El control remoto en el teléfono: fila de apps, touchpad, botón de voz y controles multimedia" loading="eager">
-            </div>
-        </div>
-    </section>
-
-    <!-- GALERÍA -->
-    <section class="center" style="padding-top:0;">
-        <span class="kicker">Capturas</span>
-        <h2 class="section-title">Así se ve, de verdad</h2>
-        <p class="section-sub">Imágenes reales de la versión 1.9.1 en un teléfono, sin retoques.
-        Los cuatro temas vienen incluidos y son gratis.</p>
-        <div class="grid-3" style="margin-top:34px; justify-items:center;">
-            <div class="phone small">
-                <img src="screenshots/004_cafetheme.webp" alt="El tema Café: la pantalla principal del control con su paleta cálida" loading="lazy">
-            </div>
-            <div class="phone small">
-                <img src="screenshots/005_animetheme.webp" alt="El tema Anime: la misma pantalla sobre un fondo ilustrado" loading="lazy">
-            </div>
-            <div class="phone small violet-glow">
-                <img src="screenshots/006_voicecommand.webp" alt="Un comando de voz en curso: el micrófono grabando, el contador de tiempo y ejemplos como «Abre Netflix» o «Sube el volumen»" loading="lazy">
-            </div>
-        </div>
-    </section>
-
-    <!-- CÓMO FUNCIONA -->
-    <section id="como-funciona">
-        <div class="center">
-            <span class="kicker">Cómo funciona</span>
-            <h2 class="section-title">Listo en tres pasos</h2>
-            <p class="section-sub">Sin apps que descargar de ninguna tienda, sin crear cuentas, sin abrir puertos al exterior.</p>
-        </div>
-        <div class="grid-3">
-            <div class="card">
-                <span class="step-n">1</span>
-                <h3>Un comando en tu PC</h3>
-                <p>Pegás el comando de instalación en la terminal y el asistente configura solo
-                el servicio, el HTTPS local y los permisos de hardware. El <a href="docs.html#instalacion" style="color:var(--green); text-decoration:none;">tutorial</a> te explica cada pregunta.</p>
-            </div>
-            <div class="card">
-                <span class="step-n">2</span>
-                <h3>Emparejá tu teléfono</h3>
-                <p>El instalador te muestra un enlace seguro. Lo abrís en el teléfono, aceptás el
-                certificado local una vez, y agregás la app a tu pantalla de inicio.</p>
-            </div>
-            <div class="card">
-                <span class="step-n">3</span>
-                <h3>Controlá desde el sofá</h3>
-                <p>Netflix, YouTube, Spotify y las apps nativas de tu Linux. Touchpad, teclado,
-                volumen y reproducción. Con Pro, también por voz.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- LA APP: FAMILIA -->
-    <section id="familia">
-        <div class="glow glow-green" style="top:120px; right:-160px; width:560px; height:560px;"></div>
-        <div class="duo">
-            <div class="copy">
-                <span class="kicker">Para tu familia</span>
-                <h3>La tele que tu mamá puede usar sola</h3>
-                <p>El problema de un HTPC no es armarlo — es que después nadie más en la casa
-                sabe usarlo. LinuxRemotePlayer lo resuelve con un control que ya todos saben
-                usar: su propio teléfono.</p>
-                <ul>
-                    <li><b>Sus apps en un toque:</b> Netflix, YouTube, Pluto TV y las que agregues, con su ícono grande.</li>
-                    <li><b>Comandos de voz (Pro):</b> «pon YouTube de recetas», «sube el volumen», «pausa» — en español y en inglés.</li>
-                    <li><b>Botones que se entienden:</b> volumen, pausa, atrás. Nada de menús de tres niveles.</li>
-                </ul>
-            </div>
-            <div class="visual">
-                <div class="phone small">
-                    <img src="screenshots/001_apps.webp" alt="Cajón de aplicaciones con los íconos de streaming: YouTube, Netflix, Disney+, Spotify y más" loading="lazy">
+    <main>
+        <section class="center">
+            <span class="kicker">BETA OPT-IN · 1.99.x</span>
+            <h1 class="section-title">LinuxRemotePlayer beta</h1>
+            <p class="section-sub">Canal voluntario para probar la distribución antes de 2.0.0.</p>
+            <p class="trust-line">Tu instalación estable 1.9.1 no cambia ni descubre esta beta.</p>
+            <p class="compat-note">Requiere Debian/Ubuntu Linux con systemd.</p>
+            <div class="terminal">
+                <div class="terminal-header">
+                    <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+                </div>
+                <div class="terminal-body">
+                    <code class="terminal-cmd">curl -fsSL https://www.linuxremoteplayer.com/beta/install.sh | sudo bash</code>
                 </div>
             </div>
-        </div>
-
-        <div class="duo pro">
-            <div class="copy">
-                <span class="kicker violet">Para vos</span>
-                <h3>El control fino que un power user espera</h3>
-                <p>Debajo de la superficie simple hay un control completo del sistema,
-                pensado para quien administra la máquina.</p>
-                <ul>
-                    <li><b>Apps nativas detectadas:</b> Dolphin, Konsole, Okular — lo que tengas instalado, lanzable desde el teléfono.</li>
-                    <li><b>Touchpad + teclado reales:</b> puntero virtual, clic derecho, scroll y teclado completo vía el kernel (uinput).</li>
-                    <li><b>Modo kiosk:</b> cada app web abre a pantalla completa en Firefox, sin bordes ni distracciones.</li>
-                    <li><b>Temas:</b> los cuatro (Day, Night, Café y Anime) vienen incluidos y son gratis — la misma paleta que este sitio.</li>
-                </ul>
-            </div>
-            <div class="visual">
-                <div class="phone small violet-glow">
-                    <img src="screenshots/002_systemapps.webp" alt="Apps del sistema detectadas automáticamente: Konsole, Keysmith, Marble, cada una con botones para añadir o abrir" loading="lazy">
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- COMPATIBILIDAD -->
-    <section id="compatibilidad">
-        <div class="center">
-            <span class="kicker">Compatibilidad</span>
-            <h2 class="section-title">Probado de verdad, dicho con honestidad</h2>
-            <p class="section-sub">Preferimos decirte exactamente dónde funciona antes que prometerte «cualquier Linux».</p>
-        </div>
-        <div class="compat">
-            <div class="compat-row">
-                <div class="distro">KDE Neon — Plasma Bigscreen 6.7.0<small>La plataforma de referencia: cada versión se prueba acá de punta a punta.</small></div>
-                <span class="badge badge-full">100% compatible</span>
-            </div>
-            <div class="compat-row">
-                <div class="distro">Linux Mint (Cinnamon)<small>El control funciona; algunas integraciones de kiosk pueden variar.</small></div>
-                <span class="badge badge-partial">Parcial</span>
-            </div>
-            <div class="compat-row">
-                <div class="distro">Debian y derivados en general<small>Requiere systemd. El instalador está pensado para la familia Debian/Ubuntu.</small></div>
-                <span class="badge badge-partial">Parcial</span>
-            </div>
-            <div class="compat-row">
-                <div class="distro">Arch, Fedora y otras<small>Aún sin probar. El soporte multi-distro está en el roadmap.</small></div>
-                <span class="badge badge-untested">No probado</span>
-            </div>
-        </div>
-        <p class="compat-note">¿Lo probaste en otra distro? Contanos cómo te fue desde el botón de feedback de la app — así crece esta tabla.</p>
-    </section>
-
-    <!-- INSTALACIÓN -->
-    <section id="instalacion">
-        <div class="glow glow-violet" style="top:40px; left:-180px; width:520px; height:520px;"></div>
-        <div class="center">
-            <span class="kicker">Instalación</span>
-            <h2 class="section-title">Descargá, instalá, emparejá</h2>
-            <p class="section-sub">En tu PC con Linux (familia Debian/Ubuntu, con systemd y Firefox):</p>
-        </div>
-
-        <div class="terminal">
-            <div class="terminal-header">
-                <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
-            </div>
-            <div class="terminal-body">
-                <span class="terminal-cmd" id="cmd-text">curl -fsSL https://www.linuxremoteplayer.com/install.sh | sudo bash</span>
-                <button class="btn-copy" onclick="copyCommand()" id="copy-btn">Copiar</button>
-            </div>
-        </div>
-
-        <p class="compat-note" style="margin-bottom:26px;">Un solo comando: descarga la última versión, verifica su
-        integridad (sha256) y lanza el asistente. El asistente te hace 4 preguntas (usuario, modo TV o
-        escritorio, suspensión y teclado) y al final te da el enlace de emparejamiento para el teléfono.<br>
-        <a href="docs.html#instalacion" style="color:var(--green); text-decoration:none;">Tutorial completo paso a paso →</a></p>
-
-        <details class="qa" style="max-width:760px; margin:0 auto;">
-            <summary>¿Preferís descargar el paquete manualmente?</summary>
-            <div class="a">
-                <div class="dl-box" style="margin:12px 0 8px; padding:18px;">
-                    <div class="meta">
-                        <b id="deb-name">linuxremoteplayer_1.9.1_all.deb</b>
-                        <div>Versión <b id="deb-version">1.9.1</b> · después: <code>sudo apt install ./&lt;archivo&gt;.deb</code></div>
-                        <div class="sha mono" id="deb-sha">sha256: 82b6bc5286cdf197bb684ddc00f6c797aac498f2959b354cada83acaddd93d38</div>
-                    </div>
-                    <a class="btn btn-outline" id="deb-link" href="downloads/linuxremoteplayer_1.9.1_all.deb">Descargar .deb</a>
-                </div>
-                <p class="compat-note" style="margin:10px 0 0;">El software se distribuye bajo la
-                <a href="https://www.elastic.co/licensing/elastic-license" target="_blank" rel="noopener" style="color:var(--green);">Licencia Elastic 2.0</a>.
-                Instalar y usar el control es gratis; no hace falta comprar nada.</p>
-            </div>
-        </details>
-    </section>
-
-    <!-- PRECIO -->
-    <section id="precio">
-        <div class="center">
-            <span class="kicker">Precio</span>
-            <h2 class="section-title">Gratis para controlar. $5 una sola vez para hablarle.</h2>
-            <p class="section-sub">Sin suscripciones. Sin niveles confusos. El control básico es gratis para siempre;
-            la licencia Pro es un pago único que desbloquea todo lo premium, presente y futuro.</p>
-        </div>
-        <div class="pricing">
-            <div class="price-card">
-                <div class="plan">Gratis</div>
-                <div class="amount">$0</div>
-                <div class="period">para siempre</div>
-                <ul>
-                    <li><b>Touchpad y teclado</b> completos</li>
-                    <li><b>Apps de streaming</b> en modo kiosk (Netflix, YouTube, y las que agregues)</li>
-                    <li><b>Apps del sistema</b> detectadas y lanzables</li>
-                    <li>Controles de volumen y reproducción</li>
-                    <li>Actualizaciones desde la propia app</li>
-                </ul>
-                <a href="#instalacion" class="btn btn-outline">Instalar gratis</a>
-            </div>
-            <div class="price-card pro">
-                <div class="plan">Pro — licencia personal</div>
-                <div class="amount">$5 USD</div>
-                <div class="period">pago único, para siempre</div>
-                <ul>
-                    <li><b>Control por voz con IA</b> en español o inglés (60 comandos/día)</li>
-                    <li><b>Todo lo premium futuro</b> incluido — sin pagar de nuevo</li>
-                    <li>1 PC activa por licencia, con mudanza autoservicio</li>
-                    <li>La clave llega a tu correo al instante</li>
-                </ul>
-                <!-- PLACEHOLDER-PADDLE: reemplazar por el enlace real de checkout en T-51 -->
-                <a class="btn btn-disabled" id="buy-btn" title="La tienda abre muy pronto">Compra disponible muy pronto</a>
-                <p class="price-note">El pago será procesado por Paddle, nuestro distribuidor autorizado.
-                Reembolso sin preguntas dentro de los 14 días.<br>
-                Al comprar aceptás los <a href="terminos.html" style="color:var(--violet);">términos y condiciones</a>.</p>
-            </div>
-        </div>
-        <p class="dev-note"><b>En desarrollo activo:</b> cada actualización mejora el control por voz y suma
-        más sitios compatibles. Comprás una vez, y la app sigue creciendo con vos.</p>
-    </section>
-
-    <!-- DONACIONES -->
-    <section id="apoyo">
-        <div class="donate-box">
-            <span class="kicker">Apoyá el proyecto</span>
-            <h2 class="section-title" style="font-size:1.4rem;">Hecho por una persona, no por una corporación</h2>
-            <p>LinuxRemotePlayer lo desarrolla una sola persona. Si la app te resuelve el salón
-            y querés empujar el desarrollo (multi-distro, más comandos de voz, modo gamepad),
-            una propina ayuda muchísimo.</p>
-            <!-- PLACEHOLDER-KOFI: reemplazar href por la página real de Ko-fi al crearla -->
-            <a class="btn btn-outline" id="kofi-btn" title="Muy pronto">☕ Invitame un café — muy pronto</a>
-        </div>
-    </section>
-
-    <!-- FAQ -->
-    <section id="faq">
-        <div class="center">
-            <span class="kicker">Dudas</span>
-            <h2 class="section-title">Preguntas frecuentes</h2>
-        </div>
-        <div class="faq">
-            <details class="qa">
-                <summary>¿Qué necesito para usarlo?</summary>
-                <div class="a">Una PC con Linux conectada a la TV (familia Debian/Ubuntu con systemd y Firefox)
-                y un teléfono (Android o iPhone) en la misma red WiFi. Nada más: ni hardware extra, ni cuentas.
-                Detalle completo en <a href="docs.html#requisitos">requisitos</a>.</div>
-            </details>
-            <details class="qa">
-                <summary>¿La parte gratis qué incluye exactamente?</summary>
-                <div class="a">Todo el control: touchpad, teclado, volumen, reproducción, apps de streaming en kiosk
-                y apps del sistema. No es una demo recortada — es un control remoto completo. La licencia Pro
-                agrega la voz con IA y lo que venga.</div>
-            </details>
-            <details class="qa">
-                <summary>¿Mi voz y mis datos salen de mi casa?</summary>
-                <div class="a">El control (touchpad, teclado, apps) funciona 100% dentro de tu red local: nada viaja
-                por internet. Lo único que sale es el audio de un comando de voz — solo cuando apretás el botón del
-                micrófono, cifrado, hacia nuestro servicio de IA — y se usa únicamente para entender el comando.
-                Más detalle en <a href="docs.html#privacidad">privacidad</a>.</div>
-            </details>
-            <details class="qa">
-                <summary>¿Cómo recibo y activo mi licencia?</summary>
-                <div class="a">Al completar la compra, tu clave (formato <code>LRP-XXXX-XXXX-XXXX</code>) llega a tu
-                correo en 1-2 minutos. En la app: Ajustes → Licencia → pegás la clave → Activar.
-                La licencia funciona en una PC a la vez y podés <a href="docs.html#licencia">mudarla vos mismo</a>
-                si cambiás de máquina.</div>
-            </details>
-            <details class="qa">
-                <summary>¿Cómo se actualiza?</summary>
-                <div class="a">Desde la propia app: Ajustes → Actualización → Buscar. El servidor se actualiza solo
-                y la app del teléfono toma la nueva versión al cerrarla y reabrirla.
-                <a href="docs.html#actualizar">Guía de actualización</a>.</div>
-            </details>
-            <details class="qa">
-                <summary>¿Y si quiero desinstalarlo todo?</summary>
-                <div class="a">Un comando: <code>sudo apt remove linuxremoteplayer</code>. Se lleva el servicio, las
-                reglas de firewall y los permisos que configuró. Sin residuos escondidos.
-                <a href="docs.html#desinstalar">Detalle acá</a>.</div>
-            </details>
-            <details class="qa">
-                <summary>¿Ofrecen reembolso?</summary>
-                <div class="a">Sí: 14 días, sin preguntas. Escribinos a
-                <a href="mailto:support@linuxremoteplayer.com">support@linuxremoteplayer.com</a> con el correo de tu
-                compra y lo procesamos.</div>
-            </details>
-        </div>
-    </section>
-
-    <!-- FOOTER -->
-    <footer>
-        <div class="footer-inner">
-            <div>
-                <h4>LinuxRemotePlayer</h4>
-                <p>El control remoto para tu TV con Linux. Hecho para el salón,
-                con cariño por el ecosistema HTPC.</p>
-            </div>
-            <div>
-                <h4>Producto</h4>
-                <ul>
-                    <li><a href="docs.html">Documentación</a></li>
-                    <li><a href="changelog.html">Novedades</a></li>
-                    <li><a href="#precio">Precio</a></li>
-                    <li><a href="#apoyo">Apoyá el proyecto</a></li>
-                </ul>
-            </div>
-            <div>
-                <h4>Soporte</h4>
-                <ul>
-                    <li><a href="mailto:support@linuxremoteplayer.com">support@linuxremoteplayer.com</a></li>
-                    <li><a href="#faq">Preguntas frecuentes</a></li>
-                    <li><a href="docs.html#problemas">Solución de problemas</a></li>
-                </ul>
-            </div>
-        </div>
-        <div class="footer-legal">
-            <a href="terminos.html" style="color:var(--footer-text);">Términos y condiciones</a> ·
-            <a href="docs.html#privacidad" style="color:var(--footer-text);">Privacidad</a> ·
-            <a href="mailto:support@linuxremoteplayer.com" style="color:var(--footer-text);">support@linuxremoteplayer.com</a><br>
-            © 2026 LinuxRemotePlayer — hecho por Gusitir · Netflix, YouTube, Spotify y demás marcas
-            pertenecen a sus respectivos dueños; este producto no está afiliado ni avalado por ellos.
-        </div>
-    </footer>
-
-    <script>
-        function copyCommand() {
-            const text = document.getElementById('cmd-text').textContent;
-            const btn = document.getElementById('copy-btn');
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(text).then(() => {
-                    btn.textContent = '¡Copiado!';
-                    setTimeout(() => { btn.textContent = 'Copiar'; }, 2000);
-                }).catch(() => { alert('No se pudo copiar automáticamente.'); });
-            } else {
-                alert('Portapapeles no soportado. Copiá el comando manualmente.');
-            }
-        }
-
-        // El bloque de descarga se alimenta de latest.json: una sola fuente de verdad por release.
-        fetch('latest.json').then(r => r.json()).then(d => {
-            if (!d || !d.version || !d.deb_url) return;
-            const name = d.deb_url.split('/').pop();
-            document.getElementById('deb-name').textContent = name;
-            document.getElementById('deb-version').textContent = d.version;
-            document.getElementById('deb-link').href = d.deb_url;
-            if (d.sha256) document.getElementById('deb-sha').textContent = 'sha256: ' + d.sha256;
-        }).catch(() => { /* los valores estáticos del HTML quedan como fallback */ });
-    </script>
-
-    <div class="theme-switch" role="group" aria-label="Cambiar tema">
-        <button type="button" data-theme-btn="light" title="Tema claro">☀️</button>
-        <button type="button" data-theme-btn="cafe" title="Tema cálido (café)">☕</button>
-        <button type="button" data-theme-btn="dark" title="Tema oscuro">🌙</button>
-    </div>
+            <p class="compat-note">Riesgo aceptado: esta beta aún no tiene firma independiente, protección de downgrade ni rollback.</p>
+        </section>
+    </main>
 </body>
 </html>
