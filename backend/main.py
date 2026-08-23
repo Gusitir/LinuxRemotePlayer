@@ -31,6 +31,32 @@ logger = logging.getLogger("main")
 global_dropped_fast = 0
 global_dropped_slow = 0
 
+STABLE_CHANNEL = "stable"
+BETA_CHANNEL = "beta"
+STABLE_MANIFEST_URL = "https://www.linuxremoteplayer.com/latest.json"
+BETA_MANIFEST_URL = "https://www.linuxremoteplayer.com/beta/latest.json"
+
+
+def get_channel() -> str:
+    """Return the only channel allowed to influence update discovery."""
+    configured = os.getenv("LRP_CHANNEL")
+    if configured is None or not configured.strip():
+        return STABLE_CHANNEL
+
+    channel = configured.strip().lower()
+    if channel in (STABLE_CHANNEL, BETA_CHANNEL):
+        return channel
+
+    logger.warning("Invalid LRP_CHANNEL=%r; using stable channel", configured)
+    return STABLE_CHANNEL
+
+
+def get_update_manifest_url() -> str:
+    """Select a manifest from the normalized channel's namespace only."""
+    if get_channel() == BETA_CHANNEL:
+        return os.getenv("BETA_UPDATE_MANIFEST_URL") or BETA_MANIFEST_URL
+    return os.getenv("UPDATE_MANIFEST_URL") or STABLE_MANIFEST_URL
+
 # H9: /docs, /redoc y /openapi.json responden SIN gate a cualquiera en la LAN y enumeran
 # toda la superficie de la API. Se apagan por defecto. El default es CERRADO a proposito:
 # un .env sin LRP_DEV, o de un usuario en modo escritorio, tiene que quedar cerrado igual.
@@ -477,6 +503,7 @@ def get_config():
         "voice_enabled": voice_enabled(),
         "hostname": socket.gethostname(),
         "version": VERSION,
+        "channel": get_channel(),
         "buy_url": os.getenv("BUY_URL", "")   # PLACEHOLDER-PADDLE, ver T-51
     }
 
@@ -617,7 +644,7 @@ async def get_license_status():
 
 @app.get("/api/update/check", dependencies=[Depends(require_local_or_token)])
 async def check_update():
-    manifest_url = os.getenv("UPDATE_MANIFEST_URL", "https://www.linuxremoteplayer.com/latest.json")
+    manifest_url = get_update_manifest_url()
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
             res = await client.get(manifest_url)
