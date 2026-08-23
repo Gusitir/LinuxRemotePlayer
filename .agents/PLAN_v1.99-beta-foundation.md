@@ -223,7 +223,8 @@ Digest boundary: exact UTF-8/LF bytes between `CANONICAL-DESIGN-BEGIN` and
   channel after restart; beta check reads beta manifest; stable manifest remains 1.9.1.
 - Evidence: literal endpoint responses, installed package/version/channel, service health and UI.
 - Gates: protocol round trip stable->stable and beta->beta; package verification; endpoint/link sweep.
-- Human checks: `TST-BETA-CHANNEL-001` must be `[OK]`.
+- Human checks: `TST-BETA-HUMAN-001` must be `[OK]`.
+- External required check: `TST-BETA-CHANNEL-001` must be `[OK]`.
 - Audit: independent model audit by principal Architect, separate model/context from execution.
 - Worker result: none; not dispatched.
 - Risks: cache leakage, wrong manifest, beta marker loss and owner-accepted B19 exposure.
@@ -238,7 +239,7 @@ Digest boundary: exact UTF-8/LF bytes between `CANONICAL-DESIGN-BEGIN` and
 - [ ] Curl is the only enrollment path and beta channel persists across restart/update.
 - [ ] Beta manifest, package, VERSION, service worker and SHA agree.
 - [ ] Website is minimal and distribution assets remain reachable.
-- [ ] `TST-BETA-CHANNEL-001` is fresh.
+- [ ] Fresh `[OK]` capsules exist for both `TST-BETA-CHANNEL-001` and `TST-BETA-HUMAN-001`.
 - [ ] B19 is recorded as accepted beta risk and remains a stable 2.0.0 blocker.
 - [ ] Main v3 control state agrees with accepted capsules, repository, artifact and Git.
 - [ ] Push, deploy and branch disposition remain separate owner actions.
