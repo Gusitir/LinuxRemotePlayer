@@ -1,10 +1,10 @@
 # INDEX - navegacion del repositorio
 
 ```yaml
-last_reindexed_at: 2026-08-21T22:28:50-05:00
-source_commit: 1999a8457b64eb7801df80fb69e7bda97456886c
+last_reindexed_at: 2026-08-21T22:28:50-05:00 (historical; final integration did not reindex)
+source_commit: 8e27512
 dirty: true
-dirty_state: "control plane pendiente de commit STATE; producto beta en codex/beta-foundation@e838279; lochi.png preexistente intacto"
+dirty_state: "current control edits: CURRENT.md, TESTING.md, CONTEXT.md, INDEX.md; lochi.png preexistente intacto; no reindex claim"
 ```
 
 El estado activo pertenece a [`CURRENT.md`](CURRENT.md), no a este indice.

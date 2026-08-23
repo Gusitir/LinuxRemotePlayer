@@ -90,3 +90,20 @@ elegir STT; Python mantiene PolicyEngine y los modelos nunca ejecutan shell.
 **Aprobación D28:** el dueño aprobó el plan beta y ordenó `RUN THE LOOP` el 2026-08-21. Diseño
 canónico SHA-256: `2bc3ec3cfac39a205c4a16c0d1f06b85f388d040e34a0d2290e3dd0f9c552f7d`.
 La aprobación habilita T-117; no autoriza push, deploy, release ni operaciones destructivas.
+
+## 2026-08-22 · integración final beta opt-in
+
+Registro operativo: `main` quedó en `8e27512` y `codex/beta-foundation` en `4bdf5da`; la cadena de
+commits de producto fue `942fab2`, `afdcfd3`, `bedc94b`, `28be028` y el fix LF `8e27512` en main,
+con equivalentes `298bb39`, `607bf04`, `be96e35`, `e838279` y `4bdf5da` en beta. Vercel reportó
+status success para `8e27512` en `2026-08-23T04:48:12Z`.
+
+Se verificaron los endpoints públicos: raíz ES y `/en/` muestran beta mínima; `/latest.json` sigue
+stable `1.9.1` con SHA `82b6bc5286cdf197bb684ddc00f6c797aac498f2959b354cada83acaddd93d38`;
+`/beta/latest.json` es `1.99.1` y `/beta/install.sh` responde. El `.deb` beta descargado de forma
+independiente coincide con SHA `8d4a19834eca05eda0e3f8b9c77817e6baaa19fb1bd823e30b5a726b6cb9c894`.
+
+El fix `.gitattributes` quedó incluido en `8e27512`; 29 tests pasaron después del arreglo de LF.
+T-121 queda bloqueado únicamente por la evidencia HTPC del dueño (`TST-BETA-CHANNEL-001`). Los
+clones externos `lrp-t118-build-3`, `lrp-t118-integrated-1` y `t120-native-20260822-5` quedan sin
+cleanup autorizado. Este registro no emite veredicto humano.
