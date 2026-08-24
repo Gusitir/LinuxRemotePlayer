@@ -155,3 +155,19 @@ realizados. La disposición propuesta es conservar `codex/beta-foundation`. D29 
 `linuxremoteplayer-savepoint-beta-foundation-20260823.zip`; no se persiste ruta absoluta. El siguiente
 paso, tras registrar hashes del backup, es iniciar PLAN BETA-STT. El cleanup de clones WSL sigue sin
 autorización.
+
+## 2026-08-23 · D30 backup receipt correction
+
+Corrección append-only del estado D30: `backup_state` pasa de `pending` a `complete` con recibo
+verificado bajo autoridad del Arquitecto. El commit de cierre main es `407bb66`; la disposición de
+branch permanece `keep codex/beta-foundation` y push/deploy ya estaban realizados.
+
+Google Drive labels/names y hashes: `backups/linuxremoteplayer-savepoint-beta-foundation-20260823.bundle`,
+size `13079844`, SHA256
+`ebcf392cb5c521e1b07f4e9264c2838a994c14769d32e80906260ffb2ef5f0c4`; `git bundle verify` reporta
+complete history y 14 refs. `backups/linuxremoteplayer-savepoint-beta-foundation-20260823.zip`, size
+`4144496`, SHA256
+`f78fdb421d355321596ef503c0ab59b2df3666f149f86a037e95de3f566eb1ec`; contiene todos los tracked
+files en `407bb66` más el `lochi.png` preexistente, sin `.env` ni `.git`. No se persiste ruta absoluta
+de Drive. El siguiente job es PLAN BETA-STT; quedan únicamente cleanup WSL no autorizado y decisiones
+de inventario/diseño de modelos sin resolver.

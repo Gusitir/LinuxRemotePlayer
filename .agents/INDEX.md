@@ -2,10 +2,10 @@
 
 ```yaml
 last_reindexed_at: 2026-08-21T22:28:50-05:00 (historical; no new reindex claim)
-source_commit: f65ea58
+source_commit: 407bb66
 dirty: true
 active_plan: none
-dirty_state: "CLOSE control edits: APPCORE.md, CONTEXT.md, CURRENT.md, INDEX.md, PLAN.md, PLAN_PH21.md, PLAN_v2.0-ph21-stt.md, TESTING.md, archive/PLAN_v1.99-beta-foundation.md, archive/TESTING_beta-foundation_1.99.1.md; lochi.png preexistente intacto; no reindex claim"
+dirty_state: "backup receipt control edits: APPCORE.md, CONTEXT.md, CURRENT.md, INDEX.md; lochi.png preexistente intacto; no reindex claim"
 ```
 
 El estado activo pertenece a [`CURRENT.md`](CURRENT.md), no a este indice.

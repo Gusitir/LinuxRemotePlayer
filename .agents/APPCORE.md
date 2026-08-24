@@ -1,8 +1,8 @@
 # APPCORE - mapa factual del codigo publicado 1.9.1
 
 ```yaml
-verified_at: 2026-08-23T23:52:55-05:00
-source_commit: "f65ea58 (dirty: CLOSE control edits; pre-existing lochi.png preserved)"
+verified_at: 2026-08-23T23:59:01-05:00
+source_commit: "407bb66 (dirty: backup receipt metadata in APPCORE, CONTEXT, CURRENT and INDEX; pre-existing lochi.png preserved)"
 producto: servicio Python/FastAPI + PWA estatica servido en LAN
 ```
 
