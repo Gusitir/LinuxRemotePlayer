@@ -1,8 +1,8 @@
 # APPCORE - mapa factual del codigo publicado 1.9.1
 
 ```yaml
-verified_at: 2026-08-21T22:28:50-05:00
-source_commit: "1999a8457b64eb7801df80fb69e7bda97456886c (dirty: MAINTAIN + REINDEX, uncommitted)"
+verified_at: 2026-08-23T23:52:55-05:00
+source_commit: "f65ea58 (dirty: CLOSE control edits; pre-existing lochi.png preserved)"
 producto: servicio Python/FastAPI + PWA estatica servido en LAN
 ```
 
@@ -116,6 +116,17 @@ fases futuras ni estado de bugs.
   `latest.json` y artefactos `.deb`/SHA publicados.
 - `website/latest.json` apunta a version `1.9.1`, URL del `.deb` y SHA256; las paginas consumen el
   manifiesto para actualizar el enlace de descarga.
+
+## BETA-FOUNDATION RELEASE SURFACES
+
+- Stable release remains `1.9.1`; its public `latest.json` is stable-only and does not discover beta.
+- The beta source/release `1.99.1` supports the explicit channel enum and durable beta-channel marker.
+- The public beta manifest advertises `1.99.1` and the public beta installer is reachable; the beta
+  artifact SHA256 is `8d4a19834eca05eda0e3f8b9c77817e6baaa19fb1bd823e30b5a726b6cb9c894`.
+- The website is a minimal beta notice with curl enrollment; stable manifest and required assets
+  remain reachable.
+- These facts describe the closed distribution milestone only; no future STT, model or Needle
+  implementation is claimed here.
 
 ## ACOPLAMIENTOS FACTUALES
 

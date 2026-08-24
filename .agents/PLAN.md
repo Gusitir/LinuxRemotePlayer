@@ -1,7 +1,7 @@
 # LinuxRemotePlayer — plan de transición local
 
 > Roadmap de arquitectura. La ejecución inmediata cambió a betas opt-in; el plan activo es
-> [`PLAN_v1.99-beta-foundation.md`](PLAN_v1.99-beta-foundation.md). PH21 queda como tooling
+> [`archive/PLAN_v1.99-beta-foundation.md`](archive/PLAN_v1.99-beta-foundation.md). PH21 queda como tooling
 > reutilizable y deja de ser gate previo a integrar modelos en betas.
 
 ```yaml

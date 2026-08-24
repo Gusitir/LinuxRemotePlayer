@@ -1,6 +1,6 @@
 # PLAN v2.0 - PH21 STT local
 
-> Draft superseded before approval by [`PLAN_v1.99-beta-foundation.md`](PLAN_v1.99-beta-foundation.md).
+> Draft superseded before approval by [`archive/PLAN_v1.99-beta-foundation.md`](archive/PLAN_v1.99-beta-foundation.md).
 > No task in this draft was dispatched. Its laboratory evidence remains reusable, not gating.
 
 ```yaml

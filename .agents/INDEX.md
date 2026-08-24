@@ -1,10 +1,11 @@
 # INDEX - navegacion del repositorio
 
 ```yaml
-last_reindexed_at: 2026-08-21T22:28:50-05:00 (historical; final integration did not reindex)
-source_commit: 8e27512
+last_reindexed_at: 2026-08-21T22:28:50-05:00 (historical; no new reindex claim)
+source_commit: f65ea58
 dirty: true
-dirty_state: "current control edits: CURRENT.md, TESTING.md, CONTEXT.md, INDEX.md; lochi.png preexistente intacto; no reindex claim"
+active_plan: none
+dirty_state: "CLOSE control edits: APPCORE.md, CONTEXT.md, CURRENT.md, INDEX.md, PLAN.md, PLAN_PH21.md, PLAN_v2.0-ph21-stt.md, TESTING.md, archive/PLAN_v1.99-beta-foundation.md, archive/TESTING_beta-foundation_1.99.1.md; lochi.png preexistente intacto; no reindex claim"
 ```
 
 El estado activo pertenece a [`CURRENT.md`](CURRENT.md), no a este indice.
@@ -16,12 +17,13 @@ El estado activo pertenece a [`CURRENT.md`](CURRENT.md), no a este indice.
 - [`CURRENT.md`](CURRENT.md): estado vivo y proxima accion.
 - [`CONTEXT.md`](CONTEXT.md): decisiones y handoffs append-only.
 - [`INDEX.md`](INDEX.md): este mapa de navegacion.
-- [`TESTING.md`](TESTING.md): checks humanos o no disponibles.
+- [`TESTING.md`](TESTING.md): checks vivos del ciclo BETA-STT, humanos o no disponibles.
 - [`WORKFLOW.md`](WORKFLOW.md): extension subordinada de agents-workflow v3.
 
 ## PLANES Y EXTENSIONES
 
-- [`PLAN_v1.99-beta-foundation.md`](PLAN_v1.99-beta-foundation.md): plan activo v3 pendiente de aprobación.
+- [`archive/PLAN_v1.99-beta-foundation.md`](archive/PLAN_v1.99-beta-foundation.md): plan cerrado
+  BETA-FOUNDATION, veredicto `APTO`.
 - [`PLAN_v2.0-ph21-stt.md`](PLAN_v2.0-ph21-stt.md): draft superseded antes de aprobación.
 - [`PLAN_PH21.md`](PLAN_PH21.md): fuente legacy de G0, sin autoridad activa.
 - [`PLAN.md`](PLAN.md): roadmap y alcance de transicion.
@@ -32,7 +34,7 @@ El estado activo pertenece a [`CURRENT.md`](CURRENT.md), no a este indice.
 
 ## MAPAS Y DOCUMENTACION
 
-- [`APPCORE.md`](APPCORE.md): mapa factual de arquitectura 1.9.1.
+- [`APPCORE.md`](APPCORE.md): mapa factual de arquitectura estable 1.9.1 y superficies beta 1.99.1.
 - [`docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md): forma del sistema y limites.
 - [`docs/DEVELOPING.md`](../docs/DEVELOPING.md): desarrollo, gates y release.
 - [`README.md`](../README.md): entrada publica del repositorio.
@@ -58,6 +60,8 @@ El estado activo pertenece a [`CURRENT.md`](CURRENT.md), no a este indice.
 - [`archive/`](archive/): historico; no es autoridad operativa ni se reescribe durante REINDEX.
 - [`archive/TESTING_legacy_2026-08-21.md`](archive/TESTING_legacy_2026-08-21.md): snapshot de
   testing previo a v3.
+- [`archive/TESTING_beta-foundation_1.99.1.md`](archive/TESTING_beta-foundation_1.99.1.md): snapshot
+  exacto de testing completado para BETA-FOUNDATION.
 - [`design/`](design/): diseño no operativo; no es fuente de arquitectura.
 - `design/skins2/lochi.png`: asset untracked preexistente; preservado, no es navegación operativa.
 - `.work/`: evidencia efimera si existe; no se inventa ni se indexa como producto.

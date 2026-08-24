@@ -1,7 +1,11 @@
 # PLAN v1.99 - beta opt-in foundation
 
 ```yaml
-status: active
+status: closed
+closure_state: closed
+closed_at: 2026-08-23T23:52:55-05:00
+milestone_verdict: APTO
+branch_disposition: keep codex/beta-foundation
 goal: entregar una beta numerica 1.99.1 instalable solo por curl, invisible para clientes estables 1.9.1 y capaz de recibir actualizaciones exclusivas del canal beta
 assurance: Standard
 approval_digest: 2bc3ec3cfac39a205c4a16c0d1f06b85f388d040e34a0d2290e3dd0f9c552f7d
@@ -210,7 +214,7 @@ Digest boundary: exact UTF-8/LF bytes between `CANONICAL-DESIGN-BEGIN` and
 
 ### T-121 - Validate opt-in and channel isolation
 
-- Status: blocked
+- Status: apto
 - Architect: principal Architect; issues milestone verdict.
 - Engineer: INGENIERO-PRODUCTO; prepares G3 capsule.
 - Worker: none unless an audited correction brief is authorized.
@@ -220,26 +224,39 @@ Digest boundary: exact UTF-8/LF bytes between `CANONICAL-DESIGN-BEGIN` and
 - Allowed scope: installed test systems and distribution endpoints read-only; corrections require a
   new bounded task.
 - Acceptance: existing 1.9.1 reports no beta update; curl installs 1.99.1; installed beta persists
-  channel after restart; beta check reads beta manifest; stable manifest remains 1.9.1.
-- Evidence: literal endpoint responses, installed package/version/channel, service health and UI.
-- Gates: protocol round trip stable->stable and beta->beta; package verification; endpoint/link sweep.
+  channel after restart (verified); beta check reads beta manifest; stable manifest remains 1.9.1.
+  Beta-to-beta update is explicitly deferred under D29 and nonblocking. Deterministic T-117 tests
+  plus the public stable manifest replace installed-stable field evidence.
+- Evidence/verdict: `APTO` from independent model audit on 2026-08-23. Reconciled AI
+  `TST-BETA-CHANNEL-001` `[OK]`, owner `TST-BETA-HUMAN-001` `[OK]`, D29 explicit substitution;
+  fresh web checks show stable `latest.json` `1.9.1`, beta `latest.json` `1.99.1`, beta SHA
+  `8d4a198...`, and reachable beta installer.
+- Gates: protocol stable->stable and beta channel read after restart; package verification;
+  endpoint/link sweep. Beta-to-beta update is deferred under D29 and nonblocking.
 - Human checks: `TST-BETA-HUMAN-001` must be `[OK]`.
 - External required check: `TST-BETA-CHANNEL-001` must be `[OK]`.
-- Audit: independent model audit by principal Architect, separate model/context from execution.
-- Worker result: none; not dispatched.
+- Audit: independent model audit by principal Architect, separate model/context from execution ->
+  `APTO`.
+- Worker result: none; read-only evidence integration; no Worker/product/commit/push/deploy action.
+- Residuals: `TST-DEVICE-001` remains `[SKIP]`; `TST-BETA-UPDATE-002` remains deferred and
+  nonblocking until beta `1.99.2` exists.
 - Risks: cache leakage, wrong manifest, beta marker loss and owner-accepted B19 exposure.
 - STOP conditions: stable sees beta, beta falls back silently to stable, field package differs from
   artifact or required human evidence is unavailable.
 - Invalidated by: delayed upstream NO APTO, endpoint drift or deployment mismatch.
 
-## Closure gate
+## Closure gate — closed
 
-- [ ] Owner approval digest is current and T-117..T-121 have required verdicts.
-- [ ] Stable `latest.json` still advertises 1.9.1 and stable clients cannot discover beta.
-- [ ] Curl is the only enrollment path and beta channel persists across restart/update.
-- [ ] Beta manifest, package, VERSION, service worker and SHA agree.
-- [ ] Website is minimal and distribution assets remain reachable.
-- [ ] Fresh `[OK]` capsules exist for both `TST-BETA-CHANNEL-001` and `TST-BETA-HUMAN-001`.
-- [ ] B19 is recorded as accepted beta risk and remains a stable 2.0.0 blocker.
-- [ ] Main v3 control state agrees with accepted capsules, repository, artifact and Git.
-- [ ] Push, deploy and branch disposition remain separate owner actions.
+- [x] Owner approval digest is current and T-117..T-121 have required verdicts.
+- [x] Stable `latest.json` still advertises 1.9.1 and stable clients cannot discover beta.
+- [x] Curl is the only enrollment path and beta channel persistence across restart is verified;
+  beta-to-beta update is deferred under D29 and is nonblocking, not falsely checked.
+- [x] Beta manifest, package, VERSION, service worker and SHA agree.
+- [x] Website is minimal and distribution assets remain reachable.
+- [x] Fresh `[OK]` capsules exist for both `TST-BETA-CHANNEL-001` and `TST-BETA-HUMAN-001`.
+- [x] B19 is recorded as accepted beta risk and remains a stable 2.0.0 blocker.
+- [x] Main v3 control state agrees with accepted capsules, repository, artifact and Git.
+- [x] Push, deploy and branch disposition remain separate owner actions; branch disposition proposal:
+  keep the beta branch.
+- [x] `TST-DEVICE-001` offline/uninstall/upgrade coverage is an owner-accepted residual, not an unmet
+  BETA-FOUNDATION closure check.

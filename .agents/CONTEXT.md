@@ -122,3 +122,36 @@ Sesiones persistentes: control `ses_fd89e5f9effeFg15Lq7OKDlxu3`, producto
 `ses_fd89e2891ffePR5nRqlGsyeKHw`, Workers `ses_fd84c189dffeo3efi7lMZtZ6HS` y
 `ses_fd82b70b4ffe1xKKtLCNow4QzW`, DeepSeek del Arquitecto `ses_fd31148adffeGMmtU9XqM9OYqG`.
 Sin veredicto humano nuevo; el Arquitecto audita y decide después de recibir ambas capsules.
+
+## 2026-08-23 · D29 T-121 evidence reconciliation
+
+Se separó la evidencia de T-121: `TST-BETA-CHANNEL-001` conserva una cápsula técnica AI `[OK]`
+con manifiestos, hash, instalación beta, canal persistente, servicio y endpoints verificados; AI no
+ejecutó ni certifica browser/certificado, QR/PIN, onboarding PWA, kiosk, touchpad o media. El dueño
+registró esos checks en `TST-BETA-HUMAN-001` como `[OK]` el 2026-08-23.
+
+`TST-DEVICE-001` queda `[SKIP: offline/uninstall/upgrade not executed; owner accepts deferral and
+trusts existing implementation]`. La prueba de campo con una instalación estable ya instalada
+queda `[SKIP: no ejecutada; no aplicable por ausencia de usuarios]`. Stable isolation sigue siendo
+requisito de producto; para BETA-FOUNDATION, los tests deterministas T-117 y el manifiesto público
+stable `1.9.1` sustituyen esa evidencia de campo. T-121 queda en `audit` hasta la revisión
+independiente del Arquitecto; no se emite `APTO`.
+
+## 2026-08-23 · D30 BETA-FOUNDATION milestone close
+
+El Arquitecto cerró BETA-FOUNDATION con veredictos autoritativos `APTO` para T-117, T-118, T-119,
+T-120 y T-121 bajo assurance `Standard` / independent model audit. El plan cerrado vive en
+`archive/PLAN_v1.99-beta-foundation.md` y la cápsula completa en
+`archive/TESTING_beta-foundation_1.99.1.md`; `TESTING.md` fue rotado al ciclo BETA-STT sin resultados
+crudos del milestone cerrado.
+
+Stable permanece en `1.9.1`; beta en `1.99.1`; el artefacto beta conserva SHA
+`8d4a19834eca05eda0e3f8b9c77817e6baaa19fb1bd823e30b5a726b6cb9c894`. Push y deploy ya estaban
+realizados. La disposición propuesta es conservar `codex/beta-foundation`. D29 sigue aceptado y
+`TST-DEVICE-001` queda como residual `[SKIP]`; `TST-BETA-UPDATE-002` queda diferido y no bloquea.
+
+`backup_state: pending`. El savepoint autorizado para Google Drive debe usar los nombres
+`linuxremoteplayer-savepoint-beta-foundation-20260823.bundle` y
+`linuxremoteplayer-savepoint-beta-foundation-20260823.zip`; no se persiste ruta absoluta. El siguiente
+paso, tras registrar hashes del backup, es iniciar PLAN BETA-STT. El cleanup de clones WSL sigue sin
+autorización.
