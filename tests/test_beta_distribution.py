@@ -26,8 +26,12 @@ def test_beta_installer_contract():
     assert 'MANIFEST_URL="https://www.linuxremoteplayer.com/beta/latest.json"' in source
     assert "source " not in source and "eval " not in source
     assert 'LRP_CHANNEL=beta' in source
+    assert 'architecture != "amd64"' in source
+    assert 'f"linuxremoteplayer_{version}_amd64.deb"' in source
     assert "sha256sum -c" in source
-    assert "/usr/local/bin/lrp-setup < /dev/tty" in source
+    assert "/usr/local/bin/lrp-setup --apply --approve < /dev/tty" in source
+    assert "Run: sudo lrp-setup --apply --approve" in source
+    assert "Reboot required. Run: sudo lrp-setup --resume" in source
     assert "mktemp \"$ENV_DIR/.env.XXXXXX\"" in source
     assert 'chmod --reference="$ENV_FILE" "$ENV_TMP"' in source
     assert 'chown --reference="$ENV_FILE" "$ENV_TMP"' in source

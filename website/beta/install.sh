@@ -25,13 +25,16 @@ try:
         data = json.load(stream)
     version = data["version"]
     deb_url = data["deb_url"]
+    architecture = data["architecture"]
     sha256 = data["sha256"]
     if not isinstance(version, str) or not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version):
         raise ValueError("invalid version")
     if not isinstance(deb_url, str) or urlparse(deb_url).scheme != "https" or "\n" in deb_url:
         raise ValueError("invalid deb_url")
+    if architecture != "amd64":
+        raise ValueError("invalid architecture")
     filename = urlparse(deb_url).path.rsplit("/", 1)[-1]
-    if filename != f"linuxremoteplayer_{version}_all.deb":
+    if filename != f"linuxremoteplayer_{version}_amd64.deb":
         raise ValueError("invalid package filename")
     if not isinstance(sha256, str) or not re.fullmatch(r"[0-9a-fA-F]{64}", sha256):
         raise ValueError("invalid sha256")
@@ -49,7 +52,7 @@ fi
 VERSION=$(sed -n '1p' "$WORK_DIR/metadata")
 DEB_URL=$(sed -n '2p' "$WORK_DIR/metadata")
 SHA256=$(sed -n '3p' "$WORK_DIR/metadata")
-DEB_FILE="linuxremoteplayer_${VERSION}_all.deb"
+DEB_FILE="linuxremoteplayer_${VERSION}_amd64.deb"
 cd "$WORK_DIR"
 curl -fsSL -o "$DEB_FILE" "$DEB_URL"
 echo "$SHA256  $DEB_FILE" | sha256sum -c -
@@ -77,7 +80,16 @@ fi
 mv -f "$ENV_TMP" "$ENV_FILE"
 
 if [ -e /dev/tty ]; then
-    /usr/local/bin/lrp-setup < /dev/tty || echo "[!] Setup failed. Run: sudo lrp-setup"
+    set +e
+    /usr/local/bin/lrp-setup --apply --approve < /dev/tty
+    SETUP_RC=$?
+    set -e
+    case "$SETUP_RC" in
+        0) ;;
+        20) echo "[i] Reboot required. Run: sudo lrp-setup --resume" ;;
+        *) echo "[!] Setup failed (rc=$SETUP_RC). Run: sudo lrp-setup --apply --approve" >&2; exit "$SETUP_RC" ;;
+    esac
 else
-    echo "[!] No interactive terminal. Run: sudo lrp-setup"
+    echo "[!] No interactive terminal. Run: sudo lrp-setup --apply --approve" >&2
+    exit 20
 fi

@@ -68,7 +68,7 @@ Version: ${VERSION}
 Architecture: amd64
 Maintainer: LinuxRemotePlayer
 Description: LinuxRemotePlayer API and web interface
-Depends: python3, python3-venv, python3-dev, build-essential, openssl, avahi-daemon
+Depends: python3, python3-venv, python3-dev, build-essential, openssl
 Recommends: firefox-esr, ufw, pulseaudio-utils
 EOF
 
@@ -76,13 +76,6 @@ EOF
 cat <<'EOF' > pkg/DEBIAN/postinst
 #!/bin/bash
 set -e
-
-# Permissions for evdev / uinput
-modprobe uinput || true
-echo uinput > /etc/modules-load.d/uinput.conf
-echo 'KERNEL=="uinput", MODE="0660", GROUP="input", OPTIONS+="static_node=uinput"' > /etc/udev/rules.d/99-uinput.rules
-udevadm control --reload-rules || true
-udevadm trigger || true
 
 BACKEND_DIR=/opt/linuxremoteplayer/backend
 cd "$BACKEND_DIR"
@@ -104,7 +97,7 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 cd /opt/linuxremoteplayer/scripts
-./install.sh
+exec ./debian/bootstrap.sh "$@"
 INNEREOF
 chmod 755 /usr/local/bin/lrp-setup
 
@@ -202,7 +195,7 @@ echo "================================================="
 echo " Paquete base instalado."
 echo ""
 echo " FALTA UN PASO. Para configurar el servicio ejecuta:"
-echo "     sudo lrp-setup"
+echo "     sudo lrp-setup --apply --approve"
 echo "================================================="
 EOF
 chmod 755 pkg/DEBIAN/postinst

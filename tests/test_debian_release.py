@@ -20,10 +20,18 @@ def test_debian_release_source_contract():
     assert (ROOT / "VERSION").read_text(encoding="ascii").strip() == "1.99.2"
     assert "Architecture: amd64" in source
     assert "chmod 0755 pkg/opt/linuxremoteplayer/scripts/debian/*.sh" in source
+    assert "exec ./debian/bootstrap.sh \"$@\"" in source
+    assert "sudo lrp-setup --apply --approve" in source
+    assert "exec ./debian/bootstrap.sh \"$@\"" in source
+    assert "exec ./install.sh" not in source
     assert "linuxremoteplayer_${VERSION}_amd64.deb" in source
     assert "linuxremoteplayer_${VERSION}_amd64.deb.sha256" in source
     assert "firefox-esr | firefox" not in source
     assert "Recommends: firefox-esr," in source
+    assert "Depends: python3, python3-venv, python3-dev, build-essential, openssl" in source
+    assert "Depends: python3, python3-venv, python3-dev, build-essential, openssl, avahi-daemon" not in source
+    assert "modprobe uinput" not in source
+    assert "99-linuxremoteplayer-uinput.rules" not in source
     assert "main \"$@\"; exit $?" in source
     assert 'if [ "$1" = "remove" ]; then' in source
 
