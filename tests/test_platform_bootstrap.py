@@ -59,7 +59,7 @@ class Fixture:
         self.stub("openssl", '#!/bin/sh\nexit 0\n')
         self.stub("usermod", '#!/bin/sh\necho "usermod $*" >> "$LRP_CMDLOG"\n')
         self.stub("udevadm", '#!/bin/sh\necho "udevadm $*" >> "$LRP_CMDLOG"\n')
-        self.stub("ufw", '#!/bin/sh\nif [ "$1" = status ]; then if grep -q "phase=applied" "$LRP_ROOT/var/lib/linuxremoteplayer/platform/state" 2>/dev/null; then echo "Status: active"; echo "8000/tcp ALLOW"; else echo "Status: inactive"; fi; exit 0; fi\necho "ufw $*" >> "$LRP_CMDLOG"\n')
+        self.stub("ufw", '#!/bin/sh\nif [ "$1" = status ]; then if grep -q "phase=applied" "$LRP_ROOT/var/lib/linuxremoteplayer/platform/state" 2>/dev/null; then echo "Status: active"; echo "linuxremoteplayer ALLOW"; else echo "Status: inactive"; fi; exit 0; fi\necho "ufw $*" >> "$LRP_CMDLOG"\n')
         self.stub("update-ca-certificates", '#!/bin/sh\necho "update-ca-certificates" >> "$LRP_CMDLOG"\n')
         self.stub("gpasswd", '#!/bin/sh\necho "gpasswd $*" >> "$LRP_CMDLOG"\n')
         self.stub("chmod", '#!/bin/sh\necho "chmod $*" >> "$LRP_CMDLOG"\n')
@@ -116,6 +116,12 @@ def test_apply_orders_ssh_before_ufw_enable_and_audio_bus(fx):
     enable = next(i for i, line in enumerate(lines) if "ufw --force enable" in line)
     assert ssh < enable
     assert any(line.startswith("runuser -u lrp") and "DBUS_SESSION_BUS_ADDRESS" in line for line in lines)
+
+
+def test_applied_audio_verification_uses_the_same_user_bus_environment():
+    text = SCRIPT.read_text(encoding="ascii")
+    assert 'state_applied_audio_bus_ok()' in text
+    assert 'state_applied_audio_bus_ok || return 1' in text
 
 
 def test_apply_is_idempotent_and_does_not_duplicate_dpms(fx):
