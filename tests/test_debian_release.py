@@ -1,4 +1,5 @@
 import json
+import hashlib
 import re
 from pathlib import Path
 
@@ -10,6 +11,8 @@ BUILD = ROOT / "scripts" / "build_deb.sh"
 MANIFEST = ROOT / "website" / "beta" / "latest.json"
 STABLE_MANIFEST = ROOT / "website" / "latest.json"
 SERVICE_WORKER = ROOT / "frontend" / "sw.js"
+PACKAGE = ROOT / "website" / "beta" / "downloads" / "linuxremoteplayer_1.99.2_amd64.deb"
+SIDECAR = PACKAGE.with_name(PACKAGE.name + ".sha256")
 
 
 def test_debian_release_source_contract():
@@ -38,7 +41,15 @@ def test_beta_manifest_is_prebuild_only_and_stable_is_isolated():
     assert beta["version"] == "1.99.2"
     assert beta["architecture"] == "amd64"
     assert beta["deb_url"].endswith("linuxremoteplayer_1.99.2_amd64.deb")
-    assert beta["sha256"] == "BUILD_REQUIRED"
+    if not PACKAGE.exists():
+        assert not SIDECAR.exists()
+        assert beta["sha256"] == "BUILD_REQUIRED"
+    else:
+        assert SIDECAR.is_file()
+        digest = hashlib.sha256(PACKAGE.read_bytes()).hexdigest()
+        assert re.fullmatch(r"[0-9a-f]{64}", beta["sha256"])
+        assert beta["sha256"] == digest
+        assert SIDECAR.read_text(encoding="ascii").split() == [digest, PACKAGE.name]
     assert stable["version"] != beta["version"]
     assert "beta/" not in stable["deb_url"]
 
@@ -52,9 +63,12 @@ def _assert_manifest_ready(manifest, final_build):
 
 def test_manifest_placeholder_is_allowed_prebuild_but_forbidden_final_build():
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
-    _assert_manifest_ready(manifest, final_build=False)
-    with pytest.raises(AssertionError):
+    if PACKAGE.exists():
         _assert_manifest_ready(manifest, final_build=True)
+    else:
+        _assert_manifest_ready(manifest, final_build=False)
+        with pytest.raises(AssertionError):
+            _assert_manifest_ready(manifest, final_build=True)
 
 
 def test_service_worker_source_remains_unstamped():
