@@ -4,7 +4,7 @@ set -e
 # P7: Release process
 # 1. Bump version in VERSION file.
 # 2. Run ./scripts/build_deb.sh
-# 3. Upload dist/linuxremoteplayer_<VERSION>_all.deb to website/downloads/
+# 3. Upload dist/linuxremoteplayer_<VERSION>_amd64.deb to website/downloads/
 # 4. Update website/latest.json with new version, url, and sha256.
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
@@ -15,7 +15,7 @@ if [ ! -f "VERSION" ]; then
 fi
 VERSION=$(cat VERSION)
 
-echo "Building linuxremoteplayer_${VERSION}_all.deb..."
+echo "Building linuxremoteplayer_${VERSION}_amd64.deb..."
 
 echo "Running CSS sync check..."
 python3 scripts/check_css_sync.py
@@ -64,11 +64,11 @@ chmod +x pkg/opt/linuxremoteplayer/scripts/*.sh
 cat <<EOF > pkg/DEBIAN/control
 Package: linuxremoteplayer
 Version: ${VERSION}
-Architecture: all
+Architecture: amd64
 Maintainer: LinuxRemotePlayer
 Description: LinuxRemotePlayer API and web interface
 Depends: python3, python3-venv, python3-dev, build-essential, openssl, avahi-daemon
-Recommends: firefox-esr | firefox, ufw, pulseaudio-utils
+Recommends: firefox-esr, ufw, pulseaudio-utils
 EOF
 
 # DEBIAN/postinst
@@ -127,22 +127,8 @@ restart_services() {
     local rc=$?
     echo "[i] Asegurando que el servicio quede levantado (rc=$rc)..."
     systemctl daemon-reload || true
-    if [ -f /etc/systemd/system/linuxremoteplayer.service ]; then
-        systemctl enable linuxremoteplayer.service || true
-        systemctl restart linuxremoteplayer.service || true
-    else
-        for d in /run/user/*; do
-            if [ -d "$d" ]; then
-                uid=$(basename "$d")
-                user_home=$(getent passwd "$(id -nu "$uid")" | cut -d: -f6)
-                if [ -f "$user_home/.config/systemd/user/linuxremoteplayer.service" ]; then
-                    sudo -u "#$uid" XDG_RUNTIME_DIR="$d" systemctl --user daemon-reload || true
-                    sudo -u "#$uid" XDG_RUNTIME_DIR="$d" systemctl --user enable linuxremoteplayer.service || true
-                    sudo -u "#$uid" XDG_RUNTIME_DIR="$d" systemctl --user restart linuxremoteplayer.service || true
-                fi
-            fi
-        done
-    fi
+    systemctl enable linuxremoteplayer.service || true
+    systemctl restart linuxremoteplayer.service || true
     return $rc
 }
 
@@ -191,18 +177,18 @@ main() {
     cd /tmp
     echo "Downloading $DEB_URL..."
     # Snap-packaged curl cannot write files outside $HOME (error 23). Fall back to wget.
-    if ! curl -fsSL -o "linuxremoteplayer_${VERSION}_all.deb" "$DEB_URL" 2>/dev/null; then
+    if ! curl -fsSL -o "linuxremoteplayer_${VERSION}.deb" "$DEB_URL" 2>/dev/null; then
         echo "[!] curl no pudo escribir el archivo (¿curl de snap?). Intentando con wget..."
-        wget -qO "linuxremoteplayer_${VERSION}_all.deb" "$DEB_URL"
+        wget -qO "linuxremoteplayer_${VERSION}.deb" "$DEB_URL"
     fi
-    if [ ! -s "linuxremoteplayer_${VERSION}_all.deb" ]; then
+    if [ ! -s "linuxremoteplayer_${VERSION}.deb" ]; then
         echo "[!] ERROR: no se pudo descargar la actualización. Instala el curl real: sudo apt install curl"
         exit 1
     fi
 
-    echo "$SHA256 linuxremoteplayer_${VERSION}_all.deb" | sha256sum -c -
+    echo "$SHA256 linuxremoteplayer_${VERSION}.deb" | sha256sum -c -
 
-    apt-get install -y --reinstall "./linuxremoteplayer_${VERSION}_all.deb"
+    apt-get install -y --reinstall "./linuxremoteplayer_${VERSION}.deb"
 
     echo "[+] Paquete $VERSION instalado. El trap se encarga del reinicio."
 }
@@ -229,16 +215,6 @@ if [ "$1" = "remove" ]; then
     systemctl disable linuxremoteplayer.service 2>/dev/null || true
 fi
 
-for d in /run/user/*; do
-    if [ -d "$d" ]; then
-        uid=$(basename "$d")
-        sudo -u "#$uid" XDG_RUNTIME_DIR="$d" systemctl --user stop linuxremoteplayer.service 2>/dev/null || true
-        if [ "$1" = "remove" ]; then
-            sudo -u "#$uid" XDG_RUNTIME_DIR="$d" systemctl --user disable linuxremoteplayer.service 2>/dev/null || true
-        fi
-    fi
-done
-
 # Limpieza de sistema SOLO al desinstalar de verdad. dpkg tambien corre el prerm
 # en cada actualizacion con $1="upgrade": si esto se ejecutara ahi, cada OTA
 # borraria las reglas udev y liberaria la licencia del dispositivo. Ver T-19.
@@ -259,7 +235,7 @@ chmod 440 pkg/etc/sudoers.d/linuxremoteplayer
 
 chmod -R 0755 pkg/DEBIAN
 
-dpkg-deb --root-owner-group --build pkg dist/linuxremoteplayer_${VERSION}_all.deb
+dpkg-deb --root-owner-group --build pkg dist/linuxremoteplayer_${VERSION}_amd64.deb
 cd dist
-sha256sum linuxremoteplayer_${VERSION}_all.deb > linuxremoteplayer_${VERSION}_all.deb.sha256
-echo "Done! Wrote dist/linuxremoteplayer_${VERSION}_all.deb and sha256."
+sha256sum linuxremoteplayer_${VERSION}_amd64.deb > linuxremoteplayer_${VERSION}_amd64.deb.sha256
+echo "Done! Wrote dist/linuxremoteplayer_${VERSION}_amd64.deb and sha256."

@@ -24,7 +24,6 @@
                 <a href="index.html#apoyo">Apoyá</a>
                 <a href="index.html#faq">FAQ</a>
                 <a href="docs.html" class="active">Documentación</a>
-                <a href="changelog.html">Novedades</a>
                 <a href="en/docs.html" title="English version">EN</a>
             </nav>
             <a href="index.html#instalacion" class="btn btn-green">Instalar gratis</a>
@@ -55,10 +54,12 @@
 
         <h2 id="requisitos">Requisitos</h2>
         <ul>
-            <li><b>La PC de la TV:</b> Linux de la familia Debian/Ubuntu con <code>systemd</code>
-            (probado a fondo en KDE Neon con Plasma Bigscreen; ver la
-            <a href="index.html#compatibilidad">matriz de compatibilidad</a>). Firefox se usa para el modo
-            kiosk — si no está, el instalador lo instala solo.</li>
+            <li><b>La PC de la TV:</b> Debian 13 stable amd64 minimal con <code>systemd</code> y la
+            sesión propia de LRP basada en Xorg/Openbox. La GPU inicialmente certificada es la
+            NVIDIA RTX 3060 12 GB con el driver de los repositorios Debian. Firefox ESR se usa para
+            el modo kiosk.</li>
+            <li><b>Compatibilidad:</b> otras distribuciones, GPUs o escritorios pueden funcionar
+            accidentalmente, pero no están garantizados. No se declara soporte para otros entornos.</li>
             <li><b>El control:</b> cualquier teléfono con navegador moderno (Android con Chrome o
             Firefox; iPhone con Safari). No se descarga nada de ninguna tienda.</li>
             <li><b>Red:</b> la PC y el teléfono en la misma red WiFi. No hace falta abrir puertos

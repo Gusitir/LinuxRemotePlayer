@@ -1,0 +1,117 @@
+import re
+import subprocess
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+BASH = str(Path("C:/Program Files/Git/bin/bash.exe"))
+INSTALLER = (ROOT / "scripts" / "install.sh").read_text()
+BUILDER = (ROOT / "scripts" / "build_deb.sh").read_text()
+
+
+def test_installer_requires_the_existing_lrp_identity():
+    assert 'TARGET_USER="lrp"' in INSTALLER
+    assert 'getent passwd "$TARGET_USER"' in INSTALLER
+    assert 'USER_UID" = "0"' in INSTALLER
+    assert 'USER_HOME" != "/home/lrp"' in INSTALLER
+    assert 'USER_SHELL" != "/bin/bash"' in INSTALLER
+    assert "useradd" not in INSTALLER
+
+
+def test_installer_never_prompts_or_selects_a_different_user():
+    assert "PROMPT_USER" not in INSTALLER
+    assert 'read -p "Que usuario' not in INSTALLER
+    assert "logname" not in INSTALLER
+    assert "loginctl" not in INSTALLER
+    assert 'TARGET_USER="$SUDO_USER"' not in INSTALLER
+    assert 'TARGET_USER="lrp"' in INSTALLER
+
+
+def test_passwd_mapping_behavior_accepts_valid_lrp_and_rejects_uid_zero():
+    validation = r'''
+TARGET_USER="lrp"
+USER_RECORD=$(getent passwd "$TARGET_USER")
+IFS=: read -r _ _ USER_UID _ _ USER_HOME USER_SHELL <<EOF
+$USER_RECORD
+EOF
+if [ "$USER_UID" = "0" ] || [ "$USER_HOME" != "/home/lrp" ] || [ "$USER_SHELL" != "/bin/bash" ]; then
+    exit 1
+fi
+'''
+    valid = subprocess.run(
+        [BASH, "-c", 'getent() { printf "%s\\n" "lrp:x:1001:1001::/home/lrp:/bin/bash"; }; ' + validation],
+        capture_output=True,
+    )
+    root = subprocess.run(
+        [BASH, "-c", 'getent() { printf "%s\\n" "lrp:x:0:0::/home/lrp:/bin/bash"; }; ' + validation],
+        capture_output=True,
+    )
+    assert valid.returncode == 0
+    assert root.returncode == 1
+    assert 'IFS=: read -r _ _ USER_UID _ _ USER_HOME USER_SHELL' in INSTALLER
+
+
+def test_mode_migration_replaces_every_assignment_with_htpc():
+    assert "LRP_MODE=htpc" in INSTALLER
+    assert "sed -i -E 's/^[[:space:]]*LRP_MODE" in INSTALLER
+    assert "LRP_MODE=$lrp_mode_str" not in INSTALLER
+    assert "LRP_MODE=appliance" not in INSTALLER
+    assert "LRP_MODE=desktop" not in INSTALLER
+
+
+def test_mode_fixture_preserves_unrelated_environment_lines():
+    env = "PAIRING_TOKEN=keep\n LRP_MODE = desktop\nKEYBOARD_LAYOUT=es\nLRP_MODE=appliance\n"
+    migrated = re.sub(r"^[ \t]*LRP_MODE[ \t]*=.*$", "LRP_MODE=htpc", env, flags=re.MULTILINE)
+    assert migrated == "PAIRING_TOKEN=keep\nLRP_MODE=htpc\nKEYBOARD_LAYOUT=es\nLRP_MODE=htpc\n"
+
+
+def test_installer_generates_one_system_unit_with_required_dependencies():
+    unit = INSTALLER[INSTALLER.index("cat <<EOF > /etc/systemd/system/linuxremoteplayer.service"):]
+    assert "User=lrp" in unit
+    assert "Wants=network-online.target" in unit
+    assert "After=display-manager.service network-online.target" in unit
+    assert "WantedBy=graphical.target" in unit
+    assert INSTALLER.count("/etc/systemd/system/linuxremoteplayer.service") == 1
+
+
+def test_installer_removes_the_lrp_legacy_user_unit_before_starting_system_unit():
+    legacy = INSTALLER.index("cleanup_legacy_user_unit()")
+    service = INSTALLER.index("cat <<EOF > /etc/systemd/system/linuxremoteplayer.service")
+    block = INSTALLER[legacy:service]
+    assert 'legacy_record=$(getent passwd "$legacy_user"' in block
+    assert 'legacy_unit="$legacy_home/.config/systemd/user/linuxremoteplayer.service"' in block
+    assert 'systemctl --user stop linuxremoteplayer.service' in block
+    assert 'systemctl --user disable linuxremoteplayer.service' in block
+    assert 'rm -f "$legacy_unit"' in block
+    assert 'cleanup_legacy_user_unit "$TARGET_USER"' in block
+    assert 'cleanup_legacy_user_unit "$SUDO_USER"' in block
+    assert '"$SUDO_USER" != "$TARGET_USER"' in block
+    assert INSTALLER.index("systemctl daemon-reload") > service
+
+
+def test_installer_uses_system_lifecycle_only():
+    assert "systemctl daemon-reload" in INSTALLER
+    assert "systemctl enable linuxremoteplayer.service" in INSTALLER
+    assert "systemctl restart linuxremoteplayer.service" in INSTALLER
+    assert 'systemctl --user daemon-reload' not in INSTALLER
+    assert 'systemctl --user disable linuxremoteplayer.service' in INSTALLER  # legacy cleanup only
+
+
+def test_embedded_updater_has_no_user_service_fallback():
+    restart = BUILDER[BUILDER.index("restart_services()"):BUILDER.index("main()")]
+    assert "systemctl daemon-reload" in restart
+    assert "systemctl enable linuxremoteplayer.service" in restart
+    assert "systemctl restart linuxremoteplayer.service" in restart
+    assert "systemctl --user" not in restart
+    assert "for d in /run/user" not in restart
+
+
+def test_package_prerm_has_no_user_service_lifecycle_and_preserves_guards():
+    prerm = BUILDER[BUILDER.index("cat <<'EOF' > pkg/DEBIAN/prerm"):]
+    assert "systemctl --user" not in prerm
+    assert 'if [ "$1" = "remove" ]; then' in prerm
+    assert "lrp-cleanup.sh" in prerm
+    assert "systemctl stop linuxremoteplayer.service" in prerm
+    assert "platform-bootstrap.sh" in INSTALLER
+    assert "qdbus" not in INSTALLER
+    assert "kbuildsycoca" not in INSTALLER

@@ -12,9 +12,11 @@ Verified against the code: **2026-07-24** · version `1.8.0`
 
 ## 1. Day one: get it running
 
-You need a Linux machine with a desktop session — this project writes to the kernel's
-virtual input device, so it cannot be meaningfully developed on Windows or macOS. A VM with
-a desktop works. Debian/Ubuntu family with systemd is the target.
+You need a Debian 13 stable amd64 minimal machine with the LRP-owned Xorg/Openbox session — this
+project writes to the kernel's virtual input device, so it cannot be meaningfully developed on
+Windows or macOS. Other distributions, GPUs, or desktop environments may work accidentally, but
+are not guaranteed. The initial certified GPU is NVIDIA RTX 3060 12 GB with its Debian-repository
+driver.
 
 ```bash
 git clone <repo> && cd linuxremoteplayer

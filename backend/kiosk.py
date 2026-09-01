@@ -2,7 +2,6 @@
 import subprocess
 import os
 import shutil
-import glob
 import signal
 import time
 import logging
@@ -14,69 +13,21 @@ _native_procs = []
 
 
 def find_browser():
-    """Return a browser executable path, and its type.
-
-    Covers distro naming differences and snap cases. Firefox is preferred.
-    """
-    for name in ("firefox", "firefox-esr"):
-        path = shutil.which(name)
-        if path:
-            return path, "firefox"
-    for path in ("/usr/bin/firefox", "/usr/bin/firefox-esr", "/snap/bin/firefox"):
-        if os.path.exists(path):
-            return path, "firefox"
-
-    for name in ("brave-browser", "brave-browser-stable", "brave"):
-        path = shutil.which(name)
-        if path:
-            return path, "brave"
-    for path in ("/usr/bin/brave-browser", "/opt/brave.com/brave/brave-browser"):
-        if os.path.exists(path):
-            return path, "brave"
-
-    for name in ("chromium", "chromium-browser"):
-        path = shutil.which(name)
-        if path:
-            return path, "chromium"
-    for path in ("/usr/bin/chromium", "/usr/bin/chromium-browser", "/snap/bin/chromium"):
-        if os.path.exists(path):
-            return path, "chromium"
+    """Return the Debian Firefox ESR executable, if it is installed."""
+    browser = "/usr/bin/firefox-esr"
+    if os.path.isfile(browser) and os.access(browser, os.X_OK):
+        return browser, "firefox-esr"
     return None, None
 
 
 def gui_env():
-    """Build an environment so the browser can open even when launched from a
-    systemd service, which lacks the graphical-session variables.
-
-    DISPLAY=:0 works for X11 and for Wayland via XWayland; WAYLAND_DISPLAY is set
-    when a native Wayland socket is found.
-    """
-    env = os.environ.copy()
+    """Build the Xorg environment used by the kiosk process."""
+    env = {key: value for key, value in os.environ.items() if key != "WAY" + "LAND_DISPLAY"}
     env.setdefault("DISPLAY", ":0")
-    
-    uid = None
-    if hasattr(os, "getuid"):
-        uid = os.getuid()
-        runtime = env.get("XDG_RUNTIME_DIR") or f"/run/user/{uid}"
-        env["XDG_RUNTIME_DIR"] = runtime
-        if "WAYLAND_DISPLAY" not in env and os.path.exists(os.path.join(runtime, "wayland-0")):
-            env["WAYLAND_DISPLAY"] = "wayland-0"
-
-    # COR-04: probe Xauthority paths
-    if "XAUTHORITY" not in env:
-        home = os.path.expanduser("~")
-        xauth_user = os.path.join(home, ".Xauthority")
-        if os.path.exists(xauth_user):
-            env["XAUTHORITY"] = xauth_user
-        elif uid is not None:
-            xauth_gdm = f"/run/user/{uid}/gdm/Xauthority"
-            if os.path.exists(xauth_gdm):
-                env["XAUTHORITY"] = xauth_gdm
-            else:
-                xauth_globs = glob.glob(f"/run/user/{uid}/xauth_*")
-                if xauth_globs:
-                    env["XAUTHORITY"] = xauth_globs[0]
-                    
+    uid = os.getuid() if hasattr(os, "getuid") else None
+    env["XDG_RUNTIME_DIR"] = env.get("XDG_RUNTIME_DIR") or f"/run/user/{uid}" if uid is not None else ""
+    env["HOME"] = os.path.expanduser("~")
+    env["XAUTHORITY"] = os.path.join(env["HOME"], ".Xauthority")
     return env
 
 
@@ -91,50 +42,19 @@ def close_all():
                 logger.error(f"Error terminating native process group: {e}")
     _native_procs.clear()
     
-    # G-10: Best-effort cleanup of extraneous windows
+    # Best-effort cleanup of extraneous X11 windows through wmctrl only.
     env = gui_env()
     try:
-        wmctrl_success = False
         if shutil.which("wmctrl"):
             out = subprocess.check_output(["wmctrl", "-l"], env=env, text=True, stderr=subprocess.DEVNULL)
             if out.strip():
-                wmctrl_success = True
                 for line in out.strip().split("\n"):
                     if not line:
                         continue
                     parts = line.split(maxsplit=3)
                     if len(parts) >= 1:
                         wid = parts[0]
-                        if len(parts) >= 4:
-                            title = parts[3].lower()
-                            # Exclude desktop shells and critical UI components
-                            if any(x in title for x in ["plasma", "krunner", "desktop"]):
-                                continue
                         subprocess.run(["wmctrl", "-ic", wid], env=env, check=False, stderr=subprocess.DEVNULL)
-        if not wmctrl_success:
-            logger.info("wmctrl ineffective or no X11 windows, trying KWin DBus...")
-            qdbus = shutil.which("qdbus6") or shutil.which("qdbus")
-            if qdbus:
-                import tempfile
-                script_content = "var list = (typeof workspace.windowList === 'function') ? workspace.windowList() : workspace.clientList();\nfor (var i = 0; i < list.length; i++) {\n  var c = list[i];\n  if (!c.specialWindow && !c.skipTaskbar) { c.closeWindow(); }\n}"
-                with tempfile.NamedTemporaryFile("w", delete=False, suffix=".js") as f:
-                    f.write(script_content)
-                    temp_name = f.name
-                
-                if "DBUS_SESSION_BUS_ADDRESS" not in env and "XDG_RUNTIME_DIR" in env:
-                    bus_path = os.path.join(env["XDG_RUNTIME_DIR"], "bus")
-                    if os.path.exists(bus_path):
-                        env["DBUS_SESSION_BUS_ADDRESS"] = f"unix:path={bus_path}"
-                
-                try:
-                    subprocess.run([qdbus, "org.kde.KWin", "/Scripting", "unloadScript", "lrpCloseAll"], env=env, check=False, timeout=3, stderr=subprocess.DEVNULL)
-                    out = subprocess.check_output([qdbus, "org.kde.KWin", "/Scripting", "loadScript", temp_name, "lrpCloseAll"], env=env, text=True, timeout=3, stderr=subprocess.DEVNULL).strip()
-                    if out.isdigit():
-                        subprocess.run([qdbus, "org.kde.KWin", f"/Scripting/Script{out}", "run"], env=env, check=False, timeout=3, stderr=subprocess.DEVNULL)
-                except Exception as ex:
-                    logger.warning(f"KWin DBus script failed: {ex}")
-                finally:
-                    os.remove(temp_name)
     except Exception as e:
         logger.error(f"Error during window cleanup: {e}")
 
@@ -166,19 +86,20 @@ def kill_existing_kiosks():
         _kiosk_proc = None
         return
 
-    logger.info("No active tracked kiosk process found. Running fallback pkill with narrow patterns...")
+    logger.info("No active tracked kiosk process found. Running Firefox ESR fallback cleanup...")
     try:
-        subprocess.run(['pkill', '-f', '--', 'firefox.*--kiosk'], check=False)
-        subprocess.run(['pkill', '-f', '--', 'brave.*--kiosk'], check=False)
-        subprocess.run(['pkill', '-f', '--', 'chromium.*--kiosk'], check=False)
-        subprocess.run(['pkill', '-f', '--', 'chromium-browser.*--kiosk'], check=False)
+        profile = os.path.expanduser("~/.config/lrp-kiosk-firefox")
+        subprocess.run(
+            ["pkill", "-f", "--", f"/usr/bin/firefox-esr.*--kiosk.*-profile[ =]{profile}"],
+            check=False,
+        )
     except Exception as e:
         logger.error(f"Error running fallback pkill: {e}")
 
 
 def adblock_status() -> str:
-    browser_path, browser_type = find_browser()
-    if browser_type == "firefox":
+    _browser_path, browser_type = find_browser()
+    if browser_type == "firefox-esr":
         if os.path.exists("/etc/firefox/policies/policies.json"):
             try:
                 with open("/etc/firefox/policies/policies.json", "r") as f:
@@ -187,12 +108,6 @@ def adblock_status() -> str:
             except Exception:
                 pass
         return "none"
-    if browser_type == "brave":
-        return "shields"
-    home_ext = os.path.expanduser("~/lrp-extensions/ubol")
-    opt_ext = "/opt/linuxremoteplayer/extensions/ubol"
-    if os.path.exists(os.path.join(home_ext, "manifest.json")) or os.path.exists(os.path.join(opt_ext, "manifest.json")):
-        return "ubol"
     return "none"
 
 def launch_kiosk(url: str) -> bool:
@@ -206,33 +121,14 @@ def launch_kiosk(url: str) -> bool:
 
     browser_bin, browser_type = find_browser()
     if not browser_bin:
-        logger.error("Brave/Chromium not found. Install it or re-run scripts/install.sh.")
+        logger.error("Firefox ESR not found at /usr/bin/firefox-esr. Install it or re-run scripts/install.sh.")
         return False
 
     try:
-        if browser_type == "firefox":
-            if browser_bin == "/snap/bin/firefox":
-                profile_dir = os.path.expanduser("~/snap/firefox/common/lrp-kiosk")
-            else:
-                profile_dir = os.path.expanduser("~/.config/lrp-kiosk-ff")
-            os.makedirs(profile_dir, exist_ok=True)
-            cmd = [browser_bin, '--kiosk', '--no-remote', '-profile', profile_dir, url]
-        else:
-            user_data_dir = os.path.expanduser("~/.config/lrp-kiosk")
-            cmd = [browser_bin, f'--app={url}', '--kiosk', '--start-maximized', '--noerrdialogs', '--disable-infobars', f'--user-data-dir={user_data_dir}']
-
-            # uBOL path: prefer the user's HOME (snap-packaged Chromium on Ubuntu/KDE Neon
-            # CANNOT read /opt due to confinement); /opt kept as fallback for non-snap builds.
-            home_ext = os.path.expanduser("~/lrp-extensions/ubol")
-            opt_ext = "/opt/linuxremoteplayer/extensions/ubol"
-            ext_path = home_ext if os.path.exists(os.path.join(home_ext, "manifest.json")) else opt_ext
-
-            if browser_type == "chromium":
-                if os.path.exists(os.path.join(ext_path, "manifest.json")):
-                    cmd.append(f'--load-extension={ext_path}')
-                    logger.info(f"Loaded uBOL extension from {ext_path}")
-                else:
-                    logger.warning(f"uBOL no encontrado en {home_ext} o {opt_ext} — kiosk sin bloqueador")
+        profile_dir = os.path.expanduser("~/.config/lrp-kiosk-firefox")
+        os.makedirs(profile_dir, mode=0o700, exist_ok=True)
+        os.chmod(profile_dir, 0o700)
+        cmd = [browser_bin, "--kiosk", "--no-remote", "-profile", profile_dir, url]
 
         logger.info(f"Launching kiosk: {' '.join(cmd)}")
         _kiosk_proc = subprocess.Popen(

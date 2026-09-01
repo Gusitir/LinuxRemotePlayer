@@ -26,7 +26,6 @@
                 <a href="index.html#support-us">Support us</a>
                 <a href="index.html#faq">FAQ</a>
                 <a href="docs.html" class="active">Docs</a>
-                <a href="changelog.html">Changelog</a>
                 <a href="../docs.html" title="Versión en español">ES</a>
             </nav>
             <a href="index.html#install" class="btn btn-green">Install free</a>
@@ -57,10 +56,11 @@
 
         <h2 id="requirements">Requirements</h2>
         <ul>
-            <li><b>The TV PC:</b> a Debian/Ubuntu-family Linux with <code>systemd</code>
-            (thoroughly tested on KDE Neon with Plasma Bigscreen; see the
-            <a href="index.html#compatibility">compatibility matrix</a>). Firefox is used for kiosk
-            mode — if it's missing, the installer installs it for you.</li>
+            <li><b>The TV PC:</b> Debian 13 stable amd64 minimal with <code>systemd</code> and the
+            LRP-owned Xorg/Openbox session. The initially certified GPU is the NVIDIA RTX 3060 12 GB
+            with the driver from Debian repositories. Firefox ESR is used for kiosk mode.</li>
+            <li><b>Compatibility:</b> other distributions, GPUs, or desktop environments may work
+            accidentally, but are not guaranteed. No other environment is declared supported.</li>
             <li><b>The remote:</b> any phone with a modern browser (Android with Chrome or Firefox;
             iPhone with Safari). Nothing to download from any app store.</li>
             <li><b>Network:</b> the PC and the phone on the same WiFi network. No ports need to be

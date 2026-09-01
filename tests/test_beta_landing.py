@@ -87,7 +87,7 @@ def test_beta_landing_has_exact_copy_and_single_command():
             "LinuxRemotePlayer beta",
             "Canal voluntario para probar la distribución antes de 2.0.0.",
             "Tu instalación estable 1.9.1 no cambia ni descubre esta beta.",
-            "Requiere Debian/Ubuntu Linux con systemd.",
+            "Soporte declarado: Debian 13 stable amd64 minimal.",
             "Riesgo aceptado: esta beta aún no tiene firma independiente, protección de downgrade ni rollback.",
         ),
         "en": (
@@ -95,7 +95,7 @@ def test_beta_landing_has_exact_copy_and_single_command():
             "LinuxRemotePlayer beta",
             "A voluntary channel for testing distribution before 2.0.0.",
             "Your stable 1.9.1 installation is unchanged and cannot discover this beta.",
-            "Requires Debian/Ubuntu Linux with systemd.",
+            "Declared support: Debian 13 stable amd64 minimal.",
             "Accepted risk: this beta does not yet have independent signing, downgrade protection, or rollback.",
         ),
     }

@@ -1,74 +1,22 @@
 #!/bin/bash
-# ==============================================================================
-# LinuxRemotePlayer Uninstaller Script (C2-5)
-# ==============================================================================
-set -e
+set -euo pipefail
 
-if [ "$EUID" -ne 0 ]; then
-  echo "Please run as root (sudo ./uninstall.sh)"
-  exit 1
-fi
-
-echo "======================================"
-echo " LinuxRemotePlayer Uninstaller        "
-echo "======================================"
-read -p "Esto eliminará LinuxRemotePlayer de tu sistema. ¿Continuar? [y/N]: " confirm
-
-if [[ ! "$confirm" =~ ^[yY]$ ]]; then
-    echo "Desinstalación cancelada."
-    exit 0
-fi
-
-# La limpieza de sistema vive en un solo lugar y la comparte con el prerm del .deb.
-BACKEND_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../backend" && pwd)"
-CLEANUP="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lrp-cleanup.sh"
-
-# Stop and disable system services
-echo "[i] Stopping and disabling systemd services..."
-if [ -f "/etc/systemd/system/linuxremoteplayer.service" ]; then
-    systemctl stop linuxremoteplayer.service || true
-    systemctl disable linuxremoteplayer.service || true
-    rm -f "/etc/systemd/system/linuxremoteplayer.service"
+ROOT=${LRP_ROOT:-/}; SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PLATFORM="$SCRIPT_DIR/debian/platform-bootstrap.sh"; SESSION="$SCRIPT_DIR/debian/session-bootstrap.sh"
+SERVICE="$ROOT/etc/systemd/system/linuxremoteplayer.service"; PLATFORM_STATE="$ROOT/var/lib/linuxremoteplayer/platform/state"; SESSION_STATE="$ROOT/var/lib/linuxremoteplayer/session/state"
+MODE=dry-run; APPROVE=0
+for arg in "$@"; do case "$arg" in --dry-run) MODE=dry-run;; --apply) MODE=apply;; --approve) APPROVE=1;; --help|-h) echo 'usage: uninstall.sh [--dry-run|--apply --approve]'; exit 0;; *) echo '{"contract_valid":false,"reason":"invalid_argument"}'; exit 12;; esac; done
+[ "${EUID:-1}" = 0 ] || { echo '{"contract_valid":false,"reason":"root_required"}'; exit 12; }
+[ "$MODE" != apply ] || { [ "$APPROVE" = 1 ] || { echo '{"contract_valid":false,"reason":"approval_required"}'; exit 12; }; }
+would=(); [ -f "$SERVICE" ] && would+=(stop_disable_remove_system_unit); [ -f "$PLATFORM_STATE" ] && would+=(platform_rollback); [ -f "$SESSION_STATE" ] && would+=(session_rollback); would+=(daemon_reload)
+if [ "$MODE" = apply ]; then
+    [ -x "$PLATFORM" ] || [ ! -f "$PLATFORM_STATE" ] || exit 11
+    [ -x "$SESSION" ] || [ ! -f "$SESSION_STATE" ] || exit 11
+    if [ -f "$SERVICE" ]; then systemctl stop linuxremoteplayer.service; systemctl disable linuxremoteplayer.service; rm -f "$SERVICE"; fi
+    [ ! -f "$PLATFORM_STATE" ] || "$PLATFORM" --rollback --approve --strict
+    [ ! -f "$SESSION_STATE" ] || "$SESSION" --rollback --approve
     systemctl daemon-reload
-    echo "[+] Removed system service."
-fi
-
-# Stop and disable user-level services for SUDO_USER if applicable
-if [ -n "$SUDO_USER" ]; then
-    USER_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
-    USER_SVC="$USER_HOME/.config/systemd/user/linuxremoteplayer.service"
-    if [ -f "$USER_SVC" ]; then
-        export XDG_RUNTIME_DIR="/run/user/$(id -u "$SUDO_USER")"
-        sudo -u "$SUDO_USER" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" systemctl --user stop linuxremoteplayer.service || true
-        sudo -u "$SUDO_USER" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" systemctl --user disable linuxremoteplayer.service || true
-        rm -f "$USER_SVC"
-        sudo -u "$SUDO_USER" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" systemctl --user daemon-reload
-        echo "[+] Removed user service."
-    fi
-fi
-
-# Limpieza compartida: licencia, udev, firewall y suspension.
-if [ -x "$CLEANUP" ]; then
-    LRP_BACKEND_DIR="$BACKEND_DIR" "$CLEANUP" || true
+    printf '%s\n' '{"mode":"apply","status":"rolled_back","retained":["nvidia/kernel packages","all apt packages","lrp user/home","/opt/linuxremoteplayer/backend/.env","/opt/linuxremoteplayer/backend/.pairing_token","/opt/linuxremoteplayer/backend/.license_cache","/opt/linuxremoteplayer/backend/certs","/opt/linuxremoteplayer backend owner data"]}'
 else
-    echo "[!] No se encontro lrp-cleanup.sh; se omite la limpieza de sistema."
+    printf '{"mode":"dry-run","would_do":[%s],"retained":["nvidia/kernel packages","all apt packages","lrp user/home","/opt/linuxremoteplayer/backend/.env","/opt/linuxremoteplayer/backend/.pairing_token","/opt/linuxremoteplayer/backend/.license_cache","/opt/linuxremoteplayer/backend/certs","/opt/linuxremoteplayer backend owner data"]}\n' "$(printf '"%s",' "${would[@]}" | sed 's/,$//')"
 fi
-
-# Remove generated files and environments
-echo "[i] Cleaning up files under $BACKEND_DIR..."
-rm -rf "$BACKEND_DIR/.venv"
-rm -rf "$BACKEND_DIR/certs"
-rm -rf "$BACKEND_DIR/.pairing_token"
-rm -rf "$BACKEND_DIR/.license_cache"
-rm -rf "$BACKEND_DIR/__pycache__"
-
-echo "======================================"
-echo " Desinstalación básica completada.   "
-echo "======================================"
-echo "Pasos manuales recomendados:"
-echo " 1. Remover al usuario del grupo input:"
-echo "    sudo gpasswd -d $SUDO_USER input"
-echo " 2. Eliminar la carpeta clonada del repositorio:"
-echo "    rm -rf $(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-echo " 3. Chromium y avahi-daemon no han sido desinstalados ya que pueden ser usados por otros servicios."
-echo "======================================"

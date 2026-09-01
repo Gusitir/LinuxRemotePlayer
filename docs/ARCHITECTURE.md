@@ -13,8 +13,7 @@
 > a boundary, adds a dependency, or reverses a decision. Nothing here is written that was
 > not checked against the code.
 
-Last verified against the code: **2026-07-24** · shipped version `1.8.0` · built and
-audited, not yet published: `1.8.9`
+Last verified against the code: **2026-08-31** · supported host: Debian 13 stable amd64 minimal
 
 ---
 
@@ -55,8 +54,10 @@ python3 scripts/check_css_sync.py  # fails if a CSS class is used in markup but 
   inside the Linux home directory.
 - The frontend has **no build step**. `app.js`, `index.html` and the CSS ship as written.
   This is deliberate (see §7) and it is why the CSS gate exists.
-- Target platform is Debian/Ubuntu-family with **systemd**, **uinput**, and a desktop
-  session. Wayland/KDE Plasma Bigscreen is the reference platform.
+- Supported host is Debian 13 stable amd64 minimal with systemd, uinput, and the
+  LRP-owned Xorg/Openbox session. Other distributions, GPUs, or desktop environments may work
+  accidentally, but are not guaranteed.
+- The initial certified GPU is NVIDIA RTX 3060 12 GB using the driver from Debian repositories.
 
 ## 3. Where the risk is
 
@@ -78,7 +79,7 @@ Central, non-trivial, and weakly verified — read this before anything else.
 |---|---|---|
 | `main.py` (945) | HTTP endpoints, WebSocket protocol, pairing PIN state machine, voice handler, idle-panel monitor | `TESTING.md` matrix + task audits |
 | `input_emulator.py` (305) | Virtual keyboard and mouse via `evdev`/uinput; per-layout character maps (`us`/`es`/`latam`) | `TESTING.md` matrix |
-| `kiosk.py` (244) | Launching sites full-screen in Firefox with a dedicated profile; closing windows via `wmctrl` with a KWin DBus fallback; ad-block status | `TESTING.md` matrix |
+| `kiosk.py` (244) | Launching sites full-screen in Firefox ESR with a dedicated profile; closing windows via `wmctrl`; ad-block status | `TESTING.md` matrix |
 | `run.py` (222) | HTTPS with self-healing certificates (a stable local CA plus a leaf per IP/hostname); restarts the service when the machine's IP changes | `TESTING.md` matrix |
 | `ai_pipeline.py` (113) | **Talks only to the ai-proxy.** Packs audio, sends it, returns the parsed intent. Holds no AI credentials. | device E2E (T-50) |
 | `auth.py` (89) | Pairing-token verification; license checks against the Edge Function with a 72 h offline grace cache | device E2E (T-50) |
@@ -164,7 +165,7 @@ that was passed to it in that request.
 | Supabase (Edge Functions + Postgres) | licensing, quota, activation, voice proxy | Voice stops. Pro state survives ~72 h on the offline grace cache, then degrades to free. |
 | Together AI (reached only through the proxy) | speech-to-text and intent extraction | Voice stops; everything else is unaffected. |
 | Vercel (site + `latest.json` + `.deb`) | update channel and purchase funnel | No updates and no new installs. **Existing installs poll this host — moving it without a redirect strands them.** |
-| Firefox | kiosk browser | Site launching stops; falls back to Brave/Chromium if present. |
+| Firefox ESR | kiosk browser | Site launching stops. |
 | System: uinput, `wmctrl` or KWin DBus, `pulseaudio-utils`, UFW | input, window management, audio, firewall | Input needs uinput; the rest degrade individually. |
 
 Python dependencies are deliberately few: `fastapi`, `uvicorn`, `evdev`, `python-dotenv`,
@@ -178,7 +179,7 @@ Python dependencies are deliberately few: `fastapi`, `uvicorn`, `evdev`, `python
   bypassable by definition. The cost accepted: voice now requires internet.
 - **A PWA, not a native app.** No store review, no install friction, and updates ship
   instantly. Rejected a native Android app for v1; it stays on the roadmap for later.
-- **Firefox as the kiosk browser**, replacing Chromium. Better ad-blocking through
+- **Firefox ESR as the kiosk browser**, replacing Chromium. Better ad-blocking through
   enterprise policy and a cleaner full-screen profile story.
 - **No local inference.** A living-room HTPC has no GPU budget to spare while playing
   video. Rejected local speech-to-text for latency and hardware reasons.
@@ -217,7 +218,8 @@ Written down deliberately. Two of these are live defects.
   ~1 s) and not yet applied.
 - **First voice command after idle is slow** (dormant Edge Function plus a cold model).
 - **Keyboard gaps:** `< >` and AltGr bracket characters are not emitted correctly.
-- **One distro family.** Debian/Ubuntu with systemd only; other distributions are roadmap.
+- **One supported host.** Debian 13 stable amd64 minimal with the LRP-owned Xorg/Openbox session;
+  other distributions and desktop environments are not guaranteed.
 
 ## 9. Verification summary
 

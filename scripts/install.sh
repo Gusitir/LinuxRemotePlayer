@@ -10,74 +10,23 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
-TARGET_USER=""
-if [ -n "$SUDO_USER" ] && [ "$SUDO_USER" != "root" ]; then
-    TARGET_USER="$SUDO_USER"
-elif logname >/dev/null 2>&1 && [ "$(logname)" != "root" ]; then
-    TARGET_USER="$(logname)"
-else
-    # Try to find the active graphical session owner
-    if command -v loginctl >/dev/null 2>&1; then
-        TARGET_USER=$(loginctl list-sessions --no-legend | awk '$3!="root"{print $3; exit}')
-    fi
+TARGET_USER="lrp"
+USER_RECORD=$(getent passwd "$TARGET_USER" 2>/dev/null || true)
+if [ -z "$USER_RECORD" ]; then
+    echo "[!] ABORTANDO: T-124 user lrp is required; it will not be created."
+    exit 1
 fi
-
-if [ -n "$TARGET_USER" ]; then
-    read -p "¿Qué usuario usará la TV? [$TARGET_USER]: " PROMPT_USER
-    if [ -n "$PROMPT_USER" ]; then
-        TARGET_USER="$PROMPT_USER"
-    fi
-else
-    read -p "¿Qué usuario usará la TV?: " TARGET_USER
-fi
-
-if [ -z "$TARGET_USER" ] || [ "$TARGET_USER" = "root" ]; then
-    echo -e "\e[31m[!] ABORTANDO: No se pudo determinar un usuario válido o se especificó 'root'. Nunca configures este servicio para root.\e[0m"
+IFS=: read -r _ _ USER_UID _ _ USER_HOME USER_SHELL <<EOF
+$USER_RECORD
+EOF
+if [ "$USER_UID" = "0" ] || [ "$USER_HOME" != "/home/lrp" ] || [ "$USER_SHELL" != "/bin/bash" ] || [ ! -d "$USER_HOME" ]; then
+    echo "[!] ABORTANDO: existing lrp must be non-root with /home/lrp and /bin/bash."
     exit 1
 fi
 
 echo "[i] Configurando para el usuario: $TARGET_USER"
-USER_HOME=$(getent passwd "$TARGET_USER" | cut -d: -f6)
 
 if [ ! -t 0 ] && [ -e /dev/tty ]; then exec < /dev/tty; fi
-
-if [ -n "$LRP_MODE" ]; then
-    mode="$LRP_MODE"
-    echo "[i] Using mode from LRP_MODE environment variable: $mode"
-else
-    read -p "¿Esta PC está dedicada a la TV? [S/n]: " ans
-    if [ "$ans" = "n" ] || [ "$ans" = "N" ]; then
-        mode="2"
-    else
-        mode="1"
-    fi
-fi
-
-if [ -n "$LRP_NOSLEEP" ]; then
-    nosleep="$LRP_NOSLEEP"
-    echo "[i] Using LRP_NOSLEEP environment variable: $nosleep"
-else
-    if [ "$mode" = "1" ]; then
-        read -p "¿Deshabilitar suspensión/apagado de pantalla del sistema? [S/n]: " ans_sleep
-        if [ "$ans_sleep" = "n" ] || [ "$ans_sleep" = "N" ]; then
-            nosleep="0"
-        else
-            nosleep="1"
-        fi
-    else
-        read -p "¿Deshabilitar suspensión/apagado de pantalla del sistema? [s/N]: " ans_sleep
-        if [ "$ans_sleep" = "s" ] || [ "$ans_sleep" = "S" ]; then
-            nosleep="1"
-        else
-            nosleep="0"
-        fi
-    fi
-fi
-
-if [ "$nosleep" = "1" ]; then
-    echo "[i] Deshabilitando suspensión del sistema..."
-    systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target || true
-fi
 
 AUTO_LAYOUT="us"
 if command -v localectl >/dev/null 2>&1; then
@@ -105,42 +54,17 @@ fi
 
 # Install dependencies (including avahi-daemon for mDNS hostname resolution)
 apt-get update
-apt-get install -y python3-venv python3-dev ufw openssl avahi-daemon libnss3-tools wmctrl pulseaudio-utils
-echo "[i] Installing qdbus for Wayland fallback..."
-apt-get install -y qdbus-qt6 || apt-get install -y qdbus-qt5 || true
-systemctl enable --now avahi-daemon || true
-
-# --- evdev / uinput permissions (FIX F1: Phase 6 blocker) ---
-modprobe uinput || true
-echo uinput > /etc/modules-load.d/uinput.conf
-echo 'KERNEL=="uinput", MODE="0660", GROUP="input", OPTIONS+="static_node=uinput"' > /etc/udev/rules.d/99-uinput.rules
-usermod -aG input "$TARGET_USER"
-udevadm control --reload-rules && udevadm trigger
-echo "[i] Added '$TARGET_USER' to 'input' group. REBOOT or re-login required before uinput works."
-
-# --- Ensure Firefox is installed (F-01) ---
-if command -v firefox >/dev/null 2>&1 || command -v firefox-esr >/dev/null 2>&1; then
-    echo "[i] Firefox already installed."
-else
-    echo "[i] Firefox not found. Installing..."
-    apt-get install -y firefox-esr || apt-get install -y firefox || true
-fi
+apt-get install -y python3-venv python3-dev openssl wmctrl pulseaudio-utils firefox-esr
 
 # Define BACKEND_DIR for systemd paths and token generation
 BACKEND_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../backend" && pwd)"
 cd "$BACKEND_DIR"
 
-# Write mode to .env
-if [ "$mode" = "1" ]; then
-    lrp_mode_str="appliance"
+# Normalize every legacy mode assignment while preserving all other environment lines.
+if grep -Eq "^[[:space:]]*LRP_MODE[[:space:]]*=" "$BACKEND_DIR/.env" 2>/dev/null; then
+    sed -i -E 's/^[[:space:]]*LRP_MODE[[:space:]]*=.*$/LRP_MODE=htpc/' "$BACKEND_DIR/.env"
 else
-    lrp_mode_str="desktop"
-fi
-
-if grep -q "^LRP_MODE=" "$BACKEND_DIR/.env" 2>/dev/null; then
-    sed -i "s/^LRP_MODE=.*/LRP_MODE=$lrp_mode_str/" "$BACKEND_DIR/.env"
-else
-    echo "LRP_MODE=$lrp_mode_str" >> "$BACKEND_DIR/.env"
+    echo "LRP_MODE=htpc" >> "$BACKEND_DIR/.env"
 fi
 
 # Write keyboard layout to .env
@@ -157,8 +81,6 @@ fi
 chown -R "$TARGET_USER":"$TARGET_USER" /opt/linuxremoteplayer
 
 
-# P5: Ad-blocking (uBlock Origin Lite) -> Removed for Brave
-
 # Validate venv dependencies
 if [ -f /opt/linuxremoteplayer/.deps_incomplete ] || ! "$BACKEND_DIR/.venv/bin/python" -c "import fastapi, evdev, segno" 2>/dev/null; then
     echo -e "\n\e[31m[!] Dependencias incompletas. La instalación falló durante 'pip install'.\e[0m"
@@ -167,18 +89,6 @@ if [ -f /opt/linuxremoteplayer/.deps_incomplete ] || ! "$BACKEND_DIR/.venv/bin/p
     exit 1
 fi
 rm -f /opt/linuxremoteplayer/.deps_incomplete
-
-# Configure UFW
-ufw allow 8000/tcp
-if [ "$mode" = "1" ]; then
-    echo "[i] Enabling UFW firewall for Appliance Mode (allowing OpenSSH first)..."
-    ufw allow OpenSSH 2>/dev/null || ufw allow 22/tcp || true
-    ufw --force enable
-else
-    if ufw status | grep -q "inactive"; then
-      echo "[!] WARNING: UFW firewall is currently INACTIVE. The allow rule for port 8000 will have no effect until you enable it (sudo ufw enable)."
-    fi
-fi
 
 # Pre-generate pairing token if not exists (SEC-01)
 sudo -u "$TARGET_USER" "$BACKEND_DIR/.venv/bin/python" -c "
@@ -194,46 +104,33 @@ if not os.path.exists(token_file):
 # --- HTTPS (automatic) ---
 echo "[i] HTTPS will be enabled automatically on first start (self-signed cert)."
 
-if [ "$mode" == "1" ]; then
-    echo "Configuring Appliance Mode..."
-    echo "[!] Note: Autologin configuration must be done manually depending on your Display Manager."
+cleanup_legacy_user_unit() {
+    local legacy_user="$1" legacy_record legacy_home legacy_uid legacy_unit
+    [ -n "$legacy_user" ] && [ "$legacy_user" != root ] || return 0
+    legacy_record=$(getent passwd "$legacy_user" 2>/dev/null || true)
+    [ -n "$legacy_record" ] || return 0
+    legacy_home=$(printf '%s\n' "$legacy_record" | awk -F: 'NF >= 7 {print $6}')
+    legacy_uid=$(id -u "$legacy_user" 2>/dev/null || true)
+    legacy_unit="$legacy_home/.config/systemd/user/linuxremoteplayer.service"
+    [ -n "$legacy_uid" ] && [ -f "$legacy_unit" ] || return 0
+    sudo -u "$legacy_user" XDG_RUNTIME_DIR="/run/user/$legacy_uid" systemctl --user stop linuxremoteplayer.service 2>/dev/null || true
+    sudo -u "$legacy_user" XDG_RUNTIME_DIR="/run/user/$legacy_uid" systemctl --user disable linuxremoteplayer.service 2>/dev/null || true
+    rm -f "$legacy_unit"
+}
+cleanup_legacy_user_unit "$TARGET_USER"
+if [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != root ] && [ "$SUDO_USER" != "$TARGET_USER" ]; then
+    cleanup_legacy_user_unit "$SUDO_USER"
+fi
 
-    echo "[i] Disabling screen locker and DPMS for KDE Plasma..."
-    sudo -u "$TARGET_USER" bash -c '
-        if command -v kwriteconfig5 >/dev/null 2>&1; then
-            KWRITE="kwriteconfig5"
-        elif command -v kwriteconfig6 >/dev/null 2>&1; then
-            KWRITE="kwriteconfig6"
-        else
-            KWRITE=""
-        fi
-        if [ -n "$KWRITE" ]; then
-            $KWRITE --file kscreenlockerrc --group Daemon --key Autolock false
-            $KWRITE --file kscreenlockerrc --group Daemon --key LockOnResume false
-            $KWRITE --file powermanagementprofilesrc --group AC --group DPMSControl --key idleTime 0
-            $KWRITE --file powermanagementprofilesrc --group AC --group SuspendSession --key idleTime 0
-            $KWRITE --file powermanagementprofilesrc --group AC --group DimDisplay --key idleTime 0
-        fi
-    '
-
-    USER_SVC_DIR="$USER_HOME/.config/systemd/user"
-    if [ -f "$USER_SVC_DIR/linuxremoteplayer.service" ]; then
-        echo "[i] Removing previous Desktop Mode configuration..."
-        export XDG_RUNTIME_DIR="/run/user/$(id -u "$TARGET_USER")"
-        sudo -u "$TARGET_USER" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" systemctl --user stop linuxremoteplayer.service 2>/dev/null || true
-        sudo -u "$TARGET_USER" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" systemctl --user disable linuxremoteplayer.service 2>/dev/null || true
-        rm -f "$USER_SVC_DIR/linuxremoteplayer.service"
-    fi
-
-    # Added After=display-manager.service (COR-04)
-    cat <<EOF > /etc/systemd/system/linuxremoteplayer.service
+cat <<EOF > /etc/systemd/system/linuxremoteplayer.service
 [Unit]
 Description=Linux Remote Player Backend API
-After=graphical.target network.target display-manager.service
+Wants=network-online.target
+After=display-manager.service network-online.target
 
 [Service]
 Type=simple
-User=$TARGET_USER
+User=lrp
 WorkingDirectory=$BACKEND_DIR
 Environment="APPLIANCE_IDLE_PANEL=true"
 ExecStart="$BACKEND_DIR/.venv/bin/python" run.py
@@ -243,48 +140,12 @@ RestartSec=5
 [Install]
 WantedBy=graphical.target
 EOF
-    systemctl daemon-reload
-    systemctl enable linuxremoteplayer.service
-    systemctl restart linuxremoteplayer.service
-    echo "System-wide service enabled and started."
+systemctl daemon-reload
+systemctl enable linuxremoteplayer.service
+systemctl restart linuxremoteplayer.service
 
-else
-    echo "Configuring Desktop Mode..."
-    
-    if [ -f /etc/systemd/system/linuxremoteplayer.service ]; then
-        echo "[i] Removing previous Appliance Mode configuration..."
-        systemctl stop linuxremoteplayer.service 2>/dev/null || true
-        systemctl disable linuxremoteplayer.service 2>/dev/null || true
-        rm -f /etc/systemd/system/linuxremoteplayer.service
-        systemctl daemon-reload
-    fi
-
-    USER_SVC_DIR="$USER_HOME/.config/systemd/user"
-    sudo -u "$TARGET_USER" mkdir -p "$USER_SVC_DIR"
-
-    cat <<EOF > "$USER_SVC_DIR/linuxremoteplayer.service"
-[Unit]
-Description=Linux Remote Player Backend API
-After=network.target
-
-[Service]
-Type=simple
-WorkingDirectory=$BACKEND_DIR
-ExecStart="$BACKEND_DIR/.venv/bin/python" run.py
-Restart=always
-RestartSec=5
-
-[Install]
-WantedBy=default.target
-EOF
-    chown -R "$TARGET_USER":"$TARGET_USER" "$USER_HOME/.config"
-
-    export XDG_RUNTIME_DIR="/run/user/$(id -u "$TARGET_USER")"
-    sudo -u "$TARGET_USER" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" systemctl --user daemon-reload
-    sudo -u "$TARGET_USER" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" systemctl --user enable linuxremoteplayer.service
-    sudo -u "$TARGET_USER" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" systemctl --user restart linuxremoteplayer.service
-    echo "User-level service enabled and started."
-fi
+echo "Configuring Debian HTPC Mode..."
+echo "[i] Autologin is managed by the T-124 LightDM session bootstrap."
 
 HOSTNAME_LOCAL="$(hostname).local"
 IP_ADDR=$(python3 -c "import socket; s=socket.socket(socket.AF_INET, socket.SOCK_DGRAM); s.connect(('1.1.1.1', 80)); print(s.getsockname()[0]); s.close()" || echo "<your-ip>")
@@ -309,8 +170,6 @@ echo " Alternativa avanzada (enlace directo):"
 echo "   https://$HOSTNAME_LOCAL:8000/?token=$TOKEN"
 echo "======================================"
 
-sudo -u "$TARGET_USER" kbuildsycoca6 --noincremental 2>/dev/null || sudo -u "$TARGET_USER" kbuildsycoca5 2>/dev/null || true
-
 echo "[i] Waiting for service to start..."
 for i in {1..15}; do
   if curl -sk https://127.0.0.1:8000/health >/dev/null 2>&1; then break; fi
@@ -323,7 +182,7 @@ for i in {1..30}; do
   sleep 1
 done
 
-# Write policies first so a hung certutil doesn't block them
+# Write policies before system trust setup so policy creation cannot be blocked.
 echo "[i] Configuring Firefox policies..."
 mkdir -p /etc/firefox/policies
 cat <<EOFJSON > /etc/firefox/policies/policies.json
@@ -347,35 +206,14 @@ cat <<EOFJSON > /etc/firefox/policies/policies.json
 }
 EOFJSON
 
-# Trust the CA certificate in the system and the user's NSS db (for Brave/Chromium)
-if [ -f "$BACKEND_DIR/certs/ca.pem" ]; then
-    echo "[i] Installing LRP CA certificate to system trust..."
-    cp "$BACKEND_DIR/certs/ca.pem" /usr/local/share/ca-certificates/lrp-ca.crt
-    update-ca-certificates >/dev/null 2>&1
-    
-    echo "[i] Installing LRP CA certificate to user NSS db..."
-    USER_NSSDB="$USER_HOME/.pki/nssdb"
-    sudo -u "$TARGET_USER" mkdir -p "$USER_NSSDB"
-    
-    PWFILE=$(mktemp)
-    echo "" > "$PWFILE"
-    
-    sudo -u "$TARGET_USER" certutil -d sql:"$USER_NSSDB" -N --empty-password -f "$PWFILE" < /dev/null 2>/dev/null || true
-    # B14: borrar cualquier "LRP CA" previa antes de agregar la nueva. certutil -A no
-    # reemplaza: acumula entradas con el mismo apodo y llaves distintas, y despues el
-    # navegador elige la equivocada. El fallo se tolera porque en la primera instalacion
-    # no hay nada que borrar.
-    sudo -u "$TARGET_USER" certutil -d sql:"$USER_NSSDB" -D -n "LRP CA" -f "$PWFILE" < /dev/null 2>/dev/null || true
-    if ! sudo -u "$TARGET_USER" certutil -d sql:"$USER_NSSDB" -A -t "C,," -n "LRP CA" -i "$BACKEND_DIR/certs/ca.pem" -f "$PWFILE" < /dev/null; then
-        echo "[!] Warning: Could not import CA into NSS database (maybe it has a password?). Firefox kiosk will still work via policies."
-    fi
-    rm -f "$PWFILE"
+PLATFORM_CA_PATH=""
+[ -f "$BACKEND_DIR/certs/ca.pem" ] && PLATFORM_CA_PATH="$BACKEND_DIR/certs/ca.pem"
+echo "[i] Applying Debian platform configuration..."
+if [ -n "$PLATFORM_CA_PATH" ]; then
+    /opt/linuxremoteplayer/scripts/debian/platform-bootstrap.sh --apply --approve --ca-path "$PLATFORM_CA_PATH"
 else
-    echo "[!] CA certificate not generated in time. HTTPS trust may not work locally."
+    /opt/linuxremoteplayer/scripts/debian/platform-bootstrap.sh --apply --approve
 fi
-
-echo "[i] Launching Status Panel..."
-sudo -u "$TARGET_USER" DISPLAY=:0 XDG_RUNTIME_DIR="/run/user/$(id -u "$TARGET_USER")" xdg-open "https://127.0.0.1:8000/status" 2>/dev/null || sudo -u "$TARGET_USER" DISPLAY=:0 XDG_RUNTIME_DIR="/run/user/$(id -u "$TARGET_USER")" chromium --app="https://127.0.0.1:8000/status" 2>/dev/null || true
 
 echo "======================================"
 echo " Panel de estado (ábrelo en el navegador"

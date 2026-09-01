@@ -1,6 +1,6 @@
 # LinuxRemotePlayer
 
-**Convierte tu PC con Linux en una Smart TV.** Control remoto completo desde el teléfono: touchpad, teclado, apps de streaming en modo kiosk y control por voz con IA — todo en tu red local, sin hardware extra y sin cuentas.
+**Convierte una PC compatible en una Smart TV.** LinuxRemotePlayer ofrece control remoto desde el teléfono: touchpad, teclado, apps de streaming en modo kiosk y control por voz con IA.
 
 A plug & play remote-control ecosystem for Linux HTPCs: a mobile PWA client talking to a local FastAPI backend over secure WebSockets.
 
@@ -14,14 +14,14 @@ A plug & play remote-control ecosystem for Linux HTPCs: a mobile PWA client talk
 | :---: | :---: | :---: |
 | ![Main remote screen: app row, touchpad, voice button and media controls](website/screenshots/000_principal.webp) | ![App drawer with streaming apps and auto-detected system apps](website/screenshots/001_apps.webp) | ![A voice command being recorded, with example phrases](website/screenshots/006_voicecommand.webp) |
 
-*Real screenshots from v1.9.1. All four themes (Day, Night, Café, Anime) ship free.*
+*Real screenshots from the current application. All four themes (Day, Night, Café, Anime) ship free.*
 
 ---
 
 ## Features
 
 * **Virtual input emulation** — mouse pointer, clicks, scroll, long-press right click, full keyboard bridge and media keys (transport, volume, mute) injected via `uinput`.
-* **Streaming apps in kiosk mode** — Netflix, YouTube, Max, Disney+, Spotify, Twitch and any custom web app, launched full-screen in Firefox. Native Linux apps are auto-discovered from `.desktop` entries.
+* **Streaming apps in kiosk mode** — Netflix, YouTube, Max, Disney+, Spotify, Twitch and any custom web app, launched full-screen in Firefox ESR. Native Linux apps are auto-discovered from `.desktop` entries.
 * **Installable PWA** — offline-capable app shell, no address bar, no stores. Network-first service worker keeps clients up to date automatically. *(Nota iOS: iOS hornea las metas del PWA al instalar — tras actualizaciones que toquen manifest o metas apple-*, es necesario reinstalar la app en el teléfono).*
 * **Resilient connection** — ping/pong heartbeat, reconnect-on-wake, exponential backoff, and an actionable troubleshooting banner when something is wrong.
 * **Self-healing HTTPS** — local two-tier CA (`ca.pem` + leaf certs) regenerated automatically for the current IP and `hostname.local` (mDNS via avahi). Install the CA once on your phone and never see a warning again.
@@ -62,13 +62,15 @@ A plug & play remote-control ecosystem for Linux HTPCs: a mobile PWA client talk
 
 ## Installation
 
-On the Linux PC connected to your TV (Debian/Ubuntu and derivatives, systemd required), install everything with a single command:
+On a Debian 13 stable amd64 minimal PC connected to your TV, install everything with a single command:
 
 ```bash
 curl -fsSL https://www.linuxremoteplayer.com/install.sh | sudo bash
 ```
 
-Run the setup script. When asked "¿Esta PC está dedicada a la TV?", answer **S** (Yes) to install as a system service (Appliance mode), or **n** (No) for a user service (Desktop mode). The installer sets up dependencies, `uinput` permissions, Firefox, mDNS, the firewall rule and the systemd service. Reboot or re-login once after the first install.
+The installer configures the LRP-owned Xorg/Openbox session, Firefox ESR, mDNS, `uinput` permissions, firewall rules and the systemd service. Reboot or re-login once after the first install. Other distributions, GPUs or desktop environments may work accidentally, but are not guaranteed.
+
+The initial certified GPU is an NVIDIA RTX 3060 12 GB using the driver available from the Debian repositories. Other GPUs are not certified.
 
 ---
 
@@ -123,7 +125,7 @@ https://<hostname>.local:8000/?token=<token>   or   https://<ip>:8000/?token=<to
 | TLS errors in the PWA | Open `https://<ip>:8000` in the phone *browser* | Re-accept the cert, or install the CA from `/api/ca` once. |
 | "No autorizado" | WS closes with code 1008 | Enter the token from `backend/.pairing_token` in Ajustes. |
 | Buttons do nothing | `curl -k https://127.0.0.1:8000/api/debug` | `evdev_available` must be `true`; ensure your user is in the `input` group and reboot. |
-| Service down | Appliance mode: `systemctl status linuxremoteplayer`. Desktop mode: add `--user` | Logs: same command with `journalctl -u ... -n 100`. |
+| Service down | `systemctl status linuxremoteplayer` | Logs: `journalctl -u linuxremoteplayer -n 100`. |
 
 More detail in the project's internal test plan (`.agents/TESTING.md`).
 

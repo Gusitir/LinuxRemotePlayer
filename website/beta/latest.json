@@ -1,6 +1,7 @@
 {
-  "version": "1.99.1",
-  "deb_url": "https://www.linuxremoteplayer.com/beta/downloads/linuxremoteplayer_1.99.1_all.deb",
-  "sha256": "8d4a19834eca05eda0e3f8b9c77817e6baaa19fb1bd823e30b5a726b6cb9c894",
-  "notes": "Beta build; opt-in channel foundation."
+  "version": "1.99.2",
+  "architecture": "amd64",
+  "deb_url": "https://www.linuxremoteplayer.com/beta/downloads/linuxremoteplayer_1.99.2_amd64.deb",
+  "sha256": "BUILD_REQUIRED",
+  "notes": "Beta preparation for the Debian 13 stable amd64 minimal HTPC foundation: LRP-owned Xorg/Openbox session, Firefox ESR, and initially certified NVIDIA RTX 3060 12 GB with the Debian-repository driver."
 }
