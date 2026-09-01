@@ -37,10 +37,11 @@ EXPECTED_COMPONENTS = "main contrib non-free non-free-firmware"
 
 
 def _find_bash():
-    c = Path("C:/Program Files/Git/bin/bash.exe")
-    if c.exists():
-        return str(c)
-    return shutil.which("bash") or str(c)
+    if os.name == "nt":
+        c = Path("C:/Program Files/Git/bin/bash.exe")
+        if c.exists():
+            return str(c)
+    return shutil.which("bash") or ("/bin/bash" if os.name != "nt" else str(c))
 
 
 BASH = _find_bash()
@@ -48,6 +49,8 @@ BASH = _find_bash()
 
 def _msys(path):
     text = str(path).replace("\\", "/")
+    if os.name != "nt":
+        return str(Path(path).resolve())
     drive, rest = text.split(":", 1)
     return "/" + drive.lower() + rest
 
@@ -875,9 +878,10 @@ def test_static_exit_codes_present():
 # ---------------------------------------------------------------------------
 
 def test_exact_write_set():
-    res = subprocess.run(
-        ["git", "-C", str(ROOT), "ls-files", "--others", "--exclude-standard"],
-        capture_output=True, text=True)
-    untracked = {p.replace("\\", "/") for p in res.stdout.splitlines() if p}
-    assert "scripts/debian/nvidia-bootstrap.sh" in untracked
-    assert "tests/test_nvidia_bootstrap.py" in untracked
+    for relative in ("scripts/debian/nvidia-bootstrap.sh",
+                     "tests/test_nvidia_bootstrap.py"):
+        path = ROOT / relative
+        assert path.is_file()
+        assert subprocess.run(
+            ["git", "-C", str(ROOT), "ls-files", "--error-unmatch", relative],
+            capture_output=True, text=True).returncode == 0

@@ -1,10 +1,20 @@
 import re
+import os
+import shutil
 import subprocess
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-BASH = str(Path("C:/Program Files/Git/bin/bash.exe"))
+def _find_bash():
+    if os.name == "nt":
+        candidate = Path("C:/Program Files/Git/bin/bash.exe")
+        if candidate.exists():
+            return str(candidate)
+    return shutil.which("bash") or ("/bin/bash" if os.name != "nt" else str(candidate))
+
+
+BASH = _find_bash()
 INSTALLER = (ROOT / "scripts" / "install.sh").read_text()
 BUILDER = (ROOT / "scripts" / "build_deb.sh").read_text()
 

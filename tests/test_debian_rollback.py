@@ -13,11 +13,11 @@ BUILDER = (ROOT / "scripts/build_deb.sh").read_text(encoding="utf-8")
 
 
 def _find_bash():
-    candidate = Path("C:/Program Files/Git/bin/bash.exe")
-    if candidate.exists():
-        return str(candidate)
-    found = shutil.which("bash")
-    return found or str(candidate)
+    if os.name == "nt":
+        candidate = Path("C:/Program Files/Git/bin/bash.exe")
+        if candidate.exists():
+            return str(candidate)
+    return shutil.which("bash") or ("/bin/bash" if os.name != "nt" else str(candidate))
 
 
 BASH = _find_bash()
@@ -25,6 +25,8 @@ BASH = _find_bash()
 
 def _msys(path):
     text = str(path).replace("\\", "/")
+    if os.name != "nt":
+        return str(Path(path).resolve())
     drive, rest = text.split(":", 1)
     return "/" + drive.lower() + rest
 

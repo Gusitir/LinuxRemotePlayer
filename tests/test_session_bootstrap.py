@@ -9,7 +9,15 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "debian" / "session-bootstrap.sh"
-BASH = str(Path("C:/Program Files/Git/bin/bash.exe"))
+def _find_bash():
+    if os.name == "nt":
+        candidate = Path("C:/Program Files/Git/bin/bash.exe")
+        if candidate.exists():
+            return str(candidate)
+    return shutil.which("bash") or ("/bin/bash" if os.name != "nt" else str(candidate))
+
+
+BASH = _find_bash()
 PACKAGES = {
     "lightdm": "1.32.0-6+b2",
     "xserver-xorg": "1:7.7+24+deb13u1",
@@ -23,6 +31,8 @@ PACKAGES = {
 
 def msys(path):
     text = str(path).replace("\\", "/")
+    if os.name != "nt":
+        return str(Path(path).resolve())
     drive, rest = text.split(":", 1)
     return "/" + drive.lower() + rest
 
@@ -236,9 +246,12 @@ def test_static_scope_and_write_set():
     assert "autologin-user=lrp" in source
     assert "linuxremoteplayer" in source
     assert "policykit-1" not in source
-    untracked = subprocess.run(["git", "ls-files", "--others", "--exclude-standard"], cwd=ROOT, capture_output=True, text=True).stdout.splitlines()
-    assert "scripts/debian/session-bootstrap.sh" in untracked
-    assert "tests/test_session_bootstrap.py" in untracked
+    for relative in ("scripts/debian/session-bootstrap.sh",
+                     "tests/test_session_bootstrap.py"):
+        assert (ROOT / relative).is_file()
+        assert subprocess.run(
+            ["git", "ls-files", "--error-unmatch", relative], cwd=ROOT,
+            capture_output=True, text=True).returncode == 0
 
 
 def test_legacy_sources_are_supported_and_backup_extensions_ignored(fx):

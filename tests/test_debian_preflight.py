@@ -21,11 +21,11 @@ PREFLIGHT = ROOT / "scripts" / "debian" / "preflight.sh"
 
 
 def _find_bash():
-    candidate = Path("C:/Program Files/Git/bin/bash.exe")
-    if candidate.exists():
-        return str(candidate)
-    found = shutil.which("bash")
-    return found or str(candidate)
+    if os.name == "nt":
+        candidate = Path("C:/Program Files/Git/bin/bash.exe")
+        if candidate.exists():
+            return str(candidate)
+    return shutil.which("bash") or ("/bin/bash" if os.name != "nt" else str(candidate))
 
 
 BASH = _find_bash()
@@ -55,6 +55,8 @@ FORBIDDEN_MUTATORS = (
 
 def _msys(path):
     text = str(path).replace("\\", "/")
+    if os.name != "nt":
+        return str(Path(path).resolve())
     drive, rest = text.split(":", 1)
     return "/" + drive.lower() + rest
 

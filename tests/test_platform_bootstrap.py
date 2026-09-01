@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -7,7 +8,23 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts/debian/platform-bootstrap.sh"
-BASH = str(Path("C:/Program Files/Git/bin/bash.exe"))
+def _find_bash():
+    if os.name == "nt":
+        candidate = Path("C:/Program Files/Git/bin/bash.exe")
+        if candidate.exists():
+            return str(candidate)
+    return shutil.which("bash") or ("/bin/bash" if os.name != "nt" else str(candidate))
+
+
+BASH = _find_bash()
+
+
+def _shell_path(path):
+    text = str(path).replace("\\", "/")
+    if os.name != "nt":
+        return str(Path(path).resolve())
+    drive, rest = text.split(":", 1)
+    return "/" + drive.lower() + rest
 VERSIONS = {
     "pipewire": "1.4.2-1",
     "pipewire-pulse": "1.4.2-1",
@@ -58,8 +75,8 @@ class Fixture:
     def run(self, *args):
         env = dict(os.environ)
         env.update(self.env)
-        env.update({"LRP_ROOT": str(self.root).replace("\\", "/"), "LRP_COMMANDS": str(self.cmds).replace("\\", "/"), "LRP_COMMANDS_ONLY": "1", "LRP_CMDLOG": str(self.log).replace("\\", "/")})
-        return subprocess.run([BASH, "-c", 'bash "$0" "$@"', str(SCRIPT).replace("\\", "/"), *args], env=env, capture_output=True, text=True)
+        env.update({"LRP_ROOT": _shell_path(self.root), "LRP_COMMANDS": _shell_path(self.cmds), "LRP_COMMANDS_ONLY": "1", "LRP_CMDLOG": _shell_path(self.log)})
+        return subprocess.run([BASH, "-c", 'bash "$0" "$@"', _shell_path(SCRIPT), *args], env=env, capture_output=True, text=True)
 
     def parsed(self, *args):
         result = self.run(*args)
