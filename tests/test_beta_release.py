@@ -88,6 +88,7 @@ def test_package_identity_and_stable_default_contract():
     assert _package_control("Version") == VERSION
     assert _package_control("Package") == "linuxremoteplayer"
     assert _package_control("Architecture") == "amd64"
+    assert all(package in _package_control("Depends") for package in ("sudo", "curl", "ca-certificates"))
     listing = _dpkg_deb(["-c", str(PACKAGE)]).stdout
     assert not re.search(r"\./opt/linuxremoteplayer/backend/\.env\s", listing)
     assert "./opt/linuxremoteplayer/frontend/sw.js" in listing

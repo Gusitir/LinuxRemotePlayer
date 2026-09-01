@@ -68,7 +68,7 @@ Version: ${VERSION}
 Architecture: amd64
 Maintainer: LinuxRemotePlayer
 Description: LinuxRemotePlayer API and web interface
-Depends: python3, python3-venv, python3-dev, build-essential, openssl
+Depends: python3, python3-venv, python3-dev, build-essential, openssl, sudo, curl, ca-certificates
 Recommends: firefox-esr, ufw, pulseaudio-utils
 EOF
 

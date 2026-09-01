@@ -28,8 +28,8 @@ def test_debian_release_source_contract():
     assert "linuxremoteplayer_${VERSION}_amd64.deb.sha256" in source
     assert "firefox-esr | firefox" not in source
     assert "Recommends: firefox-esr," in source
-    assert "Depends: python3, python3-venv, python3-dev, build-essential, openssl" in source
-    assert "Depends: python3, python3-venv, python3-dev, build-essential, openssl, avahi-daemon" not in source
+    assert "Depends: python3, python3-venv, python3-dev, build-essential, openssl, sudo, curl, ca-certificates" in source
+    assert "avahi-daemon" not in source
     assert "modprobe uinput" not in source
     assert "99-linuxremoteplayer-uinput.rules" not in source
     assert "main \"$@\"; exit $?" in source
