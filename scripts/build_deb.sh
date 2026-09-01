@@ -59,6 +59,7 @@ rm -rf backend/.venv backend/certs backend/.pairing_token backend/.env backend/_
 cd ../../..
 
 chmod +x pkg/opt/linuxremoteplayer/scripts/*.sh
+chmod 0755 pkg/opt/linuxremoteplayer/scripts/debian/*.sh
 
 # DEBIAN/control
 cat <<EOF > pkg/DEBIAN/control

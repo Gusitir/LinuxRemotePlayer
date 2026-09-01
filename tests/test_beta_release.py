@@ -91,10 +91,17 @@ def test_package_identity_and_stable_default_contract():
     listing = _dpkg_deb(["-c", str(PACKAGE)]).stdout
     assert not re.search(r"\./opt/linuxremoteplayer/backend/\.env\s", listing)
     assert "./opt/linuxremoteplayer/frontend/sw.js" in listing
-
     with tempfile.TemporaryDirectory() as directory:
         _dpkg_deb(["-x", str(PACKAGE), directory])
         extracted = Path(directory) / "opt" / "linuxremoteplayer"
+        bootstrap_scripts = (
+            "platform-bootstrap.sh",
+            "session-bootstrap.sh",
+            "nvidia-bootstrap.sh",
+            "preflight.sh",
+        )
+        for script in bootstrap_scripts:
+            assert (extracted / "scripts" / "debian" / script).stat().st_mode & 0o111
         assert (extracted / "VERSION").read_text(encoding="ascii").strip() == VERSION
         sw = (extracted / "frontend" / "sw.js").read_text(encoding="utf-8")
         assert "__LRP_VERSION__" not in sw

@@ -16,6 +16,7 @@ def test_debian_release_source_contract():
     source = BUILD.read_text(encoding="utf-8")
     assert (ROOT / "VERSION").read_text(encoding="ascii").strip() == "1.99.2"
     assert "Architecture: amd64" in source
+    assert "chmod 0755 pkg/opt/linuxremoteplayer/scripts/debian/*.sh" in source
     assert "linuxremoteplayer_${VERSION}_amd64.deb" in source
     assert "linuxremoteplayer_${VERSION}_amd64.deb.sha256" in source
     assert "firefox-esr | firefox" not in source
