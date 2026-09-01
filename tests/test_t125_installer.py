@@ -75,6 +75,15 @@ def test_mode_fixture_preserves_unrelated_environment_lines():
     assert migrated == "PAIRING_TOKEN=keep\nLRP_MODE=htpc\nKEYBOARD_LAYOUT=es\nLRP_MODE=htpc\n"
 
 
+def test_installer_does_not_expose_pairing_token_in_display_output():
+    assert "TOKEN_FILE" not in INSTALLER
+    assert 'TOKEN="guest"' not in INSTALLER
+    assert "?token=" not in INSTALLER
+    assert "Escribe el PIN que muestra el panel en tu TV." in INSTALLER
+    assert "Introduce el PIN que muestra el panel en tu TV para emparejar." in INSTALLER
+    assert "os.chmod(token_file, 0o600)" in INSTALLER
+
+
 def test_installer_generates_one_system_unit_with_required_dependencies():
     unit = INSTALLER[INSTALLER.index("cat <<EOF > /etc/systemd/system/linuxremoteplayer.service"):]
     assert "User=lrp" in unit

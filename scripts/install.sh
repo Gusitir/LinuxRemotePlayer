@@ -150,12 +150,6 @@ echo "[i] Autologin is managed by the T-124 LightDM session bootstrap."
 HOSTNAME_LOCAL="$(hostname).local"
 IP_ADDR=$(python3 -c "import socket; s=socket.socket(socket.AF_INET, socket.SOCK_DGRAM); s.connect(('1.1.1.1', 80)); print(s.getsockname()[0]); s.close()" || echo "<your-ip>")
 
-TOKEN="guest"
-TOKEN_FILE="$BACKEND_DIR/.pairing_token"
-if [ -f "$TOKEN_FILE" ]; then
-  TOKEN=$(cat "$TOKEN_FILE" | tr -d ' \n\r')
-fi
-
 echo "======================================"
 echo "    LinuxRemotePlayer installed!      "
 echo "======================================"
@@ -166,8 +160,7 @@ echo "      (o https://$IP_ADDR:8000)"
 echo "   2) Acepta la advertencia de certificado (solo la primera vez)."
 echo "   3) Escribe el PIN que muestra el panel en tu TV."
 echo " "
-echo " Alternativa avanzada (enlace directo):"
-echo "   https://$HOSTNAME_LOCAL:8000/?token=$TOKEN"
+echo "   Introduce el PIN que muestra el panel en tu TV para emparejar."
 echo "======================================"
 
 echo "[i] Waiting for service to start..."
