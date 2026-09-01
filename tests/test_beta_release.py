@@ -92,6 +92,7 @@ def test_package_identity_and_stable_default_contract():
     assert not re.search(r"\./opt/linuxremoteplayer/backend/\.env\s", listing)
     assert "./opt/linuxremoteplayer/frontend/sw.js" in listing
     bootstrap_paths = {
+        "./opt/linuxremoteplayer/scripts/debian/bootstrap.sh",
         "./opt/linuxremoteplayer/scripts/debian/platform-bootstrap.sh",
         "./opt/linuxremoteplayer/scripts/debian/session-bootstrap.sh",
         "./opt/linuxremoteplayer/scripts/debian/nvidia-bootstrap.sh",
