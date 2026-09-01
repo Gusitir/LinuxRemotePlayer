@@ -2,6 +2,6 @@
   "version": "1.99.2",
   "architecture": "amd64",
   "deb_url": "https://www.linuxremoteplayer.com/beta/downloads/linuxremoteplayer_1.99.2_amd64.deb",
-  "sha256": "d1dea777703539d950b55c8273b93133d2ff369c1e3bd871d3ec8551be9fb3fe",
+  "sha256": "4705a77c2e2aeae0bfed9bf55b2dcf01e153d2a7843a2b94be72a30842b58578",
   "notes": "Beta preparation for the Debian 13 stable amd64 minimal HTPC foundation: LRP-owned Xorg/Openbox session, Firefox ESR, and initially certified NVIDIA RTX 3060 12 GB with the Debian-repository driver."
 }
