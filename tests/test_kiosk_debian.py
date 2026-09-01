@@ -26,6 +26,7 @@ def test_find_browser_reports_missing_esr(monkeypatch):
 def test_gui_env_is_xorg_only(monkeypatch):
     monkeypatch.setenv("WAYLAND_DISPLAY", "wayland-0")
     monkeypatch.setenv("DISPLAY", ":7")
+    monkeypatch.delenv("XDG_RUNTIME_DIR", raising=False)
     monkeypatch.setattr(kiosk.os, "getuid", lambda: 1001, raising=False)
     env = kiosk.gui_env()
     assert env["DISPLAY"] == ":7"
