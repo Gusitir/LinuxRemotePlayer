@@ -36,7 +36,9 @@ if command -v localectl >/dev/null 2>&1; then
     fi
 fi
 
-if [ -n "$LRP_KEYBOARD" ]; then
+if [ "${LRP_NONINTERACTIVE:-0}" = 1 ]; then
+    kb_layout="${LRP_KEYBOARD:-${KEYBOARD_LAYOUT:-$AUTO_LAYOUT}}"
+elif [ -n "$LRP_KEYBOARD" ]; then
     kb_layout="$LRP_KEYBOARD"
 else
     echo "¿Selecciona layout de teclado de esta PC?"

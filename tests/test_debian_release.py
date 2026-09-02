@@ -32,6 +32,8 @@ def test_debian_release_source_contract():
     assert "avahi-daemon" not in source
     assert "modprobe uinput" not in source
     assert "99-linuxremoteplayer-uinput.rules" not in source
+    assert "systemd-run --unit=\"linuxremoteplayer-bootstrap-ota-$$\"" in source
+    assert "--resume --unattended" in source
     assert "main \"$@\"; exit $?" in source
     assert 'if [ "$1" = "remove" ]; then' in source
 

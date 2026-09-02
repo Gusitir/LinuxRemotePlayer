@@ -100,6 +100,12 @@ cd /opt/linuxremoteplayer/scripts
 exec ./debian/bootstrap.sh "$@"
 INNEREOF
 chmod 755 /usr/local/bin/lrp-setup
+if grep -q '^phase=complete$' /var/lib/linuxremoteplayer/bootstrap/state 2>/dev/null \
+   && grep -q '^phase=complete$' /var/lib/linuxremoteplayer/session/state 2>/dev/null \
+   && command -v systemd-run >/dev/null 2>&1; then
+    systemd-run --unit="linuxremoteplayer-bootstrap-ota-$$" --on-active=30s --no-block \
+        /usr/local/bin/lrp-setup --resume --unattended || true
+fi
 
 # Create lrp-update wrapper
 cat <<'INNEREOF' > /usr/local/bin/lrp-update
@@ -196,6 +202,7 @@ echo " Paquete base instalado."
 echo ""
 echo " FALTA UN PASO. Para configurar el servicio ejecuta:"
 echo "     sudo lrp-setup --apply --approve"
+echo "     sudo lrp-setup --apply --approve --unattended"
 echo "================================================="
 EOF
 chmod 755 pkg/DEBIAN/postinst

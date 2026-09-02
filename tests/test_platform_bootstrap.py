@@ -45,7 +45,7 @@ class Fixture:
             (self.root / path).mkdir(parents=True, exist_ok=True)
         self.cmds.mkdir()
         self.write(self.root / "home/lrp/.config/openbox/autostart", "# existing\n")
-        self.env = {"LRP_ARCH": "amd64", "LRP_APT_RC": "0", "LRP_SYSTEMCTL_RC": "0"}
+        self.env = {"LRP_ARCH": "amd64", "LRP_APT_RC": "0", "LRP_SYSTEMCTL_RC": "0", "LRP_TEST_AUDIO_SINK": "1"}
         self.stub("getent", '#!/bin/sh\necho "lrp:x:1001:1001::/home/lrp:/bin/bash"\n')
         self.stub("passwd", '#!/bin/sh\n[ "$1" = -S ] && echo "lrp L 01/01/1970 0 99999 7 -1"\n')
         self.stub("id", '#!/bin/sh\n[ "$1" = -u ] && echo 1001 && exit 0\n[ "$1" = -nG ] && echo "lrp video" && exit 0\n')
@@ -128,6 +128,7 @@ def test_applied_audio_verification_uses_the_same_user_bus_environment():
 
 
 def test_audio_output_fails_without_hdmi_sink(fx):
+    fx.env["LRP_TEST_AUDIO_SINK"] = "0"
     fx.stub("runuser", '#!/bin/sh\ncase "$*" in *is-enabled*|*is-active*) grep -q "phase=applied" "$LRP_ROOT/var/lib/linuxremoteplayer/platform/state" 2>/dev/null && exit 0 || exit 1;; esac\nexit 0\n')
     assert fx.run("--apply", "--approve").returncode == 1
 
