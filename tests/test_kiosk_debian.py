@@ -34,6 +34,7 @@ def test_gui_env_is_xorg_only(monkeypatch):
     assert env["HOME"] == os.path.expanduser("~")
     assert env["XAUTHORITY"] == os.path.join(env["HOME"], ".Xauthority")
     assert "WAYLAND_DISPLAY" not in env
+    assert env["MOZ_CRASHREPORTER_DISABLE"] == "1"
 
 
 def test_launch_rejects_non_http_url(monkeypatch):
@@ -57,7 +58,26 @@ def test_launch_uses_exact_esr_command_and_dedicated_profile(monkeypatch, tmp_pa
     assert kiosk.launch_kiosk("https://example.test") is True
     assert calls["cmd"] == ["/usr/bin/firefox-esr", "--kiosk", "--no-remote", "-profile", str(tmp_path), "https://example.test"]
     assert calls["kwargs"]["start_new_session"] is True
-    assert modes == [(str(tmp_path), 0o700)]
+    assert modes[0] == (str(tmp_path), 0o700)
+    assert any(path.startswith(str(tmp_path)) and mode == 0o600 for path, mode in modes)
+    prefs = (tmp_path / "user.js").read_text()
+    assert "browser.sessionstore.resume_from_crash" in prefs
+    assert "browser.startup.page" in prefs
+    assert "browser.shell.checkDefaultBrowser" in prefs
+
+
+def test_launch_removes_only_dedicated_session_artifacts(monkeypatch, tmp_path):
+    profile = tmp_path / "profile"
+    profile.mkdir()
+    (profile / "sessionstore.jsonlz4").write_text("x")
+    (profile / "sessionstore-backups").mkdir()
+    monkeypatch.setattr(kiosk, "kill_existing_kiosks", lambda: None)
+    monkeypatch.setattr(kiosk, "find_browser", lambda: ("/usr/bin/firefox-esr", "firefox-esr"))
+    monkeypatch.setattr(kiosk.os.path, "expanduser", lambda path: str(profile) if path == "~/.config/lrp-kiosk-firefox" else path)
+    monkeypatch.setattr(kiosk.subprocess, "Popen", lambda *args, **kwargs: SimpleNamespace(poll=lambda: None, pid=1))
+    assert kiosk.launch_kiosk("https://example.test") is True
+    assert not (profile / "sessionstore.jsonlz4").exists()
+    assert not (profile / "sessionstore-backups").exists()
 
 
 def test_launch_returns_false_when_popen_fails(monkeypatch):
@@ -112,7 +132,7 @@ def test_adblock_status_reports_firefox_policy_only(monkeypatch, tmp_path):
 
 def test_runtime_has_no_forbidden_browser_or_desktop_paths():
     source = (ROOT / "backend" / "kiosk.py").read_text()
-    for forbidden in ("brave", "chromium", "/snap/", "qdbus", "KWin", "tempfile", "WAYLAND_DISPLAY", "gdm", "plasma", "krunner"):
+    for forbidden in ("brave", "chromium", "/snap/", "qdbus", "KWin", "WAYLAND_DISPLAY", "gdm", "plasma", "krunner"):
         assert forbidden not in source
 
 

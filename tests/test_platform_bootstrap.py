@@ -54,7 +54,9 @@ class Fixture:
         self.stub("dpkg-query", '#!/bin/sh\ncase "$3" in pipewire|pipewire-pulse) echo "1.4.2-1";; wireplumber) echo "0.5.8-2";; avahi-daemon) echo "0.8-16";; libnss-mdns) echo "0.15.1-4+b1";; ufw) echo "0.36.2-9";; x11-xserver-utils) echo "7.7+11";; esac\n')
         self.stub("dpkg", '#!/bin/sh\nexit 0\n')
         self.stub("systemctl", '#!/bin/sh\necho "systemctl $*" >> "$LRP_CMDLOG"\nif grep -q "phase=applied" "$LRP_ROOT/var/lib/linuxremoteplayer/platform/state" 2>/dev/null; then case "$1 $2" in "is-enabled avahi-daemon"|"is-active avahi-daemon") exit 0;; "is-enabled sleep.target"|"is-enabled suspend.target"|"is-enabled hibernate.target"|"is-enabled hybrid-sleep.target") echo masked; exit 0;; esac; fi\ncase "$1 $2" in "is-enabled avahi-daemon"|"is-active avahi-daemon") exit 1;; "is-enabled sleep.target"|"is-enabled suspend.target"|"is-enabled hibernate.target"|"is-enabled hybrid-sleep.target") echo disabled; exit 1;; esac\nexit "$LRP_SYSTEMCTL_RC"\n')
-        self.stub("runuser", '#!/bin/sh\necho "runuser $*" >> "$LRP_CMDLOG"\ncase "$*" in *is-enabled*|*is-active*) grep -q "phase=applied" "$LRP_ROOT/var/lib/linuxremoteplayer/platform/state" 2>/dev/null && exit 0 || exit 1;; esac\nexit 0\n')
+        self.stub("runuser", '#!/bin/sh\necho "runuser $*" >> "$LRP_CMDLOG"\ncase "$*" in *pactl*"list short sinks"*) echo "3 alsa_output.pci.hdmi-stereo";; *pactl*"list short sink-inputs"*) echo "7 input";; *pactl*"get-default-sink"*) echo "alsa_output.pci.hdmi-stereo";; *is-enabled*|*is-active*) grep -q "phase=applied" "$LRP_ROOT/var/lib/linuxremoteplayer/platform/state" 2>/dev/null && exit 0 || exit 1;; esac\nexit 0\n')
+        self.stub("pactl", '#!/bin/sh\ncase "$1 $2 $3" in "list short sinks") echo "3 alsa_output.pci.hdmi-stereo";; "list short sink-inputs") echo "7 input";; esac\n[ "$1" = get-default-sink ] && echo "alsa_output.pci.hdmi-stereo"\nexit 0\n')
+        self.stub("wpctl", '#!/bin/sh\nexit 0\n')
         self.stub("modprobe", '#!/bin/sh\nexit 0\n')
         self.stub("openssl", '#!/bin/sh\nexit 0\n')
         self.stub("usermod", '#!/bin/sh\necho "usermod $*" >> "$LRP_CMDLOG"\n')
@@ -122,6 +124,12 @@ def test_applied_audio_verification_uses_the_same_user_bus_environment():
     text = SCRIPT.read_text(encoding="ascii")
     assert 'state_applied_audio_bus_ok()' in text
     assert 'state_applied_audio_bus_ok || return 1' in text
+    assert "pactl list short sinks" in text and "wpctl set-default" in text
+
+
+def test_audio_output_fails_without_hdmi_sink(fx):
+    fx.stub("runuser", '#!/bin/sh\ncase "$*" in *is-enabled*|*is-active*) grep -q "phase=applied" "$LRP_ROOT/var/lib/linuxremoteplayer/platform/state" 2>/dev/null && exit 0 || exit 1;; esac\nexit 0\n')
+    assert fx.run("--apply", "--approve").returncode == 1
 
 
 def test_apply_is_idempotent_and_does_not_duplicate_dpms(fx):
@@ -132,6 +140,31 @@ def test_apply_is_idempotent_and_does_not_duplicate_dpms(fx):
     fx.stub("systemctl", systemctl)
     assert fx.run("--apply", "--approve").returncode == 0
     assert (fx.root / "home/lrp/.config/openbox/autostart").read_text() == before
+
+
+def test_old_profile_migration_reloads_runtime(fx):
+    assert fx.run("--apply", "--approve").returncode == 0
+    profile = fx.root / "etc/ufw/applications.d/linuxremoteplayer"
+    profile.write_bytes(b"[linuxremoteplayer]\ntitle=LinuxRemotePlayer\n"
+                        b"description=LinuxRemotePlayer panel\nports=8000/tcp\n")
+    fx.run("--apply", "--approve")
+    log = fx.log.read_text()
+    assert "ufw app update linuxremoteplayer" in log
+    assert "ufw reload" in log
+
+
+def test_new_profile_repeat_reloads_without_rewrite(fx):
+    text = SCRIPT.read_text(encoding="ascii")
+    assert 'if [ "$current" = "$PROFILE_NEW" ]; then run ufw reload' in text
+    assert 'if [ "$current" = "$PROFILE_OLD" ]; then' not in text
+
+
+def test_arbitrary_profile_drift_does_not_reload(fx):
+    assert fx.run("--apply", "--approve").returncode == 0
+    (fx.root / "etc/ufw/applications.d/linuxremoteplayer").write_text("[foreign]\nports=9999/tcp\n")
+    before = fx.log.read_text().count("ufw reload")
+    assert fx.run("--apply", "--approve").returncode == 1
+    assert fx.log.read_text().count("ufw reload") == before
 
 
 def test_rollback_requires_approval_and_keeps_packages(fx):

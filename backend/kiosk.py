@@ -5,6 +5,7 @@ import shutil
 import signal
 import time
 import logging
+import tempfile
 
 logger = logging.getLogger("kiosk")
 
@@ -28,6 +29,7 @@ def gui_env():
     env["XDG_RUNTIME_DIR"] = env.get("XDG_RUNTIME_DIR") or f"/run/user/{uid}" if uid is not None else ""
     env["HOME"] = os.path.expanduser("~")
     env["XAUTHORITY"] = os.path.join(env["HOME"], ".Xauthority")
+    env["MOZ_CRASHREPORTER_DISABLE"] = "1"
     return env
 
 
@@ -128,6 +130,28 @@ def launch_kiosk(url: str) -> bool:
         profile_dir = os.path.expanduser("~/.config/lrp-kiosk-firefox")
         os.makedirs(profile_dir, mode=0o700, exist_ok=True)
         os.chmod(profile_dir, 0o700)
+        for artifact in ("sessionstore.jsonlz4", "sessionstore-backups"):
+            path = os.path.join(profile_dir, artifact)
+            if os.path.isdir(path):
+                shutil.rmtree(path)
+            elif os.path.exists(path):
+                os.unlink(path)
+        fd, prefs_tmp = tempfile.mkstemp(prefix=".user.js.", dir=profile_dir, text=True)
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as stream:
+                stream.write('user_pref("browser.sessionstore.resume_from_crash", false);\n')
+                stream.write('user_pref("browser.startup.page", 0);\n')
+                stream.write('user_pref("browser.shell.checkDefaultBrowser", false);\n')
+            if hasattr(os, "chown") and hasattr(os, "getuid"):
+                os.chown(prefs_tmp, os.getuid(), os.getgid())
+            os.chmod(prefs_tmp, 0o600)
+            os.replace(prefs_tmp, os.path.join(profile_dir, "user.js"))
+        except Exception:
+            try:
+                os.unlink(prefs_tmp)
+            except OSError:
+                pass
+            raise
         cmd = [browser_bin, "--kiosk", "--no-remote", "-profile", profile_dir, url]
 
         logger.info(f"Launching kiosk: {' '.join(cmd)}")
