@@ -322,3 +322,19 @@ def test_apply_writes_valid_openbox_34_xml(fx):
     assert proc.returncode == 20
     xml = (fx.root / "home/lrp/.config/openbox/rc.xml").read_text()
     assert xml == '<openbox_config xmlns="http://openbox.org/3.4"></openbox_config>\n'
+
+
+def test_apply_configures_tv_cursor_and_scaling_environment(fx):
+    proc, _ = fx.parsed("--apply", "--approve")
+    assert proc.returncode == 20
+    xresources = (fx.root / "home/lrp/.Xresources").read_text()
+    assert "Xcursor.size: 48" in xresources
+    assert "Xcursor.theme: DMZ-White" in xresources
+    index_theme = (fx.root / "home/lrp/.icons/default/index.theme").read_text()
+    assert "Inherits=DMZ-White" in index_theme
+    env_script = (fx.root / "home/lrp/.config/openbox/environment").read_text()
+    assert 'export XCURSOR_THEME="DMZ-White"' in env_script
+    assert "export XCURSOR_SIZE=48" in env_script
+    assert "export XCURSOR_SIZE=96" in env_script
+    assert "xrdb -merge" in env_script
+

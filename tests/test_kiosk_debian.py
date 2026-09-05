@@ -1,15 +1,23 @@
+import asyncio
 import os
 import signal
+import sys
+import time
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
-from backend import kiosk
-
-
 ROOT = Path(__file__).resolve().parents[1]
+BACKEND_DIR = str(ROOT / "backend")
+if BACKEND_DIR not in sys.path:
+    sys.path.insert(0, BACKEND_DIR)
+
+from backend import kiosk, main
+sys.modules["kiosk"] = kiosk
+
 INSTALLER = (ROOT / "scripts" / "install.sh").read_text()
+
 
 
 def test_find_browser_accepts_only_executable_debian_path(monkeypatch):
@@ -144,3 +152,194 @@ def test_installer_requires_esr_and_removes_browser_fallbacks():
         assert forbidden not in INSTALLER
     assert "/etc/firefox/policies/policies.json" in INSTALLER
     assert "platform-bootstrap.sh" in INSTALLER
+
+
+def test_tv_cursor_scaling_default_and_4k(monkeypatch):
+    monkeypatch.setattr(kiosk.shutil, "which", lambda name: None)
+    assert kiosk.get_tv_cursor_size() == 48
+
+    monkeypatch.setattr(kiosk.shutil, "which", lambda name: "/usr/bin/xrandr" if name == "xrandr" else None)
+    monkeypatch.setattr(kiosk.subprocess, "check_output", lambda *a, **k: "Screen 0: ...\nHDMI-1 connected 1920x1080+0+0\n   1920x1080     60.00*+  50.00\n")
+    assert kiosk.get_tv_cursor_size() == 48
+
+    monkeypatch.setattr(kiosk.subprocess, "check_output", lambda *a, **k: "Screen 0: ...\nHDMI-1 connected 3840x2160+0+0\n   3840x2160     60.00*+  30.00\n")
+    assert kiosk.get_tv_cursor_size() == 96
+
+
+def test_gui_env_includes_tv_cursor():
+    env = kiosk.gui_env()
+    assert env.get("XCURSOR_SIZE") in ("48", "96")
+    assert env.get("XCURSOR_THEME") == "DMZ-White"
+
+
+def test_status_panel_and_media_kiosk_detection(monkeypatch):
+    kiosk._kiosk_proc = None
+    kiosk._kiosk_url = None
+    assert kiosk.is_kiosk_running() is False
+    assert kiosk.is_status_panel_running() is False
+    assert kiosk.is_media_kiosk_running() is False
+
+    kiosk._kiosk_proc = SimpleNamespace(poll=lambda: None)
+    kiosk._kiosk_url = "https://127.0.0.1:8000/status"
+    assert kiosk.is_kiosk_running() is True
+    assert kiosk.is_status_panel_running() is True
+    assert kiosk.is_media_kiosk_running() is False
+
+    kiosk._kiosk_url = "https://youtube.com"
+    assert kiosk.is_status_panel_running() is False
+    assert kiosk.is_media_kiosk_running() is True
+
+    kiosk._kiosk_proc = SimpleNamespace(poll=lambda: 0)
+    assert kiosk.is_kiosk_running() is False
+    assert kiosk.is_status_panel_running() is False
+    assert kiosk.is_media_kiosk_running() is False
+    kiosk._kiosk_proc = None
+    kiosk._kiosk_url = None
+
+
+def test_audio_playing_detection(monkeypatch):
+    monkeypatch.setattr(kiosk.shutil, "which", lambda name: "/usr/bin/pactl" if name == "pactl" else None)
+    monkeypatch.setattr(kiosk.subprocess, "check_output", lambda *a, **k: "1   42  PipeWire    s16le 2ch 48000Hz\n")
+    assert kiosk.is_audio_playing() is True
+
+    monkeypatch.setattr(kiosk.subprocess, "check_output", lambda *a, **k: "   \n")
+    assert kiosk.is_audio_playing() is False
+
+
+def test_has_user_windows_detection(monkeypatch):
+    monkeypatch.setattr(kiosk.shutil, "which", lambda name: "/usr/bin/wmctrl" if name == "wmctrl" else None)
+    monkeypatch.setattr(kiosk.subprocess, "check_output", lambda *a, **k: "0x01  0 host Linux Remote Player Status\n")
+    assert kiosk.has_user_windows() is False
+
+    monkeypatch.setattr(kiosk.subprocess, "check_output", lambda *a, **k: "0x02  0 host VLC media player\n")
+    assert kiosk.has_user_windows() is True
+
+
+def test_is_media_active_composite(monkeypatch):
+    kiosk._kiosk_proc = None
+    kiosk._kiosk_url = None
+    kiosk._native_procs.clear()
+    monkeypatch.setattr(kiosk, "is_audio_playing", lambda: False)
+    monkeypatch.setattr(kiosk, "has_user_windows", lambda: False)
+
+    assert kiosk.is_media_active() is False
+
+    kiosk._kiosk_proc = SimpleNamespace(poll=lambda: None)
+    kiosk._kiosk_url = "https://netflix.com"
+    assert kiosk.is_media_active() is True
+    kiosk._kiosk_proc = None
+    kiosk._kiosk_url = None
+
+    proc = SimpleNamespace(poll=lambda: None)
+    kiosk._native_procs.append(proc)
+    assert kiosk.is_media_active() is True
+    kiosk._native_procs.clear()
+
+    monkeypatch.setattr(kiosk, "is_audio_playing", lambda: True)
+    assert kiosk.is_media_active() is True
+
+
+@pytest.mark.asyncio
+async def test_idle_panel_disabled_by_default(monkeypatch):
+    monkeypatch.delenv("APPLIANCE_IDLE_PANEL", raising=False)
+    launched = []
+    monkeypatch.setattr(kiosk, "launch_kiosk", lambda url: launched.append(url) or True)
+    res = await main.check_and_launch_status_panel()
+    assert res is False
+    assert launched == []
+
+
+@pytest.mark.asyncio
+async def test_idle_panel_immediate_launch_on_empty_desktop(monkeypatch):
+    monkeypatch.setenv("APPLIANCE_IDLE_PANEL", "true")
+    monkeypatch.setattr(kiosk, "is_status_panel_running", lambda: False)
+    monkeypatch.setattr(kiosk, "is_media_active", lambda: False)
+    main.connected_clients = 0
+    main.client_disconnected_during_media_time = 0.0
+
+    launched = []
+    monkeypatch.setattr(kiosk, "launch_kiosk", lambda url: launched.append(url) or True)
+
+    res = await main.check_and_launch_status_panel()
+    assert res is True
+    assert len(launched) == 1
+    assert launched[0].endswith("/status")
+
+
+@pytest.mark.asyncio
+async def test_idle_panel_skips_when_status_panel_already_running(monkeypatch):
+    monkeypatch.setenv("APPLIANCE_IDLE_PANEL", "true")
+    monkeypatch.setattr(kiosk, "is_status_panel_running", lambda: True)
+    monkeypatch.setattr(kiosk, "is_media_active", lambda: False)
+
+    launched = []
+    monkeypatch.setattr(kiosk, "launch_kiosk", lambda url: launched.append(url) or True)
+
+    res = await main.check_and_launch_status_panel()
+    assert res is False
+    assert launched == []
+
+
+@pytest.mark.asyncio
+async def test_idle_panel_never_interrupts_active_media(monkeypatch):
+    monkeypatch.setenv("APPLIANCE_IDLE_PANEL", "true")
+    monkeypatch.setattr(kiosk, "is_status_panel_running", lambda: False)
+    monkeypatch.setattr(kiosk, "is_media_active", lambda: True)
+    main.connected_clients = 0
+    main.client_disconnected_during_media_time = 0.0
+
+    launched = []
+    monkeypatch.setattr(kiosk, "launch_kiosk", lambda url: launched.append(url) or True)
+
+    res = await main.check_and_launch_status_panel()
+    assert res is False
+    assert launched == []
+
+
+@pytest.mark.asyncio
+async def test_idle_panel_respects_45s_safety_delay_after_disconnect_during_media(monkeypatch):
+    monkeypatch.setenv("APPLIANCE_IDLE_PANEL", "true")
+    monkeypatch.setattr(kiosk, "is_status_panel_running", lambda: False)
+    monkeypatch.setattr(kiosk, "is_media_active", lambda: False)
+    main.connected_clients = 0
+
+    # Disconnected 10 seconds ago during media
+    main.client_disconnected_during_media_time = time.time() - 10.0
+
+    launched = []
+    monkeypatch.setattr(kiosk, "launch_kiosk", lambda url: launched.append(url) or True)
+
+    # Within 45s: must not launch
+    res = await main.check_and_launch_status_panel()
+    assert res is False
+    assert launched == []
+
+    # After 45s (e.g. 50s ago): must launch
+    main.client_disconnected_during_media_time = time.time() - 50.0
+    res = await main.check_and_launch_status_panel()
+    assert res is True
+    assert len(launched) == 1
+    assert launched[0].endswith("/status")
+
+
+@pytest.mark.asyncio
+async def test_stop_kiosk_resets_safety_delay_and_launches_status(monkeypatch):
+    monkeypatch.setenv("APPLIANCE_IDLE_PANEL", "true")
+    monkeypatch.setattr(kiosk, "is_status_panel_running", lambda: False)
+    monkeypatch.setattr(kiosk, "is_media_active", lambda: False)
+    monkeypatch.setattr(kiosk, "close_all", lambda: None)
+    main.connected_clients = 0
+    main.client_disconnected_during_media_time = time.time() - 5.0
+
+    launched = []
+    monkeypatch.setattr(kiosk, "launch_kiosk", lambda url: launched.append(url) or True)
+
+    res = await main.stop_kiosk()
+    assert res == {"status": "success"}
+    assert main.client_disconnected_during_media_time == 0.0
+
+    await asyncio.sleep(0.05)
+    assert len(launched) == 1
+    assert launched[0].endswith("/status")
+
+

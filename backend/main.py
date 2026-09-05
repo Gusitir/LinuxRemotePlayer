@@ -17,7 +17,10 @@ from pydantic import BaseModel, Field, field_validator
 from dotenv import set_key
 import httpx
 import io
-import segno
+try:
+    import segno
+except ImportError:
+    segno = None
 import auth
 
 from input_emulator import gamepad, mouse
@@ -122,6 +125,7 @@ if os.path.exists(version_path):
 
 connected_clients = 0
 last_input_time = time.time()
+client_disconnected_during_media_time = 0.0
 
 
 def is_newer_version(current_ver: str, latest_ver: str) -> bool:
@@ -132,46 +136,54 @@ def is_newer_version(current_ver: str, latest_ver: str) -> bool:
     except Exception:
         return latest_ver != current_ver
 
-async def monitor_idle_panel():
-    """P4-B: when the TV is IDLE (nothing playing) and no phone has been connected
-    for >=45s, show the status panel with the pairing QR. NEVER interrupts running
-    media — a dropped phone must not kill a movie."""
-    import kiosk
-    while True:
-        await asyncio.sleep(15)
-        if os.getenv("APPLIANCE_IDLE_PANEL", "").lower() != "true":
-            continue
-        media_running = (getattr(kiosk, "_kiosk_proc", None) is not None
-                         and kiosk._kiosk_proc.poll() is None) or any(
-                             p.poll() is None for p in getattr(kiosk, "_native_procs", []))
-                             
-        if not media_running:
-            import shutil
-            import subprocess
-            try:
-                if shutil.which("pactl"):
-                    def _check_audio():
-                        return subprocess.check_output(["pactl", "list", "short", "sink-inputs"], text=True, stderr=subprocess.DEVNULL, timeout=2.0, env=kiosk.gui_env())
-                    out = await asyncio.to_thread(_check_audio)
-                    if out.strip():
-                        media_running = True
-                else:
-                    if not getattr(monitor_idle_panel, "_pactl_warned_missing", False):
-                        logger.warning("pactl no encontrado: instala pulseaudio-utils para detección de audio")
-                        monitor_idle_panel._pactl_warned_missing = True
-            except Exception as e:
-                if not getattr(monitor_idle_panel, "_pactl_warned", False):
-                    logger.warning(f"Failed to check audio with pactl: {e}")
-                    monitor_idle_panel._pactl_warned = True
 
-        if media_running:
-            continue  # something is on screen (movie, app or the panel itself) or audio is playing -> leave it alone
-        if connected_clients == 0 and (time.time() - last_input_time) >= 45.0:
-            logger.info("TV idle, no clients for 45s, and no audio -> launching status panel (pairing QR).")
-            await asyncio.to_thread(kiosk.launch_kiosk, "https://127.0.0.1:8000/status")
+async def check_and_launch_status_panel() -> bool:
+    """T-132: Immediately launch status panel when TV desktop is empty and appliance idle panel is enabled.
+    Preserves 45s safety delay ONLY if a client disconnected while media was actively playing."""
+    import kiosk
+    if os.getenv("APPLIANCE_IDLE_PANEL", "").lower() != "true":
+        return False
+    if kiosk.is_status_panel_running():
+        return False
+
+    media_active = await asyncio.to_thread(kiosk.is_media_active)
+    if media_active:
+        return False
+
+    # Check 45s safety delay if client disconnected during active playback
+    global client_disconnected_during_media_time
+    if connected_clients == 0 and client_disconnected_during_media_time > 0.0:
+        elapsed = time.time() - client_disconnected_during_media_time
+        if elapsed < 45.0:
+            logger.debug(f"Media stopped but client disconnected during media; waiting safety delay ({elapsed:.1f}s / 45s)")
+            return False
+
+    port = os.getenv("PORT", "8000")
+    status_url = f"https://127.0.0.1:{port}/status"
+    logger.info(f"Empty TV desktop detected -> launching status panel ({status_url})")
+    success = await asyncio.to_thread(kiosk.launch_kiosk, status_url)
+    return success
+
+
+async def monitor_idle_panel():
+    """T-132: Monitor TV state and show status panel when desktop is empty,
+    preserving 45s safety delay ONLY if client disconnected during active media."""
+    while True:
+        await asyncio.sleep(5)
+        try:
+            await check_and_launch_status_panel()
+        except Exception as e:
+            logger.debug(f"Error in monitor_idle_panel: {e}")
+
 
 @app.on_event("startup")
 async def startup_event():
+    # T-132: Immediate OSD status launch on startup if idle panel enabled (< 3s)
+    if os.getenv("APPLIANCE_IDLE_PANEL", "").lower() == "true":
+        try:
+            await check_and_launch_status_panel()
+        except Exception as e:
+            logger.warning(f"Failed to launch status panel on startup: {e}")
     asyncio.create_task(monitor_idle_panel())
 
 
@@ -726,9 +738,12 @@ async def start_kiosk(payload: KioskLaunchBody):
 @app.post("/api/kiosk/kill", dependencies=[Depends(require_token)])
 async def stop_kiosk():
     import kiosk
-    global last_input_time
-    last_input_time = time.time()  # Reset idle timer so APPLIANCE_IDLE_PANEL waits 45s
+    global last_input_time, client_disconnected_during_media_time
+    last_input_time = time.time()
+    client_disconnected_during_media_time = 0.0  # Deliberate user close; no disconnect delay
     await asyncio.to_thread(kiosk.close_all)
+    if os.getenv("APPLIANCE_IDLE_PANEL", "").lower() == "true":
+        asyncio.create_task(check_and_launch_status_panel())
     return {"status": "success"}
 
 
@@ -1035,6 +1050,14 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
     finally:
         if is_authenticated:
             connected_clients = max(0, connected_clients - 1)
+            try:
+                import kiosk
+                if kiosk.is_media_active():
+                    global client_disconnected_during_media_time
+                    client_disconnected_during_media_time = time.time()
+                    logger.info("Client disconnected during active media; armed 45s safety delay.")
+            except Exception as e:
+                logger.debug(f"Error checking active media on disconnect: {e}")
 
 frontend_path = os.path.join(os.path.dirname(__file__), "..", "frontend")
 app.mount("/", StaticFiles(directory=frontend_path, html=True), name="static")
