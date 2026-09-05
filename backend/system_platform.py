@@ -323,6 +323,7 @@ def connect_wifi(body: WifiConnectBody):
     try:
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=25, check=False)
         if proc.returncode == 0:
+            stop_hotspot()
             return {"ok": True, "message": f"Connected to {body.ssid}"}
         error_msg = proc.stderr.strip() or proc.stdout.strip() or "Connection failed"
         return {"ok": False, "error": error_msg}
@@ -478,3 +479,187 @@ def get_display_info() -> Dict[str, Any]:
 @router.get("/display", dependencies=[Depends(is_authorized)])
 def get_display():
     return get_display_info()
+
+
+# --- Onboarding & Dual Wi-Fi (T-137) ---
+
+_hotspot_state: Dict[str, Any] = {
+    "active": False,
+    "ssid": None,
+    "password": None
+}
+
+
+def get_hotspot_suffix() -> str:
+    """Generate deterministic 4-character suffix for Setup Hotspot."""
+    try:
+        with open("/etc/machine-id", "r") as mid:
+            return mid.read().strip()[:4].upper()
+    except Exception:
+        import uuid
+        return uuid.uuid4().hex[:4].upper()
+
+
+def is_physical_keyboard_connected() -> bool:
+    """Detect if a physical hardware keyboard is connected to the system.
+    Excludes virtual uinput / LRP emulated devices."""
+    if os.getenv("LRP_MOCK_KEYBOARD") is not None:
+        return os.getenv("LRP_MOCK_KEYBOARD") == "1"
+
+    by_id = "/dev/input/by-id"
+    if os.path.exists(by_id):
+        try:
+            for name in os.listdir(by_id):
+                n_lower = name.lower()
+                if n_lower.endswith("-kbd") and "uinput" not in n_lower and "linuxremoteplayer" not in n_lower:
+                    return True
+        except Exception:
+            pass
+
+    devices_proc = "/proc/bus/input/devices"
+    if os.path.exists(devices_proc):
+        try:
+            with open(devices_proc, "r", encoding="utf-8", errors="ignore") as f:
+                content = f.read()
+            for section in content.split("\n\n"):
+                if "Handlers=" in section and "kbd" in section:
+                    s_lower = section.lower()
+                    if "uinput" in s_lower or "linuxremoteplayer" in s_lower or "power button" in s_lower or "sleep button" in s_lower:
+                        continue
+                    return True
+        except Exception:
+            pass
+
+    return False
+
+
+def has_active_network() -> bool:
+    """Check if the system has an active non-loopback network connection."""
+    if os.getenv("LRP_MOCK_NETWORK") is not None:
+        return os.getenv("LRP_MOCK_NETWORK") == "1"
+
+    try:
+        import socket
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("1.1.1.1", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        if ip and ip != "127.0.0.1":
+            return True
+    except Exception:
+        pass
+
+    nmcli_bin = shutil.which("nmcli")
+    if nmcli_bin:
+        try:
+            proc = subprocess.run(
+                [nmcli_bin, "-t", "-f", "DEVICE,TYPE,STATE", "device"],
+                capture_output=True, text=True, timeout=5, check=False
+            )
+            if proc.returncode == 0:
+                for line in proc.stdout.splitlines():
+                    parts = line.strip().split(":")
+                    if len(parts) >= 3 and parts[2] == "connected" and parts[1] != "loopback":
+                        return True
+        except Exception:
+            pass
+
+    return False
+
+
+def start_hotspot(ssid_suffix: Optional[str] = None) -> Dict[str, Any]:
+    """Start temporary Wi-Fi hotspot (LRP-Setup-XXXX) via NetworkManager."""
+    global _hotspot_state
+    suffix = ssid_suffix or get_hotspot_suffix()
+    ssid = f"LRP-Setup-{suffix}"
+    password = f"lrpsetup{suffix.lower()}"
+
+    nmcli_bin = shutil.which("nmcli")
+    if not nmcli_bin:
+        _hotspot_state = {"active": True, "ssid": ssid, "password": password}
+        return {"ok": True, "hotspot": _hotspot_state, "mock": True}
+
+    # Find wireless interface
+    wifi_iface = None
+    try:
+        proc = subprocess.run(
+            [nmcli_bin, "-t", "-f", "DEVICE,TYPE", "device"],
+            capture_output=True, text=True, timeout=5, check=False
+        )
+        if proc.returncode == 0:
+            for line in proc.stdout.splitlines():
+                parts = line.strip().split(":")
+                if len(parts) >= 2 and parts[1] == "wifi":
+                    wifi_iface = parts[0]
+                    break
+    except Exception as e:
+        logger.warning(f"Error finding wifi iface: {e}")
+
+    cmd = [nmcli_bin, "device", "wifi", "hotspot"]
+    if wifi_iface:
+        cmd.extend(["ifname", wifi_iface])
+    cmd.extend(["ssid", ssid, "password", password])
+
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=15, check=False)
+        if proc.returncode == 0:
+            _hotspot_state = {"active": True, "ssid": ssid, "password": password}
+            logger.info(f"Hotspot started successfully: {ssid}")
+            return {"ok": True, "hotspot": _hotspot_state}
+        else:
+            logger.warning(f"Failed to start hotspot via nmcli: {proc.stderr}")
+            return {"ok": False, "error": proc.stderr.strip() or "Failed to start hotspot"}
+    except Exception as e:
+        logger.error(f"Error executing hotspot command: {e}")
+        return {"ok": False, "error": str(e)}
+
+
+def stop_hotspot() -> Dict[str, Any]:
+    """Stop temporary Wi-Fi hotspot."""
+    global _hotspot_state
+    nmcli_bin = shutil.which("nmcli")
+    if nmcli_bin and _hotspot_state.get("active"):
+        try:
+            subprocess.run([nmcli_bin, "connection", "down", "Hotspot"], capture_output=True, text=True, timeout=5, check=False)
+            subprocess.run([nmcli_bin, "connection", "delete", "Hotspot"], capture_output=True, text=True, timeout=5, check=False)
+        except Exception as e:
+            logger.debug(f"Error stopping hotspot: {e}")
+    _hotspot_state = {"active": False, "ssid": None, "password": None}
+    return {"ok": True}
+
+
+def get_onboarding_status() -> Dict[str, Any]:
+    """Determine initial onboarding state based on network and keyboard presence."""
+    net_ok = has_active_network()
+    kbd_ok = is_physical_keyboard_connected()
+
+    if net_ok:
+        mode = "normal"
+    elif kbd_ok:
+        mode = "wifi_keyboard"
+    else:
+        mode = "wifi_hotspot"
+
+    return {
+        "has_network": net_ok,
+        "keyboard_detected": kbd_ok,
+        "hotspot_active": _hotspot_state.get("active", False),
+        "hotspot_ssid": _hotspot_state.get("ssid"),
+        "hotspot_password": _hotspot_state.get("password"),
+        "mode": mode
+    }
+
+
+@router.get("/onboarding", dependencies=[Depends(is_authorized)])
+def api_get_onboarding():
+    return get_onboarding_status()
+
+
+@router.post("/onboarding/hotspot/start", dependencies=[Depends(is_authorized)])
+def api_start_hotspot():
+    return start_hotspot()
+
+
+@router.post("/onboarding/hotspot/stop", dependencies=[Depends(is_authorized)])
+def api_stop_hotspot():
+    return stop_hotspot()
