@@ -89,6 +89,32 @@ if ! .venv/bin/pip install -r requirements.txt; then
 fi
 set -e
 
+# ASTRA-01: Ensure root:root ownership and 0755/0644 on /opt/linuxremoteplayer and .venv
+chown -R root:root /opt/linuxremoteplayer
+find /opt/linuxremoteplayer -type d -exec chmod 0755 {} +
+find /opt/linuxremoteplayer -type f -exec chmod 0644 {} +
+find /opt/linuxremoteplayer/scripts -type f -name "*.sh" -exec chmod 0755 {} +
+if [ -d /opt/linuxremoteplayer/backend/.venv/bin ]; then
+    chmod 0755 /opt/linuxremoteplayer/backend/.venv/bin/*
+fi
+
+# Ensure /var/lib/linuxremoteplayer exists and is owned by lrp:lrp 0700
+if id -u lrp >/dev/null 2>&1; then
+    mkdir -p /var/lib/linuxremoteplayer
+    for _f in .env .pairing_token .license_cache; do
+        if [ -f "/opt/linuxremoteplayer/backend/$_f" ] && [ ! -f "/var/lib/linuxremoteplayer/$_f" ]; then
+            cp -p "/opt/linuxremoteplayer/backend/$_f" "/var/lib/linuxremoteplayer/$_f"
+            rm -f "/opt/linuxremoteplayer/backend/$_f"
+        fi
+    done
+    if [ -d "/opt/linuxremoteplayer/backend/certs" ] && [ ! -d "/var/lib/linuxremoteplayer/certs" ]; then
+        cp -rp "/opt/linuxremoteplayer/backend/certs" "/var/lib/linuxremoteplayer/certs"
+        rm -rf "/opt/linuxremoteplayer/backend/certs"
+    fi
+    chown -R lrp:lrp /var/lib/linuxremoteplayer
+    chmod 0700 /var/lib/linuxremoteplayer
+fi
+
 # Create lrp-setup
 cat <<'INNEREOF' > /usr/local/bin/lrp-setup
 #!/bin/bash
@@ -150,7 +176,8 @@ main() {
 
     set -e
     export DEBIAN_FRONTEND=noninteractive
-    ENV_FILE=/opt/linuxremoteplayer/backend/.env
+    ENV_FILE=/var/lib/linuxremoteplayer/.env
+    [ -f "$ENV_FILE" ] || ENV_FILE=/opt/linuxremoteplayer/backend/.env
     CHANNEL="stable"
     if [ -f "$ENV_FILE" ]; then
         CHANNEL=$(awk '

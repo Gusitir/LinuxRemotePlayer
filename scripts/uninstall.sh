@@ -16,7 +16,7 @@ if [ "$MODE" = apply ]; then
     [ ! -f "$PLATFORM_STATE" ] || "$PLATFORM" --rollback --approve --strict
     [ ! -f "$SESSION_STATE" ] || "$SESSION" --rollback --approve
     systemctl daemon-reload
-    printf '%s\n' '{"mode":"apply","status":"rolled_back","retained":["nvidia/kernel packages","all apt packages","lrp user/home","/opt/linuxremoteplayer/backend/.env","/opt/linuxremoteplayer/backend/.pairing_token","/opt/linuxremoteplayer/backend/.license_cache","/opt/linuxremoteplayer/backend/certs","/opt/linuxremoteplayer backend owner data"]}'
+    printf '%s\n' '{"mode":"apply","status":"rolled_back","retained":["nvidia/kernel packages","all apt packages","lrp user/home","/var/lib/linuxremoteplayer","/opt/linuxremoteplayer/backend/.env","/opt/linuxremoteplayer/backend/.pairing_token","/opt/linuxremoteplayer/backend/.license_cache","/opt/linuxremoteplayer/backend/certs","/opt/linuxremoteplayer backend owner data"]}'
 else
-    printf '{"mode":"dry-run","would_do":[%s],"retained":["nvidia/kernel packages","all apt packages","lrp user/home","/opt/linuxremoteplayer/backend/.env","/opt/linuxremoteplayer/backend/.pairing_token","/opt/linuxremoteplayer/backend/.license_cache","/opt/linuxremoteplayer/backend/certs","/opt/linuxremoteplayer backend owner data"]}\n' "$(printf '"%s",' "${would[@]}" | sed 's/,$//')"
+    printf '{"mode":"dry-run","would_do":[%s],"retained":["nvidia/kernel packages","all apt packages","lrp user/home","/var/lib/linuxremoteplayer","/opt/linuxremoteplayer/backend/.env","/opt/linuxremoteplayer/backend/.pairing_token","/opt/linuxremoteplayer/backend/.license_cache","/opt/linuxremoteplayer/backend/certs","/opt/linuxremoteplayer backend owner data"]}\n' "$(printf '"%s",' "${would[@]}" | sed 's/,$//')"
 fi

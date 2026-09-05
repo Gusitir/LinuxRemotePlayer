@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
-from dotenv import set_key
+from dotenv import set_key, load_dotenv
 import httpx
 import io
 try:
@@ -22,6 +22,17 @@ try:
 except ImportError:
     segno = None
 import auth
+
+try:
+    from config import (
+        get_env_file, get_token_file, get_license_cache_file, get_ca_cert_file, secure_permissions
+    )
+except ImportError:
+    from backend.config import (
+        get_env_file, get_token_file, get_license_cache_file, get_ca_cert_file, secure_permissions
+    )
+
+load_dotenv(get_env_file())
 
 from input_emulator import gamepad, mouse
 from discovery import get_installed_apps
@@ -33,6 +44,20 @@ logger = logging.getLogger("main")
 
 global_dropped_fast = 0
 global_dropped_slow = 0
+
+active_authenticated_websockets: set[WebSocket] = set()
+
+
+async def revoke_all_websockets(code: int = 1008, reason: str = "Token revoked"):
+    """ASTRA-02: Forcibly closes all active authenticated WebSocket sessions."""
+    global active_authenticated_websockets
+    to_close = list(active_authenticated_websockets)
+    active_authenticated_websockets.clear()
+    for ws in to_close:
+        try:
+            await ws.close(code=code)
+        except Exception as e:
+            logger.debug(f"Error closing revoked WebSocket: {e}")
 
 STABLE_CHANNEL = "stable"
 BETA_CHANNEL = "beta"
@@ -99,9 +124,11 @@ def _autoenable_voice_for_existing_license() -> None:
     if not os.getenv("LICENSE_TOKEN"):
         return
     try:
-        env_file = os.path.abspath(os.path.join(os.path.dirname(__file__), ".env"))
+        from pathlib import Path
+        env_file = str(get_env_file())
         if os.path.exists(env_file):
             set_key(env_file, "ENABLE_VOICE", "true")
+            secure_permissions(Path(env_file))
         os.environ["ENABLE_VOICE"] = "true"
         logger.info("Licencia presente y ENABLE_VOICE sin definir: voz activada.")
     except Exception as e:
@@ -379,23 +406,27 @@ def pair_with_pin(body: PairPinBody, request: Request):
 
 
 @app.get("/api/pairing-token")
+@app.get("/api/token")
 def get_pairing_token(request: Request):
     require_local(request)
     return {"token": auth.PAIRING_TOKEN}
 
 
 @app.post("/api/pairing-token/regenerate")
-def regenerate_pairing_token(request: Request):
+@app.post("/api/token/regenerate")
+async def regenerate_pairing_token(request: Request):
     require_local(request)
     import secrets
     new_token = secrets.token_urlsafe(16)
-    token_file = os.path.abspath(os.path.join(os.path.dirname(__file__), ".pairing_token"))
+    token_path = get_token_file()
     try:
-        with open(token_file, "w") as f:
+        token_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(token_path, "w") as f:
             f.write(new_token)
-        os.chmod(token_file, 0o600)
+        secure_permissions(token_path)
         auth.PAIRING_TOKEN = new_token
         logger.info("Pairing token regenerated via local API.")
+        await revoke_all_websockets(code=1008, reason="Token rotated")
         return {"status": "success", "token": new_token}
     except Exception as e:
         logger.error(f"Failed to regenerate .pairing_token: {e}")
@@ -522,7 +553,7 @@ def get_config():
 
 @app.get("/api/ca")
 def get_ca():
-    ca_path = os.path.join(os.path.dirname(__file__), "certs", "ca.pem")
+    ca_path = str(get_ca_cert_file())
     if os.path.exists(ca_path):
         return FileResponse(ca_path, media_type="application/x-pem-file", filename="ca.pem")
     raise HTTPException(status_code=404, detail="CA certificate not found")
@@ -586,18 +617,17 @@ async def activate_license(payload: ActivateBody):
     if claim.get("status") == "invalid":
         raise HTTPException(status_code=400, detail="Clave no válida")
     try:
-        env_file = os.path.abspath(os.path.join(os.path.dirname(__file__), ".env"))
+        from pathlib import Path
+        env_file = str(get_env_file())
         if not os.path.exists(env_file):
+            Path(env_file).parent.mkdir(parents=True, exist_ok=True)
             with open(env_file, "w") as f:
                 f.write("")
         await asyncio.to_thread(set_key, env_file, "LICENSE_TOKEN", payload.key)
         # D9: la voz es la razon por la que se compra el Pro. Encenderla aca evita que el
         # cliente active la licencia y se quede sin microfono sin saber por que.
         await asyncio.to_thread(set_key, env_file, "ENABLE_VOICE", "true")
-        try:
-            os.chmod(env_file, 0o600)
-        except Exception as pe:
-            logger.warning(f"Could not set secure permissions on .env file: {pe}")
+        secure_permissions(Path(env_file))
         os.environ["LICENSE_TOKEN"] = payload.key
         os.environ["ENABLE_VOICE"] = "true"
         return {"status": "success", "plan": "lifetime"}
@@ -615,12 +645,15 @@ async def toggle_voice(payload: VoiceToggleBody):
     """D10: apagar la voz es una decision legitima de privacidad. No toca la licencia:
     el usuario sigue siendo Pro, solo deja de usar el microfono."""
     try:
-        env_file = os.path.abspath(os.path.join(os.path.dirname(__file__), ".env"))
+        from pathlib import Path
+        env_file = str(get_env_file())
         if not os.path.exists(env_file):
+            Path(env_file).parent.mkdir(parents=True, exist_ok=True)
             with open(env_file, "w") as f:
                 f.write("")
         value = "true" if payload.enabled else "false"
         await asyncio.to_thread(set_key, env_file, "ENABLE_VOICE", value)
+        secure_permissions(Path(env_file))
         os.environ["ENABLE_VOICE"] = value
         return {"status": "success", "voice_enabled": payload.enabled}
     except Exception as e:
@@ -795,6 +828,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
         if await asyncio.to_thread(verify_access, auth_token):
             is_authenticated = True
             connected_clients += 1
+            active_authenticated_websockets.add(websocket)
 
     fast_bucket = TokenBucket(rate=240.0, capacity=480.0)
     slow_bucket = TokenBucket(rate=30.0, capacity=60.0)
@@ -964,6 +998,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
                         if not is_authenticated:
                             is_authenticated = True
                             connected_clients += 1
+                            active_authenticated_websockets.add(websocket)
                         await safe_send_json({"status": "success", "message": "Authenticated"})
                     else:
                         await safe_send_json({"status": "error", "message": "Unauthorized"})
@@ -1048,6 +1083,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
     except WebSocketDisconnect:
         logger.info("Client disconnected")
     finally:
+        active_authenticated_websockets.discard(websocket)
         if is_authenticated:
             connected_clients = max(0, connected_clients - 1)
             try:

@@ -20,11 +20,22 @@ logger = logging.getLogger("run")
 HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", "8000"))
 
-CERT_DIR = os.path.join(os.path.dirname(__file__), "certs")
-CA_KEY_FILE = os.path.join(CERT_DIR, "ca.key")
-CA_CERT_FILE = os.path.join(CERT_DIR, "ca.pem")
-KEY_FILE = os.path.join(CERT_DIR, "key.pem")
-CERT_FILE = os.path.join(CERT_DIR, "cert.pem")
+try:
+    from config import (
+        get_certs_dir, get_ca_key_file, get_ca_cert_file, get_key_file, get_cert_file,
+        get_token_file, secure_permissions
+    )
+except ImportError:
+    from backend.config import (
+        get_certs_dir, get_ca_key_file, get_ca_cert_file, get_key_file, get_cert_file,
+        get_token_file, secure_permissions
+    )
+
+CERT_DIR = str(get_certs_dir())
+CA_KEY_FILE = str(get_ca_key_file())
+CA_CERT_FILE = str(get_ca_cert_file())
+KEY_FILE = str(get_key_file())
+CERT_FILE = str(get_cert_file())
 
 
 def detect_ip():
@@ -121,7 +132,9 @@ def ensure_full_chain() -> None:
 
 def ensure_cert(ip, fqdn):
     """Generate/refresh CA and self-signed leaf cert. Returns True if HTTPS is ready."""
+    from pathlib import Path
     os.makedirs(CERT_DIR, exist_ok=True)
+    secure_permissions(Path(CERT_DIR), is_dir=True)
 
     # 1. Generate CA if not exists
     if not os.path.exists(CA_KEY_FILE) or not os.path.exists(CA_CERT_FILE):
@@ -233,10 +246,10 @@ if __name__ == "__main__":
     
     token = ""
     if not supabase_active:
-        token_file = os.path.join(os.path.dirname(__file__), ".pairing_token")
-        if os.path.exists(token_file):
+        token_path = get_token_file()
+        if token_path.is_file():
             try:
-                with open(token_file, "r") as f:
+                with open(token_path, "r") as f:
                     token = f.read().strip()
             except Exception as e:
                 logger.error(f"Could not read .pairing_token file: {e}")
