@@ -834,11 +834,112 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
     slow_bucket = TokenBucket(rate=30.0, capacity=60.0)
     auth_start = time.time()
 
+    ws_send_lock = asyncio.Lock()
+
     async def safe_send_json(data):
         try:
-            await websocket.send_text(json.dumps(data))
-        except RuntimeError:
+            async with ws_send_lock:
+                await websocket.send_text(json.dumps(data))
+        except (RuntimeError, WebSocketDisconnect):
             logger.debug("Attempted to send text on closed WebSocket.")
+        except Exception as e:
+            logger.debug(f"Error sending on WebSocket: {e}")
+
+    active_voice_tasks: set[asyncio.Task] = set()
+
+    async def handle_voice_message(audio_data: bytes):
+        try:
+            await safe_send_json({"status": "processing", "message": "Listening..."})
+            valid_targets = [k["id"] for k in SUGGESTED_KIOSKS]
+            result = await voice_command(audio_data, valid_targets=valid_targets)
+
+            if result.get("ok"):
+                text = result.get("text", "")
+                await safe_send_json({"status": "processing", "message": f"Intent: {text}"})
+                intent = result.get("intent") or {"action": "error"}
+
+                if intent.get("action") == "error":
+                    await safe_send_json({"status": "error", "message": "Voz: error LLM"})
+                    return
+
+                action = intent.get("action")
+                params = intent.get("parameters", {})
+
+                if action == "launch_kiosk":
+                    target = params.get("target_id")
+                    if target:
+                        target = str(target).lower().strip()
+                        target_url = SUGGESTED_KIOSKS_MAP.get(target)
+                        if target_url:
+                            if target == "youtube":
+                                query = quote_plus(params.get('search_query', ''))
+                                target_url = f"https://youtube.com/results?search_query={query}"
+                            success = await asyncio.to_thread(launch_kiosk, target_url)
+                            if success:
+                                await safe_send_json({"status": "success", "message": "Launched app"})
+                            else:
+                                await safe_send_json({"status": "error", "message": "Failed to launch app"})
+                        else:
+                            await safe_send_json({"status": "error", "message": f"Voz: app '{target}' no reconocida"})
+                    else:
+                        await safe_send_json({"status": "error", "message": "Target missing"})
+                elif action == "media_control":
+                    media_key = params.get("key")
+                    if media_key:
+                        media_key = str(media_key).upper().strip()
+                        if not media_key.startswith("KEY_"):
+                            media_key = f"KEY_{media_key}"
+                            
+                        if media_key in MEDIA_KEYS:
+                            import audio
+                            import kiosk
+                            if media_key == "KEY_VOLUMEUP":
+                                if not audio.set_volume(5): await gamepad.press_button(media_key)
+                            elif media_key == "KEY_VOLUMEDOWN":
+                                if not audio.set_volume(-5): await gamepad.press_button(media_key)
+                            elif media_key == "KEY_MUTE":
+                                if not audio.toggle_mute(): await gamepad.press_button(media_key)
+                            elif media_key == "KEY_PLAYPAUSE" and getattr(kiosk, "_kiosk_proc", None) is not None:
+                                await gamepad.press_button("KEY_SPACE")
+                            else:
+                                await gamepad.press_button(media_key)
+                            await safe_send_json({"status": "success", "message": f"Media: {media_key}"})
+                        else:
+                            await safe_send_json({"status": "error", "message": "Invalid media key"})
+                    else:
+                        await safe_send_json({"status": "error", "message": "Invalid media key"})
+                elif action == "search":
+                    query = quote_plus(params.get("search_query", ""))
+                    if query:
+                        success = await asyncio.to_thread(launch_kiosk, f"https://www.youtube.com/results?search_query={query}")
+                        if success:
+                            await safe_send_json({"status": "success", "message": f"Searching: {params.get('search_query', '')}"})
+                        else:
+                            await safe_send_json({"status": "error", "message": "Failed to search"})
+                    else:
+                        await safe_send_json({"status": "error", "message": "Empty search"})
+                else:
+                    await safe_send_json({"status": "error", "message": "Unknown action"})
+            else:
+                reason = result.get("reason", "error")
+                voice_errors = {
+                    "no_speech": "Voz: no se entendió el audio",
+                    "quota_exceeded": "Voz: cuota diaria agotada",
+                    "in_use_elsewhere": "Licencia en uso en otro dispositivo",
+                    "invalid_license": "Voz: licencia inválida",
+                    "service_disabled": "Voz: servicio temporalmente deshabilitado",
+                    "global_cap": "Voz: servicio temporalmente deshabilitado",
+                    "audio_too_large": "Audio too large",
+                    "stt_error": "Voz: error STT",
+                    "llm_error": "Voz: error LLM",
+                    "proxy_unreachable": "Voz: sin conexión con el servicio",
+                }
+                await safe_send_json({"status": "error", "code": reason,
+                                      "message": voice_errors.get(reason, "Voz: error del servicio")})
+        except asyncio.CancelledError:
+            logger.debug("Voice processing task cancelled.")
+        except Exception as e:
+            logger.error(f"Error in async voice processing task: {e}")
 
     try:
         while True:
@@ -880,93 +981,12 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
                     await safe_send_json({"status": "error", "message": "Audio too large"})
                     continue
 
-                await safe_send_json({"status": "processing", "message": "Listening..."})
-                valid_targets = [k["id"] for k in SUGGESTED_KIOSKS]
-                result = await voice_command(audio_data, valid_targets=valid_targets)
-
-                if result.get("ok"):
-                    text = result.get("text", "")
-                    await safe_send_json({"status": "processing", "message": f"Intent: {text}"})
-                    intent = result.get("intent") or {"action": "error"}
-
-                    if intent.get("action") == "error":
-                        await safe_send_json({"status": "error", "message": "Voz: error LLM"})
-                        continue
-
-                    action = intent.get("action")
-                    params = intent.get("parameters", {})
-
-                    if action == "launch_kiosk":
-                        target = params.get("target_id")
-                        if target:
-                            target = str(target).lower().strip()
-                            target_url = SUGGESTED_KIOSKS_MAP.get(target)
-                            if target_url:
-                                if target == "youtube":
-                                    query = quote_plus(params.get('search_query', ''))
-                                    target_url = f"https://youtube.com/results?search_query={query}"
-                                success = await asyncio.to_thread(launch_kiosk, target_url)
-                                if success:
-                                    await safe_send_json({"status": "success", "message": "Launched app"})
-                                else:
-                                    await safe_send_json({"status": "error", "message": "Failed to launch app"})
-                            else:
-                                await safe_send_json({"status": "error", "message": f"Voz: app '{target}' no reconocida"})
-                        else:
-                            await safe_send_json({"status": "error", "message": "Target missing"})
-                    elif action == "media_control":
-                        media_key = params.get("key")
-                        if media_key:
-                            media_key = str(media_key).upper().strip()
-                            if not media_key.startswith("KEY_"):
-                                media_key = f"KEY_{media_key}"
-                                
-                            if media_key in MEDIA_KEYS:
-                                import audio
-                                import kiosk
-                                if media_key == "KEY_VOLUMEUP":
-                                    if not audio.set_volume(5): await gamepad.press_button(media_key)
-                                elif media_key == "KEY_VOLUMEDOWN":
-                                    if not audio.set_volume(-5): await gamepad.press_button(media_key)
-                                elif media_key == "KEY_MUTE":
-                                    if not audio.toggle_mute(): await gamepad.press_button(media_key)
-                                elif media_key == "KEY_PLAYPAUSE" and getattr(kiosk, "_kiosk_proc", None) is not None:
-                                    await gamepad.press_button("KEY_SPACE")
-                                else:
-                                    await gamepad.press_button(media_key)
-                                await safe_send_json({"status": "success", "message": f"Media: {media_key}"})
-                            else:
-                                await safe_send_json({"status": "error", "message": "Invalid media key"})
-                        else:
-                            await safe_send_json({"status": "error", "message": "Invalid media key"})
-                    elif action == "search":
-                        query = quote_plus(params.get("search_query", ""))
-                        if query:
-                            success = await asyncio.to_thread(launch_kiosk, f"https://www.youtube.com/results?search_query={query}")
-                            if success:
-                                await safe_send_json({"status": "success", "message": f"Searching: {params.get('search_query', '')}"})
-                            else:
-                                await safe_send_json({"status": "error", "message": "Failed to search"})
-                        else:
-                            await safe_send_json({"status": "error", "message": "Empty search"})
-                    else:
-                        await safe_send_json({"status": "error", "message": "Unknown action"})
-                else:
-                    reason = result.get("reason", "error")
-                    voice_errors = {
-                        "no_speech": "Voz: no se entendió el audio",
-                        "quota_exceeded": "Voz: cuota diaria agotada",
-                        "in_use_elsewhere": "Licencia en uso en otro dispositivo",
-                        "invalid_license": "Voz: licencia inválida",
-                        "service_disabled": "Voz: servicio temporalmente deshabilitado",
-                        "global_cap": "Voz: servicio temporalmente deshabilitado",
-                        "audio_too_large": "Audio too large",
-                        "stt_error": "Voz: error STT",
-                        "llm_error": "Voz: error LLM",
-                        "proxy_unreachable": "Voz: sin conexión con el servicio",
-                    }
-                    await safe_send_json({"status": "error", "code": reason,
-                                          "message": voice_errors.get(reason, "Voz: error del servicio")})
+                # ASTRA-03: Decouple voice processing from main WebSocket receive loop
+                # into a background task per connection, preventing slow STT/LLM inference
+                # from blocking concurrent ping/pong or heartbeats.
+                v_task = asyncio.create_task(handle_voice_message(audio_data))
+                active_voice_tasks.add(v_task)
+                v_task.add_done_callback(active_voice_tasks.discard)
 
             elif message.get("text"):
                 data = message.get("text")
@@ -1083,6 +1103,10 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
     except WebSocketDisconnect:
         logger.info("Client disconnected")
     finally:
+        for v_task in list(active_voice_tasks):
+            if not v_task.done():
+                v_task.cancel()
+        active_voice_tasks.clear()
         active_authenticated_websockets.discard(websocket)
         if is_authenticated:
             connected_clients = max(0, connected_clients - 1)
