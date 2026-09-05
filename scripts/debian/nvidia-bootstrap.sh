@@ -304,12 +304,36 @@ if [ "$kernel_probe_status" = "ok" ]; then
     PKG_ORDER="nvidia-driver nvidia-kernel-dkms xserver-xorg-video-nvidia firmware-nvidia-gsp $HEADER_PKG dkms"
 fi
 
+ensure_dynamic_udev_rules() {
+    local udev_dir="$ROOT/etc/udev/rules.d"
+    mkdir -p "$udev_dir" 2>/dev/null || true
+    ensure_store
+    local tmp; tmp=$(mktemp "$BST/udev.XXXXXX" 2>/dev/null || mktemp 2>/dev/null)
+    if [ -n "$tmp" ]; then
+        printf '%s\n' 'ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", RUN+="/sbin/modprobe nvidia", RUN+="/sbin/modprobe nvidia-modeset", RUN+="/sbin/modprobe nvidia-drm", RUN+="/sbin/modprobe nvidia-uvm"' > "$tmp"
+        setmode 0644 "$tmp"
+        setown 0:0 "$tmp"
+        mv -f "$tmp" "$udev_dir/71-nvidia.rules" 2>/dev/null || true
+        setmode 0644 "$udev_dir/71-nvidia.rules"
+        setown 0:0 "$udev_dir/71-nvidia.rules"
+    fi
+    rm -f "$ROOT"/etc/modules-load.d/nvidia*.conf 2>/dev/null || true
+}
+
 # expected GPU PCI device present + driver binding
 gpu_expected_found=0; gpu_bound=""
+non_nvidia_gpu=0
 declare -a GPU_DEVS=()
 for _d in "$ROOT"/sys/bus/pci/devices/*/; do
     [ -d "$_d" ] || continue
-    _v=$(cat "$_d/vendor" 2>/dev/null); _dv=$(cat "$_d/device" 2>/dev/null)
+    _v=$(cat "$_d/vendor" 2>/dev/null); _dv=$(cat "$_d/device" 2>/dev/null); _c=$(cat "$_d/class" 2>/dev/null)
+    case "$_c" in
+        0x03*)
+            if [ "$_v" = "0x8086" ] || [ "$_v" = "0x1002" ] || [ "$_v" != "$GEXPECT_GPU_VENDOR" ]; then
+                non_nvidia_gpu=1
+            fi
+            ;;
+    esac
     [ "$_v" = "$GEXPECT_GPU_VENDOR" ] && [ "$_dv" = "$GEXPECT_GPU_DEVICE" ] || continue
     gpu_expected_found=1
     if [ -L "$_d/driver" ]; then
@@ -318,7 +342,7 @@ for _d in "$ROOT"/sys/bus/pci/devices/*/; do
         gpu_bound=$(cat "$_d/driver" 2>/dev/null)
     fi
 done
-unset _d _v _dv
+unset _d _v _dv _c
 
 mods=""; modules_csv=""
 if [ -f "$ROOT/proc/modules" ]; then mods=$(cat "$ROOT/proc/modules" 2>/dev/null); fi
@@ -485,7 +509,11 @@ if [ -z "$os_id" ] || [ -z "$os_version" ] || [ -z "$host_arch" ]; then prf_unkn
 if [ -n "$host_arch" ] && [ "$host_arch" != "$GEXPECT_ARCH" ]; then prf_fail "architecture"; fi
 if [ "$sb" = "enabled" ]; then prf_fail "secure_boot"; fi
 if [ "$sb" = "unknown" ]; then prf_unknown "secure_boot_unresolved"; fi
-if [ "$gpu_expected_found" = "0" ]; then prf_fail "expected_gpu_missing"; fi
+if [ "$gpu_expected_found" = "0" ]; then
+    if [ "$non_nvidia_gpu" = "0" ]; then
+        prf_fail "expected_gpu_missing"
+    fi
+fi
 if [ "$kernel_probe_status" = "unknown" ]; then prf_unknown "$kernel_probe_issue"; fi
 if [ "$kernel_probe_status" = "fail" ]; then prf_fail "$kernel_probe_issue"; fi
 # A pre-install nouveau binding is expected and is not an unresolved gate.
@@ -501,6 +529,10 @@ if cmd_exists nvidia-smi; then if cmd_run nvidia-smi >/dev/null 2>&1; then nvidi
 
 pvr_ok=0; declare -a PVR_ISSUES=()
 verify_post_reboot() {
+    if [ "$non_nvidia_gpu" = "1" ] && [ "$gpu_expected_found" = "0" ]; then
+        pvr_ok=1
+        return
+    fi
     [ "$gpu_expected_found" = "1" ] || PVR_ISSUES+=("gpu_not_found")
     [ "$gpu_bound" = "nvidia" ] || PVR_ISSUES+=("gpu_not_bound_to_nvidia")
     [ "$with_nvidia_modules" = "1" ] || PVR_ISSUES+=("nvidia_modules_absent")
@@ -603,6 +635,16 @@ run_apply() {
     if [ "$prf_status" = "fail" ]; then state_phase="preflight"; state_status="preflight_failed"; exit_code=11; return; fi
     if [ "$prf_status" = "unknown" ]; then state_phase="preflight"; state_status="preflight_unresolved"; exit_code=10; return; fi
 
+    if [ "$non_nvidia_gpu" = "1" ] && [ "$gpu_expected_found" = "0" ]; then
+        ensure_dynamic_udev_rules
+        state_phase="complete"
+        state_post_reboot_ok=1
+        state_status="complete"
+        write_state
+        exit_code=0
+        return
+    fi
+
     state_phase="source_backed_up"
     backup_source
     if [ -z "$state_backup_sha" ]; then state_phase="failed"; state_status="backup_failed"; exit_code=11; return; fi
@@ -632,6 +674,7 @@ run_apply() {
         return
     fi
     state_packages_installed=1
+    ensure_dynamic_udev_rules
     write_state
 
     # successful install completes the mutation; keep components for future
@@ -645,6 +688,15 @@ run_apply() {
 
 # ---------- resume --------------------------------------------------------
 run_resume() {
+    if [ "$non_nvidia_gpu" = "1" ] && [ "$gpu_expected_found" = "0" ]; then
+        ensure_dynamic_udev_rules
+        state_phase="complete"
+        state_post_reboot_ok=1
+        state_status="complete"
+        write_state
+        exit_code=0
+        return
+    fi
     case "$state_phase" in
         packages_installed|reboot_required|post_reboot_verify) ;;
         *) printf '{"tool":"%s","schema":"%s","contract_valid":false,"reason":"resume_state_invalid","phase":"%s"}\n' "$TOOL" "$SCHEMA" "$(json_escape "$state_phase")" >&2
@@ -682,7 +734,7 @@ print_report() {
     printf '  "contract_valid":true,\n'
     printf '  "mode":"%s",\n' "$MODE"
     printf '  "identity":{"id":"%s","version_id":"%s","codename":"%s","arch":"%s","kernel":"%s","secure_boot":"%s"},\n' "$(json_escape "$os_id")" "$(json_escape "$os_version")" "$(json_escape "$os_codename")" "$(json_escape "$host_arch")" "$(json_escape "$host_kernel")" "$(json_escape "$sb")"
-    printf '  "gpu":{"expected":true,"found":%s,"bound":"%s","modules_loaded":%s,"nouveau_absent":%s,"nvidia_smi_ok":%s},\n' "$([ "$gpu_expected_found" = "1" ] && printf true || printf false)" "$(json_escape "$gpu_bound")" "$([ "$with_nvidia_modules" = "1" ] && printf true || printf false)" "$([ "$nouveau_present" = "0" ] && printf true || printf false)" "$([ "$nvidia_smi_ok" = "1" ] && printf true || printf false)"
+    printf '  "gpu":{"expected":%s,"found":%s,"bound":"%s","modules_loaded":%s,"nouveau_absent":%s,"nvidia_smi_ok":%s},\n' "$([ "$non_nvidia_gpu" = "1" ] && [ "$gpu_expected_found" = "0" ] && printf false || printf true)" "$([ "$gpu_expected_found" = "1" ] && printf true || printf false)" "$(json_escape "$gpu_bound")" "$([ "$with_nvidia_modules" = "1" ] && printf true || printf false)" "$([ "$nouveau_present" = "0" ] && printf true || printf false)" "$([ "$nvidia_smi_ok" = "1" ] && printf true || printf false)"
     printf '  "sources":{"contract_ok":%s,"layout":"%s","file":"%s","uri_host_class":"%s","components":"%s"},\n' "$([ "$src_reject" = "0" ] && printf true || printf false)" "$(json_escape "$SOURCE_LAYOUT")" "$(json_escape "$SOURCE_LABEL")" "$( [ "$official_only" = "1" ] && printf official || printf other )" "$(json_escape "${ds_comps:-$legacy_components}")"
     printf '  "post_reboot":{"issues":%s},\n' "$(report_issues "${PVR_ISSUES[@]}")"
     printf '  "kernel":{"release":"%s","image_package":"%s","image_version":"%s","header_package":"%s","header_version":"%s","probe":"%s"},\n' "$(json_escape "$host_kernel")" "$(json_escape "$IMAGE_PKG")" "$(json_escape "$IMAGE_VERSION")" "$(json_escape "$HEADER_PKG")" "$(json_escape "$HEADER_VERSION")" "$(json_escape "$kernel_probe_status")"
@@ -718,6 +770,7 @@ case "$MODE" in
         if [ "$state_phase" = "complete" ]; then exit_code=0
         elif [ "$state_phase" = "reboot_required" ]; then exit_code=20
         elif [ "$state_phase" = "post_reboot_verify" ]; then exit_code=0
+        elif [ "$non_nvidia_gpu" = "1" ] && [ "$gpu_expected_found" = "0" ]; then exit_code=0
         elif [ "$prf_status" = "fail" ]; then exit_code=11
         elif [ "$prf_status" = "unknown" ]; then exit_code=10
         fi

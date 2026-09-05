@@ -835,8 +835,19 @@ def test_state_contains_no_secrets(fx):
     assert "phase=" in state
 
 
+def test_intel_gpu_noop_apply_and_resume(fx):
+    fx.pci_gpu(vendor="0x8086", device="0x0152", bound="i915")
+    proc, body = fx.json("--apply", "--approve")
+    assert proc.returncode == 0
+    assert body["state"]["phase"] == "complete"
+    assert body["state"]["status"] == "complete"
+    udev = fx.root / "etc" / "udev" / "rules.d" / "71-nvidia.rules"
+    assert udev.is_file()
+    assert 'ATTR{vendor}=="0x10de"' in udev.read_text()
+
+
 # ---------------------------------------------------------------------------
-# Static contract checks
+# Static invariant tests
 # ---------------------------------------------------------------------------
 
 def _code(source):

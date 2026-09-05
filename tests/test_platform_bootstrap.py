@@ -326,3 +326,112 @@ def test_default_rollback_remains_best_effort(fx):
     assert fx.run("--apply", "--approve").returncode == 0
     fx.stub("systemctl", '#!/bin/sh\nexit 1\n')
     assert fx.run("--rollback", "--approve").returncode == 0
+
+
+def test_apply_configures_wildcard_dhcp_network_and_watchdog(fx):
+    result, _ = fx.parsed("--apply", "--approve")
+    assert result.returncode == 0
+    net_conf = fx.root / "etc/systemd/network/10-wired-default.network"
+    assert net_conf.is_file()
+    assert "Name=en* eth* enx*" in net_conf.read_text()
+    assert "DHCP=yes" in net_conf.read_text()
+
+    watchdog = fx.root / "usr/local/bin/lrp-network-watchdog"
+    assert watchdog.is_file()
+    text = watchdog.read_text()
+    assert "carrier" in text
+    assert "networkctl reconfigure" in text
+
+    svc = fx.root / "etc/systemd/system/linuxremoteplayer-network-watchdog.service"
+    assert svc.is_file()
+    tmr = fx.root / "etc/systemd/system/linuxremoteplayer-network-watchdog.timer"
+    assert tmr.is_file()
+    udev = fx.root / "etc/udev/rules.d/99-linuxremoteplayer-network-watchdog.rules"
+    assert udev.is_file()
+
+    log = fx.log.read_text()
+    assert "systemctl enable systemd-networkd" in log
+    assert "systemctl enable linuxremoteplayer-network-watchdog.timer" in log
+
+
+def test_apply_sanitizes_static_interfaces(fx):
+    interfaces = fx.root / "etc/network/interfaces"
+    interfaces.parent.mkdir(parents=True, exist_ok=True)
+    interfaces.write_text(
+        "source /etc/network/interfaces.d/*\n"
+        "auto lo\n"
+        "iface lo inet loopback\n\n"
+        "allow-hotplug enp2s0\n"
+        "iface enp2s0 inet dhcp\n"
+    )
+    result, _ = fx.parsed("--apply", "--approve")
+    assert result.returncode == 0
+    content = interfaces.read_text()
+    assert "auto lo" in content
+    assert "iface lo inet loopback" in content
+    assert "enp2s0" not in content
+
+
+def test_apply_creates_dynamic_nvidia_udev_and_removes_static_modules_load(fx):
+    static_mod = fx.root / "etc/modules-load.d/nvidia.conf"
+    static_mod.parent.mkdir(parents=True, exist_ok=True)
+    static_mod.write_text("nvidia\nnvidia-modeset\n")
+
+    result, _ = fx.parsed("--apply", "--approve")
+    assert result.returncode == 0
+    assert not static_mod.exists()
+
+    udev = fx.root / "etc/udev/rules.d/71-nvidia.rules"
+    assert udev.is_file()
+    content = udev.read_text()
+    assert 'ATTR{vendor}=="0x10de"' in content
+    assert 'RUN+="/sbin/modprobe nvidia"' in content
+
+
+def test_rollback_removes_network_and_dynamic_nvidia_rules(fx):
+    assert fx.run("--apply", "--approve").returncode == 0
+    assert (fx.root / "usr/local/bin/lrp-network-watchdog").is_file()
+    assert (fx.root / "etc/udev/rules.d/71-nvidia.rules").is_file()
+
+    result = fx.run("--rollback", "--approve")
+    assert result.returncode == 0
+    assert not (fx.root / "usr/local/bin/lrp-network-watchdog").exists()
+    assert not (fx.root / "etc/systemd/system/linuxremoteplayer-network-watchdog.service").exists()
+    assert not (fx.root / "etc/systemd/system/linuxremoteplayer-network-watchdog.timer").exists()
+    assert not (fx.root / "etc/udev/rules.d/99-linuxremoteplayer-network-watchdog.rules").exists()
+    assert not (fx.root / "etc/udev/rules.d/71-nvidia.rules").exists()
+    assert not (fx.root / "etc/systemd/network/10-wired-default.network").exists()
+
+
+def test_watchdog_script_execution_on_carrier_changes(fx):
+    assert fx.run("--apply", "--approve").returncode == 0
+    watchdog = fx.root / "usr/local/bin/lrp-network-watchdog"
+    assert watchdog.is_file()
+
+    fx.stub("ip", '#!/bin/sh\necho "ip $*" >> "$LRP_CMDLOG"\nif [ -f "$LRP_ROOT/has_ip" ]; then echo "    inet 192.168.1.50/24 brd 192.168.1.255 scope global eth0"; fi\nexit 0\n')
+    fx.stub("networkctl", '#!/bin/sh\necho "networkctl $*" >> "$LRP_CMDLOG"\nexit 0\n')
+
+    eth = fx.root / "sys/class/net/enp2s0"
+    eth.mkdir(parents=True, exist_ok=True)
+    (eth / "carrier").write_text("0\n", encoding="ascii")
+    env = dict(os.environ)
+    env.update(fx.env)
+    env["LRP_ROOT"] = _shell_path(fx.root)
+    env["LRP_CMDLOG"] = _shell_path(fx.log)
+    cmd = f'export PATH="{_shell_path(fx.cmds)}:$PATH"; bash "$0"'
+    res = subprocess.run([BASH, "-c", cmd, _shell_path(watchdog)], env=env, capture_output=True, text=True)
+    assert res.returncode == 0
+    assert "networkctl" not in fx.log.read_text()
+
+    (eth / "carrier").write_text("1\n", encoding="ascii")
+    (fx.root / "has_ip").write_text("1\n", encoding="ascii")
+    res = subprocess.run([BASH, "-c", cmd, _shell_path(watchdog)], env=env, capture_output=True, text=True)
+    assert res.returncode == 0
+    assert "networkctl" not in fx.log.read_text()
+
+    (fx.root / "has_ip").unlink()
+    res = subprocess.run([BASH, "-c", cmd, _shell_path(watchdog)], env=env, capture_output=True, text=True)
+    assert res.returncode == 0
+    assert "networkctl reconfigure enp2s0" in fx.log.read_text()
+
+
