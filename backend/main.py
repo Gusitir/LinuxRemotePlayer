@@ -107,6 +107,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+try:
+    from system_platform import router as system_router
+except ImportError:
+    from backend.system_platform import router as system_router
+
+app.include_router(system_router)
+
 def voice_enabled() -> bool:
     """Se lee en cada consulta A PROPOSITO: activar la licencia enciende la voz escribiendo
     el .env, y con una constante de modulo ese cambio no tendria efecto hasta reiniciar el

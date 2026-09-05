@@ -242,6 +242,9 @@ def launch_kiosk(url: str) -> bool:
                 stream.write('user_pref("browser.sessionstore.resume_from_crash", false);\n')
                 stream.write('user_pref("browser.startup.page", 0);\n')
                 stream.write('user_pref("browser.shell.checkDefaultBrowser", false);\n')
+                # Intel HD 2500 VA-API optimization (T-136): force H.264 hardware decode
+                stream.write('user_pref("media.av1.enabled", false);\n')
+                stream.write('user_pref("media.mediasource.vp9.enabled", false);\n')
             if hasattr(os, "chown") and hasattr(os, "getuid"):
                 os.chown(prefs_tmp, os.getuid(), os.getgid())
             os.chmod(prefs_tmp, 0o600)
