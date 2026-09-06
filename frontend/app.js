@@ -462,10 +462,29 @@ function toggleNavMode() {
     localStorage.setItem('nav_mode', navMode);
     updateNavUI();
 }
+function onHeroCenterPress() {
+    if (navigator.vibrate) navigator.vibrate(20);
+    if (navMode) {
+        sendKey('KEY_ENTER');
+    } else {
+        sendKey('KEY_SPACE');
+    }
+}
 function updateNavUI() {
     const btn = document.getElementById('btn-nav-mode');
     const overlay = document.getElementById('nav-overlay');
     const hint = document.getElementById('nav-hint');
+    const heroIcon = document.getElementById('hero-center-icon');
+    const heroBtn = document.getElementById('btn-hero-play');
+
+    if (heroIcon) {
+        heroIcon.textContent = navMode ? 'OK' : '⏯';
+        heroIcon.setAttribute('font-size', navMode ? '14' : '18');
+    }
+    if (heroBtn) {
+        heroBtn.setAttribute('title', navMode ? 'Confirmar (Enter)' : 'Play / Pausa');
+    }
+
     if (!btn || !overlay) return;
     if (navMode) {
         btn.classList.add('util-active');
@@ -756,15 +775,118 @@ function setTileFavicon(img, domain) {
     img.src = ddg;
 }
 
+let activeKioskAppId = null;
+let activeKioskUrl = null;
+
+const APP_CATALOG_PRESETS = [
+    { id: 'disneyplus', name: 'Disney+', url: 'https://www.disneyplus.com', category: 'video', color: '#113CCF', iconText: 'D+' },
+    { id: 'primevideo', name: 'Prime Video', url: 'https://www.primevideo.com', category: 'video', color: '#00A8E1', iconText: 'Prime' },
+    { id: 'stremio', name: 'Stremio', url: 'https://web.stremio.com', category: 'video', color: '#6A38A0', iconText: 'Stremio' },
+    { id: 'twitch', name: 'Twitch', url: 'https://www.twitch.tv', category: 'web', color: '#9146FF', iconText: 'Twitch' },
+    { id: 'crunchyroll', name: 'Crunchyroll', url: 'https://www.crunchyroll.com', category: 'video', color: '#F47521', iconText: 'CR' },
+    { id: 'appletv', name: 'Apple TV+', url: 'https://tv.apple.com', category: 'video', color: '#1C1C1E', iconText: 'TV+' },
+    { id: 'plutotv', name: 'Pluto TV', url: 'https://pluto.tv', category: 'video', color: '#FFD700', iconText: 'Pluto' },
+    { id: 'kick', name: 'Kick', url: 'https://kick.com', category: 'web', color: '#53FC18', iconText: 'Kick' },
+];
+
+let appHubCategory = 'all';
+let appHubFilterText = '';
+
+function setAppHubCategory(cat) {
+    appHubCategory = cat;
+    const chips = document.querySelectorAll('#hub-chips .hub-chip');
+    chips.forEach(chip => {
+        if (chip.dataset.category === cat) {
+            chip.classList.add('active');
+        } else {
+            chip.classList.remove('active');
+        }
+    });
+    filterAppHub();
+}
+
+function filterAppHub() {
+    const input = document.getElementById('hub-search-input');
+    appHubFilterText = (input ? input.value : '').toLowerCase().trim();
+    renderApps(lastSuggestedKiosks);
+    renderCatalogGrid();
+}
+
+function renderCatalogGrid() {
+    const grid = document.getElementById('catalog-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    const customApps = getCustomApps();
+    const installedUrls = new Set(customApps.map(a => (a.url || '').toLowerCase()));
+
+    const filtered = APP_CATALOG_PRESETS.filter(p => {
+        const matchesCat = appHubCategory === 'all' || p.category === appHubCategory;
+        const matchesText = !appHubFilterText || p.name.toLowerCase().includes(appHubFilterText);
+        const notInstalled = !installedUrls.has(p.url.toLowerCase());
+        return matchesCat && matchesText && notInstalled;
+    });
+
+    if (filtered.length === 0) {
+        grid.innerHTML = '<div class="col-span-2 text-center text-xs text-gray-500 py-3">No hay más plataformas en esta categoría</div>';
+        return;
+    }
+
+    filtered.forEach(preset => {
+        const card = document.createElement('div');
+        card.className = 'surface-glass border border-white/10 rounded-xl p-2 flex items-center justify-between gap-2';
+        card.innerHTML = `
+            <div class="flex items-center gap-2 min-w-0">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 shadow-sm" style="background:${preset.color};color:#fff;">
+                    ${preset.iconText}
+                </div>
+                <span class="text-xs font-medium text-gray-200 truncate">${preset.name}</span>
+            </div>
+            <button class="shrink-0 px-2.5 py-1 rounded-lg bg-blue-600/30 hover:bg-blue-600/50 text-blue-300 text-xs font-bold border border-blue-500/40 active:scale-95 transition" title="Añadir">
+                + Añadir
+            </button>
+        `;
+        const addBtn = card.querySelector('button');
+        addBtn.onclick = (e) => {
+            e.stopPropagation();
+            addCatalogPreset(preset);
+        };
+        grid.appendChild(card);
+    });
+}
+
+function addCatalogPreset(preset) {
+    if (navigator.vibrate) navigator.vibrate(20);
+    const customApps = getCustomApps();
+    const newId = 'custom_' + Date.now();
+    customApps.push({
+        id: newId,
+        name: preset.name,
+        url: preset.url,
+        color: preset.color,
+        category: preset.category
+    });
+    localStorage.setItem('custom_apps', JSON.stringify(customApps));
+    toast(`${preset.name} añadida a Mis Aplicaciones`);
+    renderApps(lastSuggestedKiosks);
+    renderCatalogGrid();
+}
+
+function toggleCustomAppPanel() {
+    const panel = document.getElementById('add-panel');
+    if (!panel) return;
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
 function createAppTile(app) {
     const div = document.createElement('div');
-    div.className = 'relative flex flex-col items-center gap-1 cursor-pointer active:scale-95';
+    div.className = 'relative flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition select-none';
     div.dataset.url = app.url || '';
     div.dataset.id = app.id || '';
     if (app.is_native) div.dataset.native = 'true';
 
-    const iconWrapper = document.createElement('div');
-    iconWrapper.className = 'w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-gray-800 shrink-0';
+    const card = document.createElement('div');
+    card.className = 'squircle-card relative overflow-hidden flex items-center justify-center p-2';
 
     if (app.is_native && app.id) {
         const img = document.createElement('img');
@@ -772,49 +894,58 @@ function createAppTile(app) {
         img.className = 'w-10 h-10 object-contain';
         img.onerror = () => {
             const fb = document.createElement('div');
-            fb.className = 'text-gray-300 font-bold text-2xl';
+            fb.className = 'text-gray-200 font-bold text-xl';
             fb.textContent = app.name ? app.name.charAt(0).toUpperCase() : '?';
             img.replaceWith(fb);
         };
-        iconWrapper.appendChild(img);
+        card.appendChild(img);
     } else if (app.url) {
         try {
             const domain = new URL(app.url).hostname;
             const img = document.createElement('img');
-            img.className = 'w-full h-full object-cover';
-            iconWrapper.appendChild(img);
+            img.className = 'w-10 h-10 object-contain rounded-lg';
+            card.appendChild(img);
             setTileFavicon(img, domain);
         } catch(e) {
             const fb = document.createElement('div');
-            fb.className = 'text-gray-300 font-bold text-2xl';
+            fb.className = 'text-gray-200 font-bold text-xl';
             fb.textContent = app.name ? app.name.charAt(0).toUpperCase() : '?';
-            iconWrapper.appendChild(fb);
+            card.appendChild(fb);
         }
     } else {
         const fb = document.createElement('div');
-        fb.className = 'text-gray-300 font-bold text-2xl';
+        fb.className = 'text-gray-200 font-bold text-xl';
         fb.textContent = app.name ? app.name.charAt(0).toUpperCase() : '?';
-        iconWrapper.appendChild(fb);
+        card.appendChild(fb);
+    }
+
+    // Live Indicator for active app
+    if (activeKioskAppId && (app.id === activeKioskAppId || (app.url && activeKioskUrl === app.url))) {
+        const liveDot = document.createElement('span');
+        liveDot.className = 'live-indicator absolute top-2 right-2';
+        card.appendChild(liveDot);
+        card.style.borderColor = 'rgba(16, 185, 129, 0.5)';
+        card.style.boxShadow = '0 0 10px rgba(16, 185, 129, 0.25)';
     }
 
     const span = document.createElement('span');
-    span.className = 'text-[10px] text-gray-300 truncate w-full text-center';
+    span.className = 'text-[11px] font-medium text-gray-300 truncate w-full text-center px-0.5 mt-0.5';
     span.textContent = app.name || '';
 
-    div.appendChild(iconWrapper);
+    div.appendChild(card);
     div.appendChild(span);
 
     if (app.id && (app.id.startsWith('custom_') || app.is_native)) {
         const delBtn = document.createElement('button');
         delBtn.textContent = '×';
-        delBtn.className = 'absolute -top-1 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs font-bold border border-gray-900';
+        delBtn.className = 'absolute -top-1 -right-1 bg-red-600/90 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold border border-gray-900 shadow transition';
         delBtn.dataset.remove = app.id;
         delBtn.title = 'Eliminar';
         div.appendChild(delBtn);
     } else if (app.id && !app.is_native) {
         const hideBtn = document.createElement('button');
         hideBtn.textContent = '×';
-        hideBtn.className = 'absolute -top-1 right-2 bg-gray-600 hover:bg-gray-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs font-bold border border-gray-900 opacity-60 hover:opacity-100 transition-opacity';
+        hideBtn.className = 'absolute -top-1 -right-1 bg-gray-700/80 hover:bg-gray-600 text-gray-300 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold border border-gray-900 opacity-60 hover:opacity-100 transition';
         hideBtn.dataset.hide = app.id;
         hideBtn.title = 'Ocultar';
         div.appendChild(hideBtn);
@@ -833,23 +964,45 @@ function renderApps(kiosks) {
     const sorted = allKiosks.sort((a, b) => (usage[b.id] || 0) - (usage[a.id] || 0));
 
     const row = document.getElementById('apps-row');
-    row.innerHTML = '';
-    sorted.slice(0, 5).forEach((app) => {
-        row.appendChild(createAppTile(app));
-    });
+    if (row) {
+        row.innerHTML = '';
+        sorted.slice(0, 5).forEach((app) => {
+            row.appendChild(createAppTile(app));
+        });
+    }
 
     const drawer = document.getElementById('drawer-grid');
-    drawer.innerHTML = '';
-    sorted.forEach((app) => {
-        drawer.appendChild(createAppTile(app));
-    });
+    if (drawer) {
+        drawer.innerHTML = '';
+        const filteredForDrawer = sorted.filter(app => {
+            if (appHubCategory !== 'all') {
+                const cat = app.category || (app.name && /spotify|radio|music/i.test(app.name) ? 'music' : 'video');
+                if (cat !== appHubCategory && (appHubCategory === 'web' && !app.url)) return false;
+            }
+            if (appHubFilterText) {
+                const name = (app.name || '').toLowerCase();
+                const url = (app.url || '').toLowerCase();
+                if (!name.includes(appHubFilterText) && !url.includes(appHubFilterText)) return false;
+            }
+            return true;
+        });
 
-    
+        if (filteredForDrawer.length === 0) {
+            drawer.innerHTML = '<div class="col-span-4 text-center text-xs text-gray-500 py-4">No se encontraron aplicaciones</div>';
+        } else {
+            filteredForDrawer.forEach((app) => {
+                drawer.appendChild(createAppTile(app));
+            });
+        }
+    }
+
+    renderCatalogGrid();
+
     let restoreBtn = document.getElementById('restore-hidden-apps');
-    if (!restoreBtn) {
+    if (!restoreBtn && drawer) {
         restoreBtn = document.createElement('button');
         restoreBtn.id = 'restore-hidden-apps';
-        restoreBtn.className = 'text-blue-400 text-sm mt-4 underline text-center w-full block hover:text-blue-300';
+        restoreBtn.className = 'text-blue-400 text-xs mt-3 underline text-center w-full block hover:text-blue-300';
         restoreBtn.onclick = () => {
             localStorage.setItem('hidden_apps', '[]');
             renderApps(lastSuggestedKiosks);
@@ -858,11 +1011,13 @@ function renderApps(kiosks) {
         drawer.parentNode.insertBefore(restoreBtn, drawer.nextSibling);
     }
     
-    if (hiddenApps.length > 0) {
-        restoreBtn.textContent = `Restablecer apps ocultas (${hiddenApps.length})`;
-        restoreBtn.style.display = 'block';
-    } else {
-        restoreBtn.style.display = 'none';
+    if (restoreBtn) {
+        if (hiddenApps.length > 0) {
+            restoreBtn.textContent = `Restablecer apps ocultas (${hiddenApps.length})`;
+            restoreBtn.style.display = 'block';
+        } else {
+            restoreBtn.style.display = 'none';
+        }
     }
 }
 
@@ -938,6 +1093,9 @@ async function launchKiosk(url, id) {
             body: JSON.stringify({ url })
         });
         if (!res.ok) throw new Error('HTTP ' + res.status);
+        activeKioskAppId = id || null;
+        activeKioskUrl = url || null;
+        renderApps(lastSuggestedKiosks);
         toast('Aplicación abierta');
     } catch (e) {
         console.error('Launch error:', e);
@@ -954,6 +1112,9 @@ async function killKiosk() {
             headers: { 'X-Auth-Token': token }
         });
         if (!res.ok) throw new Error('HTTP ' + res.status);
+        activeKioskAppId = null;
+        activeKioskUrl = null;
+        renderApps(lastSuggestedKiosks);
         toast('Aplicación cerrada');
     } catch (e) {
         console.error('Kill error:', e);
@@ -1077,6 +1238,9 @@ async function launchNativeApp(id) {
             body: JSON.stringify({ id })
         });
         if (!res.ok) throw new Error('HTTP ' + res.status);
+        activeKioskAppId = id || null;
+        activeKioskUrl = null;
+        renderApps(lastSuggestedKiosks);
         toast('Aplicación nativa abierta');
     } catch (e) {
         console.error('App launch error:', e);
@@ -1115,10 +1279,162 @@ function addCustomApp() {
     fetchApps();
 }
 
+// --- PipeWire Audio Controls ---
+async function loadAudioSettings() {
+    const container = document.getElementById('settings-audio-sinks');
+    const slider = document.getElementById('settings-audio-vol-slider');
+    const valLabel = document.getElementById('settings-audio-vol-val');
+    if (!container) return;
+
+    try {
+        const res = await fetch(`${apiUrl}/system/audio`, {
+            headers: { 'X-Auth-Token': token }
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+
+        container.innerHTML = '';
+        if (!data.sinks || data.sinks.length === 0) {
+            container.innerHTML = '<div class="text-xs text-gray-400 italic">No se detectaron salidas de audio</div>';
+        } else {
+            data.sinks.forEach(sink => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                const isActive = sink.active || (sink.id === data.active_sink);
+                btn.className = `w-full p-2.5 rounded-lg text-left text-xs flex items-center justify-between transition border ${
+                    isActive
+                    ? 'bg-blue-600/20 border-blue-500/60 text-blue-300 font-semibold shadow-sm'
+                    : 'bg-black/20 border-gray-700/60 text-gray-300 hover:bg-white/5'
+                }`;
+
+                let icon = '🔈';
+                const nLower = (sink.name || '').toLowerCase();
+                if (nLower.includes('hdmi') || nLower.includes('digital') || nLower.includes('tv')) {
+                    icon = '📺';
+                } else if (nLower.includes('blue') || nLower.includes('bt')) {
+                    icon = '🎧';
+                }
+
+                btn.innerHTML = `
+                    <span class="flex items-center gap-2 truncate flex-1">
+                        <span>${icon}</span>
+                        <span class="truncate">${sink.name || sink.id}</span>
+                    </span>
+                    ${isActive ? '<span class="text-blue-400 text-[10px] uppercase font-bold tracking-wider shrink-0 ml-2">Activo</span>' : ''}
+                `;
+                btn.onclick = () => applyAudioSink(sink.id);
+                container.appendChild(btn);
+            });
+        }
+
+        if (slider && typeof data.volume === 'number') {
+            slider.value = data.volume;
+            if (valLabel) valLabel.textContent = `${data.volume}%`;
+        }
+    } catch (e) {
+        console.warn('Failed to load audio settings:', e);
+        container.innerHTML = '<div class="text-xs text-gray-400 italic">No disponible</div>';
+    }
+}
+
+async function applyAudioSink(sinkId) {
+    if (navigator.vibrate) navigator.vibrate(20);
+    toast('Cambiando salida de audio...');
+    try {
+        const res = await fetch(`${apiUrl}/system/audio/sink`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Auth-Token': token },
+            body: JSON.stringify({ sink_id: sinkId })
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        toast('Salida de audio actualizada');
+        loadAudioSettings();
+    } catch (e) {
+        console.error('Audio sink error:', e);
+        toast('Error al cambiar salida de audio');
+    }
+}
+
+let volumeDebounceTimer = null;
+function onAudioVolumeSliderInput(val) {
+    const valLabel = document.getElementById('settings-audio-vol-val');
+    if (valLabel) valLabel.textContent = `${val}%`;
+    clearTimeout(volumeDebounceTimer);
+    volumeDebounceTimer = setTimeout(() => {
+        applyAudioVolume(val);
+    }, 250);
+}
+
+async function applyAudioVolume(val) {
+    try {
+        await fetch(`${apiUrl}/system/audio/volume`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Auth-Token': token },
+            body: JSON.stringify({ volume: parseInt(val, 10), sink_id: '@DEFAULT_AUDIO_SINK@' })
+        });
+    } catch (e) {
+        console.warn('Failed to set volume:', e);
+    }
+}
+
+// --- Power Management Controls (2-Step Safety Modal) ---
+let pendingPowerAction = null;
+
+function confirmPowerAction(action, label) {
+    pendingPowerAction = action;
+    const modal = document.getElementById('power-confirm-modal');
+    const title = document.getElementById('power-modal-title');
+    const desc = document.getElementById('power-modal-desc');
+    if (!modal) return;
+
+    if (title) title.textContent = label;
+    if (desc) {
+        if (action === 'suspend') {
+            desc.textContent = 'El HTPC entrará en modo suspensión de bajo consumo.';
+        } else if (action === 'reboot') {
+            desc.textContent = 'El equipo se reiniciará por completo. La conexión se perderá momentáneamente.';
+        } else if (action === 'poweroff') {
+            desc.textContent = 'El equipo se apagará por completo. Para volver a encenderlo usarás el botón físico o Wake-on-LAN.';
+        } else if (action === 'restart-service') {
+            desc.textContent = 'Se reiniciará únicamente el servicio web de Linux Remote Player.';
+        }
+    }
+    modal.classList.remove('hidden');
+    if (navigator.vibrate) navigator.vibrate([30, 30]);
+}
+
+function closePowerModal() {
+    const modal = document.getElementById('power-confirm-modal');
+    if (modal) modal.classList.add('hidden');
+    pendingPowerAction = null;
+}
+
+async function executePendingPowerAction() {
+    if (!pendingPowerAction) return;
+    const action = pendingPowerAction;
+    closePowerModal();
+    if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
+    toast(`Ejecutando acción: ${action}...`);
+
+    try {
+        const res = await fetch(`${apiUrl}/system/power/${action}`, {
+            method: 'POST',
+            headers: { 'X-Auth-Token': token }
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        toast(data.message || 'Acción completada');
+    } catch (e) {
+        console.error('Power action error:', e);
+        toast('Error al ejecutar acción de energía');
+    }
+}
+
 // --- Settings and Token save ---
 function openSettings() {
     const d = document.getElementById('settings-drawer');
     if (d) d.classList.add('open');
+    loadAudioSettings();
 }
 function closeSettings() {
     const d = document.getElementById('settings-drawer');
@@ -1127,8 +1443,7 @@ function closeSettings() {
 function openDrawer() {
     const d = document.getElementById('app-drawer');
     if (d) d.classList.add('open');
-    const panel = document.getElementById('add-panel');
-    if (panel) panel.style.display = 'block';
+    renderCatalogGrid();
 }
 function closeDrawer() {
     const d = document.getElementById('app-drawer');

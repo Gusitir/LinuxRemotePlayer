@@ -663,3 +663,43 @@ def api_start_hotspot():
 @router.post("/onboarding/hotspot/stop", dependencies=[Depends(is_authorized)])
 def api_stop_hotspot():
     return stop_hotspot()
+
+
+# --- Host Power & Service Management ---
+
+def power_action(action: str) -> Dict[str, Any]:
+    """Execute host power or service lifecycle actions.
+    Supported actions: suspend, reboot, poweroff, restart-service.
+    Safe fallback via LRP_MOCK_POWER or missing systemctl.
+    """
+    valid_actions = {"suspend", "reboot", "poweroff", "restart-service"}
+    if action not in valid_actions:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid power action '{action}'. Must be one of: {sorted(valid_actions)}"
+        )
+
+    mock_power = os.getenv("LRP_MOCK_POWER", "false").lower() == "true" or not shutil.which("systemctl")
+    if mock_power:
+        logger.info(f"[MOCK POWER] Triggered power action: {action}")
+        return {"ok": True, "action": action, "mock": True}
+
+    cmd_map = {
+        "suspend": ["systemctl", "suspend"],
+        "reboot": ["systemctl", "reboot"],
+        "poweroff": ["systemctl", "poweroff"],
+        "restart-service": ["systemctl", "restart", "linuxremoteplayer.service"],
+    }
+    cmd = cmd_map[action]
+    try:
+        subprocess.Popen(cmd)
+        logger.info(f"Triggered power action: {action} with command: {cmd}")
+        return {"ok": True, "action": action, "mock": False}
+    except Exception as e:
+        logger.error(f"Error executing power action {action}: {e}")
+        return {"ok": False, "action": action, "error": str(e)}
+
+
+@router.post("/power/{action}", dependencies=[Depends(is_authorized)])
+def api_power_action(action: str):
+    return power_action(action)

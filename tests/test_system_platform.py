@@ -269,3 +269,52 @@ def test_kiosk_user_js_vaapi_optimization(tmp_path, monkeypatch):
     assert 'user_pref("media.mediasource.vp9.enabled", false);' in content
     # Session restore suppression must still be preserved
     assert 'user_pref("browser.sessionstore.resume_from_crash", false);' in content
+
+
+def test_power_actions_mock_and_validation(client, monkeypatch):
+    """Verify mock power actions and validation for suspend, reboot, poweroff, restart-service."""
+    monkeypatch.setenv("LRP_MOCK_POWER", "true")
+
+    for action in ["suspend", "reboot", "poweroff", "restart-service"]:
+        resp = client.post(f"/api/system/power/{action}")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["ok"] is True
+        assert data["action"] == action
+        assert data["mock"] is True
+
+    # Invalid action
+    resp = client.post("/api/system/power/invalid-action")
+    assert resp.status_code == 400
+    assert "Invalid power action" in resp.json()["detail"]
+
+
+def test_power_actions_subprocess_dispatch(client, monkeypatch):
+    """Verify actual subprocess dispatch for systemctl power actions when mock is off."""
+    monkeypatch.setenv("LRP_MOCK_POWER", "false")
+    monkeypatch.setattr(shutil, "which", lambda cmd: "/bin/systemctl" if cmd == "systemctl" else None)
+
+    dispatched = []
+
+    def mock_popen(cmd, *args, **kwargs):
+        dispatched.append(cmd)
+        return SimpleNamespace(pid=9999)
+
+    monkeypatch.setattr(subprocess, "Popen", mock_popen)
+
+    expected_cmds = {
+        "suspend": ["systemctl", "suspend"],
+        "reboot": ["systemctl", "reboot"],
+        "poweroff": ["systemctl", "poweroff"],
+        "restart-service": ["systemctl", "restart", "linuxremoteplayer.service"],
+    }
+
+    for action, expected_cmd in expected_cmds.items():
+        resp = client.post(f"/api/system/power/{action}")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["ok"] is True
+        assert data["action"] == action
+        assert data["mock"] is False
+
+    assert dispatched == list(expected_cmds.values())

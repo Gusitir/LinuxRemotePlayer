@@ -10,8 +10,49 @@
  * Ids legacy (dark/day-viejo/neon) se migran en app.js -> setSkin().
  */
 
-/* ---------- DAY (claro) — POR DEFECTO, gratis ---------- */
-:root, [data-skin="day"] {
+/* ---------- DARK OBSIDIAN GLASSMORPHISM (PWA 2.0 por defecto) ---------- */
+:root, [data-skin="night"] {
+    --bg-app: #070A0E;
+    --bg-chassis: #0D1117;
+    --surface-glass: rgba(255, 255, 255, 0.04);
+    --surface-glass-active: rgba(255, 255, 255, 0.08);
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-highlight: rgba(255, 255, 255, 0.15);
+    --text-primary: #F3F4F6;
+    --text-secondary: #9CA3AF;
+    --text-muted: #6B7280;
+    --accent-green: #10B981;
+    --accent-green-glow: rgba(16, 185, 129, 0.35);
+    --accent-blue: #3B82F6;
+    --accent-blue-glow: rgba(59, 130, 246, 0.40);
+    --accent-red: #EF4444;
+    --accent-red-glow: rgba(239, 68, 68, 0.35);
+
+    --bg-base: #070A0E;
+    --bg-panel: #0D1117;
+    --bg-btn: rgba(255, 255, 255, 0.05);
+    --bg-btn-active: rgba(255, 255, 255, 0.10);
+    --border: rgba(255, 255, 255, 0.08);
+    --border-soft: rgba(255, 255, 255, 0.05);
+    --text-main: #F3F4F6;
+    --text-dim: #9CA3AF;
+    --accent: #3B82F6;
+    --accent-contrast: #ffffff;
+    --green-contrast: #07120a;
+    --violet: #a855f7;
+    --amber: #eab308;
+    --touchpad-bg: #0D1117;
+    --touchpad-dot: rgba(255, 255, 255, 0.18);
+    --overlay-soft: rgba(0, 0, 0, 0.40);
+    --bg-image: none;
+    --bg-size: cover;
+    --bg-position: center;
+    --bg-repeat: no-repeat;
+    --panel-backdrop: blur(20px);
+}
+
+/* ---------- DAY (claro opcional) ---------- */
+[data-skin="day"] {
     --bg-base: #f6f2ea;
     --bg-panel: #ffffff;
     --bg-btn: #f0ebe0;
@@ -29,32 +70,6 @@
     --touchpad-bg: #ffffff;
     --touchpad-dot: rgba(37, 99, 235, 0.30);
     --overlay-soft: rgba(41, 35, 25, 0.05);
-    --bg-image: none;
-    --bg-size: cover;
-    --bg-position: center;
-    --bg-repeat: no-repeat;
-    --panel-backdrop: none;
-}
-
-/* ---------- NIGHT (navy) — Pro ---------- */
-[data-skin="night"] {
-    --bg-base: #0b1220;
-    --bg-panel: #121c2f;
-    --bg-btn: #182440;
-    --bg-btn-active: #263650;
-    --border: #263650;
-    --border-soft: #1c2a42;
-    --text-main: #e7edf6;
-    --text-dim: #94a3b8;
-    --accent: #3b82f6;
-    --accent-contrast: #ffffff;
-    --accent-green: #22c55e;
-    --green-contrast: #07120a;
-    --violet: #a855f7;
-    --amber: #eab308;
-    --touchpad-bg: #121c2f;
-    --touchpad-dot: rgba(59, 130, 246, 0.38);
-    --overlay-soft: rgba(0, 0, 0, 0.28);
     --bg-image: none;
     --bg-size: cover;
     --bg-position: center;
@@ -297,3 +312,108 @@ h1, h2, h3, .font-header {
 .bg-green-500\/20 { background-color: color-mix(in srgb, var(--accent-green) 20%, transparent); }
 .active\:bg-green-400:active { background-color: color-mix(in srgb, var(--accent-green) 80%, white); }
 .active\:bg-green-500:active { background-color: color-mix(in srgb, var(--accent-green) 88%, white); }
+
+/* ==========================================================================
+   PWA 2.0 Dark Obsidian Glassmorphism & Radial Wheel System
+   ========================================================================== */
+
+.glow-green {
+    box-shadow: 0 0 18px rgba(16, 185, 129, 0.45), inset 0 0 8px rgba(16, 185, 129, 0.2);
+}
+.glow-blue {
+    box-shadow: 0 0 18px rgba(59, 130, 246, 0.45), inset 0 0 8px rgba(59, 130, 246, 0.2);
+}
+.glow-red {
+    box-shadow: 0 0 14px rgba(239, 68, 68, 0.40);
+}
+
+.surface-glass {
+    background: var(--surface-glass, rgba(255, 255, 255, 0.04));
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+}
+.surface-glass-active, .surface-glass:active {
+    background: var(--surface-glass-active, rgba(255, 255, 255, 0.08));
+}
+
+.touchpad-dotted {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.16) 1.2px, transparent 1.2px);
+    background-size: 14px 14px;
+    touch-action: none;
+}
+
+.squircle-card {
+    width: 72px;
+    height: 72px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+.squircle-card:active {
+    transform: scale(0.94);
+    background: rgba(255, 255, 255, 0.10);
+}
+
+.live-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 9999px;
+    background-color: #10B981;
+    box-shadow: 0 0 8px #10B981;
+    display: inline-block;
+    animation: pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+.wedge-btn {
+    cursor: pointer;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.1s ease;
+}
+.wedge-btn path {
+    fill: rgba(255, 255, 255, 0.04);
+    stroke: rgba(255, 255, 255, 0.09);
+    stroke-width: 1.5px;
+    transition: fill 0.12s ease, stroke 0.12s ease;
+}
+.wedge-btn:active path, .wedge-btn.active path {
+    fill: rgba(255, 255, 255, 0.18);
+    stroke: rgba(255, 255, 255, 0.30);
+}
+.wedge-btn text {
+    user-select: none;
+    pointer-events: none;
+}
+
+/* Category filter chips */
+.hub-chip {
+    padding: 6px 14px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #9CA3AF;
+    transition: all 0.15s ease;
+}
+.hub-chip:active {
+    background: rgba(255, 255, 255, 0.12);
+}
+.hub-chip.active {
+    background: #3B82F6;
+    border-color: #60A5FA;
+    color: #ffffff;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.35);
+}
