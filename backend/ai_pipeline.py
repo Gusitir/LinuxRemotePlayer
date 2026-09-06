@@ -1,15 +1,23 @@
-"""AI pipeline client — sends voice commands to the ai-proxy Edge Function (v1.9).
+"""Voice pipeline client and local STT/NLU orchestrator (v2.0).
 
-The HTPC holds NO AI provider keys: the proxy (Supabase Edge Function) validates
-license/device/quota server-side and calls Together AI (STT + intent LLM).
+Voice commands are processed 100% locally and offline on the appliance:
+1. In-memory audio transcoding (WebM/Opus or MP4/AAC -> WAV PCM 16kHz mono).
+2. Energy-based VAD and silence filtering.
+3. Whisper.cpp AVX1 speech-to-text inference.
+4. Deterministic Local NLU Intent Engine (<50ms).
 """
 import os
 import json
+import asyncio
 import hashlib
 import logging
 import uuid
+from typing import Optional, List, Dict, Any
 import httpx
 from dotenv import load_dotenv
+
+from local_stt import WhisperRunner
+from local_intent import parse_intent
 
 logger = logging.getLogger("ai_pipeline")
 
@@ -22,8 +30,8 @@ AI_PROXY_URL = os.getenv(
 
 # Module-level shared httpx.AsyncClient (lazy init) — reused across requests (COR-07).
 _client = None
-
 _device_id = None
+_whisper_runner: Optional[WhisperRunner] = None
 
 
 def get_client() -> httpx.AsyncClient:
@@ -49,53 +57,64 @@ def get_device_id() -> str:
     return _device_id
 
 
-async def voice_command(audio_bytes: bytes, valid_targets: list = None) -> dict:
-    """Send one voice command to the ai-proxy; returns the proxy's JSON dict.
+def get_whisper_runner() -> WhisperRunner:
+    """Lazy initialize whisper.cpp runner with appliance defaults."""
+    global _whisper_runner
+    if _whisper_runner is None:
+        _whisper_runner = WhisperRunner()
+    return _whisper_runner
 
-    Success: {"ok": True, "text": ..., "intent": {...}, "remaining_today": N}.
-    Failure: {"ok": False, "reason": <no_speech|quota_exceeded|in_use_elsewhere|
-    invalid_license|service_disabled|global_cap|audio_too_large|stt_error|
-    llm_error|proxy_unreachable|http_NNN>}.
+
+async def voice_command(audio_bytes: bytes, valid_targets: Optional[List[str]] = None) -> Dict[str, Any]:
+    """Process a voice command 100% locally on the appliance.
+
+    Zero external API dependencies: operates fully offline with VAD, whisper.cpp AVX1,
+    and local deterministic NLU intent parsing.
+
+    Success: {"ok": True, "text": ..., "intent": {...}, "stt_metrics": {...}}.
+    Failure: {"ok": False, "reason": <empty_audio|no_speech|stt_error|...>}
     """
-    token = os.getenv("LICENSE_TOKEN", "")
-    if not token:
-        return {"ok": False, "reason": "invalid_license"}
+    if not audio_bytes:
+        return {"ok": False, "reason": "empty_audio"}
 
-    # Container by magic bytes: MP4/ftyp (iOS) vs WebM/EBML (Android/desktop default)
-    filename = "audio.webm"
-    mime = "audio/webm"
-    if len(audio_bytes) > 8 and audio_bytes[4:8] == b"ftyp":
-        filename = "audio.m4a"
-        mime = "audio/mp4"
+    runner = get_whisper_runner()
+    model_name = os.getenv("LRP_WHISPER_MODEL", "ggml-base-q5_1.bin")
 
-    data = {
-        "token": token,
-        "device_id": get_device_id(),
-        "targets": json.dumps(valid_targets or []),
-    }
-    files = {"audio": (filename, audio_bytes, mime)}
-    try:
-        response = await get_client().post(AI_PROXY_URL, data=data, files=files)
-        try:
-            body = response.json()
-        except Exception:
-            body = {}
-        if response.status_code == 200:
-            return body
-        reason = body.get("reason") or body.get("error") or f"http_{response.status_code}"
-        logger.warning(f"ai-proxy returned {response.status_code}: {reason}")
+    # ASTRA-03: Execute CPU-bound STT in a separate thread to keep WebSocket loop unblocked
+    stt_res = await asyncio.to_thread(
+        runner.transcribe,
+        audio_bytes=audio_bytes,
+        model_name=model_name,
+        language="es",
+    )
+
+    if not stt_res.get("ok"):
+        reason = stt_res.get("reason", "stt_error")
         return {"ok": False, "reason": reason}
-    except Exception as e:
-        logger.error(f"ai-proxy unreachable: {e}")
-        return {"ok": False, "reason": "proxy_unreachable"}
+
+    transcribed_text = stt_res.get("text", "").strip()
+    if not transcribed_text:
+        return {"ok": False, "reason": "no_speech"}
+
+    # Local NLU Intent Engine (<50ms)
+    intent = parse_intent(transcribed_text, valid_targets=valid_targets)
+
+    return {
+        "ok": True,
+        "text": transcribed_text,
+        "intent": intent,
+        "stt_metrics": {
+            "latency_ms": stt_res.get("latency_ms"),
+            "rtf": stt_res.get("rtf"),
+            "peak_rss_mb": stt_res.get("peak_rss_mb"),
+            "model": stt_res.get("model"),
+        },
+        "nlu_latency_ms": intent.get("latency_ms", 0.0),
+    }
 
 
 async def proxy_license_action(action: str, token: str, force: bool = False) -> dict:
-    """Call the ai-proxy JSON branch: action = 'activate' | 'release'.
-
-    Returns the proxy's JSON body plus "http" (status code), or
-    {"status": "unreachable"} on network failure.
-    """
+    """Call the ai-proxy JSON branch: action = 'activate' | 'release'."""
     payload = {"action": action, "token": token, "device_id": get_device_id()}
     if force:
         payload["force"] = True

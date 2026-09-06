@@ -118,7 +118,7 @@ def voice_enabled() -> bool:
     """Se lee en cada consulta A PROPOSITO: activar la licencia enciende la voz escribiendo
     el .env, y con una constante de modulo ese cambio no tendria efecto hasta reiniciar el
     servicio -- que es justo lo que dejaba al cliente sin microfono."""
-    return os.getenv("ENABLE_VOICE", "false").lower() == "true"
+    return os.getenv("ENABLE_VOICE", "true").lower() == "true"
 
 
 def _autoenable_voice_for_existing_license() -> None:
@@ -925,6 +925,23 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
                             await safe_send_json({"status": "error", "message": "Failed to search"})
                     else:
                         await safe_send_json({"status": "error", "message": "Empty search"})
+                elif action == "system_control":
+                    cmd = params.get("command")
+                    if cmd in ("toggle_osd", "open_settings"):
+                        target_url = "https://127.0.0.1:8000/status"
+                        if cmd == "open_settings":
+                            target_url = "https://127.0.0.1:8000/status#pane-settings"
+                        success = await asyncio.to_thread(launch_kiosk, target_url)
+                        if success:
+                            await safe_send_json({"status": "success", "message": f"System: {cmd}"})
+                        else:
+                            await safe_send_json({"status": "error", "message": "Failed system action"})
+                    elif cmd == "close_kiosk":
+                        import kiosk
+                        await asyncio.to_thread(kiosk.close_kiosk)
+                        await safe_send_json({"status": "success", "message": "Kiosk closed"})
+                    else:
+                        await safe_send_json({"status": "error", "message": "Unknown system command"})
                 else:
                     await safe_send_json({"status": "error", "message": "Unknown action"})
             else:
