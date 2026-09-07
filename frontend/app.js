@@ -1,4 +1,31 @@
-const statusEl = document.getElementById('status');
+const statusEl = {
+    get textContent() {
+        const el = document.getElementById('status');
+        return el ? el.textContent : '';
+    },
+    set textContent(val) {
+        const el = document.getElementById('status');
+        const s = String(val != null ? val : '');
+        const displayVal = (s === 'Connected' ? 'Stable' : s);
+        if (el) el.textContent = displayVal;
+        const icon = document.getElementById('conn-icon');
+        if (icon) {
+            if (s === 'Connected' || s === 'Stable') icon.className = 'text-emerald-400';
+            else if (s.includes('Reconnecting') || s.includes('Reconectando') || s.includes('Error') || s.includes('No autorizado')) icon.className = 'text-red-500';
+            else if (s.includes('Conectando')) icon.className = 'text-yellow-400';
+            else if (s.includes('Listening') || s.includes('Processing')) icon.className = 'text-purple-400';
+        }
+    },
+    get className() {
+        const el = document.getElementById('status');
+        return el ? el.className : '';
+    },
+    set className(val) {
+        const el = document.getElementById('status');
+        if (el) el.className = val;
+    }
+};
+let lastLongPressTime = 0;
 let ws;
 let mediaRecorder;
 let audioChunks = [];
@@ -167,9 +194,6 @@ let connectAttempts = 0;
 let retryTimeoutId = null; // HYG-02: prevent storm reconnects
 let hostname = '';
 
-// Skins v1.9: la paleta es la misma del sitio web. TODAS son gratuitas (D4, decision
-// del dueño 2026-07-26): son el gancho de entrada, y el Pro se vendera con las skins
-// ADICIONALES de v2.0. 'day' (clara) sigue siendo la de por defecto.
 const DEFAULT_SKIN = 'day';
 const SKINS = ['day', 'night', 'cafe', 'anime'];
 // Ids anteriores a v1.9 -> equivalente en la paleta nueva. 'dark' ya no depende de la
@@ -177,7 +201,7 @@ const SKINS = ['day', 'night', 'cafe', 'anime'];
 const LEGACY_SKINS = { neon: 'night', dark: 'night' };
 const SKIN_THEME_COLOR = {
     day: '#f6f2ea',
-    night: '#0b1220',
+    night: '#070A0E',
     cafe: '#261b12',
     anime: '#111827'
 };
@@ -209,13 +233,13 @@ async function fetchLicenseStatus() {
             const micRow = document.getElementById('mic-row');
             const voiceCard = document.getElementById('voice-commands-card');
             if (micRow) {
-                const showVoice = data.voice_enabled && isLicensed;
-                micRow.style.display = showVoice ? 'flex' : 'none';
+                const showVoice = true;
+                micRow.style.display = 'flex';
                 if (voiceCard) {
-                    voiceCard.classList.toggle('hidden', !showVoice);
+                    voiceCard.classList.remove('hidden');
                 }
                 
-                if (showVoice && !localStorage.getItem('lrp_voice_hint_shown')) {
+                if (!localStorage.getItem('lrp_voice_hint_shown')) {
                     localStorage.setItem('lrp_voice_hint_shown', 'true');
                     toast("Consejo: mantén pulsado el micrófono y di 'abre youtube'");
                 }
@@ -311,8 +335,8 @@ function connect() {
         }
         connectAttempts = 0;
         showTroubleBanner(false);
-        statusEl.textContent = 'Connected';
-        statusEl.className = 'text-green-500 text-xs font-bold';
+        statusEl.textContent = 'Stable';
+        statusEl.className = 'text-emerald-400 font-medium';
 
         // SEC-06: WebSocket auth frame
         ws.send(JSON.stringify({ type: 'auth', token: token }));
@@ -322,7 +346,10 @@ function connect() {
     ws.onclose = (event) => {
         stopHeartbeat();
         const latencyEl = document.getElementById('latency');
-        if (latencyEl) latencyEl.classList.add('hidden');
+        if (latencyEl) {
+            latencyEl.textContent = 'Latency: --ms';
+            latencyEl.className = 'text-[10px] font-mono text-gray-400';
+        }
         if (event.code === 1008) {
             statusEl.textContent = 'No autorizado';
             statusEl.className = 'text-red-500 text-xs font-bold';
@@ -355,8 +382,8 @@ function connect() {
                     const rtt = lastPong - lastPingSent;
                     const latencyEl = document.getElementById('latency');
                     if (latencyEl) {
-                        latencyEl.textContent = rtt + ' ms';
-                        latencyEl.className = 'text-xs font-bold ml-2 opacity-80 ' + (rtt < 60 ? 'text-green-500' : (rtt < 150 ? 'text-yellow-500' : 'text-red-500'));
+                        latencyEl.textContent = 'Latency: ' + rtt + 'ms';
+                        latencyEl.className = 'text-[10px] font-mono ' + (rtt < 60 ? 'text-emerald-400' : (rtt < 150 ? 'text-yellow-400' : 'text-red-500'));
                         latencyEl.classList.remove('hidden');
                     }
                 }
@@ -474,12 +501,22 @@ function updateNavUI() {
     const btn = document.getElementById('btn-nav-mode');
     const overlay = document.getElementById('nav-overlay');
     const hint = document.getElementById('nav-hint');
+    const heroPlay = document.getElementById('hero-vector-play');
+    const heroOk = document.getElementById('hero-vector-ok');
     const heroIcon = document.getElementById('hero-center-icon');
     const heroBtn = document.getElementById('btn-hero-play');
 
+    if (heroPlay && heroOk) {
+        if (navMode) {
+            heroPlay.classList.add('hidden');
+            heroOk.classList.remove('hidden');
+        } else {
+            heroPlay.classList.remove('hidden');
+            heroOk.classList.add('hidden');
+        }
+    }
     if (heroIcon) {
         heroIcon.textContent = navMode ? 'OK' : '⏯';
-        heroIcon.setAttribute('font-size', navMode ? '14' : '18');
     }
     if (heroBtn) {
         heroBtn.setAttribute('title', navMode ? 'Confirmar (Enter)' : 'Play / Pausa');
@@ -509,7 +546,10 @@ function updateNavUI() {
         }
     }
 }
-document.addEventListener('DOMContentLoaded', updateNavUI);
+document.addEventListener('DOMContentLoaded', () => {
+    updateNavUI();
+    renderQuickDock();
+});
 
 const pad = document.getElementById('touchpad');
 let padLast = null, padMoved = 0, padDown = 0, accX = 0, accY = 0, rafPending = false;
@@ -585,20 +625,40 @@ if (pad) {
 
 // --- Scroll strip (drag vertically -> mouse wheel) ---
 const scrollStrip = document.getElementById('scroll-strip');
+const scrollThumb = document.getElementById('scroll-thumb');
 let scLast = null, scAcc = 0;
 const SCROLL_STEP = 18;
 if (scrollStrip) {
-    scrollStrip.addEventListener('pointerdown', (e) => { scrollStrip.setPointerCapture(e.pointerId); scLast = e.clientY; scAcc = 0; });
+    scrollStrip.addEventListener('pointerdown', (e) => {
+        scrollStrip.setPointerCapture(e.pointerId);
+        scLast = e.clientY;
+        scAcc = 0;
+        if (scrollThumb) {
+            scrollThumb.classList.add('active');
+        }
+    });
     scrollStrip.addEventListener('pointermove', (e) => {
         if (scLast === null) return;
-        scAcc += e.clientY - scLast;
+        const delta = e.clientY - scLast;
+        scAcc += delta;
         scLast = e.clientY;
+        if (scrollThumb) {
+            const rect = scrollStrip.getBoundingClientRect();
+            const relY = Math.max(0, Math.min(rect.height - 24, e.clientY - rect.top - 12));
+            scrollThumb.style.transform = `translateY(${relY - (rect.height / 2 - 12)}px)`;
+        }
         while (Math.abs(scAcc) >= SCROLL_STEP) {
             wsSend({ type: 'pointer', scroll: scAcc > 0 ? -1 : 1 });
             scAcc += scAcc > 0 ? -SCROLL_STEP : SCROLL_STEP;
         }
     });
-    const scEnd = () => { scLast = null; };
+    const scEnd = () => {
+        scLast = null;
+        if (scrollThumb) {
+            scrollThumb.classList.remove('active');
+            scrollThumb.style.transform = 'translateY(0px)';
+        }
+    };
     scrollStrip.addEventListener('pointerup', scEnd);
     scrollStrip.addEventListener('pointercancel', scEnd);
 }
@@ -779,15 +839,179 @@ let activeKioskAppId = null;
 let activeKioskUrl = null;
 
 const APP_CATALOG_PRESETS = [
+    { id: 'animeav1', name: 'AnimeAV1', url: 'https://animeav1.com', category: 'video', color: '#7C3AED', iconText: 'AV1' },
+    { id: 'stremio', name: 'Stremio', url: 'https://web.stremio.com', category: 'video', color: '#6A38A0', iconText: 'Stremio' },
+    { id: 'animeflv', name: 'AnimeFLV', url: 'https://www3.animeflv.net', category: 'video', color: '#EA580C', iconText: 'FLV' },
+    { id: 'crunchyroll', name: 'Crunchyroll', url: 'https://www.crunchyroll.com', category: 'video', color: '#F47521', iconText: 'CR' },
+    { id: 'youtubetv', name: 'YouTube TV', url: 'https://tv.youtube.com', category: 'video', color: '#FF0000', iconText: 'YT TV' },
+    { id: 'netflix', name: 'Netflix', url: 'https://netflix.com', category: 'video', color: '#E50914', iconText: 'Netflix' },
     { id: 'disneyplus', name: 'Disney+', url: 'https://www.disneyplus.com', category: 'video', color: '#113CCF', iconText: 'D+' },
     { id: 'primevideo', name: 'Prime Video', url: 'https://www.primevideo.com', category: 'video', color: '#00A8E1', iconText: 'Prime' },
-    { id: 'stremio', name: 'Stremio', url: 'https://web.stremio.com', category: 'video', color: '#6A38A0', iconText: 'Stremio' },
-    { id: 'twitch', name: 'Twitch', url: 'https://www.twitch.tv', category: 'web', color: '#9146FF', iconText: 'Twitch' },
-    { id: 'crunchyroll', name: 'Crunchyroll', url: 'https://www.crunchyroll.com', category: 'video', color: '#F47521', iconText: 'CR' },
-    { id: 'appletv', name: 'Apple TV+', url: 'https://tv.apple.com', category: 'video', color: '#1C1C1E', iconText: 'TV+' },
     { id: 'plutotv', name: 'Pluto TV', url: 'https://pluto.tv', category: 'video', color: '#FFD700', iconText: 'Pluto' },
+    { id: 'twitch', name: 'Twitch', url: 'https://www.twitch.tv', category: 'web', color: '#9146FF', iconText: 'Twitch' },
     { id: 'kick', name: 'Kick', url: 'https://kick.com', category: 'web', color: '#53FC18', iconText: 'Kick' },
+    { id: 'spotify', name: 'Spotify', url: 'https://open.spotify.com', category: 'music', color: '#1DB954', iconText: 'Spotify' },
+    { id: 'appletv', name: 'Apple TV+', url: 'https://tv.apple.com', category: 'video', color: '#1C1C1E', iconText: 'TV+' },
+    { id: 'kodi', name: 'Kodi', url: 'https://kodi.tv', category: 'video', color: '#17B2E7', iconText: 'Kodi' },
+    { id: 'retroarch', name: 'RetroArch', url: 'https://web.retroarch.com', category: 'web', color: '#333333', iconText: 'Retro' }
 ];
+
+const BUILTIN_APPS_MAP = {
+    netflix: { id: 'netflix', name: 'Netflix', url: 'https://netflix.com', color: '#E50914', iconText: 'Netflix' },
+    youtube: { id: 'youtube', name: 'YouTube', url: 'https://youtube.com/tv', color: '#FF0000', iconText: 'YouTube' },
+    spotify: { id: 'spotify', name: 'Spotify', url: 'https://open.spotify.com', color: '#1DB954', iconText: 'Spotify' },
+    animeav1: { id: 'animeav1', name: 'AnimeAV1', url: 'https://animeav1.com', color: '#7C3AED', iconText: 'AV1' },
+    stremio: { id: 'stremio', name: 'Stremio', url: 'https://web.stremio.com', color: '#6A38A0', iconText: 'Stremio' },
+    animeflv: { id: 'animeflv', name: 'AnimeFLV', url: 'https://www3.animeflv.net', color: '#EA580C', iconText: 'FLV' },
+    crunchyroll: { id: 'crunchyroll', name: 'Crunchyroll', url: 'https://www.crunchyroll.com', color: '#F47521', iconText: 'CR' },
+    youtubetv: { id: 'youtubetv', name: 'YouTube TV', url: 'https://tv.youtube.com', color: '#FF0000', iconText: 'YT TV' },
+    disneyplus: { id: 'disneyplus', name: 'Disney+', url: 'https://www.disneyplus.com', color: '#113CCF', iconText: 'D+' },
+    primevideo: { id: 'primevideo', name: 'Prime Video', url: 'https://www.primevideo.com', color: '#00A8E1', iconText: 'Prime' },
+    plutotv: { id: 'plutotv', name: 'Pluto TV', url: 'https://pluto.tv', color: '#FFD700', iconText: 'Pluto' },
+    twitch: { id: 'twitch', name: 'Twitch', url: 'https://www.twitch.tv', color: '#9146FF', iconText: 'Twitch' },
+    kick: { id: 'kick', name: 'Kick', url: 'https://kick.com', color: '#53FC18', iconText: 'Kick' },
+    appletv: { id: 'appletv', name: 'Apple TV+', url: 'https://tv.apple.com', color: '#1C1C1E', iconText: 'TV+' },
+    kodi: { id: 'kodi', name: 'Kodi', url: 'https://kodi.tv', color: '#17B2E7', iconText: 'Kodi' },
+    retroarch: { id: 'retroarch', name: 'RetroArch', url: 'https://web.retroarch.com', color: '#333333', iconText: 'Retro' }
+};
+
+const DEFAULT_PINNED_APPS = ['netflix', 'youtube', 'spotify'];
+
+function getPinnedApps() {
+    try {
+        const val = localStorage.getItem('lrp_pinned_apps');
+        if (val !== null) {
+            const parsed = JSON.parse(val);
+            if (Array.isArray(parsed)) return parsed;
+        }
+    } catch(e) {}
+    return [...DEFAULT_PINNED_APPS];
+}
+
+function setPinnedApps(pinned) {
+    try {
+        localStorage.setItem('lrp_pinned_apps', JSON.stringify(pinned));
+    } catch(e) {}
+}
+
+function isAppPinned(id) {
+    return getPinnedApps().includes(id);
+}
+
+function togglePinApp(appId) {
+    let pinned = getPinnedApps();
+    if (pinned.includes(appId)) {
+        pinned = pinned.filter(id => id !== appId);
+        toast('Desanclada del dock');
+    } else {
+        pinned.push(appId);
+        toast('Anclada al dock');
+    }
+    setPinnedApps(pinned);
+    renderQuickDock();
+    renderApps(lastSuggestedKiosks);
+}
+
+function findAppMetadata(id) {
+    const custom = getCustomApps().find(a => a.id === id);
+    if (custom) return custom;
+    const kiosk = lastSuggestedKiosks.find(a => a.id === id);
+    if (kiosk) return kiosk;
+    const preset = APP_CATALOG_PRESETS.find(a => a.id === id);
+    if (preset) return preset;
+    if (BUILTIN_APPS_MAP[id]) return BUILTIN_APPS_MAP[id];
+    return { id, name: id, url: '' };
+}
+
+function createMoreBtn() {
+    const btn = document.createElement('button');
+    btn.id = 'more-btn';
+    btn.onclick = () => openDrawer();
+    btn.className = 'flex-1 py-1 flex flex-col items-center gap-1 rounded-xl active:bg-white/10 transition';
+    btn.title = 'Más Apps';
+    btn.innerHTML = `
+        <div class="w-10 h-10 rounded-xl surface-glass flex items-center justify-center border border-white/10 shadow-sm text-gray-300">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+        </div>
+        <span class="text-[10px] font-medium text-gray-300">Más Apps</span>
+    `;
+    return btn;
+}
+
+function renderQuickDock() {
+    const dock = document.getElementById('quick-dock');
+    if (!dock) return;
+    const moreBtn = document.getElementById('more-btn') || createMoreBtn();
+    dock.innerHTML = '';
+
+    const pinnedIds = getPinnedApps();
+    pinnedIds.forEach(id => {
+        const app = findAppMetadata(id);
+        const btn = document.createElement('button');
+        btn.className = 'flex-1 py-1 flex flex-col items-center gap-1 rounded-xl active:bg-white/10 transition';
+        btn.title = app.name || id;
+        btn.onclick = () => {
+            if (app.is_native) {
+                launchNativeApp(app.id);
+            } else if (app.url) {
+                launchKiosk(app.url, app.id);
+            }
+        };
+
+        const iconBox = document.createElement('div');
+        iconBox.className = 'w-10 h-10 rounded-xl flex items-center justify-center border shadow-sm';
+
+        if (id === 'netflix') {
+            iconBox.className += ' bg-black border-red-600/40';
+            iconBox.innerHTML = `<svg viewBox="0 0 24 24" class="w-5 h-5"><path fill="#B81D24" d="M4.5 2h3.2v20c-1.1-.2-2.1-.4-3.2-.6V2z"/><path fill="#B81D24" d="M16.3 2h3.2v19.4c-1.1.2-2.1.4-3.2.6V2z"/><path fill="#E50914" d="M4.5 2h3.5l11.5 19.4c-1.1.2-2.3.4-3.5.6L4.5 4.5V2z"/></svg>`;
+        } else if (id === 'youtube' || id === 'youtubetv') {
+            iconBox.className += ' bg-[#1A1D24] border-red-500/40';
+            iconBox.innerHTML = `<svg viewBox="0 0 24 24" class="w-5 h-5"><path fill="#FF0000" d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814z"/><polygon fill="#FFFFFF" points="9.545,15.568 15.818,12 9.545,8.432"/></svg>`;
+        } else if (id === 'spotify') {
+            iconBox.className += ' bg-[#1A1D24] border-green-500/40';
+            iconBox.innerHTML = `<svg viewBox="0 0 24 24" class="w-5 h-5"><circle cx="12" cy="12" r="12" fill="#1DB954"/><path fill="#000000" d="M17.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>`;
+        } else if (app.color) {
+            iconBox.className += ' border-white/10';
+            iconBox.style.backgroundColor = app.color;
+            iconBox.innerHTML = `<span class="text-white font-bold text-xs">${app.iconText || (app.name || id).slice(0, 3)}</span>`;
+        } else if (app.is_native && app.id) {
+            iconBox.className += ' surface-glass border-white/10';
+            const img = document.createElement('img');
+            img.src = `/api/icon/${app.id}`;
+            img.className = 'w-6 h-6 object-contain';
+            img.onerror = () => {
+                iconBox.innerHTML = `<span class="skin-text-main font-bold text-xs">${(app.name || id).slice(0, 2).toUpperCase()}</span>`;
+            };
+            iconBox.appendChild(img);
+        } else if (app.url) {
+            iconBox.className += ' surface-glass border-white/10';
+            try {
+                const domain = new URL(app.url).hostname;
+                const img = document.createElement('img');
+                img.className = 'w-6 h-6 object-contain rounded';
+                iconBox.appendChild(img);
+                setTileFavicon(img, domain);
+            } catch(e) {
+                iconBox.innerHTML = `<span class="skin-text-main font-bold text-xs">${(app.name || id).slice(0, 2).toUpperCase()}</span>`;
+            }
+        } else {
+            iconBox.className += ' surface-glass border-white/10';
+            iconBox.innerHTML = `<span class="skin-text-main font-bold text-xs">${(app.name || id).slice(0, 2).toUpperCase()}</span>`;
+        }
+
+        const lbl = document.createElement('span');
+        lbl.className = 'text-[10px] font-medium text-gray-300 truncate max-w-[64px] text-center';
+        lbl.textContent = app.name || id;
+
+        btn.appendChild(iconBox);
+        btn.appendChild(lbl);
+        dock.appendChild(btn);
+    });
+
+    if (moreBtn) {
+        dock.appendChild(moreBtn);
+    }
+}
 
 let appHubCategory = 'all';
 let appHubFilterText = '';
@@ -864,7 +1088,8 @@ function addCatalogPreset(preset) {
         name: preset.name,
         url: preset.url,
         color: preset.color,
-        category: preset.category
+        category: preset.category,
+        iconText: preset.iconText || ''
     });
     localStorage.setItem('custom_apps', JSON.stringify(customApps));
     toast(`${preset.name} añadida a Mis Aplicaciones`);
@@ -919,13 +1144,22 @@ function createAppTile(app) {
         card.appendChild(fb);
     }
 
-    // Live Indicator for active app
+    // Live Indicator for active app (positioned top-left to avoid colliding with top-right pin badge)
     if (activeKioskAppId && (app.id === activeKioskAppId || (app.url && activeKioskUrl === app.url))) {
         const liveDot = document.createElement('span');
-        liveDot.className = 'live-indicator absolute top-2 right-2';
+        liveDot.className = 'live-indicator absolute top-1.5 left-1.5';
         card.appendChild(liveDot);
         card.style.borderColor = 'rgba(16, 185, 129, 0.5)';
         card.style.boxShadow = '0 0 10px rgba(16, 185, 129, 0.25)';
+    }
+
+    // Pin badge for apps in Quick Dock (c)
+    if (app.id && isAppPinned(app.id)) {
+        const pinBadge = document.createElement('div');
+        pinBadge.className = 'pin-badge absolute top-1 right-1 w-4 h-4 rounded-full bg-blue-600/90 text-white flex items-center justify-center shadow pointer-events-none z-10';
+        pinBadge.title = 'Anclada al Quick Dock';
+        pinBadge.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor" class="w-2.5 h-2.5"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>`;
+        card.appendChild(pinBadge);
     }
 
     const span = document.createElement('span');
@@ -935,26 +1169,50 @@ function createAppTile(app) {
     div.appendChild(card);
     div.appendChild(span);
 
-    if (app.id && (app.id.startsWith('custom_') || app.is_native)) {
-        const delBtn = document.createElement('button');
-        delBtn.textContent = '×';
-        delBtn.className = 'absolute -top-1 -right-1 bg-red-600/90 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold border border-gray-900 shadow transition';
-        delBtn.dataset.remove = app.id;
-        delBtn.title = 'Eliminar';
-        div.appendChild(delBtn);
-    } else if (app.id && !app.is_native) {
-        const hideBtn = document.createElement('button');
-        hideBtn.textContent = '×';
-        hideBtn.className = 'absolute -top-1 -right-1 bg-gray-700/80 hover:bg-gray-600 text-gray-300 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold border border-gray-900 opacity-60 hover:opacity-100 transition';
-        hideBtn.dataset.hide = app.id;
-        hideBtn.title = 'Ocultar';
-        div.appendChild(hideBtn);
+    // Long-press (450ms with haptic vibration) to pin/unpin from Quick Dock (c)
+    if (app.id) {
+        let pressTimer = null;
+        let startX = 0, startY = 0;
+
+        div.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        div.addEventListener('pointerdown', (e) => {
+            startX = e.clientX;
+            startY = e.clientY;
+            pressTimer = setTimeout(() => {
+                lastLongPressTime = Date.now();
+                div.dataset.longPressTriggered = 'true';
+                if (navigator.vibrate) navigator.vibrate(50);
+                togglePinApp(app.id);
+            }, 450);
+        });
+
+        div.addEventListener('pointermove', (e) => {
+            if (pressTimer) {
+                const dist = Math.hypot(e.clientX - startX, e.clientY - startY);
+                if (dist > 10) {
+                    clearTimeout(pressTimer);
+                    pressTimer = null;
+                }
+            }
+        });
+
+        const cancelPress = () => {
+            if (pressTimer) {
+                clearTimeout(pressTimer);
+                pressTimer = null;
+            }
+        };
+
+        div.addEventListener('pointerup', cancelPress);
+        div.addEventListener('pointercancel', cancelPress);
     }
 
     return div;
 }
 
 function renderApps(kiosks) {
+    renderQuickDock();
     const usage = getUsage();
     const customApps = getCustomApps();
     const hiddenApps = getHiddenApps();
@@ -1022,36 +1280,17 @@ function renderApps(kiosks) {
 }
 
 function handleAppLaunchClick(e) {
-    const removeBtn = e.target.closest('[data-remove]');
-    if (removeBtn) {
-        e.stopPropagation();
+    if (Date.now() - lastLongPressTime < 800) {
         e.preventDefault();
-        const removeId = removeBtn.dataset.remove;
-        let customApps = getCustomApps();
-        customApps = customApps.filter(app => app.id !== removeId);
-        localStorage.setItem('custom_apps', JSON.stringify(customApps));
-        renderApps(lastSuggestedKiosks);
-        toast('Aplicación eliminada');
+        e.stopPropagation();
         return;
     }
-
-    const hideBtn = e.target.closest('[data-hide]');
-    if (hideBtn) {
-        e.stopPropagation();
-        e.preventDefault();
-        const hideId = hideBtn.dataset.hide;
-        let hidden = getHiddenApps();
-        if (!hidden.includes(hideId)) {
-            hidden.push(hideId);
-            localStorage.setItem('hidden_apps', JSON.stringify(hidden));
-        }
-        renderApps(lastSuggestedKiosks);
-        toast('App oculta');
-        return;
-    }
-
     const tile = e.target.closest('[data-id]');
     if (tile) {
+        if (tile.dataset.longPressTriggered === 'true') {
+            delete tile.dataset.longPressTriggered;
+            return;
+        }
         const id = tile.dataset.id;
         if (tile.dataset.native === 'true') {
             launchNativeApp(id);
@@ -1060,8 +1299,10 @@ function handleAppLaunchClick(e) {
         }
     }
 }
-document.getElementById('apps-row').addEventListener('click', handleAppLaunchClick);
-document.getElementById('drawer-grid').addEventListener('click', handleAppLaunchClick);
+const appsRowEl = document.getElementById('apps-row');
+if (appsRowEl) appsRowEl.addEventListener('click', handleAppLaunchClick);
+const drawerGridEl = document.getElementById('drawer-grid');
+if (drawerGridEl) drawerGridEl.addEventListener('click', handleAppLaunchClick);
 
 function toggleMore() { const m = document.getElementById('apps-more'); if (m) m.hidden = !m.hidden; }
 

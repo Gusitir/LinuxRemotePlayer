@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-skin="night">
+<html lang="es" data-skin="day">
 <head>
     <meta charset="UTF-8">
     <!-- HYG-01 rationale: remote-control UI requires disabling user-zoom so that double-taps on buttons and dragging on touchpad does not accidentally scale the browser layout. -->
@@ -13,8 +13,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Linux Remote Player</title>
     <link rel="manifest" href="manifest.json">
-    <!-- Coincide con el tema Dark Obsidian Glassmorphism por defecto. -->
-    <meta name="theme-color" content="#070A0E">
+    <meta name="theme-color" content="#f6f2ea">
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -25,12 +24,12 @@
     <style>
       html, body { touch-action: manipulation; overscroll-behavior: none; }
       /* Respect the notch / status bar (safe areas). */
-      body { -webkit-touch-callout: none; padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); height: var(--app-h, 100dvh); }
+      body { -webkit-touch-callout: none; padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); height: var(--app-h, 100dvh); background-color: var(--bg-base); }
       .app-header { padding-top: max(env(safe-area-inset-top), 8px); }
       @media (display-mode: standalone) {
           .app-header { padding-top: max(env(safe-area-inset-top), 20px); }
       }
-      button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+      button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; border: none; background: transparent; padding: 0; margin: 0; outline: none; font: inherit; color: inherit; }
       .icon { width: 1.4rem; height: 1.4rem; display: block; }
       .icon-lg { width: 1.9rem; height: 1.9rem; display: block; }
       .util-btn { background:var(--bg-btn); border-radius:0.6rem; padding:0.55rem 0; display:flex; align-items:center; justify-content:center; color:var(--text-main); transition: background .15s, color .15s, box-shadow .15s; }
@@ -38,16 +37,35 @@
       .util-btn.util-active { background:var(--accent); color:var(--accent-contrast); box-shadow:0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent); }
       .ctrl-round { width:3rem; height:3rem; border-radius:9999px; background:var(--bg-btn); display:flex; align-items:center; justify-content:center; color:var(--text-main); }
       .ctrl-round:active { background:var(--bg-btn-active); }
-      #touchpad { background-image: radial-gradient(var(--touchpad-dot) 1px, transparent 1px); background-size: 12px 12px; touch-action: none; }
       #scroll-strip { touch-action: none; }
       .drawer { position: fixed; inset: 0; background:var(--bg-base); transform: translateY(100%); transition: transform .25s ease; z-index: 40; display:flex; flex-direction:column; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
       .drawer.open { transform: translateY(0); }
       .applauncher:active { transform: scale(0.95); }
       .settings-row { background:var(--bg-panel); border-radius:0.75rem; padding:0.9rem 1rem; text-align:left; color:var(--text-main); display:block; width: 100%; }
       .settings-row:active { background:var(--bg-btn); }
+      .app-chassis {
+          width: 100%;
+          max-width: 440px;
+          height: 100%;
+          max-height: 100dvh;
+          border-radius: 36px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          background-color: var(--bg-chassis, transparent);
+          box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.12), 0 8px 24px rgba(0, 0, 0, 0.5);
+          overflow: hidden;
+          position: relative;
+          margin: 0 auto;
+      }
+      @media (max-width: 440px) {
+          .app-chassis {
+              border-radius: 0;
+              border: none;
+              box-shadow: none;
+          }
+      }
     </style>
 </head>
-<body class="flex flex-col h-screen select-none overflow-hidden">
+<body class="flex flex-col h-screen select-none overflow-hidden items-center justify-center">
 
     <!-- Troubleshooting banner (Spanish) - CONN-03 -->
     <div id="conn-error-banner" style="display:none" class="bg-red-900/95 text-white p-3 text-sm text-center border-b border-red-700 flex flex-col gap-1 z-50">
@@ -102,43 +120,26 @@
     </div>
 
     <!-- The remote (default view). -->
-    <div id="app-ui" class="flex-1 flex flex-col min-h-0">
+    <div id="app-ui" class="app-chassis flex-1 flex flex-col min-h-0">
         <!-- Header -->
         <div class="px-4 py-2 flex justify-between items-center app-header">
             <button id="btn-settings" onclick="openSettings()" class="w-10 h-10 rounded-full surface-glass flex items-center justify-center text-gray-300 active:text-white" title="Ajustes">
                 <svg viewBox="0 0 24 24" fill="none" class="w-5 h-5"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 8.25C9.92893 8.25 8.25 9.92893 8.25 12C8.25 14.0711 9.92893 15.75 12 15.75C14.0711 15.75 15.75 14.0711 15.75 12C15.75 9.92893 14.0711 8.25 12 8.25ZM9.75 12C9.75 10.7574 10.7574 9.75 12 9.75C13.2426 9.75 14.25 10.7574 14.25 12C14.25 13.2426 13.2426 14.25 12 14.25C10.7574 14.25 9.75 13.2426 9.75 12Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M12 1.25C11.2954 1.25 10.6519 1.44359 9.94858 1.77037C9.26808 2.08656 8.48039 2.55304 7.49457 3.13685L6.74148 3.58283C5.75533 4.16682 4.96771 4.63324 4.36076 5.07944C3.73315 5.54083 3.25177 6.01311 2.90334 6.63212C2.55548 7.25014 2.39841 7.91095 2.32306 8.69506C2.24999 9.45539 2.24999 10.3865 2.25 11.556V12.444C2.24999 13.6135 2.24999 14.5446 2.32306 15.3049C2.39841 16.0891 2.55548 16.7499 2.90334 17.3679C3.25177 17.9869 3.73315 18.4592 4.36076 18.9206C4.96771 19.3668 5.75533 19.8332 6.74148 20.4172L7.4946 20.8632C8.48038 21.447 9.2681 21.9135 9.94858 22.2296C10.6519 22.5564 11.2954 22.75 12 22.75C12.7046 22.75 13.3481 22.5564 14.0514 22.2296C14.7319 21.9134 15.5196 21.447 16.5054 20.8632L17.2585 20.4172C18.2446 19.8332 19.0323 19.3668 19.6392 18.9206C20.2669 18.4592 20.7482 17.9869 21.0967 17.3679C21.4445 16.7499 21.6016 16.0891 21.6769 15.3049C21.75 14.5446 21.75 13.6135 21.75 12.4441V11.556C21.75 10.3866 21.75 9.45538 21.6769 8.69506C21.6016 7.91095 21.4445 7.25014 21.0967 6.63212C20.7482 6.01311 20.2669 5.54083 19.6392 5.07944C19.0323 4.63324 18.2447 4.16683 17.2585 3.58285L16.5054 3.13685C15.5196 2.55303 14.7319 2.08656 14.0514 1.77037C13.3481 1.44359 12.7046 1.25 12 1.25ZM8.22524 4.44744C9.25238 3.83917 9.97606 3.41161 10.5807 3.13069C11.1702 2.85676 11.5907 2.75 12 2.75C12.4093 2.75 12.8298 2.85676 13.4193 3.13069C14.0239 3.41161 14.7476 3.83917 15.7748 4.44744L16.4609 4.85379C17.4879 5.46197 18.2109 5.89115 18.7508 6.288C19.2767 6.67467 19.581 6.99746 19.7895 7.36788C19.9986 7.73929 20.1199 8.1739 20.1838 8.83855C20.2492 9.51884 20.25 10.378 20.25 11.5937V12.4063C20.25 13.622 20.2492 14.4812 20.1838 15.1614C20.1199 15.8261 19.9986 16.2607 19.7895 16.6321C19.581 17.0025 19.2767 17.3253 18.7508 17.712C18.2109 18.1089 17.4879 18.538 16.4609 19.1462L15.7748 19.5526C14.7476 20.1608 14.0239 20.5884 13.4193 20.8693C12.8298 21.1432 12.4093 21.25 12 21.25C11.5907 21.25 11.1702 21.1432 10.5807 20.8693C9.97606 20.5884 9.25238 20.1608 8.22524 19.5526L7.53909 19.1462C6.5121 18.538 5.78906 18.1089 5.24923 17.712C4.72326 17.3253 4.419 17.0025 4.2105 16.6321C4.00145 16.2607 3.88005 15.8261 3.81618 15.1614C3.7508 14.4812 3.75 13.622 3.75 12.4063V11.5937C3.75 10.378 3.7508 9.51884 3.81618 8.83855C3.88005 8.1739 4.00145 7.73929 4.2105 7.36788C4.419 6.99746 4.72326 6.67467 5.24923 6.288C5.78906 5.89115 6.5121 5.46197 7.53909 4.85379L8.22524 4.44744Z" fill="currentColor"/></svg>
             </button>
             <span class="text-sm font-semibold tracking-tight text-gray-200">Linux Remote Player</span>
-            <div class="flex flex-col items-end">
-                <div id="conn-badge" class="flex items-center gap-1 text-xs font-semibold">
-                    <span class="text-yellow-400">⚡</span>
-                    <span id="status" class="text-gray-400 font-medium">Conectando...</span>
+            <div class="flex flex-col items-end leading-tight">
+                <div id="conn-badge" class="flex items-center gap-1 text-xs font-semibold text-gray-300">
+                    <span id="conn-icon" class="text-emerald-400">⚡</span>
+                    <span class="text-gray-400">Connection: <span id="status" class="text-emerald-400 font-medium">Stable</span></span>
                 </div>
-                <span id="latency" class="text-[10px] font-mono text-gray-400 hidden"></span>
+                <span id="latency" class="text-[10px] font-mono text-gray-400">Latency: --ms</span>
             </div>
         </div>
 
         <!-- Quick Apps Dock -->
         <div class="px-3 pt-1 pb-1">
-            <div class="surface-glass rounded-2xl p-1.5 flex items-center justify-around gap-1">
-                <button onclick="launchKiosk('https://netflix.com', 'netflix')" class="flex-1 py-1 flex flex-col items-center gap-1 rounded-xl active:bg-white/10 transition" title="Netflix">
-                    <div class="w-10 h-10 rounded-xl bg-black flex items-center justify-center border border-red-600/40 shadow-sm">
-                        <span class="text-red-600 font-black text-xl leading-none">N</span>
-                    </div>
-                    <span class="text-[10px] font-medium text-gray-300">Netflix</span>
-                </button>
-                <button onclick="launchKiosk('https://youtube.com/tv', 'youtube')" class="flex-1 py-1 flex flex-col items-center gap-1 rounded-xl active:bg-white/10 transition" title="YouTube">
-                    <div class="w-10 h-10 rounded-xl bg-[#1e1e1e] flex items-center justify-center border border-red-500/40 shadow-sm">
-                        <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-red-500"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-                    </div>
-                    <span class="text-[10px] font-medium text-gray-300">YouTube</span>
-                </button>
-                <button onclick="launchKiosk('https://open.spotify.com', 'spotify')" class="flex-1 py-1 flex flex-col items-center gap-1 rounded-xl active:bg-white/10 transition" title="Spotify">
-                    <div class="w-10 h-10 rounded-xl bg-[#121212] flex items-center justify-center border border-green-500/40 shadow-sm">
-                        <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-green-500"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
-                    </div>
-                    <span class="text-[10px] font-medium text-gray-300">Spotify</span>
-                </button>
+            <div id="quick-dock" class="surface-glass rounded-2xl p-1.5 flex items-center justify-around gap-1">
+                <!-- Dynamically populated from lrp_pinned_apps -->
                 <button id="more-btn" onclick="openDrawer()" class="flex-1 py-1 flex flex-col items-center gap-1 rounded-xl active:bg-white/10 transition" title="Más Apps">
                     <div class="w-10 h-10 rounded-xl surface-glass flex items-center justify-center border border-white/10 shadow-sm text-gray-300">
                         <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
@@ -149,17 +150,18 @@
             <div id="apps-row" class="hidden"></div>
         </div>
 
-        <!-- Massive Trackpad + Scroll Strip -->
+        <!-- Massive Trackpad with Independent Scroll Strip Column -->
         <div class="flex-1 px-3 py-1.5 min-h-[140px] flex gap-2">
-            <div id="touchpad" class="flex-1 rounded-2xl touchpad-dotted border border-white/10 relative overflow-hidden flex items-center justify-center select-none">
-                <div class="pointer-events-none opacity-20 flex flex-col items-center text-gray-300">
-                    <span class="text-xs mb-1">▲</span>
-                    <div class="flex items-center gap-6">
-                        <span class="text-xs">◄</span>
-                        <span class="text-[10px] font-mono tracking-widest">[OK]</span>
-                        <span class="text-xs">►</span>
+            <div id="touchpad" class="flex-1 h-full rounded-2xl touchpad-dotted border border-white/10 relative overflow-hidden flex items-center justify-center select-none">
+                <!-- Subtle Center Vector Cross Guide (Clean vectors, no crude text) -->
+                <div class="pointer-events-none opacity-25 flex flex-col items-center text-gray-300">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 mb-1.5"><polyline points="18 15 12 9 6 15"/></svg>
+                    <div class="flex items-center gap-7">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><polyline points="15 18 9 12 15 6"/></svg>
+                        <div class="w-1.5 h-1.5 rounded-full bg-gray-400 opacity-60"></div>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><polyline points="9 6 15 12 9 18"/></svg>
                     </div>
-                    <span class="text-xs mt-1">▼</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 mt-1.5"><polyline points="6 9 12 15 18 9"/></svg>
                 </div>
                 <div id="nav-overlay" class="absolute inset-0 hidden pointer-events-none skin-text-accent opacity-60">
                     <div class="absolute top-2 left-1/2 -translate-x-1/2">
@@ -181,35 +183,39 @@
                     </div>
                 </div>
             </div>
-            <div id="scroll-strip" class="w-10 h-full rounded-2xl surface-glass border border-white/10 flex flex-col items-center justify-between py-3 text-gray-400 select-none">
-                <svg viewBox="0 0 24 24" fill="none" class="w-4 h-4"><polyline points="6 15 12 9 18 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <span class="text-[9px] tracking-widest opacity-60" style="writing-mode:vertical-rl">SCROLL</span>
-                <svg viewBox="0 0 24 24" fill="none" class="w-4 h-4"><polyline points="6 9 12 15 18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+
+            <!-- Integrated Scroll Strip: Independent right flex column -->
+            <div id="scroll-strip" class="w-7 shrink-0 h-full rounded-2xl surface-glass border border-white/10 flex flex-col items-center justify-between py-2 text-gray-400 select-none z-10" style="touch-action: none;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 opacity-60"><polyline points="18 15 12 9 6 15"/></svg>
+                <div class="relative w-full flex-1 flex justify-center items-center my-1 overflow-hidden pointer-events-none">
+                    <div id="scroll-thumb" class="w-1.5 h-6 rounded-full"></div>
+                </div>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 opacity-60"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
         </div>
 
-        <!-- Utility Bar -->
+        <!-- Utility Bar (Official Naming & Monochromatic Silver Iconography) -->
         <div class="px-3 py-1">
             <div class="grid grid-cols-5 gap-1.5">
-                <button onclick="openKeyboard()" class="util-btn flex flex-col gap-0.5 py-1.5 rounded-xl surface-glass text-gray-300" title="Teclado Virtual">
+                <button onclick="openKeyboard()" class="util-btn flex flex-col gap-0.5 py-1.5 rounded-xl surface-glass text-gray-300 hover:text-white transition" title="Virtual Keyboard">
                     <svg viewBox="0 0 24 24" fill="none" class="w-4 h-4"><rect x="3" y="6" width="18" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><circle cx="7" cy="10" r="1" fill="currentColor"/><circle cx="12" cy="10" r="1" fill="currentColor"/><circle cx="17" cy="10" r="1" fill="currentColor"/><line x1="8" y1="14" x2="16" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                    <span class="text-[9px] font-medium leading-none">Teclado</span>
+                    <span class="text-[9px] font-medium leading-none text-center">Virtual Keyboard</span>
                 </button>
-                <button onclick="sendKey('KEY_BACKSPACE')" class="util-btn flex flex-col gap-0.5 py-1.5 rounded-xl surface-glass text-gray-300" title="Borrar">
+                <button onclick="sendKey('KEY_BACKSPACE')" class="util-btn flex flex-col gap-0.5 py-1.5 rounded-xl surface-glass text-gray-300 hover:text-white transition" title="Backspace">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M20 5H9l-7 7 7 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg>
-                    <span class="text-[9px] font-medium leading-none">Borrar</span>
+                    <span class="text-[9px] font-medium leading-none text-center">Backspace</span>
                 </button>
-                <button id="btn-nav-mode" onclick="toggleNavMode()" class="util-btn flex flex-col gap-0.5 py-1.5 rounded-xl surface-glass text-gray-400" title="D-Pad Toggle">
+                <button id="btn-nav-mode" onclick="toggleNavMode()" class="util-btn flex flex-col gap-0.5 py-1.5 rounded-xl surface-glass text-gray-300 hover:text-white transition" title="D-Pad Toggle">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="19 9 22 12 19 15"/><polyline points="15 19 12 22 9 19"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>
-                    <span class="text-[9px] font-medium leading-none">D-Pad</span>
+                    <span class="text-[9px] font-medium leading-none text-center">D-Pad Toggle</span>
                 </button>
-                <button onclick="showPanel()" class="util-btn flex flex-col gap-0.5 py-1.5 rounded-xl surface-glass text-blue-400" title="Panel TV">
+                <button onclick="showPanel()" class="util-btn flex flex-col gap-0.5 py-1.5 rounded-xl surface-glass text-gray-300 hover:text-white transition" title="Panel TV">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><rect x="2" y="4" width="20" height="13" rx="2"/><polyline points="8 20 12 17 16 20"/></svg>
-                    <span class="text-[9px] font-medium leading-none">Panel TV</span>
+                    <span class="text-[9px] font-medium leading-none text-center">Panel TV</span>
                 </button>
-                <button onclick="sendKey('KEY_LEFTMETA')" class="util-btn flex flex-col gap-0.5 py-1.5 rounded-xl surface-glass text-purple-400" title="Menú OS">
+                <button onclick="sendKey('KEY_LEFTMETA')" class="util-btn flex flex-col gap-0.5 py-1.5 rounded-xl surface-glass text-gray-300 hover:text-white transition" title="OS Meta Menu">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-                    <span class="text-[9px] font-medium leading-none">Menú OS</span>
+                    <span class="text-[9px] font-medium leading-none text-center">OS Meta Menu</span>
                 </button>
             </div>
         </div>
@@ -217,62 +223,143 @@
         <!-- Mantatomic Radial Wheel System -->
         <div class="px-2 pt-1 relative select-none flex justify-center items-center" style="padding-bottom: max(env(safe-area-inset-bottom), 8px);">
             <svg viewBox="0 0 360 250" class="w-full max-w-[390px] h-auto overflow-visible" style="touch-action: none;">
+                <defs>
+                    <filter id="glow-blue" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur" />
+                        <feMerge>
+                            <feMergeNode in="blur" />
+                            <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                    </filter>
+                    <filter id="glow-green" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur" />
+                        <feMerge>
+                            <feMergeNode in="blur" />
+                            <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                    </filter>
+                    <filter id="glow-red" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="blur" />
+                        <feMerge>
+                            <feMergeNode in="blur" />
+                            <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                    </filter>
+                </defs>
+
                 <!-- Outer Left: Seek + (Sup), Seek - (Med), Prev Track (Inf) -->
                 <g class="wedge-btn" onclick="sendKey('KEY_RIGHT')" title="Avanzar 10s">
                     <path d="M 153.5 112.7 L 137.3 56.0 A 155 155 0 0 0 76.3 89.8 L 115.8 133.7 A 96 96 0 0 1 153.5 112.7 Z" />
-                    <text x="119" y="99" text-anchor="middle" fill="#E5E7EB" font-size="14" font-weight="bold">⏩</text>
+                    <g class="icon-group">
+                        <polygon points="112,94 119,99 112,104" fill="#F3F4F6"/>
+                        <polygon points="119,94 126,99 119,104" fill="#F3F4F6"/>
+                    </g>
                 </g>
                 <g class="wedge-btn" onclick="sendKey('KEY_LEFT')" title="Retroceder 10s">
                     <path d="M 112.1 137.1 L 70.4 95.4 A 155 155 0 0 0 33.4 154.5 L 89.2 173.7 A 96 96 0 0 1 112.1 137.1 Z" />
-                    <text x="74" y="142" text-anchor="middle" fill="#E5E7EB" font-size="14" font-weight="bold">⏪</text>
+                    <g class="icon-group">
+                        <polygon points="74,137 67,142 74,147" fill="#F3F4F6"/>
+                        <polygon points="81,137 74,142 81,147" fill="#F3F4F6"/>
+                    </g>
                 </g>
                 <g class="wedge-btn" onclick="sendKey('KEY_PREVIOUSSONG')" title="Pista anterior">
                     <path d="M 87.7 178.5 L 31.0 162.3 A 155 155 0 0 0 27.4 231.9 L 85.5 221.7 A 96 96 0 0 1 87.7 178.5 Z" />
-                    <text x="55" y="202" text-anchor="middle" fill="#E5E7EB" font-size="14" font-weight="bold">⏮</text>
+                    <g class="icon-group">
+                        <rect x="47" y="197" width="2.5" height="10" rx="0.5" fill="#F3F4F6"/>
+                        <polygon points="59,197 51,202 59,207" fill="#F3F4F6"/>
+                    </g>
                 </g>
 
-                <!-- Outer Right: Fullscreen (Sup), Vol + (Med), Vol - / Mute (Inf) -->
+                <!-- Outer Right: Fullscreen (Sup), Vol + (Med), Vol - (Inf-Sup), Mute (Inf-Inf) -->
                 <g class="wedge-btn" onclick="sendKey('KEY_F11')" title="Pantalla Completa">
                     <path d="M 244.2 133.7 L 283.7 89.8 A 155 155 0 0 0 222.7 56.0 L 206.5 112.7 A 96 96 0 0 1 244.2 133.7 Z" />
-                    <text x="241" y="99" text-anchor="middle" fill="#E5E7EB" font-size="14" font-weight="bold">⛶</text>
+                    <g class="icon-group">
+                        <path fill="none" stroke="#F3F4F6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+                              d="M 236 98 L 236 94 L 240 94 M 242 94 L 246 94 L 246 98 M 236 100 L 236 104 L 240 104 M 242 104 L 246 104 L 246 100"/>
+                    </g>
                 </g>
                 <g class="wedge-btn" onclick="sendMedia('KEY_VOLUMEUP')" title="Subir Volumen">
                     <path d="M 270.8 173.7 L 326.6 154.5 A 155 155 0 0 0 289.6 95.4 L 247.9 137.1 A 96 96 0 0 1 270.8 173.7 Z" />
-                    <text x="286" y="142" text-anchor="middle" fill="#E5E7EB" font-size="14" font-weight="bold">🔊+</text>
+                    <g class="icon-group">
+                        <path fill="#F3F4F6" d="M 278 140 L 282 137 L 282 147 L 278 144 H 275 V 140 Z"/>
+                        <path fill="none" stroke="#F3F4F6" stroke-width="1.6" stroke-linecap="round" d="M 285 139 A 4 4 0 0 1 285 145"/>
+                        <path fill="none" stroke="#F3F4F6" stroke-width="1.6" stroke-linecap="round" d="M 288 137 A 7 7 0 0 1 288 147"/>
+                        <path fill="none" stroke="#F3F4F6" stroke-width="1.8" stroke-linecap="round" d="M 293 142 H 297 M 295 140 V 144"/>
+                    </g>
                 </g>
+                <!-- Divided Bottom-Right: Vol - (Sub-cuña superior) -->
                 <g class="wedge-btn" onclick="sendMedia('KEY_VOLUMEDOWN')" title="Bajar Volumen">
-                    <path d="M 274.5 221.7 L 332.6 231.9 A 155 155 0 0 0 329.0 162.3 L 272.3 178.5 A 96 96 0 0 1 274.5 221.7 Z" />
-                    <text x="305" y="202" text-anchor="middle" fill="#E5E7EB" font-size="14" font-weight="bold">🔉−</text>
+                    <path d="M 275.9 200.0 L 334.8 196.9 A 155 155 0 0 0 329.0 162.3 L 272.3 178.5 A 96 96 0 0 1 275.9 200.0 Z" />
+                    <g class="icon-group">
+                        <path fill="#F3F4F6" d="M 291 182 L 295 179 L 295 189 L 291 186 H 288 V 182 Z"/>
+                        <path fill="none" stroke="#F3F4F6" stroke-width="1.6" stroke-linecap="round" d="M 298 181 A 4 4 0 0 1 298 187"/>
+                        <path fill="none" stroke="#F3F4F6" stroke-width="1.8" stroke-linecap="round" d="M 303 184 H 308"/>
+                    </g>
+                </g>
+                <!-- Divided Bottom-Right: Mute (Sub-cuña inferior) -->
+                <g class="wedge-btn" onclick="sendMedia('KEY_MUTE')" title="Silenciar (Mute)">
+                    <path d="M 273.5 226.6 L 331.0 239.9 A 155 155 0 0 0 335.0 202.3 L 276.0 203.3 A 96 96 0 0 1 273.5 226.6 Z" />
+                    <g class="icon-group">
+                        <path fill="#F3F4F6" d="M 294 218 L 298 215 L 298 225 L 294 222 H 291 V 218 Z"/>
+                        <path fill="none" stroke="#EF4444" stroke-width="1.8" stroke-linecap="round" d="M 303 217 L 309 223 M 309 217 L 303 223"/>
+                    </g>
                 </g>
 
-                <!-- Inner Ring: Home (Left), Back (Right) -->
+                <!-- Inner Ring: Left Nav (<), Home (Left-Bottom), Back (Right) -->
+                <g class="wedge-btn" onclick="sendKey('KEY_LEFT')" title="Navegar Izquierda">
+                    <path d="M 142.2 175.5 L 110.7 150.8 A 88 88 0 0 1 133.4 130.4 L 154.6 164.3 A 48 48 0 0 0 142.2 175.5 Z" />
+                    <g class="icon-group">
+                        <polyline points="138,146 133,150 138,154" fill="none" stroke="#F3F4F6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </g>
+                </g>
                 <g class="wedge-btn" onclick="killKiosk()" title="Home / Escritorio">
-                    <path d="M 154.6 164.3 L 133.4 130.4 A 88 88 0 0 0 94.6 183.7 L 133.4 193.4 A 48 48 0 0 1 154.6 164.3 Z" />
-                    <text x="125" y="169" text-anchor="middle" fill="#E5E7EB" font-size="14">🏠</text>
+                    <path d="M 133.4 193.4 L 94.6 183.7 A 88 88 0 0 1 107.1 155.8 L 140.2 178.2 A 48 48 0 0 0 133.4 193.4 Z" />
+                    <g class="icon-group">
+                        <path fill="#F3F4F6" d="M 118 169 L 112 174 H 114 V 181 H 122 V 174 H 124 Z"/>
+                    </g>
                 </g>
                 <g class="wedge-btn" onclick="sendCombo('browser_back')" title="Atrás">
                     <path d="M 226.6 193.4 L 265.4 183.7 A 88 88 0 0 0 226.6 130.4 L 205.4 164.3 A 48 48 0 0 1 226.6 193.4 Z" />
-                    <text x="235" y="169" text-anchor="middle" fill="#E5E7EB" font-size="14">↩</text>
+                    <g class="icon-group">
+                        <path fill="none" stroke="#F3F4F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                              d="M 239 174 V 171 A 5 5 0 0 0 230 168 L 227 168 M 230 171 L 227 168 L 230 165"/>
+                    </g>
                 </g>
 
                 <!-- Hero Play / Pause / OK (Top Center) -->
                 <g id="btn-hero-play" class="wedge-btn" onclick="onHeroCenterPress()" title="Play / Pausa o OK">
                     <circle cx="180" cy="65" r="28" fill="#0D1A2D" stroke="#3B82F6" stroke-width="2" class="glow-blue" />
-                    <text id="hero-center-icon" x="180" y="71" text-anchor="middle" fill="#60A5FA" font-size="18" font-weight="bold">⏯</text>
+                    <g id="hero-vector-play">
+                        <polygon points="172,57 184,65 172,73" fill="#60A5FA"/>
+                        <line x1="187" y1="58" x2="187" y2="72" stroke="#60A5FA" stroke-width="2.2" stroke-linecap="round"/>
+                        <line x1="191" y1="58" x2="191" y2="72" stroke="#60A5FA" stroke-width="2.2" stroke-linecap="round"/>
+                    </g>
+                    <g id="hero-vector-ok" class="hidden">
+                        <polyline points="173,65 178,70 188,59" fill="none" stroke="#60A5FA" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                    </g>
+                    <text id="hero-center-icon" class="hidden">⏯</text>
                 </g>
 
                 <!-- Hero Mic Button (Bottom Center) -->
                 <g id="mic-row">
                     <g id="mic-btn" class="wedge-btn" title="Voz (Mantén pulsado para hablar)">
                         <circle cx="180" cy="205" r="28" fill="#09261A" stroke="#10B981" stroke-width="2" class="glow-green" />
-                        <text x="180" y="212" text-anchor="middle" fill="#34D399" font-size="20">🎙</text>
+                        <g id="hero-vector-mic">
+                            <rect x="176.5" y="197" width="7" height="11" rx="3.5" fill="#34D399"/>
+                            <path d="M 173 203 C 173 209 187 209 187 203" fill="none" stroke="#34D399" stroke-width="1.8" stroke-linecap="round"/>
+                            <line x1="180" y1="208" x2="180" y2="213" stroke="#34D399" stroke-width="1.8" stroke-linecap="round"/>
+                            <line x1="176" y1="213" x2="184" y2="213" stroke="#34D399" stroke-width="1.8" stroke-linecap="round"/>
+                        </g>
                     </g>
                 </g>
 
                 <!-- Floating Close App 'X' (Top Right) -->
                 <g id="btn-close-app" class="wedge-btn" onclick="killKiosk()" title="Cerrar App Actual">
-                    <circle cx="324" cy="28" r="16" fill="#2B0D0D" stroke="#EF4444" stroke-width="1.8" class="glow-red" />
-                    <text x="324" y="33" text-anchor="middle" fill="#F87171" font-size="13" font-weight="bold">✕</text>
+                    <circle cx="324" cy="28" r="18" fill="#2B0D0D" stroke="#EF4444" stroke-width="1.8" class="glow-red" />
+                    <g id="hero-vector-close">
+                        <line x1="318" y1="22" x2="330" y2="34" stroke="#F87171" stroke-width="2.2" stroke-linecap="round"/>
+                        <line x1="330" y1="22" x2="318" y2="34" stroke="#F87171" stroke-width="2.2" stroke-linecap="round"/>
+                    </g>
                 </g>
             </svg>
         </div>
@@ -355,10 +442,10 @@
             </button>
         </div>
         <div class="flex-1 overflow-y-auto overflow-x-hidden p-4">
-            <div class="grid grid-cols-1 min-[380px]:grid-cols-2 gap-3 max-w-full items-start">
+            <div class="flex flex-col gap-3.5 max-w-xl mx-auto w-full">
 
                 <!-- SALIDA DE AUDIO (PipeWire) -->
-                <details open class="skin-bg-panel rounded-xl border border-gray-700 group overflow-hidden max-w-full">
+                <details open class="skin-bg-panel rounded-xl border border-gray-700 group overflow-hidden w-full">
                     <summary class="p-3 font-semibold flex justify-between items-center cursor-pointer select-none">
                         <span class="flex items-center gap-2">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-blue-400"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
@@ -383,7 +470,7 @@
                 </details>
 
                 <!-- GESTIÓN DE ENERGÍA -->
-                <details open class="skin-bg-panel rounded-xl border border-gray-700 group overflow-hidden max-w-full">
+                <details open class="skin-bg-panel rounded-xl border border-gray-700 group overflow-hidden w-full">
                     <summary class="p-3 font-semibold flex justify-between items-center cursor-pointer select-none">
                         <span class="flex items-center gap-2">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-red-400"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
@@ -414,7 +501,7 @@
                 </details>
 
                 <!-- LICENCIA -->
-                <details class="skin-bg-panel rounded-xl border border-gray-700 group overflow-hidden max-w-full">
+                <details class="skin-bg-panel rounded-xl border border-gray-700 group overflow-hidden w-full">
                     <summary class="p-3 font-semibold flex justify-between items-center cursor-pointer select-none">
                         <span>Licencia</span>
                         <svg viewBox="0 0 24 24" fill="none" class="w-4 h-4 transition-transform group-open:rotate-180"><g transform="scale(1.33333)"><polyline points="15.25 6.5 9 12.75 2.75 6.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></polyline></g></svg>
@@ -426,7 +513,6 @@
                                 <button onclick="activateLicenseKey()" class="shrink-0 skin-accent-green skin-text-on-green px-3 py-1 rounded text-sm font-bold opacity-90 hover:opacity-100">Activar</button>
                             </div>
                             <p id="license-status-text" class="text-xs skin-text-dim">Sin licencia</p>
-                            <button id="buy-license-btn" onclick="buyLicense()" class="bg-amber-500/20 text-amber-300 font-bold px-3 py-2 rounded text-sm mt-1">Comprar licencia (Voz IA)</button>
                         </div>
                         <div id="license-licensed" class="hidden flex-col gap-2 pt-2">
                             <div class="bg-green-500/20 text-green-400 font-bold px-3 py-2 rounded text-sm flex items-center gap-2">
@@ -439,7 +525,7 @@
                 </details>
 
                 <!-- TEMAS -->
-                <details class="skin-bg-panel rounded-xl border border-gray-700 group overflow-hidden max-w-full">
+                <details class="skin-bg-panel rounded-xl border border-gray-700 group overflow-hidden w-full">
                     <summary class="p-3 font-semibold flex justify-between items-center cursor-pointer select-none">
                         <span>Temas</span>
                         <svg viewBox="0 0 24 24" fill="none" class="w-4 h-4 transition-transform group-open:rotate-180"><g transform="scale(1.33333)"><polyline points="15.25 6.5 9 12.75 2.75 6.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></polyline></g></svg>
@@ -467,7 +553,7 @@
                 </details>
 
                 <!-- ACTUALIZACIÓN -->
-                <details class="skin-bg-panel rounded-xl border border-gray-700 group overflow-hidden max-w-full">
+                <details class="skin-bg-panel rounded-xl border border-gray-700 group overflow-hidden w-full">
                     <summary class="p-3 font-semibold flex justify-between items-center cursor-pointer select-none">
                         <span>Actualización</span>
                         <svg viewBox="0 0 24 24" fill="none" class="w-4 h-4 transition-transform group-open:rotate-180"><g transform="scale(1.33333)"><polyline points="15.25 6.5 9 12.75 2.75 6.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></polyline></g></svg>
@@ -484,30 +570,8 @@
                     </div>
                 </details>
 
-                <!-- SOCIAL -->
-                <details class="skin-bg-panel rounded-xl border border-gray-700 group overflow-hidden max-w-full">
-                    <summary class="p-3 font-semibold flex justify-between items-center cursor-pointer select-none">
-                        <span>Social & Feedback</span>
-                        <svg viewBox="0 0 24 24" fill="none" class="w-4 h-4 transition-transform group-open:rotate-180"><g transform="scale(1.33333)"><polyline points="15.25 6.5 9 12.75 2.75 6.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></polyline></g></svg>
-                    </summary>
-                    <div class="p-3 pt-0 border-t border-gray-700 mt-2">
-                        <div class="flex flex-col gap-3 pt-2">
-                            <button onclick="shareApp()" class="bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 px-3 py-2 rounded text-sm font-bold flex justify-center items-center gap-2">
-                                <svg viewBox="0 0 24 24" fill="none" class="w-4 h-4"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.5 2.25C14.7051 2.25 13.25 3.70507 13.25 5.5C13.25 5.69591 13.2673 5.88776 13.3006 6.07412L8.56991 9.38558C8.54587 9.4024 8.52312 9.42038 8.50168 9.43939C7.94993 9.00747 7.25503 8.75 6.5 8.75C4.70507 8.75 3.25 10.2051 3.25 12C3.25 13.7949 4.70507 15.25 6.5 15.25C7.25503 15.25 7.94993 14.9925 8.50168 14.5606C8.52312 14.5796 8.54587 14.5976 8.56991 14.6144L13.3006 17.9259C13.2673 18.1122 13.25 18.3041 13.25 18.5C13.25 20.2949 14.7051 21.75 16.5 21.75C18.2949 21.75 19.75 20.2949 19.75 18.5C19.75 16.7051 18.2949 15.25 16.5 15.25C15.4472 15.25 14.5113 15.7506 13.9174 16.5267L9.43806 13.3911C9.63809 12.9694 9.75 12.4978 9.75 12C9.75 11.5022 9.63809 11.0306 9.43806 10.6089L13.9174 7.4733C14.5113 8.24942 15.4472 8.75 16.5 8.75C18.2949 8.75 19.75 7.29493 19.75 5.5C19.75 3.70507 18.2949 2.25 16.5 2.25ZM14.75 5.5C14.75 4.5335 15.5335 3.75 16.5 3.75C17.4665 3.75 18.25 4.5335 18.25 5.5C18.25 6.4665 17.4665 7.25 16.5 7.25C15.5335 7.25 14.75 6.4665 14.75 5.5ZM6.5 10.25C5.5335 10.25 4.75 11.0335 4.75 12C4.75 12.9665 5.5335 13.75 6.5 13.75C7.4665 13.75 8.25 12.9665 8.25 12C8.25 11.0335 7.4665 10.25 6.5 10.25ZM16.5 16.75C15.5335 16.75 14.75 17.5335 14.75 18.5C14.75 19.4665 15.5335 20.25 16.5 20.25C17.4665 20.25 18.25 19.4665 18.25 18.5C18.25 17.5335 17.4665 16.75 16.5 16.75Z" fill="currentColor"/></svg>
-                                Compartir app
-                            </button>
-                            <div class="flex flex-col gap-2 mt-2">
-                                <span class="text-xs font-bold skin-text-dim">Enviar sugerencia</span>
-                                <textarea id="feedback-msg" class="w-full skin-bg-btn border border-gray-700 rounded p-2 text-xs outline-none skin-text-main resize-none h-20" placeholder="¿Qué mejorarías? (max 500)"></textarea>
-                                <input id="feedback-email" type="email" class="w-full skin-bg-btn border border-gray-700 rounded px-2 py-1 text-xs outline-none skin-text-main" placeholder="Email (opcional)">
-                                <button onclick="sendFeedback()" class="skin-text-main bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded text-xs font-bold w-full">Enviar feedback</button>
-                            </div>
-                        </div>
-                    </div>
-                </details>
-
                 <!-- COMANDOS DE VOZ -->
-                <details id="voice-commands-card" class="skin-bg-panel rounded-xl border border-gray-700 group overflow-hidden max-w-full hidden">
+                <details id="voice-commands-card" class="skin-bg-panel rounded-xl border border-gray-700 group overflow-hidden w-full">
                     <summary class="p-3 font-semibold flex justify-between items-center cursor-pointer select-none">
                         <span>Comandos de voz</span>
                         <svg viewBox="0 0 24 24" fill="none" class="w-4 h-4 transition-transform group-open:rotate-180"><g transform="scale(1.33333)"><polyline points="15.25 6.5 9 12.75 2.75 6.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></polyline></g></svg>
@@ -525,7 +589,7 @@
                 </details>
 
                 <!-- TUTORIALES -->
-                <details class="skin-bg-panel rounded-xl border border-gray-700 group overflow-hidden max-w-full">
+                <details class="skin-bg-panel rounded-xl border border-gray-700 group overflow-hidden w-full">
                     <summary class="p-3 font-semibold flex justify-between items-center cursor-pointer select-none">
                         <span>Tutoriales</span>
                         <svg viewBox="0 0 24 24" fill="none" class="w-4 h-4 transition-transform group-open:rotate-180"><g transform="scale(1.33333)"><polyline points="15.25 6.5 9 12.75 2.75 6.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></polyline></g></svg>
