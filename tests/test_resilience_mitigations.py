@@ -185,3 +185,45 @@ def test_websocket_voice_async_decoupling(tmp_path, monkeypatch):
 
         result_msg = ws.receive_json()
         assert result_msg.get("status") == "success"
+
+
+def test_get_initial_ip_acquires_dhcp_during_polling(monkeypatch):
+    calls = 0
+
+    def mock_detect_ip():
+        nonlocal calls
+        calls += 1
+        # First 2 calls return loopback (DHCP in flight), 3rd call returns LAN IP
+        if calls < 3:
+            return "127.0.0.1"
+        return "192.168.0.246"
+
+    monkeypatch.setattr(run_module, "detect_ip", mock_detect_ip)
+    monkeypatch.setattr(run_module.time, "sleep", lambda s: None)
+
+    ip = run_module.get_initial_ip(timeout=5.0)
+    assert ip == "192.168.0.246"
+    assert calls == 3
+
+
+def test_get_initial_ip_falls_back_to_loopback_on_timeout(monkeypatch):
+    monkeypatch.setattr(run_module, "detect_ip", lambda: "127.0.0.1")
+    ip = run_module.get_initial_ip(timeout=0.1)
+    assert ip == "127.0.0.1"
+
+
+def test_monitor_ip_fast_polling_on_loopback(monkeypatch):
+    sleeps = []
+    monkeypatch.setattr(run_module.time, "sleep", lambda s: sleeps.append(s) or (_ for _ in ()).throw(KeyboardInterrupt("stop")))
+    
+    # 1. On loopback initial_ip: sleep should be 2.0s
+    with pytest.raises(KeyboardInterrupt):
+        run_module.monitor_ip("127.0.0.1")
+    assert sleeps == [2.0]
+
+    # 2. On LAN initial_ip: sleep should be 60.0s
+    sleeps.clear()
+    with pytest.raises(KeyboardInterrupt):
+        run_module.monitor_ip("192.168.0.246")
+    assert sleeps == [60.0]
+

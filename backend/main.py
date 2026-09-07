@@ -787,7 +787,7 @@ async def stop_kiosk():
     return {"status": "success"}
 
 
-@app.post("/api/panel/show", dependencies=[Depends(require_token)])
+@app.post("/api/panel/show", dependencies=[Depends(require_local_or_token)])
 async def show_panel():
     port = os.getenv("PORT", "8000")
     url = f"https://127.0.0.1:{port}/status"

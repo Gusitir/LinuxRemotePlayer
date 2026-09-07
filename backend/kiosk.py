@@ -212,6 +212,35 @@ def adblock_status() -> str:
         return "none"
     return "none"
 
+def is_display_ready() -> bool:
+    """Return True if X11 server is reachable and accepting commands on DISPLAY."""
+    if os.name != "posix" or not os.path.exists("/tmp/.X11-unix"):
+        return True
+    if not shutil.which("xset"):
+        return os.path.exists("/tmp/.X11-unix/X0")
+    try:
+        res = subprocess.run(
+            ["xset", "q"],
+            env=gui_env(),
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=1.0,
+        )
+        return res.returncode == 0
+    except Exception:
+        return False
+
+
+def wait_for_display(timeout: float = 12.0) -> bool:
+    """Wait for Xorg display to become ready (e.g. after LightDM autologin)."""
+    start = time.time()
+    while time.time() - start < timeout:
+        if is_display_ready():
+            return True
+        time.sleep(0.3)
+    return is_display_ready()
+
+
 def launch_kiosk(url: str) -> bool:
     global _kiosk_proc, _kiosk_url
     kill_existing_kiosks()
@@ -224,6 +253,10 @@ def launch_kiosk(url: str) -> bool:
     browser_bin, browser_type = find_browser()
     if not browser_bin:
         logger.error("Firefox ESR not found at /usr/bin/firefox-esr. Install it or re-run scripts/install.sh.")
+        return False
+
+    if not wait_for_display(timeout=10.0):
+        logger.warning("X11 display not ready after timeout; cannot launch kiosk.")
         return False
 
     try:
@@ -261,6 +294,11 @@ def launch_kiosk(url: str) -> bool:
         _kiosk_proc = subprocess.Popen(
             cmd, env=gui_env(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True
         )
+        time.sleep(0.2)
+        if _kiosk_proc.poll() is not None:
+            logger.error(f"Kiosk process exited prematurely with code {_kiosk_proc.poll()}")
+            _kiosk_proc = None
+            return False
         _kiosk_url = url
         return True
     except Exception as e:

@@ -285,9 +285,28 @@ def ensure_cert(ip, fqdn):
         return False
 
 
+def get_initial_ip(timeout: float = 8.0) -> str:
+    """Best-effort initial LAN IPv4.
+    During system boot on appliance hardware, DHCP may take 1-3s to acquire a lease.
+    Polls detect_ip() up to timeout seconds so the service does not initialize on loopback
+    and then immediately reboot."""
+    start = time.time()
+    while time.time() - start < timeout:
+        ip = detect_ip()
+        if ip and ip != "127.0.0.1":
+            return ip
+        time.sleep(0.5)
+    return "127.0.0.1"
+
+
 def monitor_ip(initial_ip):
+    """Monitors local IP changes to trigger self-healing.
+    If initial_ip was 127.0.0.1 (machine booted without active network or late DHCP),
+    checks frequently (every 2.0s) so it recovers as soon as an interface comes online.
+    Once on a valid LAN IP, checks every 60s."""
     while True:
-        time.sleep(60)
+        poll_interval = 2.0 if initial_ip == "127.0.0.1" else 60.0
+        time.sleep(poll_interval)
         current_ip = detect_ip()
         if current_ip != initial_ip:
             if os.getenv("INVOCATION_ID"):
@@ -301,7 +320,7 @@ def monitor_ip(initial_ip):
 
 
 if __name__ == "__main__":
-    ip = detect_ip()
+    ip = get_initial_ip(timeout=8.0)
     fqdn = f"{socket.gethostname()}.local"
 
     # Start IP monitor thread

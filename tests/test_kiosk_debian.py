@@ -343,3 +343,50 @@ async def test_stop_kiosk_resets_safety_delay_and_launches_status(monkeypatch):
     assert launched[0].endswith("/status")
 
 
+def test_is_display_ready_and_wait_for_display(monkeypatch):
+    monkeypatch.setattr(kiosk.os, "name", "posix")
+    monkeypatch.setattr(kiosk.os.path, "exists", lambda p: True)
+    monkeypatch.setattr(kiosk.shutil, "which", lambda cmd: "/usr/bin/xset" if cmd == "xset" else None)
+    
+    # 1. Success case: xset q succeeds
+    monkeypatch.setattr(kiosk.subprocess, "run", lambda *a, **kw: SimpleNamespace(returncode=0))
+    assert kiosk.is_display_ready() is True
+    assert kiosk.wait_for_display(timeout=1.0) is True
+
+    # 2. Failure case: xset q fails
+    monkeypatch.setattr(kiosk.subprocess, "run", lambda *a, **kw: SimpleNamespace(returncode=1))
+    assert kiosk.is_display_ready() is False
+
+
+def test_launch_fails_when_display_not_ready(monkeypatch):
+    monkeypatch.setattr(kiosk, "kill_existing_kiosks", lambda: None)
+    monkeypatch.setattr(kiosk, "find_browser", lambda: ("/usr/bin/firefox-esr", "firefox-esr"))
+    monkeypatch.setattr(kiosk, "wait_for_display", lambda timeout=10.0: False)
+    assert kiosk.launch_kiosk("https://example.test") is False
+
+
+def test_launch_detects_immediate_process_crash(monkeypatch, tmp_path):
+    monkeypatch.setattr(kiosk, "kill_existing_kiosks", lambda: None)
+    monkeypatch.setattr(kiosk, "find_browser", lambda: ("/usr/bin/firefox-esr", "firefox-esr"))
+    monkeypatch.setattr(kiosk, "wait_for_display", lambda timeout=10.0: True)
+    monkeypatch.setattr(kiosk.os.path, "expanduser", lambda path: str(tmp_path))
+    # Mock process that dies immediately (poll returns 1)
+    monkeypatch.setattr(kiosk.subprocess, "Popen", lambda *a, **kw: SimpleNamespace(poll=lambda: 1, pid=999))
+    assert kiosk.launch_kiosk("https://example.test") is False
+    assert kiosk._kiosk_proc is None
+
+
+@pytest.mark.asyncio
+async def test_api_panel_show_allows_local_access(monkeypatch):
+    launched = []
+    monkeypatch.setattr(main, "launch_kiosk", lambda url: launched.append(url) or True)
+    from starlette.testclient import TestClient
+    client = TestClient(main.app, client=("127.0.0.1", 50000))
+    resp = client.post("/api/panel/show")
+    assert resp.status_code == 200
+    assert resp.json() == {"status": "success"}
+    assert len(launched) == 1
+    assert launched[0].endswith("/status")
+
+
+
