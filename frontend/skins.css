@@ -96,6 +96,13 @@
     --bg-btn-active: #5c4531;
     --border: #5c4531;
     --border-soft: #463424;
+    --surface-glass: rgba(224, 163, 92, 0.08);
+    --surface-glass-active: rgba(224, 163, 92, 0.16);
+    --border-subtle: rgba(224, 163, 92, 0.18);
+    --border-highlight: rgba(224, 163, 92, 0.35);
+    --text-primary: #f4ecdf;
+    --text-secondary: #c9b8a3;
+    --text-muted: #8c735d;
     --text-main: #f4ecdf;
     --text-dim: #c9b8a3;
     --accent: #cd8b62;
@@ -363,21 +370,24 @@ h1, h2, h3, .font-header {
 }
 
 .squircle-card {
-    width: 72px;
-    height: 72px;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    width: 68px;
+    height: 68px;
+    border-radius: 18px;
+    position: relative;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    position: relative;
-    transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    overflow: hidden;
+    flex-shrink: 0;
 }
 .squircle-card:active {
     transform: scale(0.94);
-    background: rgba(255, 255, 255, 0.10);
+}
+.squircle-card.surface-glass {
+    background: var(--surface-glass, rgba(255, 255, 255, 0.05));
+    border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
 }
 
 .live-indicator {
@@ -399,16 +409,17 @@ h1, h2, h3, .font-header {
     touch-action: none;
     -webkit-tap-highlight-color: transparent;
     transition: transform 0.1s ease;
+    color: var(--wheel-icon-color, #F3F4F6);
 }
 .wedge-btn > path {
-    fill: rgba(255, 255, 255, 0.04);
-    stroke: rgba(255, 255, 255, 0.09);
+    fill: var(--wheel-wedge-bg, rgba(255, 255, 255, 0.05));
+    stroke: var(--wheel-wedge-border, rgba(255, 255, 255, 0.12));
     stroke-width: 1.5px;
     transition: fill 0.12s ease, stroke 0.12s ease;
 }
 .wedge-btn:active > path, .wedge-btn.active > path {
-    fill: rgba(255, 255, 255, 0.18);
-    stroke: rgba(255, 255, 255, 0.30);
+    fill: var(--wheel-wedge-active-bg, rgba(255, 255, 255, 0.20));
+    stroke: var(--wheel-wedge-active-border, rgba(255, 255, 255, 0.35));
 }
 .wedge-btn text {
     user-select: none;
@@ -417,6 +428,18 @@ h1, h2, h3, .font-header {
 .icon-group {
     pointer-events: none;
     user-select: none;
+    color: inherit;
+}
+.icon-group polygon,
+.icon-group rect,
+.icon-group path:not([fill="none"]) {
+    fill: currentColor;
+    transition: fill 0.12s ease;
+}
+.icon-group [stroke="currentColor"],
+.icon-group polyline {
+    stroke: currentColor;
+    transition: stroke 0.12s ease;
 }
 
 /* Category filter chips */
@@ -454,35 +477,50 @@ h1, h2, h3, .font-header {
     background-color: var(--touchpad-bg, #ffffff);
     border-color: rgba(0, 0, 0, 0.08);
 }
+[data-skin="day"] .wedge-btn {
+    color: #374151 !important;
+}
 [data-skin="day"] .wedge-btn > path {
-    fill: rgba(0, 0, 0, 0.035);
-    stroke: rgba(0, 0, 0, 0.12);
+    fill: rgba(0, 0, 0, 0.04);
+    stroke: rgba(0, 0, 0, 0.14);
 }
 [data-skin="day"] .wedge-btn:active > path,
 [data-skin="day"] .wedge-btn.active > path {
-    fill: rgba(0, 0, 0, 0.10);
-    stroke: rgba(0, 0, 0, 0.25);
+    fill: rgba(0, 0, 0, 0.12);
+    stroke: rgba(0, 0, 0, 0.28);
 }
-[data-skin="day"] .icon-group [fill="#F3F4F6" i],
-[data-skin="day"] .icon-group [fill="#f3f4f6"] {
+[data-skin="day"] .icon-group polygon,
+[data-skin="day"] .icon-group rect,
+[data-skin="day"] .icon-group path:not([fill="none"]) {
     fill: #374151 !important;
 }
-[data-skin="day"] .icon-group [stroke="#F3F4F6" i],
-[data-skin="day"] .icon-group [stroke="#f3f4f6"] {
+[data-skin="day"] .icon-group [stroke="currentColor"],
+[data-skin="day"] .icon-group polyline {
     stroke: #374151 !important;
 }
 [data-skin="day"] #btn-hero-play circle {
     fill: #eff6ff;
     stroke: #2563eb;
 }
-[data-skin="day"] #hero-vector-play polygon {
-    fill: #2563eb;
+[data-skin="day"] #hero-vector-play polygon,
+[data-skin="day"] #hero-vector-pause rect {
+    fill: #2563eb !important;
 }
 [data-skin="day"] #hero-vector-play line {
     stroke: #2563eb;
 }
 [data-skin="day"] #hero-vector-ok polyline {
-    stroke: #2563eb;
+    stroke: #2563eb !important;
+}
+[data-skin="day"] #btn-hero-play:active #hero-vector-play polygon,
+[data-skin="day"] #btn-hero-play.pressed #hero-vector-play polygon,
+[data-skin="day"] #btn-hero-play:active #hero-vector-pause rect,
+[data-skin="day"] #btn-hero-play.pressed #hero-vector-pause rect {
+    fill: #FFFFFF !important;
+}
+[data-skin="day"] #btn-hero-play:active #hero-vector-ok polyline,
+[data-skin="day"] #btn-hero-play.pressed #hero-vector-ok polyline {
+    stroke: #FFFFFF !important;
 }
 [data-skin="day"] #mic-btn circle {
     fill: #f0fdf4;
@@ -502,6 +540,16 @@ h1, h2, h3, .font-header {
 [data-skin="day"] #hero-vector-close line {
     stroke: #dc2626;
 }
+[data-skin="day"] .util-btn {
+    color: #1f2937 !important;
+}
+[data-skin="day"] .util-btn svg {
+    stroke: #1f2937 !important;
+}
+[data-skin="day"] .util-btn svg [fill="currentColor"],
+[data-skin="day"] .util-btn svg circle {
+    fill: #1f2937 !important;
+}
 [data-skin="day"] .border-white\/10,
 [data-skin="day"] .border-white\/15 {
     border-color: rgba(0, 0, 0, 0.08);
@@ -513,11 +561,11 @@ h1, h2, h3, .font-header {
 [data-skin="day"] .text-gray-400 {
     color: #4b5563;
 }
-[data-skin="day"] .squircle-card {
+[data-skin="day"] .squircle-card.surface-glass {
     background: rgba(0, 0, 0, 0.04);
     border-color: rgba(0, 0, 0, 0.08);
 }
-[data-skin="day"] .squircle-card:active {
+[data-skin="day"] .squircle-card.surface-glass:active {
     background: rgba(0, 0, 0, 0.08);
 }
 [data-skin="day"] #scroll-thumb {
@@ -574,4 +622,506 @@ h1, h2, h3, .font-header {
 #scroll-thumb.active {
     background-color: var(--scroll-thumb-active, rgba(255, 255, 255, 0.6));
 }
+
+#hub-chips {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+#hub-chips::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+/* ==========================================================================
+   Hero Play Button Feedback & Playing Animation
+   ========================================================================== */
+
+#btn-hero-play {
+    transform-origin: 180px 65px;
+    transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1);
+    cursor: pointer;
+}
+#btn-hero-play circle {
+    fill: var(--hero-play-bg, #2563EB);
+    stroke: var(--hero-play-border, #60A5FA);
+    transition: fill 0.15s ease, stroke 0.15s ease, filter 0.15s ease;
+}
+#btn-hero-play:active,
+#btn-hero-play.pressed {
+    transform: scale(0.90);
+}
+#btn-hero-play:active circle,
+#btn-hero-play.pressed circle {
+    fill: #2563EB !important;
+    stroke: #93C5FD !important;
+    filter: drop-shadow(0 0 16px rgba(59, 130, 246, 0.95)) !important;
+}
+#btn-hero-play.is-playing circle {
+    fill: #1D4ED8 !important;
+    stroke: #60A5FA !important;
+    filter: drop-shadow(0 0 14px rgba(59, 130, 246, 0.85)) !important;
+    animation: pulse-play-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes pulse-play-glow {
+    0%, 100% {
+        filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.7));
+    }
+    50% {
+        filter: drop-shadow(0 0 20px rgba(59, 130, 246, 1));
+    }
+}
+#hero-vector-play polygon {
+    fill: var(--hero-play-icon, #FFFFFF);
+}
+#hero-vector-pause rect {
+    fill: var(--hero-play-icon, #FFFFFF);
+}
+#hero-vector-ok polyline {
+    stroke: var(--hero-play-icon, #FFFFFF);
+}
+
+/* ==========================================================================
+   Hero Mic Button & Floating Close App Button (Base Styles & Feedback)
+   ========================================================================== */
+
+#mic-btn {
+    cursor: pointer;
+    touch-action: none;
+    transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+#mic-btn circle {
+    fill: var(--hero-mic-bg, rgba(16, 185, 129, 0.16));
+    stroke: var(--hero-mic-border, #10B981);
+    transition: fill 0.15s ease, stroke 0.15s ease, filter 0.15s ease;
+}
+#hero-vector-mic rect {
+    fill: var(--hero-mic-icon, #10B981);
+    transition: fill 0.15s ease;
+}
+#hero-vector-mic path,
+#hero-vector-mic line {
+    stroke: var(--hero-mic-icon, #10B981);
+    transition: stroke 0.15s ease;
+}
+#mic-btn:active,
+#mic-btn.recording {
+    transform: scale(0.92);
+}
+#mic-btn:active circle,
+#mic-btn.recording circle {
+    fill: #10B981 !important;
+    stroke: #34D399 !important;
+    filter: drop-shadow(0 0 16px rgba(16, 185, 129, 0.95)) !important;
+}
+#mic-btn:active #hero-vector-mic rect,
+#mic-btn.recording #hero-vector-mic rect {
+    fill: #FFFFFF !important;
+}
+#mic-btn:active #hero-vector-mic path,
+#mic-btn:active #hero-vector-mic line,
+#mic-btn.recording #hero-vector-mic path,
+#mic-btn.recording #hero-vector-mic line {
+    stroke: #FFFFFF !important;
+}
+
+#btn-close-app {
+    cursor: pointer;
+    touch-action: none;
+    transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+#btn-close-app circle {
+    fill: var(--hero-close-bg, rgba(239, 68, 68, 0.16));
+    stroke: var(--hero-close-border, #EF4444);
+    transition: fill 0.15s ease, stroke 0.15s ease, filter 0.15s ease;
+}
+#hero-vector-close line {
+    stroke: var(--hero-close-icon, #EF4444);
+    transition: stroke 0.15s ease;
+}
+#btn-close-app:active {
+    transform: scale(0.90);
+}
+#btn-close-app:active circle {
+    fill: #EF4444 !important;
+    stroke: #F87171 !important;
+    filter: drop-shadow(0 0 16px rgba(239, 68, 68, 0.95)) !important;
+}
+#btn-close-app:active #hero-vector-close line {
+    stroke: #FFFFFF !important;
+}
+
+/* ==========================================================================
+   Café & Anime Skin Calibration
+   ========================================================================== */
+
+[data-skin="cafe"] .wedge-btn {
+    color: #f4ecdf !important;
+}
+[data-skin="cafe"] .wedge-btn > path {
+    fill: rgba(224, 163, 92, 0.10);
+    stroke: rgba(224, 163, 92, 0.28);
+}
+[data-skin="cafe"] .wedge-btn:active > path,
+[data-skin="cafe"] .wedge-btn.active > path {
+    fill: rgba(224, 163, 92, 0.28);
+    stroke: rgba(224, 163, 92, 0.60);
+}
+[data-skin="cafe"] .icon-group polygon,
+[data-skin="cafe"] .icon-group rect,
+[data-skin="cafe"] .icon-group path:not([fill="none"]) {
+    fill: #f4ecdf !important;
+}
+[data-skin="cafe"] .icon-group [stroke="currentColor"],
+[data-skin="cafe"] .icon-group polyline {
+    stroke: #f4ecdf !important;
+}
+[data-skin="cafe"] #btn-hero-play circle {
+    fill: #cd8b62;
+    stroke: #e0a35c;
+}
+[data-skin="cafe"] #hero-vector-play polygon,
+[data-skin="cafe"] #hero-vector-pause rect {
+    fill: #241505 !important;
+}
+[data-skin="cafe"] #hero-vector-ok polyline {
+    stroke: #241505 !important;
+}
+[data-skin="cafe"] #mic-btn circle {
+    fill: rgba(224, 163, 92, 0.20);
+    stroke: #e0a35c;
+}
+[data-skin="cafe"] #hero-vector-mic rect {
+    fill: #e0a35c;
+}
+[data-skin="cafe"] #hero-vector-mic path,
+[data-skin="cafe"] #hero-vector-mic line {
+    stroke: #e0a35c;
+}
+[data-skin="cafe"] #btn-close-app circle {
+    fill: rgba(239, 68, 68, 0.20);
+    stroke: #ef4444;
+}
+[data-skin="cafe"] #hero-vector-close line {
+    stroke: #ef4444;
+}
+[data-skin="cafe"] .util-btn {
+    color: #f4ecdf !important;
+}
+[data-skin="cafe"] .squircle-card.surface-glass {
+    background: rgba(224, 163, 92, 0.08);
+    border-color: rgba(224, 163, 92, 0.18);
+}
+[data-skin="cafe"] .squircle-card.surface-glass:active {
+    background: rgba(224, 163, 92, 0.16);
+}
+
+[data-skin="anime"] .wedge-btn {
+    color: #FFFFFF !important;
+}
+[data-skin="anime"] .wedge-btn > path {
+    fill: rgba(76, 29, 149, 0.48) !important;
+    stroke: rgba(216, 180, 254, 0.55) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+[data-skin="anime"] .wedge-btn:active > path,
+[data-skin="anime"] .wedge-btn.active > path {
+    fill: rgba(126, 34, 206, 0.70) !important;
+    stroke: rgba(233, 213, 255, 0.90) !important;
+}
+[data-skin="anime"] .icon-group polygon,
+[data-skin="anime"] .icon-group rect,
+[data-skin="anime"] .icon-group path:not([fill="none"]) {
+    fill: #FFFFFF !important;
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.90));
+}
+[data-skin="anime"] .icon-group [stroke="currentColor"],
+[data-skin="anime"] .icon-group polyline {
+    stroke: #FFFFFF !important;
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.90));
+}
+[data-skin="anime"] #btn-hero-play circle {
+    fill: #9333EA;
+    stroke: #C084FC;
+    filter: drop-shadow(0 0 14px rgba(168, 85, 247, 0.65));
+}
+[data-skin="anime"] #hero-vector-play polygon,
+[data-skin="anime"] #hero-vector-pause rect {
+    fill: #FFFFFF !important;
+}
+[data-skin="anime"] #hero-vector-ok polyline {
+    stroke: #FFFFFF !important;
+}
+[data-skin="anime"] #mic-btn circle {
+    fill: rgba(16, 185, 129, 0.38) !important;
+    stroke: #34D399 !important;
+    filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.5));
+}
+[data-skin="anime"] #hero-vector-mic rect {
+    fill: #FFFFFF !important;
+}
+[data-skin="anime"] #hero-vector-mic path,
+[data-skin="anime"] #hero-vector-mic line {
+    stroke: #34D399 !important;
+    stroke-width: 2.2px;
+}
+[data-skin="anime"] #btn-close-app circle {
+    fill: rgba(244, 63, 94, 0.38) !important;
+    stroke: #FB7185 !important;
+    filter: drop-shadow(0 0 10px rgba(244, 63, 94, 0.5));
+}
+[data-skin="anime"] #hero-vector-close line {
+    stroke: #FFFFFF !important;
+    stroke-width: 2.4px;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.8));
+}
+[data-skin="anime"] .util-btn {
+    color: #FFFFFF !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+}
+[data-skin="anime"] .util-btn svg {
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85));
+}
+[data-skin="anime"] #quick-dock {
+    background: rgba(17, 24, 39, 0.50);
+    border-color: rgba(217, 70, 239, 0.35);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+[data-skin="anime"] #quick-dock span {
+    color: #FFFFFF !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+[data-skin="anime"] #scroll-strip {
+    background: rgba(17, 24, 39, 0.45);
+    border-color: rgba(217, 70, 239, 0.35);
+    color: #E2E8F0;
+}
+[data-skin="anime"] #scroll-thumb {
+    background-color: rgba(217, 70, 239, 0.70);
+    box-shadow: 0 0 8px rgba(217, 70, 239, 0.5);
+}
+[data-skin="anime"] .squircle-card.surface-glass {
+    background: rgba(17, 24, 39, 0.50);
+    border-color: rgba(217, 70, 239, 0.30);
+}
+[data-skin="anime"] .squircle-card.surface-glass:active {
+    background: rgba(17, 24, 39, 0.75);
+}
+
+/* ==========================================================================
+   Skin Selection Swatches Indicator
+   ========================================================================== */
+
+.skin-swatch {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border-width: 2px;
+    border-style: solid;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.skin-swatch.active {
+    border-color: var(--accent, #3B82F6) !important;
+    box-shadow: 0 0 0 2px var(--accent, #3B82F6), 0 4px 14px rgba(0, 0, 0, 0.3);
+    transform: scale(1.03);
+}
+.skin-swatch-check {
+    margin-left: auto;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--accent, #3B82F6);
+}
+
+/* ==========================================================================
+   Voice Badge, Pin Badge & App Hub Edit Mode
+   ========================================================================== */
+
+.voice-badge {
+    position: absolute;
+    top: 3px;
+    left: 5px;
+    width: 17px;
+    height: 17px;
+    border-radius: 9999px;
+    background: #DC2626;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.45);
+    z-index: 15;
+    pointer-events: none;
+    border: 1.5px solid rgba(255, 255, 255, 0.25);
+}
+
+.pin-badge {
+    position: absolute;
+    top: 3px;
+    right: 5px;
+    width: 17px;
+    height: 17px;
+    border-radius: 9999px;
+    background: rgba(37, 99, 235, 0.95);
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.45);
+    z-index: 15;
+    pointer-events: none;
+    border: 1.5px solid rgba(255, 255, 255, 0.25);
+}
+
+.edit-action-btn {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 24px;
+    height: 24px;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.55);
+    z-index: 25;
+    cursor: pointer;
+    border: 1.5px solid rgba(255, 255, 255, 0.3);
+    transition: transform 0.12s ease;
+}
+.edit-action-btn:active {
+    transform: scale(0.88);
+}
+
+#btn-edit-apps {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: #E5E7EB;
+    transition: all 0.15s ease;
+}
+#btn-edit-apps:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #FFFFFF;
+}
+#btn-edit-apps.active {
+    background: #2563EB !important;
+    border-color: #60A5FA !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 0 12px rgba(37, 99, 235, 0.4);
+}
+[data-skin="day"] #btn-edit-apps {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.12);
+    color: #1F2937;
+}
+[data-skin="day"] #btn-edit-apps.active {
+    background: #2563EB !important;
+    border-color: #1D4ED8 !important;
+    color: #FFFFFF !important;
+}
+
+.is-hidden-app {
+    opacity: 0.42;
+    filter: grayscale(0.85);
+    transition: opacity 0.2s ease, filter 0.2s ease;
+}
+.is-hidden-app:hover {
+    opacity: 0.75;
+    filter: grayscale(0.3);
+}
+
+/* Hub Voice Tip Banner */
+#hub-voice-tip {
+    background: rgba(185, 28, 28, 0.15);
+    border-color: rgba(239, 68, 68, 0.35);
+    animation: fadeInVoiceTip 0.25s ease-out;
+}
+#voice-tip-icon-box {
+    background: rgba(220, 38, 38, 0.25);
+    border: 1px solid rgba(239, 68, 68, 0.45);
+    color: #F87171;
+}
+#voice-tip-title {
+    color: #FECACA;
+}
+#voice-tip-badge {
+    background: rgba(220, 38, 38, 0.25);
+    border: 1px solid rgba(239, 68, 68, 0.40);
+    color: #FCA5A5;
+}
+#voice-tip-cmd-box {
+    background: rgba(0, 0, 0, 0.40);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #FEE2E2;
+}
+[data-skin="day"] #hub-voice-tip {
+    background: #FEF2F2;
+    border-color: #FECACA;
+}
+[data-skin="day"] #voice-tip-icon-box {
+    background: #FEE2E2;
+    border-color: #FCA5A5;
+    color: #DC2626;
+}
+[data-skin="day"] #voice-tip-title {
+    color: #991B1B;
+}
+[data-skin="day"] #voice-tip-badge {
+    background: #FEE2E2;
+    border-color: #FCA5A5;
+    color: #B91C1C;
+}
+[data-skin="day"] #voice-tip-desc {
+    color: #4B5563 !important;
+}
+[data-skin="day"] #voice-tip-cmd-box {
+    background: #FFFFFF;
+    border-color: #FCA5A5;
+    color: #991B1B;
+}
+
+@keyframes fadeInVoiceTip {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ==========================================================================
+   App Hub Semantic Markers & Action Buttons
+   ========================================================================== */
+
+.app-item {
+    position: relative;
+}
+
+.edit-delete-btn {
+    background-color: #DC2626;
+    color: #FFFFFF;
+}
+
+.edit-hide-btn {
+    background-color: #D97706;
+    color: #FFFFFF;
+}
+
+.edit-unhide-btn {
+    background-color: #059669;
+    color: #FFFFFF;
+}
+
+.skin-text-title {
+    color: var(--text-main, #FFFFFF);
+}
+
+
 

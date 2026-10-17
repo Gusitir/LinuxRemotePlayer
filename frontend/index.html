@@ -141,8 +141,8 @@
             <div id="quick-dock" class="surface-glass rounded-2xl p-1.5 flex items-center justify-around gap-1">
                 <!-- Dynamically populated from lrp_pinned_apps -->
                 <button id="more-btn" onclick="openDrawer()" class="flex-1 py-1 flex flex-col items-center gap-1 rounded-xl active:bg-white/10 transition" title="Más Apps">
-                    <div class="w-10 h-10 rounded-xl surface-glass flex items-center justify-center border border-white/10 shadow-sm text-gray-300">
-                        <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+                    <div class="w-11 h-11 rounded-xl surface-glass flex items-center justify-center border border-white/10 shadow-sm text-gray-300">
+                        <svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
                     </div>
                     <span class="text-[10px] font-medium text-gray-300">Más Apps</span>
                 </button>
@@ -220,9 +220,9 @@
             </div>
         </div>
 
-        <!-- Mantatomic Radial Wheel System -->
+        <!-- Mantatomic Radial Wheel System (Symmetric Semicircle with Boundary Lines) -->
         <div class="px-2 pt-1 relative select-none flex justify-center items-center" style="padding-bottom: max(env(safe-area-inset-bottom), 8px);">
-            <svg viewBox="0 0 360 250" class="w-full max-w-[390px] h-auto overflow-visible" style="touch-action: none;">
+            <svg viewBox="-15 0 390 250" class="w-full max-w-[390px] h-auto overflow-visible" style="touch-action: none;">
                 <defs>
                     <filter id="glow-blue" x="-50%" y="-50%" width="200%" height="200%">
                         <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur" />
@@ -249,93 +249,93 @@
 
                 <!-- Outer Left: Seek + (Sup), Seek - (Med), Prev Track (Inf) -->
                 <g class="wedge-btn" onclick="sendKey('KEY_RIGHT')" title="Avanzar 10s">
-                    <path d="M 153.5 112.7 L 137.3 56.0 A 155 155 0 0 0 76.3 89.8 L 115.8 133.7 A 96 96 0 0 1 153.5 112.7 Z" />
+                    <path d="M 67.04 47.53 A 202 202 0 0 1 127.72 19.88 L 149.98 102.95 A 116 116 0 0 0 115.13 118.83 Z" />
                     <g class="icon-group">
-                        <polygon points="112,94 119,99 112,104" fill="#F3F4F6"/>
-                        <polygon points="119,94 126,99 119,104" fill="#F3F4F6"/>
+                        <polygon points="107,65 114,70 107,75" fill="currentColor" />
+                        <polygon points="114,65 121,70 114,75" fill="currentColor" />
                     </g>
                 </g>
                 <g class="wedge-btn" onclick="sendKey('KEY_LEFT')" title="Retroceder 10s">
-                    <path d="M 112.1 137.1 L 70.4 95.4 A 155 155 0 0 0 33.4 154.5 L 89.2 173.7 A 96 96 0 0 1 112.1 137.1 Z" />
+                    <path d="M 18.68 93.43 A 202 202 0 0 1 67.04 47.53 L 115.13 118.83 A 116 116 0 0 0 87.36 145.19 Z" />
                     <g class="icon-group">
-                        <polygon points="74,137 67,142 74,147" fill="#F3F4F6"/>
-                        <polygon points="81,137 74,142 81,147" fill="#F3F4F6"/>
+                        <polygon points="75,95 68,100 75,105" fill="currentColor" />
+                        <polygon points="68,95 61,100 68,105" fill="currentColor" />
                     </g>
                 </g>
                 <g class="wedge-btn" onclick="sendKey('KEY_PREVIOUSSONG')" title="Pista anterior">
-                    <path d="M 87.7 178.5 L 31.0 162.3 A 155 155 0 0 0 27.4 231.9 L 85.5 221.7 A 96 96 0 0 1 87.7 178.5 Z" />
+                    <path d="M -12.11 152.58 A 202 202 0 0 1 18.68 93.43 L 87.36 145.19 A 116 116 0 0 0 69.68 179.15 Z" />
                     <g class="icon-group">
-                        <rect x="47" y="197" width="2.5" height="10" rx="0.5" fill="#F3F4F6"/>
-                        <polygon points="59,197 51,202 59,207" fill="#F3F4F6"/>
+                        <rect x="29" y="137" width="2.5" height="10" rx="0.5" fill="currentColor" />
+                        <polygon points="41,137 33,142 41,147" fill="currentColor" />
                     </g>
                 </g>
 
                 <!-- Outer Right: Fullscreen (Sup), Vol + (Med), Vol - (Inf-Sup), Mute (Inf-Inf) -->
                 <g class="wedge-btn" onclick="sendKey('KEY_F11')" title="Pantalla Completa">
-                    <path d="M 244.2 133.7 L 283.7 89.8 A 155 155 0 0 0 222.7 56.0 L 206.5 112.7 A 96 96 0 0 1 244.2 133.7 Z" />
+                    <path d="M 232.28 19.88 A 202 202 0 0 1 278.7 38.76 L 236.68 113.79 A 116 116 0 0 0 210.02 102.95 Z" />
                     <g class="icon-group">
-                        <path fill="none" stroke="#F3F4F6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
-                              d="M 236 98 L 236 94 L 240 94 M 242 94 L 246 94 L 246 98 M 236 100 L 236 104 L 240 104 M 242 104 L 246 104 L 246 100"/>
+                        <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+                              d="M 235 63 L 232 63 L 232 66 M 245 63 L 248 63 L 248 66 M 232 71 L 232 74 L 235 74 M 248 71 L 248 74 L 245 74"/>
                     </g>
                 </g>
                 <g class="wedge-btn" onclick="sendMedia('KEY_VOLUMEUP')" title="Subir Volumen">
-                    <path d="M 270.8 173.7 L 326.6 154.5 A 155 155 0 0 0 289.6 95.4 L 247.9 137.1 A 96 96 0 0 1 270.8 173.7 Z" />
+                    <path d="M 278.7 38.76 A 202 202 0 0 1 319.05 68.47 L 259.85 130.86 A 116 116 0 0 0 236.68 113.79 Z" />
                     <g class="icon-group">
-                        <path fill="#F3F4F6" d="M 278 140 L 282 137 L 282 147 L 278 144 H 275 V 140 Z"/>
-                        <path fill="none" stroke="#F3F4F6" stroke-width="1.6" stroke-linecap="round" d="M 285 139 A 4 4 0 0 1 285 145"/>
-                        <path fill="none" stroke="#F3F4F6" stroke-width="1.6" stroke-linecap="round" d="M 288 137 A 7 7 0 0 1 288 147"/>
-                        <path fill="none" stroke="#F3F4F6" stroke-width="1.8" stroke-linecap="round" d="M 293 142 H 297 M 295 140 V 144"/>
+                        <path d="M 264 84 L 268 81 L 268 93 L 264 90 H 261 V 84 Z" fill="currentColor"/>
+                        <path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M 271 83 A 4 4 0 0 1 271 91"/>
+                        <path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M 274 81 A 7 7 0 0 1 274 93"/>
+                        <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M 278 87 H 282 M 280 85 V 89"/>
                     </g>
                 </g>
-                <!-- Divided Bottom-Right: Vol - (Sub-cuña superior) -->
                 <g class="wedge-btn" onclick="sendMedia('KEY_VOLUMEDOWN')" title="Bajar Volumen">
-                    <path d="M 275.9 200.0 L 334.8 196.9 A 155 155 0 0 0 329.0 162.3 L 272.3 178.5 A 96 96 0 0 1 275.9 200.0 Z" />
+                    <path d="M 319.05 68.47 A 202 202 0 0 1 350.84 107.21 L 278.1 153.1 A 116 116 0 0 0 259.85 130.86 Z" />
                     <g class="icon-group">
-                        <path fill="#F3F4F6" d="M 291 182 L 295 179 L 295 189 L 291 186 H 288 V 182 Z"/>
-                        <path fill="none" stroke="#F3F4F6" stroke-width="1.6" stroke-linecap="round" d="M 298 181 A 4 4 0 0 1 298 187"/>
-                        <path fill="none" stroke="#F3F4F6" stroke-width="1.8" stroke-linecap="round" d="M 303 184 H 308"/>
+                        <path d="M 293 111 L 297 108 L 297 120 L 293 117 H 290 V 111 Z" fill="currentColor"/>
+                        <path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M 300 110 A 4 4 0 0 1 300 118"/>
+                        <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M 305 114 H 310"/>
                     </g>
                 </g>
-                <!-- Divided Bottom-Right: Mute (Sub-cuña inferior) -->
                 <g class="wedge-btn" onclick="sendMedia('KEY_MUTE')" title="Silenciar (Mute)">
-                    <path d="M 273.5 226.6 L 331.0 239.9 A 155 155 0 0 0 335.0 202.3 L 276.0 203.3 A 96 96 0 0 1 273.5 226.6 Z" />
+                    <path d="M 350.84 107.21 A 202 202 0 0 1 372.11 152.58 L 290.32 179.15 A 116 116 0 0 0 278.1 153.1 Z" />
                     <g class="icon-group">
-                        <path fill="#F3F4F6" d="M 294 218 L 298 215 L 298 225 L 294 222 H 291 V 218 Z"/>
-                        <path fill="none" stroke="#EF4444" stroke-width="1.8" stroke-linecap="round" d="M 303 217 L 309 223 M 309 217 L 303 223"/>
+                        <path d="M 314 144 L 318 141 L 318 153 L 314 150 H 311 V 144 Z" fill="currentColor"/>
+                        <path fill="none" stroke="#EF4444" stroke-width="1.8" stroke-linecap="round" d="M 323 144 L 329 150 M 329 144 L 323 150"/>
                     </g>
                 </g>
 
                 <!-- Inner Ring: Left Nav (<), Home (Left-Bottom), Back (Right) -->
                 <g class="wedge-btn" onclick="sendKey('KEY_LEFT')" title="Navegar Izquierda">
-                    <path d="M 142.2 175.5 L 110.7 150.8 A 88 88 0 0 1 133.4 130.4 L 154.6 164.3 A 48 48 0 0 0 142.2 175.5 Z" />
+                    <path d="M 105.44 126.14 A 116 116 0 0 1 149.98 102.95 L 166.02 162.84 A 54 54 0 0 0 145.29 173.63 Z" />
                     <g class="icon-group">
-                        <polyline points="138,146 133,150 138,154" fill="none" stroke="#F3F4F6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <polyline points="144,134 138,140 144,146" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
                     </g>
                 </g>
                 <g class="wedge-btn" onclick="killKiosk()" title="Home / Escritorio">
-                    <path d="M 133.4 193.4 L 94.6 183.7 A 88 88 0 0 1 107.1 155.8 L 140.2 178.2 A 48 48 0 0 0 133.4 193.4 Z" />
+                    <path d="M 74.87 165.98 A 116 116 0 0 1 105.44 126.14 L 145.29 173.63 A 54 54 0 0 0 131.06 192.18 Z" />
                     <g class="icon-group">
-                        <path fill="#F3F4F6" d="M 118 169 L 112 174 H 114 V 181 H 122 V 174 H 124 Z"/>
+                        <path d="M 113 158 L 107 163 H 109 V 170 H 117 V 163 H 119 Z" fill="currentColor"/>
                     </g>
                 </g>
                 <g class="wedge-btn" onclick="sendCombo('browser_back')" title="Atrás">
-                    <path d="M 226.6 193.4 L 265.4 183.7 A 88 88 0 0 0 226.6 130.4 L 205.4 164.3 A 48 48 0 0 1 226.6 193.4 Z" />
+                    <path d="M 210.02 102.95 A 116 116 0 0 1 285.13 165.98 L 228.94 192.18 A 54 54 0 0 0 193.98 162.84 Z" />
                     <g class="icon-group">
-                        <path fill="none" stroke="#F3F4F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                              d="M 239 174 V 171 A 5 5 0 0 0 230 168 L 227 168 M 230 171 L 227 168 L 230 165"/>
+                        <path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"
+                              d="M 241 156 V 150 A 6 6 0 0 0 235 144 L 227 144 M 231 140 L 226 144 L 231 148"/>
                     </g>
                 </g>
 
                 <!-- Hero Play / Pause / OK (Top Center) -->
                 <g id="btn-hero-play" class="wedge-btn" onclick="onHeroCenterPress()" title="Play / Pausa o OK">
-                    <circle cx="180" cy="65" r="28" fill="#0D1A2D" stroke="#3B82F6" stroke-width="2" class="glow-blue" />
+                    <circle cx="180" cy="65" r="28" stroke-width="2" class="glow-blue" />
                     <g id="hero-vector-play">
-                        <polygon points="172,57 184,65 172,73" fill="#60A5FA"/>
-                        <line x1="187" y1="58" x2="187" y2="72" stroke="#60A5FA" stroke-width="2.2" stroke-linecap="round"/>
-                        <line x1="191" y1="58" x2="191" y2="72" stroke="#60A5FA" stroke-width="2.2" stroke-linecap="round"/>
+                        <polygon points="174,54 191,65 174,76" fill="currentColor" />
+                    </g>
+                    <g id="hero-vector-pause" class="hidden">
+                        <rect x="172" y="55" width="5" height="20" rx="2" fill="currentColor"/>
+                        <rect x="183" y="55" width="5" height="20" rx="2" fill="currentColor"/>
                     </g>
                     <g id="hero-vector-ok" class="hidden">
-                        <polyline points="173,65 178,70 188,59" fill="none" stroke="#60A5FA" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                        <polyline points="173,65 178,70 188,59" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
                     </g>
                     <text id="hero-center-icon" class="hidden">⏯</text>
                 </g>
@@ -343,22 +343,22 @@
                 <!-- Hero Mic Button (Bottom Center) -->
                 <g id="mic-row">
                     <g id="mic-btn" class="wedge-btn" title="Voz (Mantén pulsado para hablar)">
-                        <circle cx="180" cy="205" r="28" fill="#09261A" stroke="#10B981" stroke-width="2" class="glow-green" />
+                        <circle cx="180" cy="205" r="26" stroke-width="2" fill="rgba(16, 185, 129, 0.16)" stroke="#10B981" class="glow-green" />
                         <g id="hero-vector-mic">
-                            <rect x="176.5" y="197" width="7" height="11" rx="3.5" fill="#34D399"/>
-                            <path d="M 173 203 C 173 209 187 209 187 203" fill="none" stroke="#34D399" stroke-width="1.8" stroke-linecap="round"/>
-                            <line x1="180" y1="208" x2="180" y2="213" stroke="#34D399" stroke-width="1.8" stroke-linecap="round"/>
-                            <line x1="176" y1="213" x2="184" y2="213" stroke="#34D399" stroke-width="1.8" stroke-linecap="round"/>
+                            <rect x="176.5" y="197" width="7" height="11" rx="3.5" fill="#10B981" />
+                            <path d="M 173 203 C 173 209 187 209 187 203" fill="none" stroke="#10B981" stroke-width="1.8" stroke-linecap="round"/>
+                            <line x1="180" y1="208" x2="180" y2="213" stroke="#10B981" stroke-width="1.8" stroke-linecap="round"/>
+                            <line x1="176" y1="213" x2="184" y2="213" stroke="#10B981" stroke-width="1.8" stroke-linecap="round"/>
                         </g>
                     </g>
                 </g>
 
                 <!-- Floating Close App 'X' (Top Right) -->
                 <g id="btn-close-app" class="wedge-btn" onclick="killKiosk()" title="Cerrar App Actual">
-                    <circle cx="324" cy="28" r="18" fill="#2B0D0D" stroke="#EF4444" stroke-width="1.8" class="glow-red" />
+                    <circle cx="324" cy="28" r="18" stroke-width="1.8" fill="rgba(239, 68, 68, 0.16)" stroke="#EF4444" class="glow-red" />
                     <g id="hero-vector-close">
-                        <line x1="318" y1="22" x2="330" y2="34" stroke="#F87171" stroke-width="2.2" stroke-linecap="round"/>
-                        <line x1="330" y1="22" x2="318" y2="34" stroke="#F87171" stroke-width="2.2" stroke-linecap="round"/>
+                        <line x1="318" y1="22" x2="330" y2="34" stroke="#EF4444" stroke-width="2.2" stroke-linecap="round"/>
+                        <line x1="330" y1="22" x2="318" y2="34" stroke="#EF4444" stroke-width="2.2" stroke-linecap="round"/>
                     </g>
                 </g>
             </svg>
@@ -378,10 +378,16 @@
     <!-- App drawer (slide-up): LRP App Hub -->
     <div id="app-drawer" class="drawer">
         <div class="flex items-center justify-between p-4 border-b border-gray-700/80">
-            <h2 class="text-lg font-bold text-blue-400">Aplicaciones &amp; TV</h2>
-            <button onclick="closeDrawer()" class="ctrl-round" title="Cerrar">
-                <svg viewBox="0 0 24 24" fill="none" class="icon"><g transform="scale(1.33333)"><polyline points="15.25 6.5 9 12.75 2.75 6.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></polyline></g></svg>
-            </button>
+            <h2 class="text-base font-bold skin-text-title tracking-tight font-header">Aplicaciones &amp; TV</h2>
+            <div class="flex items-center gap-2">
+                <button id="btn-edit-apps" onclick="toggleEditAppsMode()" class="px-3 py-1.5 rounded-xl text-xs font-semibold surface-glass border border-white/10 text-gray-300 hover:text-white active:scale-95 transition shadow-sm flex items-center gap-1.5" title="Ocultar o borrar apps">
+                    <svg id="btn-edit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3.5 h-3.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    <span id="btn-edit-label">Editar</span>
+                </button>
+                <button onclick="closeDrawer()" class="ctrl-round" title="Cerrar">
+                    <svg viewBox="0 0 24 24" fill="none" class="icon"><g transform="scale(1.33333)"><polyline points="15.25 6.5 9 12.75 2.75 6.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></polyline></g></svg>
+                </button>
+            </div>
         </div>
         <div class="flex-1 overflow-y-auto p-4 space-y-4">
             <!-- Buscador en tiempo real -->
@@ -397,21 +403,38 @@
             <!-- Chips de Categoría -->
             <div id="hub-chips" class="flex gap-2 overflow-x-auto pb-1 select-none">
                 <button onclick="setAppHubCategory('all')" class="hub-chip active" data-category="all">Todas</button>
+                <button onclick="setAppHubCategory('voice')" class="hub-chip" data-category="voice">🎙 Con Voz</button>
                 <button onclick="setAppHubCategory('video')" class="hub-chip" data-category="video">🎬 Cine &amp; Series</button>
                 <button onclick="setAppHubCategory('music')" class="hub-chip" data-category="music">🎵 Música</button>
                 <button onclick="setAppHubCategory('web')" class="hub-chip" data-category="web">🌐 En vivo &amp; Web</button>
             </div>
 
-            <!-- Mis Aplicaciones -->
-            <div>
-                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Mis Aplicaciones</p>
-                <div id="drawer-grid" class="grid grid-cols-4 gap-3"></div>
+            <!-- Voice Tip Banner (outside the grid, full width) -->
+            <div id="hub-voice-tip" class="hidden p-3 rounded-2xl border transition-all duration-200 shadow-sm">
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5" id="voice-tip-icon-box">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="font-bold text-xs" id="voice-tip-title">Comando de Voz para YouTube</span>
+                            <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" id="voice-tip-badge">Voz 100% Local</span>
+                        </div>
+                        <p class="text-xs text-gray-300 mt-1" id="voice-tip-desc">
+                            Mantén presionado el botón central de <strong class="text-red-400">Micrófono 🎙</strong> y di:
+                        </p>
+                        <div class="mt-2 px-3 py-1.5 rounded-xl border flex items-center gap-2 font-mono text-xs" id="voice-tip-cmd-box">
+                            <span class="text-sm">🗣</span>
+                            <span>"Buscar <strong>[canción o película]</strong>"</span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <!-- Catálogo 1-Tap Add -->
+            <!-- Mis Aplicaciones -->
             <div>
-                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Disponibles para añadir (1-Tap)</p>
-                <div id="catalog-grid" class="grid grid-cols-2 gap-2"></div>
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Aplicaciones Disponibles</p>
+                <div id="drawer-grid" class="grid grid-cols-4 gap-3"></div>
             </div>
 
             <!-- Custom URL trigger & panel -->
@@ -500,53 +523,33 @@
                     </div>
                 </details>
 
-                <!-- LICENCIA -->
-                <details class="skin-bg-panel rounded-xl border border-gray-700 group overflow-hidden w-full">
-                    <summary class="p-3 font-semibold flex justify-between items-center cursor-pointer select-none">
-                        <span>Licencia</span>
-                        <svg viewBox="0 0 24 24" fill="none" class="w-4 h-4 transition-transform group-open:rotate-180"><g transform="scale(1.33333)"><polyline points="15.25 6.5 9 12.75 2.75 6.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></polyline></g></svg>
-                    </summary>
-                    <div class="p-3 pt-0 border-t border-gray-700 mt-2">
-                        <div id="license-unlicensed" class="flex flex-col gap-2 pt-2">
-                            <div class="flex gap-2">
-                                <input id="license-input" type="text" class="flex-1 min-w-0 skin-bg-btn border border-gray-700 rounded px-2 py-1 text-sm outline-none font-mono skin-text-main" placeholder="LRP-XXXX-XXXX-XXXX">
-                                <button onclick="activateLicenseKey()" class="shrink-0 skin-accent-green skin-text-on-green px-3 py-1 rounded text-sm font-bold opacity-90 hover:opacity-100">Activar</button>
-                            </div>
-                            <p id="license-status-text" class="text-xs skin-text-dim">Sin licencia</p>
-                        </div>
-                        <div id="license-licensed" class="hidden flex-col gap-2 pt-2">
-                            <div class="bg-green-500/20 text-green-400 font-bold px-3 py-2 rounded text-sm flex items-center gap-2">
-                                <svg viewBox="0 0 24 24" fill="none" class="w-4 h-4"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                                Licencia activa (lifetime)
-                            </div>
-                            <p id="license-info-text" class="text-xs skin-text-dim break-all"></p>
-                        </div>
-                    </div>
-                </details>
-
                 <!-- TEMAS -->
-                <details class="skin-bg-panel rounded-xl border border-gray-700 group overflow-hidden w-full">
+                <details open class="skin-bg-panel rounded-xl border border-gray-700 group overflow-hidden w-full">
                     <summary class="p-3 font-semibold flex justify-between items-center cursor-pointer select-none">
                         <span>Temas</span>
                         <svg viewBox="0 0 24 24" fill="none" class="w-4 h-4 transition-transform group-open:rotate-180"><g transform="scale(1.33333)"><polyline points="15.25 6.5 9 12.75 2.75 6.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></polyline></g></svg>
                     </summary>
                     <div class="p-3 pt-0 border-t border-gray-700 mt-2">
                         <div class="grid grid-cols-2 gap-2 pt-2">
-                            <button onclick="setSkin('day')" class="skin-swatch" style="background:#f6f2ea;border-color:#d5cec0" title="Day — claro">
+                            <button onclick="setSkin('day')" class="skin-swatch" data-skin="day" style="background:#f6f2ea;border-color:#d5cec0" title="Day — claro">
                                 <span class="skin-swatch-dot" style="background:rgba(37,99,235,0.18)"><i style="background:#2563eb"></i></span>
                                 <span class="skin-swatch-label" style="color:#292319">Day</span>
+                                <span class="skin-swatch-check hidden">✓</span>
                             </button>
-                            <button onclick="setSkin('night')" class="skin-swatch" style="background:#0b1220;border-color:#263650" title="Night — navy">
+                            <button onclick="setSkin('night')" class="skin-swatch" data-skin="night" style="background:#0b1220;border-color:#263650" title="Night — navy">
                                 <span class="skin-swatch-dot" style="background:rgba(59,130,246,0.20)"><i style="background:#3b82f6"></i></span>
                                 <span class="skin-swatch-label" style="color:#e7edf6">Night</span>
+                                <span class="skin-swatch-check hidden">✓</span>
                             </button>
-                            <button onclick="setSkin('cafe')" class="skin-swatch" style="background:#261b12;border-color:#5c4531" title="Café — madera">
+                            <button onclick="setSkin('cafe')" class="skin-swatch" data-skin="cafe" style="background:#261b12;border-color:#5c4531" title="Café — madera">
                                 <span class="skin-swatch-dot" style="background:rgba(224,163,92,0.20)"><i style="background:#e0a35c"></i></span>
                                 <span class="skin-swatch-label" style="color:#f4ecdf">Café</span>
+                                <span class="skin-swatch-check hidden">✓</span>
                             </button>
-                            <button onclick="setSkin('anime')" class="skin-swatch" style="background:linear-gradient(to top right,#3b0764,#111827 60%);border-color:#86198f" title="Anime — fondo ilustrado">
+                            <button onclick="setSkin('anime')" class="skin-swatch" data-skin="anime" style="background:linear-gradient(to top right,#3b0764,#111827 60%);border-color:#86198f" title="Anime — fondo ilustrado">
                                 <span class="skin-swatch-dot" style="background:rgba(217,70,239,0.22)"><i style="background:#e879f9"></i></span>
                                 <span class="skin-swatch-label" style="color:#f5d0fe">Anime</span>
+                                <span class="skin-swatch-check hidden">✓</span>
                             </button>
                         </div>
                     </div>
@@ -607,10 +610,6 @@
                             <details class="bg-black/20 rounded p-2">
                                 <summary class="font-bold cursor-pointer">Emparejar un teléfono</summary>
                                 <p class="mt-1 skin-text-dim">En la TV, ve a LRP y anota el código. Ingresa el código en tu móvil para emparejarlos en la red local.</p>
-                            </details>
-                            <details class="bg-black/20 rounded p-2">
-                                <summary class="font-bold cursor-pointer">Activar licencia</summary>
-                                <p class="mt-1 skin-text-dim">Pega tu clave en la categoría Licencia para desbloquear Temas Pro y control por Voz con IA.</p>
                             </details>
                             <button onclick="relaunchTour()" class="bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 px-3 py-2 rounded text-xs font-bold text-center block w-full mt-2">
                                 Volver a ver la guía inicial
