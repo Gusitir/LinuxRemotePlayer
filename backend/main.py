@@ -21,7 +21,12 @@ try:
     import segno
 except ImportError:
     segno = None
+
 import auth
+try:
+    import ota_security
+except ImportError:
+    from backend import ota_security
 
 try:
     from config import (
@@ -164,11 +169,9 @@ client_disconnected_during_media_time = 0.0
 
 def is_newer_version(current_ver: str, latest_ver: str) -> bool:
     try:
-        c_parts = [int(x) for x in current_ver.lstrip('v').split('.')]
-        l_parts = [int(x) for x in latest_ver.lstrip('v').split('.')]
-        return l_parts > c_parts
+        return ota_security.is_version_newer(latest_ver, current_ver)
     except Exception:
-        return latest_ver != current_ver
+        return False
 
 
 async def check_and_launch_status_panel() -> bool:
@@ -702,20 +705,31 @@ async def check_update():
             res = await client.get(manifest_url)
         if res.status_code == 200:
             data = res.json()
-            latest = data.get("version", "").lstrip('v')
+            latest = str(data.get("version", "")).lstrip('v')
             if latest:
-                update_avail = is_newer_version(VERSION, latest)
+                update_avail = ota_security.is_version_newer(latest, VERSION)
+                sig_valid = ota_security.verify_manifest_signature(data)
+                has_sig = "signature" in data and bool(data["signature"])
+                allow_unsigned = os.getenv("LRP_ALLOW_UNSIGNED_OTA") == "1"
+
+                if has_sig and not sig_valid:
+                    update_avail = False
+                elif not has_sig and not allow_unsigned:
+                    update_avail = False
+
                 return {
                     "current": VERSION,
-                    "latest": latest,
-                    "update_available": update_avail
+                    "latest": latest if (update_avail or allow_unsigned) else None,
+                    "update_available": update_avail,
+                    "signature_valid": sig_valid
                 }
     except Exception as e:
         logger.warning(f"Failed to check update manifest: {e}")
     return {
         "current": VERSION,
         "latest": None,
-        "update_available": False
+        "update_available": False,
+        "signature_valid": False
     }
 
 
