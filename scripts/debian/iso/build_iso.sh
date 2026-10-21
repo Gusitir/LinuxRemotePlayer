@@ -130,6 +130,8 @@ cp "$SCRIPT_DIR/package-lists/lrp-appliance.list.chroot" "$WORKDIR/config/packag
 # 2. Hooks
 cp "$SCRIPT_DIR/hooks/99-lrp-setup.chroot" "$WORKDIR/config/hooks/live/99-lrp-setup.chroot"
 chmod +x "$WORKDIR/config/hooks/live/99-lrp-setup.chroot"
+cp "$SCRIPT_DIR/hooks/99-lrp-live-links.binary" "$WORKDIR/config/hooks/live/99-lrp-live-links.binary"
+chmod +x "$WORKDIR/config/hooks/live/99-lrp-live-links.binary"
 
 # 3. Bootloaders (GRUB & ISOLINUX)
 cp "$SCRIPT_DIR/config/grub.cfg" "$WORKDIR/config/bootloaders/grub-pc/grub.cfg"
