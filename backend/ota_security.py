@@ -12,7 +12,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ed25519
 
 DEFAULT_OTA_PUBLIC_KEY_PEM = """-----BEGIN PUBLIC KEY-----
-MCowBQYDK2VwAyEANS6cE+yWj7iOFbEO+B3DsLY40Kla8nCLgoPnh+FSywI=
+MCowBQYDK2VwAyEAgeE1cr9Aibra/Xnh4Xfh6rVd9Rv46pO4689BNLqUqSg=
 -----END PUBLIC KEY-----
 """
 
