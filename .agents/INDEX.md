@@ -1,11 +1,11 @@
 # INDEX - navegacion del repositorio
 
 ```yaml
-last_reindexed_at: 2026-08-21T22:28:50-05:00 (historical; no new reindex claim)
-source_commit: 407bb66
+last_reindexed_at: 2026-10-17T07:30:00-05:00
+source_commit: 50da3ca
 dirty: true
-active_plan: none
-dirty_state: "backup receipt control edits: APPCORE.md, CONTEXT.md, CURRENT.md, INDEX.md; lochi.png preexistente intacto; no reindex claim"
+active_plan: PLAN_v2.0-appliance.md
+dirty_state: "PLAN completed: PLAN_v2.0-appliance.md (Cerrado APTO, G4 APTO); T-132..T-142 apto; 283 tests passing"
 ```
 
 El estado activo pertenece a [`CURRENT.md`](CURRENT.md), no a este indice.
@@ -17,11 +17,13 @@ El estado activo pertenece a [`CURRENT.md`](CURRENT.md), no a este indice.
 - [`CURRENT.md`](CURRENT.md): estado vivo y proxima accion.
 - [`CONTEXT.md`](CONTEXT.md): decisiones y handoffs append-only.
 - [`INDEX.md`](INDEX.md): este mapa de navegacion.
-- [`TESTING.md`](TESTING.md): checks vivos del ciclo BETA-STT, humanos o no disponibles.
+- [`TESTING.md`](TESTING.md): checks vivos de DEBIAN-FOUNDATION, humanos o no disponibles.
 - [`WORKFLOW.md`](WORKFLOW.md): extension subordinada de agents-workflow v3.
 
 ## PLANES Y EXTENSIONES
 
+- [`PLAN_v2.0-appliance.md`](PLAN_v2.0-appliance.md): plan v3 completado (LRP OS Appliance & Local Voice, T-132..T-142 apto, G4 APTO).
+- [`PLAN_v1.99.2-debian-htpc-foundation.md`](PLAN_v1.99.2-debian-htpc-foundation.md): plan cerrado DEBIAN-FOUNDATION, veredicto `APTO`.
 - [`archive/PLAN_v1.99-beta-foundation.md`](archive/PLAN_v1.99-beta-foundation.md): plan cerrado
   BETA-FOUNDATION, veredicto `APTO`.
 - [`PLAN_v2.0-ph21-stt.md`](PLAN_v2.0-ph21-stt.md): draft superseded antes de aprobación.
@@ -34,7 +36,9 @@ El estado activo pertenece a [`CURRENT.md`](CURRENT.md), no a este indice.
 
 ## MAPAS Y DOCUMENTACION
 
-- [`APPCORE.md`](APPCORE.md): mapa factual de arquitectura estable 1.9.1 y superficies beta 1.99.1.
+- [`APPCORE.md`](APPCORE.md): mapa factual del codigo 1.99.2 / 2.0.0-dev (base 1.9.1).
+- [`../AUDITORIA_ASTRA.md`](../AUDITORIA_ASTRA.md): auditoría de seguridad y resiliencia (ASTRA-01..04 remediados).
+- [`../NEWUI.MD`](../NEWUI.MD): especificación de diseño canónico Mobile PWA 2.0 (Mantatomic Wheel).
 - [`docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md): forma del sistema y limites.
 - [`docs/DEVELOPING.md`](../docs/DEVELOPING.md): desarrollo, gates y release.
 - [`README.md`](../README.md): entrada publica del repositorio.
@@ -42,18 +46,28 @@ El estado activo pertenece a [`CURRENT.md`](CURRENT.md), no a este indice.
 ## PRODUCTO CLAVE
 
 - `backend/run.py`, `backend/main.py`: entrypoint HTTPS/Uvicorn, REST, WebSocket y static mount.
-- `backend/auth.py`, `backend/ai_pipeline.py`: pairing, licencia cacheada y proxy de voz.
+- `backend/auth.py`: gestión de token de pairing (ASTRA-02 revocación inmediata).
+- `backend/ota_security.py`: verificación criptográfica asimétrica Ed25519 y protección anti-downgrade (T-142).
+- `backend/ai_pipeline.py`: orquestador de voz local (whisper.cpp AVX1 + local_intent), sin proxy cloud.
+- `backend/local_intent.py`: motor NLU local Needle 2 (regex/pattern matching en CPU, <0.25ms).
+- `backend/system_platform.py`: endpoints `/api/system/*` (audio PipeWire, Wi-Fi, BT, energía, display).
 - `backend/input_emulator.py`, `backend/kiosk.py`, `backend/discovery.py`, `backend/audio.py`:
-  input, ventanas, apps y audio.
+  input uinput, ventanas Firefox ESR Kiosk, apps y audio.
 - `frontend/index.html`, `frontend/app.js`, `frontend/sw.js`, `frontend/skins.css`:
-  PWA, cliente WS, cache y temas.
-- `scripts/install.sh`, `scripts/build_deb.sh`, `scripts/update.sh`, `scripts/uninstall.sh`:
-  instalacion, paquete, OTA y desinstalacion.
+  PWA Mobile 2.0 (rueda Mantatomic SVG, App Hub, Quick Dock, scroll lateral independiente, temas Day/Night/Café/Anime).
+- `scripts/install.sh`, `scripts/build_deb.sh`, `scripts/update.sh`, `scripts/uninstall.sh`,
+  `scripts/lrp-cleanup.sh`: instalacion modo `htpc`, paquete, OTA con watchdog/rollback, desinstalacion y cleanup.
+- `scripts/sign_ota_manifest.py`: herramienta offline para firmar digitalmente manifiestos OTA con clave Ed25519 (T-142).
+- `scripts/debian/iso/build_iso.sh`: orquestador live-build para generar imagen ISO híbrida USB Debian 13 minimal (T-141).
+- `scripts/debian/preflight.sh`, `nvidia-bootstrap.sh`, `session-bootstrap.sh`,
+  `platform-bootstrap.sh`, `bootstrap.sh`: baseline, driver/sesion/plataforma y orquestador resumible.
 - `website/index.html`, `website/en/index.html`, `website/latest.json`, `website/install.sh`:
-  landing, canal de release e instalador.
+  landing, canal estable e instalador.
+- `website/beta/latest.json`, `website/beta/install.sh`, `website/beta/downloads/`: manifiesto,
+  instalador y artefacto `1.99.2` amd64.
 - `supabase/functions/ai-proxy`, `validate-license`, `send-feedback`, `stripe-webhook`:
-  funciones Edge tracked; el despliegue no se afirma desde Git.
-- `backend/supabase_schema.sql`: tablas, RLS y RPC del backend cloud.
+  funciones Edge legacy tracked; desacopladas del runtime del appliance.
+- `backend/supabase_schema.sql`: tablas, RLS y RPC del backend cloud legacy.
 
 ## HISTORICO Y ASSETS
 
@@ -75,4 +89,5 @@ El estado activo pertenece a [`CURRENT.md`](CURRENT.md), no a este indice.
 - `python -m py_compile backend/*.py`.
 - `bash scripts/build_deb.sh`.
 - `bash scripts/install.sh`, `bash scripts/update.sh`, `bash scripts/uninstall.sh`.
-- `git ls-files tests` confirma que no hay directorio de tests tracked.
+- `tests/` existe con suites Debian/kiosk/release (`test_debian_*`, `test_kiosk_debian.py`, `test_t125_installer.py`, `test_beta_*`).
+- `python -m pytest -q`; `bash -n` por cada script shell tocado.

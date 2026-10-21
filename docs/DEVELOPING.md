@@ -75,17 +75,19 @@ It applies to human contributors exactly as it does to the AI agents. The rules 
 6. **Out-of-scope findings go to `CURRENT.md`, not into your commit.** Noticed a bug next to
    your change? Write it down; don't fix it in the same commit.
 
-Before pushing, run what the build runs:
+Before pushing, run what the build and quality gates run:
 
 ```bash
 python3 scripts/check_css_sync.py    # fails if a CSS class is used but never defined
 node --check frontend/app.js         # syntax
 python -m py_compile backend/*.py    # syntax
+pytest tests -q                      # automated test suite (272 tests passing)
+bash -n scripts/*.sh scripts/debian/*.sh # shell syntax verification
 ```
 
-There is **no automated test suite** (see ARCHITECTURE §8 — it's the project's largest gap).
-Verification is `.agents/TESTING.md`, executed on real hardware. If your change touches
-anything a user can see or feel, add a matrix item for it.
+The automated test suite in `tests/` covers platform API, NLU intent parsing, local STT benchmarking,
+Astra security/resilience mitigations, kiosk launching, and Debian packaging. Physical and device
+verification is documented in `.agents/TESTING.md`.
 
 ## 4. Common changes, and where they go
 

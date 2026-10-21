@@ -1,6 +1,6 @@
-## Imported Claude Cowork project instructions
+## Control plane instructions
 
-Este archivo conserva la referencia a las instrucciones importadas y funciona como shim del repo.
+Este archivo funciona como shim del repo para el plano de control.
 
 ## CAVEMAN
 

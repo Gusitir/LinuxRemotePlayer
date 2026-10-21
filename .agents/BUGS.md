@@ -52,24 +52,9 @@ una actualización controlada del service worker, sin bucles de recarga.
 Una pantalla usa `hidden` mientras `.flex` puede ganar; otra escribe `style.display`. Unificar
 la máquina de estados y probar onboarding, pairing y reconexión.
 
-## H22 — eliminar/ocultar siempre visible
-
-Cada icono muestra permanentemente su acción destructiva. Debe existir modo edición o una
-interacción deliberada.
-
 ## H21 — `theme-color` no refresca en iOS moderno
 
 En iPhone 12 cambia al reabrir la PWA; en iPhone 8+ lo hace en vivo. No hay workaround aceptado.
-
-## L1 — STT local aún no seleccionado
-
-SenseVoice-Small no soporta español. Whisper base/small y runtimes se deben medir con corpus
-propio antes de declarar soporte o hardware mínimo. No aceptar cifras de terceros como resultado.
-
-## L2 — acciones de IA necesitan frontera de seguridad
-
-Needle debe emitir exclusivamente esquemas allowlist. El backend debe validar herramienta,
-argumentos, confianza, estado y necesidad de confirmación. Nunca shell, sudo o texto ejecutable.
 
 ## L3 — puerto de automatización del navegador
 
@@ -81,8 +66,9 @@ privilegios mínimos, apagado por defecto y adaptadores por sitio. MPRIS tiene p
 - `auth.py` compara un secreto con `==` en un camino; usar comparación constante.
 - Fuentes bold/regular son el mismo archivo y se descargan/precachean dos veces.
 - El `.deb` depende de `build-essential`, innecesario para un appliance final.
-- El instalador imprime el token de pairing en el scrollback.
+- El instalador imprimía el token de pairing en el scrollback; **resuelto en 1.99.2** (ya no se lee ni imprime `.pairing_token`; token expuesto durante diagnóstico rotado).
 - `%input` en sudoers es más amplio que el usuario exacto del servicio.
+- `scripts/debian/platform-bootstrap.sh` definía `state_applied_ok()` dos veces; **resuelto en 1.99.2 / T-131** (duplicado eliminado, preservada la llamada a `state_applied_audio_bus_ok`).
 
 # CERRADOS
 
@@ -104,3 +90,53 @@ administra su salida en `/var/log`.
 ## B1b — correo personal en `gracias.html`
 
 **Cerrado antes del savepoint 1.9.1.** Usa `support@linuxremoteplayer.com`.
+
+## H22 — eliminar/ocultar siempre visible
+
+**Cerrado en v2.0, T-140.** Retirados los botones `×` permanentes de las tarjetas en App Hub;
+reemplazados por interacción deliberada de pulsación prolongada (*long-press* de 450ms con vibración
+háptica) para fijar y desfijar aplicaciones del Quick Dock, con badge sutil de chincheta.
+
+## L1 — STT local aún no seleccionado
+
+**Cerrado en v2.0, T-138.** Medido exhaustivamente en hardware mínimo real bare-metal (Intel Core
+i5-3470, 4 cores AVX1, sin AVX2 ni dGPU). whisper.cpp compilado con `-DGGML_AVX=ON -DGGML_AVX2=OFF`.
+Seleccionado `ggml-base-q5_1`: 2.6s de latencia promedio, 136.9 MB RAM pico, 100% precisión en
+corpus gold español/inglés y cero SIGILL. Descartado `small` por latencia excesiva (~9.4s).
+
+## L2 — acciones de IA necesitan frontera de seguridad
+
+**Cerrado en v2.0, T-139.** Motor NLU local `backend/local_intent.py` (Needle 2, <0.25ms de latencia en CPU)
+con catálogo estricto allowlist (`launch_kiosk`, `media_control`, `search`, `system_control`),
+normalización fonética y filtro activo de sanitización que rechaza caracteres de inyección de shell
+(`;`, `&`, `|`, `` ` ``, `$`, `>`, `<`, `\`) y secuencias de path traversal.
+
+## ASTRA-01 — Escalada de lrp a root durante OTA
+
+**Cerrado en v2.0, T-134 (commit `610194e`).** Código de aplicación y entorno virtual `.venv` bajo
+propiedad `root:root` (read-only para usuario `lrp`). Estado mutable (tokens, certs, configs)
+aislado estrictamente en `/var/lib/linuxremoteplayer/`. Previene inyección en `.venv/bin/pip` durante OTA.
+
+## ASTRA-02 — Persistencia de WebSockets al regenerar token
+
+**Cerrado en v2.0, T-134 (commit `610194e`).** `regenerate_pairing_token()` revoca inmediatamente
+todas las sesiones WebSocket autenticadas activas, cerrando sus conexiones antes de persistir el nuevo token.
+
+## ASTRA-03 — Desconexión de control remoto por bloqueo en voz
+
+**Cerrado en v2.0, T-135 (commit `ebfdf82`).** Comandos de voz binarios procesados de forma asíncrona
+mediante background task fuera del bucle de recepción WebSocket, permitiendo que ping/pong continúe
+sin interrupción durante inferencias lentas.
+
+## ASTRA-04 — Certificados HTTPS caducados no renovados
+
+**Cerrado en v2.0, T-135 (commit `ebfdf82`).** `backend/run.py` verifica la vigencia `notAfter` del
+certificado de hoja en cada arranque y lo renueva automáticamente si ha caducado, con salvaguarda
+de sincronización horaria vía `systemd-timesyncd`.
+
+## BUG-WS-HEARTBEAT — Desconexión periódica cliente WebSocket cada 15s
+
+**Cerrado en v2.0, T-140 / D43.** El temporizador `heartbeatTimeoutId` en `frontend/app.js` no se
+cancelaba al recibir el frame `pong` del servidor, causando que el cliente cerrara erróneamente su
+propio socket cada 15 segundos por falso timeout. Resuelto cancelando el timeout inmediatamente al
+recibir `pong` y ampliando la tolerancia a 8 segundos.

@@ -13,7 +13,7 @@
 > a boundary, adds a dependency, or reverses a decision. Nothing here is written that was
 > not checked against the code.
 
-Last verified against the code: **2026-08-31** · supported host: Debian 13 stable amd64 minimal
+Last verified against the code: **2026-09-07** · supported host: Debian 13 stable amd64 minimal
 
 ---
 
@@ -22,15 +22,16 @@ Last verified against the code: **2026-08-31** · supported host: Debian 13 stab
 A Linux PC in the living room becomes the household's smart TV, and the remote control is
 any phone on the same Wi-Fi. The phone opens a PWA (no app store), pairs with a 6-digit
 PIN shown on the TV, and gets a touchpad, a real keyboard, media transport, launchers for
-streaming sites and native desktop apps, and — with a Pro license — voice commands in
-Spanish and English.
+streaming sites and native desktop apps, and — in v2.0 — 100% local, offline voice commands
+in Spanish and English.
 
 The core problem it solves is social, not technical: an HTPC is usable only by the person
 who set it up. Everyone else in the house needs a remote they already know how to hold.
 
 Two halves: a **Python service** installed on the Linux PC via a `.deb`, and a **static
-PWA** it serves to phones over HTTPS on the LAN. Cloud is used only for AI and licensing —
-there is no local model inference, by design.
+PWA** it serves to phones over HTTPS on the LAN. In v2.0, speech recognition and intent
+extraction operate completely locally on CPU (whisper.cpp AVX1 + Needle 2 NLU), eliminating
+runtime cloud and licensing dependencies.
 
 ## 2. Run, build, test
 
@@ -73,21 +74,22 @@ Central, non-trivial, and weakly verified — read this before anything else.
 
 ## 4. Components
 
-### `backend/` — the service on the Linux PC (2032 lines, Python, FastAPI)
+### `backend/` — the service on the Linux PC (Python, FastAPI)
 
 | Module | Responsible for | Verified by |
 |---|---|---|
-| `main.py` (945) | HTTP endpoints, WebSocket protocol, pairing PIN state machine, voice handler, idle-panel monitor | `TESTING.md` matrix + task audits |
-| `input_emulator.py` (305) | Virtual keyboard and mouse via `evdev`/uinput; per-layout character maps (`us`/`es`/`latam`) | `TESTING.md` matrix |
-| `kiosk.py` (244) | Launching sites full-screen in Firefox ESR with a dedicated profile; closing windows via `wmctrl`; ad-block status | `TESTING.md` matrix |
-| `run.py` (222) | HTTPS with self-healing certificates (a stable local CA plus a leaf per IP/hostname); restarts the service when the machine's IP changes | `TESTING.md` matrix |
-| `ai_pipeline.py` (113) | **Talks only to the ai-proxy.** Packs audio, sends it, returns the parsed intent. Holds no AI credentials. | device E2E (T-50) |
-| `auth.py` (89) | Pairing-token verification; license checks against the Edge Function with a 72 h offline grace cache | device E2E (T-50) |
-| `discovery.py` (63) | Finds installed desktop apps by scanning `.desktop` files | `TESTING.md` matrix |
-| `audio.py` (51) | Volume and mute through the system audio stack | `TESTING.md` matrix |
+| `main.py` | HTTP endpoints, WebSocket protocol, pairing PIN state machine, voice handler, immediate panel launch | `TESTING.md` matrix + pytest |
+| `local_intent.py` | Needle 2 local NLU engine: regex/pattern matching in CPU (<0.25ms latency), strict allowlist, phonetic normalization, shell injection filter | `tests/test_local_intent.py` (9 tests) |
+| `system_platform.py` | Decoupled platform endpoints (`/api/system/*`): PipeWire audio sinks, power management, Wi-Fi, Bluetooth, display | `tests/test_system_platform.py` (8 tests) |
+| `input_emulator.py` | Virtual keyboard and mouse via `evdev`/uinput; per-layout character maps (`us`/`es`/`latam`) | `TESTING.md` matrix |
+| `kiosk.py` | Launching sites full-screen in Firefox ESR with dedicated profile; VA-API H.264 optimization; window management via `wmctrl` | `TESTING.md` matrix + pytest |
+| `run.py` | HTTPS with self-healing certificates; ASTRA-04 `notAfter` cert renewal on startup; dynamic IP tracking | `TESTING.md` matrix + pytest |
+| `ai_pipeline.py` | Local voice orchestrator: in-memory audio transcode -> VAD -> whisper.cpp AVX1 -> `local_intent.py`. Decoupled from cloud proxy. | `tests/test_local_stt.py` + bare-metal i5-3470 benchmark |
+| `auth.py` | Pairing-token verification; immediate WebSocket revocation on token rotation (ASTRA-02) | `tests/test_security_mitigations.py` |
+| `discovery.py` | Finds installed desktop apps by scanning `.desktop` files | `TESTING.md` matrix |
+| `audio.py` | System volume and mute through PipeWire/ALSA | `TESTING.md` matrix |
 
-**Explicitly not responsible for:** talking to any AI provider directly (that moved to the
-proxy), storing license secrets, or any local model inference.
+**Explicitly not responsible for:** cloud AI proxying, proprietary telemetry, or mandatory license verification for voice.
 
 ### `frontend/` — the PWA served to phones (vanilla JS, no build step)
 

@@ -7,7 +7,7 @@
 fase: PH21
 release: 2.0.0
 owner: Arquitecto
-ejecucion: un Ingeniero Codex de fase
+ejecucion: un Ingeniero de fase
 estado: ABIERTA — G0 aprobado; G1-G3 a cargo del Ingeniero
 producto: no integrar STT al backend en esta fase
 ```
