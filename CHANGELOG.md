@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-10-21
+
+### Added
+- **LRP OS Appliance 2.0:** OSD inmediato y cursor escalado para TV, red agnóstica de hardware con
+  DHCP wildcard y watchdog, carga dinámica de drivers GPU por udev, ajustes de sistema desacoplados
+  (`/api/system/*`), onboarding Wi-Fi dual (teclado / hotspot) y voz local 100% CPU con whisper.cpp
+  AVX1 y NLU Needle 2.
+- **ISO booteable:** receta `live-build` de LRP OS sobre Debian 13 minimal con instalador
+  desatendido, exclusión fail-closed del USB de arranque y swap zram.
+- **OTA firmada:** manifiestos Ed25519 con protección anti-downgrade y watchdog de rollback
+  transaccional de 45 s; cierre del riesgo B19.
+- **Seguridad y resiliencia Astra:** aislamiento root de `/opt`, revocación inmediata de WebSockets,
+  voz asíncrona fuera del bucle WS y renovación automática de certificados caducados.
+
 ## [1.99.2] - 2026-09-01
 
 ### Added

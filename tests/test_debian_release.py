@@ -17,7 +17,7 @@ SIDECAR = PACKAGE.with_name(PACKAGE.name + ".sha256")
 
 def test_debian_release_source_contract():
     source = BUILD.read_text(encoding="utf-8")
-    assert (ROOT / "VERSION").read_text(encoding="ascii").strip() == "1.99.2"
+    assert (ROOT / "VERSION").read_text(encoding="ascii").strip() == "2.0.0"
     assert "Architecture: amd64" in source
     assert "chmod 0755 pkg/opt/linuxremoteplayer/scripts/debian/*.sh" in source
     assert "exec ./debian/bootstrap.sh \"$@\"" in source
@@ -28,7 +28,7 @@ def test_debian_release_source_contract():
     assert "linuxremoteplayer_${VERSION}_amd64.deb.sha256" in source
     assert "firefox-esr | firefox" not in source
     assert "Recommends: firefox-esr," in source
-    assert "Depends: python3, python3-venv, python3-dev, build-essential, openssl, sudo, curl, ca-certificates" in source
+    assert "Depends: python3, python3-venv, python3-dev, build-essential, openssl, sudo, curl, ca-certificates, python3-cryptography" in source
     assert "avahi-daemon" not in source
     assert "modprobe uinput" not in source
     assert "99-linuxremoteplayer-uinput.rules" not in source

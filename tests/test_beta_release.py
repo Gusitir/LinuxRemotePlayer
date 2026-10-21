@@ -12,21 +12,20 @@ import pytest
 
 ROOT = Path(__file__).parents[1]
 VERSION = (ROOT / "VERSION").read_text(encoding="ascii").strip()
-PACKAGE = ROOT / "website" / "beta" / "downloads" / f"linuxremoteplayer_{VERSION}_amd64.deb"
+# D51: el canal beta queda congelado en 1.99.2; VERSION avanza a 2.0.0 (estable).
+BETA_VERSION = "1.99.2"
+PACKAGE = ROOT / "website" / "beta" / "downloads" / f"linuxremoteplayer_{BETA_VERSION}_amd64.deb"
 SIDECAR = PACKAGE.with_name(PACKAGE.name + ".sha256")
 MANIFEST = ROOT / "website" / "beta" / "latest.json"
 
 
 def test_release_metadata_and_template_are_beta_only():
-    assert VERSION == "1.99.2"
+    assert VERSION == "2.0.0"
     changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
     assert changelog.startswith("# Changelog")
-    top_entry = changelog.split("## [1.9.1]", 1)[0]
-    assert re.search(
-        r"## \[1\.99\.2\] - 2026-09-01\n\n### Added\n- .*Base Debian HTPC",
-        top_entry,
-    )
-    assert not re.search(r"STT|Needle|IA local|AI local|capacidad|capability", top_entry, re.I)
+    assert re.search(r"## \[2\.0\.0\] - 2026-10-21", changelog)
+    top_entry = changelog.split("## [1.99.2]", 1)[0]
+    assert "LRP OS Appliance 2.0" in top_entry
 
     template = json.loads((ROOT / "website" / "beta" / "latest.template.json").read_text())
     assert template["version"] == "__BETA_VERSION__"
@@ -50,7 +49,7 @@ def test_live_beta_artifact_sidecar_and_manifest_cohere():
     sidecar = SIDECAR.read_text(encoding="ascii").split()
     assert sidecar == [digest, PACKAGE.name]
 
-    assert manifest["version"] == VERSION
+    assert manifest["version"] == BETA_VERSION
     assert manifest["deb_url"] == (
         "https://www.linuxremoteplayer.com/beta/downloads/" + PACKAGE.name
     )
@@ -85,7 +84,7 @@ def test_package_identity_and_stable_default_contract():
         assert not SIDECAR.exists()
         pytest.skip("prebuild beta manifest")
     assert re.fullmatch(r"[0-9a-f]{64}", manifest["sha256"])
-    assert _package_control("Version") == VERSION
+    assert _package_control("Version") == BETA_VERSION
     assert _package_control("Package") == "linuxremoteplayer"
     assert _package_control("Architecture") == "amd64"
     assert all(package in _package_control("Depends") for package in ("sudo", "curl", "ca-certificates"))
@@ -108,10 +107,10 @@ def test_package_identity_and_stable_default_contract():
     with tempfile.TemporaryDirectory() as directory:
         _dpkg_deb(["-x", str(PACKAGE), directory])
         extracted = Path(directory) / "opt" / "linuxremoteplayer"
-        assert (extracted / "VERSION").read_text(encoding="ascii").strip() == VERSION
+        assert (extracted / "VERSION").read_text(encoding="ascii").strip() == BETA_VERSION
         sw = (extracted / "frontend" / "sw.js").read_text(encoding="utf-8")
         assert "__LRP_VERSION__" not in sw
-        assert f"lrp-{VERSION}" in sw
+        assert f"lrp-{BETA_VERSION}" in sw
         control = Path(directory) / "control"
         _dpkg_deb(["--control", str(PACKAGE), str(control)])
         updater = (control / "postinst").read_text()
