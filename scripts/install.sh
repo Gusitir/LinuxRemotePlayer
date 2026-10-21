@@ -115,7 +115,7 @@ if [ -d /opt/linuxremoteplayer ]; then
 fi
 
 # Validate venv dependencies
-if [ -f /opt/linuxremoteplayer/.deps_incomplete ] || ! "$BACKEND_DIR/.venv/bin/python" -c "import fastapi, evdev, segno" 2>/dev/null; then
+if [ -f /opt/linuxremoteplayer/.deps_incomplete ] || ! "$BACKEND_DIR/.venv/bin/python" -c "import fastapi, evdev, segno, cryptography" 2>/dev/null; then
     echo -e "\n\e[31m[!] Dependencias incompletas. La instalación falló durante 'pip install'.\e[0m"
     echo -e "\e[31m[!] Ejecuta: sudo /opt/linuxremoteplayer/backend/.venv/bin/pip install -r /opt/linuxremoteplayer/backend/requirements.txt\e[0m"
     echo -e "\e[31m[!] Luego vuelve a ejecutar: sudo lrp-setup\e[0m"
