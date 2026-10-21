@@ -405,5 +405,32 @@ Se transforma el drawer tosco en una **experiencia de catálogo de entretenimien
 +-------------------------------------------------------------+
 ```
 
+---
+
+## 12. Implementación Final y Remediación (D43 / T-140)
+
+La implementación en código (`frontend/index.html`, `frontend/skins.css`, `frontend/app.js`) materializó la especificación con los siguientes refinamientos físicos y ergonómicos:
+
+1. **Rueda Radial Mantatomic SVG**:
+   - Apertura angular simétrica de 30° ($75^\circ$ a $105^\circ$) en el arco exterior, generando una ranura de separación de 10.8px de despeje alrededor del botón Hero Play central ($r=28$ en $cx=180, cy=65$).
+   - Cuñas de `Vol -` y `Mute` completamente independientes con trazados frontera limpios (`stroke-width: 1.5px`).
+   - Vector de retorno 'Atrás' con flecha curva de 2.4px (`fill="none"`, `stroke="currentColor"`).
+2. **Trackpad y Franja de Scroll Independiente**:
+   - `#scroll-strip` posicionado en columna flex derecha `w-7 shrink-0` fuera de `#touchpad`, eliminando cualquier invasión central y proveyendo scroll vertical con cápsula acentuada de 32px.
+3. **Quick Dock Dinámico y Long-Press**:
+   - Persistencia en `localStorage` (`lrp_pinned_apps`); pulsación prolongada de 450ms con feedback háptico en tarjetas del App Hub para anclar/desanclar.
+   - Apps base (Netflix, YouTube, Spotify) registradas en `BUILTIN_APPS_MAP` para permitir su desanclado; iconos vectoriales de marca unificados y prevención de duplicados en catálogo.
+4. **Pantalla de Ajustes LRP OS**:
+   - Layout de columna única completa (estilo iOS/Android Settings), retiro total de sección obsoleta `Social & Feedback` y eliminación de bloques comerciales de compra de licencia.
+5. **Calibración de Temas**:
+   - `Day`: tema por defecto de alto contraste (textos `#1f2937`, bordes sutiles y vectores en `#374151` sobre base `#f4f0e6`).
+   - `Anime`: chasis y trackpad transparentes (`background-color: transparent !important`) para visualización directa de la ilustración `skins/anime-bg.webp`.
+6. **Catálogo de Streaming Enriquecido**:
+   - Incorporación oficial de **AnimeAV1** (`https://animeav1.com`, color `#7C3AED`, badge `AV1`) y 14 presets populares con flags optimizados para TV y VA-API.
+   - Chips de categoría con scrollbar horizontal oculta (`scrollbar-width: none`).
+7. **Estabilidad WebSocket**:
+   - Cancelación inmediata del temporizador de timeout de heartbeat al recibir `pong` con tolerancia de 8 segundos, erradicando desconexiones periódicas cada 15 segundos.
+   - Captura de puntero en micrófono con `setPointerCapture` / `releasePointerCapture` y prevención de menú contextual.
+
 
 
