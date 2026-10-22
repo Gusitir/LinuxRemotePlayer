@@ -6,6 +6,19 @@ set -euo pipefail
 
 echo "[LRP-CHROOT-HOOK] Configuring LRP OS Appliance environment..."
 
+# 0. iso9660 en el initramfs: el USB grabado en modo DD es un ISO9660 puro y
+# live-boot no puede montarlo sin el modulo, que en el kernel Debian es =m.
+# Sin esto: "Unable to find a medium containing a live file system".
+mkdir -p /etc/initramfs-tools
+touch /etc/initramfs-tools/modules
+if ! grep -qx 'iso9660' /etc/initramfs-tools/modules; then
+    echo 'iso9660' >> /etc/initramfs-tools/modules
+fi
+if command -v update-initramfs >/dev/null 2>&1; then
+    update-initramfs -u -k all >/var/log/lrp-initramfs.log 2>&1 || \
+        echo "WARN: update-initramfs fallo; revisar /var/log/lrp-initramfs.log" >>/var/log/lrp-initramfs.log
+fi
+
 # 1. Ensure lrp system user exists
 if ! id -u lrp >/dev/null 2>&1; then
     echo "[LRP-CHROOT-HOOK] Creating user 'lrp'..."
