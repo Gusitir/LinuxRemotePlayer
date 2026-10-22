@@ -40,13 +40,14 @@ next_action: Ejecutar T-144 (PH24 backend sin licencia ni proxy cloud) sobre mai
   sidecar. Stable manifest remains `1.9.1` SHA `82b6bc5286cdf197bb684ddc00f6c797aac498f2959b354cada83acaddd93d38`.
 - T-131 artifact/manifest mismatch is resolved: no `dist/` sidecar exists in
   `.worktrees/debian-foundation` and no `25ea41…` reference remains in the repo.
-- ISO 2.0.0 vigente, head `fb8545a`: `lrp-os_2.0.0_amd64.iso`, SHA256
-  `ab40678aa839508beacb0bea76e178ffedbe7153b7021d6a7adbb09a711ce342` (copia en
-  `D:\AGUSTIN\Portafolio\Proyectos\lrp-iso\`). Verificada end-to-end en QEMU UEFI:
-  live con panel QR, instalador escribe GPT (LRP-BOOT + LRP-ROOT), copia el sistema, instala GRUB
-  EFI con fallback `EFI/BOOT/BOOTX64.EFI` y el disco arranca solo sin USB hasta el panel
-  (capturas `boot_e.png`, `disk_boot2.png`). Initramfs con `isofs`+`vfat`, MBR isohybrid, hostname
-  `lrp` y claves SSH presentes. Obsoletas todas las ISO previas.
+- ISO 2.0.0 vigente, head `611a8eb`: `lrp-os_2.0.0_amd64.iso`, SHA256
+  `720fc8370f83344a982d77ba48f2c63fb2cfc882f5e2296ea57ad7639843fbfb` (copia en
+  `D:\AGUSTIN\Portafolio\Proyectos\lrp-iso\`). Instalador con GRUB **firmado** (shim +
+  `grub-efi-amd64-signed`, `--uefi-secure-boot`), entrada NVRAM `LRP-OS` más fallback
+  `EFI/BOOT/BOOTX64.EFI`, y reporte persistente `/var/log/lrp-install-report.txt`. Verificado
+  end-to-end en QEMU UEFI (sin Secure Boot): live con panel QR, instalación GPT y arranque solo
+  desde disco (capturas `boot_e.png`, `disk_boot2.png`). Pendiente confirmación en hierro con
+  Secure Boot activo. Obsoletas todas las ISO previas.
 - Correcciones `c484274`/`f229e5b`/`bad230f`: venv limpio `IMPORT_OK 47.0.0`; VERSION 2.0.0;
   `.deb` 2.0.0 SHA256 `4783af823dab1d4b3c8ffda82c8f6521cbf1dd1a0bb1c18342f6e96d2c4b69c1`;
   manifiesto beta 1.99.2 firmado Ed25519 y verificado; pytest 282 passed + 2 fallos por root.
