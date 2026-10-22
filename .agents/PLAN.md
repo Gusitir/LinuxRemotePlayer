@@ -1,13 +1,14 @@
 # LinuxRemotePlayer — plan de transición local
 
-> Roadmap de arquitectura. DEBIAN-FOUNDATION está cerrado (1.99.2). El plan activo es
-> [`PLAN_v2.0-appliance.md`](PLAN_v2.0-appliance.md): LRP OS Appliance sobre Debian 13 minimal, OSD TV, voz local AVX1 y generador ISO.
+> Roadmap de arquitectura. DEBIAN-FOUNDATION está cerrado (1.99.2). El plan
+> [`PLAN_v2.0-appliance.md`](PLAN_v2.0-appliance.md) también está cerrado APTO, pero su producto
+> sigue solo en `codex/debian-foundation`; el próximo plan es el release 2.0.0.
 
 ```yaml
 base_estable: 1.9.1
 release_objetivo: 2.0.0
 destino: voz e interpretación locales; sin premium, pagos ni dependencia operativa de nube
-estado: arquitectura aprobada; implementación activa en PLAN_v2.0-appliance.md
+estado: PLAN_v2.0-appliance.md cerrado APTO (G4); pendiente PLAN de integración y release 2.0.0
 regla: ninguna fase se convierte en tareas T-NN antes de medir sus prerequisitos
 ```
 
@@ -203,7 +204,7 @@ HUD adaptado al objetivo y acceso deliberado a funciones power-user. Diseño en 
 
 # PH27 — imagen Debian para HTPC
 
-> **Activo como T-141 (READY) en [`PLAN_v2.0-appliance.md`](PLAN_v2.0-appliance.md)**: generador de imagen booteable USB (.iso) de LRP OS basada en Debian 13 minimal con instalador seguro y zram swap.
+> **Cerrado APTO como T-141 en [`PLAN_v2.0-appliance.md`](PLAN_v2.0-appliance.md)**: generador de imagen booteable USB (.iso) de LRP OS basada en Debian 13 minimal con instalador seguro y zram swap.
 
 Proyecto hermano posterior: Debian estable, sesión dedicada, autologin de usuario sin sudo,
 panel informativo con QR/PIN, navegador kiosk, PipeWire y LRP local. Debe heredar componentes

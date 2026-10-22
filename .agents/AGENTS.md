@@ -88,8 +88,10 @@ Un hecho tiene un solo hogar. No copiar decisiones, diarios ni estado entre arch
 - `PAIRING_TOKEN` puede estar en `.pairing_token`.
 - La CA tiene sufijo por máquina. No volver a añadir `viewport-fit=cover`. Mantener el alias Vercel
   legado mientras clientes publicados lo tengan grabado.
-- B19, OTA sin firma independiente ni rollback probado, es riesgo aceptado por el dueño solo para
-  betas opt-in sin publicidad; bloquea `2.0.0` estable y cualquier promoción al canal estable.
+- B19 (OTA sin firma independiente ni rollback probado) quedó cerrado por T-142 en
+  `codex/debian-foundation` con firma Ed25519, anti-downgrade y rollback de 45s. Ese cierre solo es
+  efectivo tras integrar la rama en `main`; mientras `main` no la contenga, la promoción a `2.0.0`
+  estable sigue bloqueada.
 - Stable usa `latest.json` y no descubre betas. Beta se instala solo por curl, persiste su canal y
   consulta un manifiesto beta separado. Versiones beta son numéricas `1.99.x`; estable será `2.0.0`.
 - El instalador beta público puede reiniciar automáticamente solo en modo unattended autorizado por

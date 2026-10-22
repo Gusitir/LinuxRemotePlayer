@@ -140,3 +140,44 @@ de sincronización horaria vía `systemd-timesyncd`.
 cancelaba al recibir el frame `pong` del servidor, causando que el cliente cerrara erróneamente su
 propio socket cada 15 segundos por falso timeout. Resuelto cancelando el timeout inmediatamente al
 recibir `pong` y ampliando la tolerancia a 8 segundos.
+
+## AUD-001 — `cryptography` no declarada: el backend no arranca en el .deb
+
+**Cerrado — commit `c484274` (2026-10-21).** `backend/requirements.txt:7` declara
+`cryptography>=42,<48`; `scripts/build_deb.sh:71` la añade a `Depends`; `scripts/install.sh:118`
+valida el import. Verificado en venv limpio: `pip install -r backend/requirements.txt` +
+`import fastapi, evdev, segno, cryptography, ota_security` → `IMPORT_OK 47.0.0`.
+
+## AUD-002 — OTA no publicable: manifiestos sin firma y versión no promovible
+
+**Abierto — bloqueado por clave.** `scripts/build_deb.sh:212-216` aborta si el manifiesto no trae
+`signature`; `website/latest.json` y `website/beta/latest.json` no la traen. `VERSION` = `1.99.2`:
+el bump a `2.0.0` rompe `tests/test_beta_release.py:21` y `tests/test_debian_release.py:20,51,53`
+hasta actualizar fixtures y artefactos. Estado de clave: `scripts/debian/lrp-ota-pub.pem` es Ed25519;
+`~/.ssh/prod_rsa_private.pem` es RSA 2048 y **no** corresponde. La clave privada Ed25519 está fuera
+del repo (offline) y no fue localizada. Requiere que el dueño aporte la clave o autorice rotación del
+ancla de confianza.
+
+## AUD-003 — preseed de la ISO pide paquetes inexistentes en trixie
+
+**Cerrado — commit `c484274` (2026-10-21).** `scripts/debian/iso/preseed.cfg:64-65` usa ahora
+`python3-evdev`, `i965-va-driver` e `intel-media-va-driver`, existentes en Debian 13. Falta rebuild y
+prueba real del instalador `d-i` (pendiente TST-DEVICE).
+
+## AUD-004 — ISO sin arranque BIOS coherente
+
+**Abierto, no bloqueante.** `build_iso.sh:164` usa `--bootloader grub-efi` mientras `:135` copia
+`grub.cfg` a `grub-pc`; no se crea partición EF02 y `lrp-install-target.sh:330` hace `grub-install
+i386-pc || true`. La ISO híbrida declarada no arranca por BIOS.
+
+## AUD-005 — Instalador con ejecución de shell sobre campos de `lsblk`
+
+**Abierto, no bloqueante.** `lrp-install-target.sh:95` hace `eval "$line"` sobre campos derivados de
+`lsblk` (incluido el modelo del USB) → RCE como root; `hook:77,83` auto-instala sin confirmación.
+Además `hook:13,25` fija `lrp/lrp` con NOPASSWD.
+
+## AUD-006 — ASTRA-03 cubre el frame pero no las tareas de audio
+
+**Abierto, no bloqueante.** El audio binario no pasa por `TokenBucket` (`main.py:1005-1027`), así que
+un cliente autenticado puede encolar tareas de voz ilimitadas (CPU/RAM).
+

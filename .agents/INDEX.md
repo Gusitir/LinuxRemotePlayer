@@ -1,11 +1,11 @@
 # INDEX - navegacion del repositorio
 
 ```yaml
-last_reindexed_at: 2026-10-17T07:30:00-05:00
-source_commit: 50da3ca
+last_reindexed_at: 2026-10-21T16:35:00-05:00
+source_commit: 88cf2f6
 dirty: true
-active_plan: PLAN_v2.0-appliance.md
-dirty_state: "PLAN completed: PLAN_v2.0-appliance.md (Cerrado APTO, G4 APTO); T-132..T-142 apto; 283 tests passing"
+active_plan: PLAN_v2.0.0-release.md (approved D51)
+state: "release 2.0.0 aprobado (D51); auditoria pre-merge NO APTO sobre head 7d95326 (AUD-001..003); producto v2.0 en codex/debian-foundation @ 7d95326, sin mergear en main; ISO de prueba 1.99.2 construida"
 ```
 
 El estado activo pertenece a [`CURRENT.md`](CURRENT.md), no a este indice.
@@ -22,6 +22,7 @@ El estado activo pertenece a [`CURRENT.md`](CURRENT.md), no a este indice.
 
 ## PLANES Y EXTENSIONES
 
+- [`PLAN_v2.0.0-release.md`](PLAN_v2.0.0-release.md): plan activo del release estable 2.0.0 (integración de rama, PH24 y gates); aprobado D51, digest `2814bb3c…`.
 - [`PLAN_v2.0-appliance.md`](PLAN_v2.0-appliance.md): plan v3 completado (LRP OS Appliance & Local Voice, T-132..T-142 apto, G4 APTO).
 - [`PLAN_v1.99.2-debian-htpc-foundation.md`](PLAN_v1.99.2-debian-htpc-foundation.md): plan cerrado DEBIAN-FOUNDATION, veredicto `APTO`.
 - [`archive/PLAN_v1.99-beta-foundation.md`](archive/PLAN_v1.99-beta-foundation.md): plan cerrado

@@ -148,9 +148,11 @@ fases futuras ni estado de bugs.
 - The public beta installer (`website/beta/install.sh`) is reachable and enforces the amd64
   manifest/filename/SHA contract; the website is a beta notice with curl enrollment ES/EN
   declaring Debian 13 amd64 minimal, Xorg/Openbox, Firefox ESR and RTX 3060 initial certification.
-- These facts describe the `98bb9f1` published state; the worktree D35 rebuild is uncommitted and
-  its sidecar disagrees with the manifest. No future STT, model or Needle implementation is
-  claimed here.
+- These facts describe the published `88cf2f6` state on `main` (`VERSION` `1.99.2`). The v2.0
+  appliance modules (`backend/ota_security.py`, `backend/local_intent.py`, `backend/system_platform.py`,
+  `scripts/debian/iso/`) live only on `codex/debian-foundation` @ `50da3ca`, 17 commits ahead of
+  `main` and unmerged at `88cf2f6`; they are not present in `main`. The worktree D35 rebuild is
+  committed on that branch and its published sidecar matches manifest `a0b54c…`.
 
 ## ACOPLAMIENTOS FACTUALES
 
@@ -168,7 +170,8 @@ fases futuras ni estado de bugs.
   resiliencia Astra (`test_security_mitigations.py`, `test_resilience_mitigations.py`), plataforma de
   sistema (`test_system_platform.py`), onboarding Wi-Fi (`test_onboarding_dual_wifi.py`), benchmark
   STT (`test_local_stt.py`), motor NLU local (`test_local_intent.py`), generador ISO (`test_iso_factory.py`)
-  y firma criptográfica/rollback OTA (`test_ota_signing_rollback.py`), totalizando 283 tests passing deterministas.
+  y firma criptográfica/rollback OTA (`test_ota_signing_rollback.py`). El conteo de tests y su
+  veredicto pertenecen a `PLAN_v2.0-appliance.md` (evidencia G4); MAINTAIN no los re-ejecuta.
 - El gate ejecutable del build es `python3 scripts/check_css_sync.py` mas la comprobacion de
   versionado del service worker; la documentacion tambien prescribe `node --check` y `py_compile`.
 - La verificacion de device pertenece a `.agents/TESTING.md` y requiere hardware real; este job no

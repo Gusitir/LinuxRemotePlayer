@@ -707,8 +707,64 @@ Entrega y cierre de fase auditada y aprobada:
    - LRP OS bootable USB ISO factory: receta `live-build` (`scripts/debian/iso/build_iso.sh`) para Debian 13 minimal con instalador target desatendido (`lrp-install-target.sh`) con salvaguarda fail-closed contra instalación en el USB de arranque, swap zram al 50% (`zram-generator.conf`), y suite `tests/test_iso_factory.py` (5/5 passed, `bash -n` exit 0).
 3. **T-142 APTO (commit `50da3ca`)**:
    - Firma criptográfica asimétrica Ed25519 en manifiestos OTA (`backend/ota_security.py`), clave pública embebida (`scripts/debian/lrp-ota-pub.pem`), herramienta de firma offline (`scripts/sign_ota_manifest.py`), protección anti-downgrade y watchdog de auto-rollback transaccional de 45 segundos en `/usr/local/bin/lrp-update`. Cierre definitivo del riesgo estructural B19. Validado con `tests/test_ota_signing_rollback.py` (6/6 passed).
-4. **Veredicto de Fase G4: APTO**:
+ 4. **Veredicto de Fase G4: APTO**:
    - Auditor de fase (`ae7b054f...`) emitió dictamen verde unánime: `check_css_sync.py` exit 0, `node --check frontend/app.js` exit 0, `bash -n` en todos los scripts shell exit 0, y 59/59 tests passed en las 9 suites de Appliance v2.0.
    - Arquitecto ratifica cierre completo de `PLAN_v2.0-appliance.md`.
+
+## 2026-10-21 · MAINTAIN — Reconciliación de control tras `[STATE]` 88cf2f6
+
+Correcciones de estado contra repo verificado (no cambia alcance ni producto):
+
+1. `CURRENT.md`: `source_commit` `98bb9f1` → `88cf2f6`; `dirty` true → false; `next_action` consumido
+   (autorización de commit/push ya ejecutada) reemplazado por PLAN del release 2.0.0; lista duplicada
+   de estados T-132..T-142 retirada porque el plan es su único hogar.
+2. `INDEX.md`: `source_commit` y estado reindexados; retirada la cifra "283 tests passing" del índice.
+3. `PLAN.md`: PH27/T-141 deja de figurar como "Activo/READY"; la cabecera refleja plan cerrado y
+   pendiente release 2.0.0.
+4. `AGENTS.md`: B19 se declara cerrado por T-142 en `codex/debian-foundation`, con bloqueo de
+   promoción vigente mientras `main` no integre la rama.
+5. `APPCORE.md`: la superficie beta ya no describe el rebuild D35 como "uncommitted"; aclara que los
+   módulos v2.0 existen solo en `codex/debian-foundation` @ `50da3ca` y que el conteo de tests
+   pertenece al plan.
+
+Evidencia: artefacto beta rehash `a0b54c85…` = manifiesto = sidecar; sin `dist/` ni referencias
+`25ea41…`; `git rev-list --left-right --count origin/main...main` = `0 0`; `main` @ `88cf2f6`.
+
+Corrección (2026-10-21, misma fecha): la frase "sin referencias `25ea41…`" vale solo para `main` y
+el worktree. La rama `codex/debian-foundation` sí contiene `25ea4173…` como artefacto
+`website/beta/downloads/linuxremoteplayer_1.99.2_amd64.deb` (331202 bytes) y como SHA en su
+`latest.json`/sidecar; ese rebuild es el que D51 resuelve publicándolo como `2.0.0`.
+
+## 2026-10-21 · D51 — Aprobación del plan de release 2.0.0
+
+Decisión del dueño sobre el preflight de `PLAN_v2.0.0-release.md`:
+
+1. **D-R1**: merge `--no-ff` de `codex/debian-foundation` @ `50da3ca` en `main`, preservando los 17
+   commits `[T-NN]`.
+2. **D-R2**: congelar el artefacto beta `1.99.2` en `a0b54c85…`; el rebuild `25ea4173…` se publica
+   como `2.0.0` firmado.
+3. **D-R3**: `LICENSE` no se modifica en 2.0.0; cualquier relicenciamiento es decisión separada.
+
+Digest del diseño canónico: `2814bb3c3252c3a6435db1c6e3b127300f72df7db850f42479159233d5661a76`
+(992 bytes UTF-8/LF, verificado contra el archivo). Con esto el plan queda `approved` y CURRENT pasa
+a `RUN THE LOOP` con `T-143` ready.
+
+## 2026-10-21 · D52 — Rotación del ancla de confianza OTA
+
+El dueño informó que no localiza la clave privada Ed25519 de la ancla vigente
+(`scripts/debian/lrp-ota-pub.pem`, introducida por T-142). Búsqueda en el host: 133 archivos de clave,
+62 con material privado, ninguna coincidencia; `~/.ssh/prod_rsa_private.pem` es RSA 2048 y no
+corresponde. Los manifiestos publicados (`1.9.1`, `1.99.2`) nunca tuvieron firma, así que no existía
+cadena firmada válida que preservar. Decisión: rotar el ancla.
+
+- Par Ed25519 nuevo generado con `scripts/sign_ota_manifest.py --generate-key`.
+- Privada: `D:\AGUSTIN\Portafolio\Proyectos\lrp-keys\lrp-ota-priv.pem`, fuera del repo; nunca se
+  versiona. Pública replicada en `scripts/debian/lrp-ota-pub.pem` y
+  `backend/ota_security.py::DEFAULT_OTA_PUBLIC_KEY_PEM`.
+- `website/beta/latest.json` firmado y verificado con la nueva pública.
+- Riesgo aceptado: los clientes `1.9.1`/`1.99.2` ya instalados llevan la pública anterior y no
+  podrán verificar releases futuros por OTA; 2.0.0 se distribuye por instalador/ISO. Si la privada
+  antigua aparece, se puede reintroducir como ancla secundaria.
+
 
 
