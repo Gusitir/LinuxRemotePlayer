@@ -10,27 +10,33 @@ from dotenv import load_dotenv
 
 logger = logging.getLogger("auth")
 
-load_dotenv()
+try:
+    from config import get_env_file, get_token_file, get_license_cache_file, secure_permissions
+except ImportError:
+    from backend.config import get_env_file, get_token_file, get_license_cache_file, secure_permissions
+
+load_dotenv(get_env_file())
 
 LICENSE_API_URL = os.getenv("LICENSE_API_URL", "https://tbijfdbtauzxbsbkujbs.functions.supabase.co/validate-license")
-CACHE_FILE = os.path.join(os.path.dirname(__file__), ".license_cache")
+CACHE_FILE = str(get_license_cache_file())
 PAIRING_TOKEN = os.getenv("PAIRING_TOKEN")
 
 # SEC-01 auto-generated pairing token
 if not PAIRING_TOKEN:
-    token_file = os.path.join(os.path.dirname(__file__), ".pairing_token")
-    if os.path.exists(token_file):
+    token_path = get_token_file()
+    if token_path.is_file():
         try:
-            with open(token_file, "r") as f:
+            with open(token_path, "r") as f:
                 PAIRING_TOKEN = f.read().strip()
         except Exception as e:
             logger.error(f"Could not read .pairing_token file: {e}")
     if not PAIRING_TOKEN:
         PAIRING_TOKEN = secrets.token_urlsafe(16)
         try:
-            with open(token_file, "w") as f:
+            token_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(token_path, "w") as f:
                 f.write(PAIRING_TOKEN)
-            os.chmod(token_file, 0o600)
+            secure_permissions(token_path)
             logger.info("Generated auto-provisioned pairing token.")
         except Exception as e:
             logger.error(f"Could not write .pairing_token file: {e}")

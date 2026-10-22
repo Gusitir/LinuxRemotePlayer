@@ -10,6 +10,7 @@ import tempfile
 logger = logging.getLogger("kiosk")
 
 _kiosk_proc = None
+_kiosk_url = None
 _native_procs = []
 
 
@@ -21,6 +22,31 @@ def find_browser():
     return None, None
 
 
+def get_tv_cursor_size() -> int:
+    """Return cursor size scaled for TV: 48px for 1080p, 96px for 4K."""
+    try:
+        if shutil.which("xrandr"):
+            base_env = {key: value for key, value in os.environ.items() if key != "WAY" + "LAND_DISPLAY"}
+            base_env.setdefault("DISPLAY", ":0")
+            out = subprocess.check_output(
+                ["xrandr", "--current"],
+                text=True,
+                stderr=subprocess.DEVNULL,
+                timeout=1.0,
+                env=base_env,
+            )
+            for line in out.splitlines():
+                if "*" in line:
+                    parts = line.split()[0].split("x")
+                    if len(parts) == 2:
+                        w, h = int(parts[0]), int(parts[1])
+                        if w >= 3840 or h >= 2160:
+                            return 96
+    except Exception:
+        pass
+    return 48
+
+
 def gui_env():
     """Build the Xorg environment used by the kiosk process."""
     env = {key: value for key, value in os.environ.items() if key != "WAY" + "LAND_DISPLAY"}
@@ -30,11 +56,84 @@ def gui_env():
     env["HOME"] = os.path.expanduser("~")
     env["XAUTHORITY"] = os.path.join(env["HOME"], ".Xauthority")
     env["MOZ_CRASHREPORTER_DISABLE"] = "1"
+    env.setdefault("XCURSOR_SIZE", str(get_tv_cursor_size()))
+    env.setdefault("XCURSOR_THEME", "DMZ-White")
     return env
 
 
+def is_kiosk_running() -> bool:
+    global _kiosk_proc
+    return _kiosk_proc is not None and _kiosk_proc.poll() is None
+
+
+def is_status_panel_running() -> bool:
+    global _kiosk_proc, _kiosk_url
+    if not is_kiosk_running():
+        return False
+    return bool(_kiosk_url and ("/status" in _kiosk_url or _kiosk_url.endswith("/status")))
+
+
+def is_media_kiosk_running() -> bool:
+    """Return True if a user media kiosk (NOT the status panel) is running."""
+    return is_kiosk_running() and not is_status_panel_running()
+
+
+def is_audio_playing() -> bool:
+    """Return True if PipeWire/PulseAudio has active audio sink-inputs."""
+    try:
+        if shutil.which("pactl"):
+            out = subprocess.check_output(
+                ["pactl", "list", "short", "sink-inputs"],
+                text=True,
+                stderr=subprocess.DEVNULL,
+                timeout=2.0,
+                env=gui_env(),
+            )
+            return bool(out.strip())
+    except Exception:
+        pass
+    return False
+
+
+def has_user_windows() -> bool:
+    """Return True if there are user application windows on X11 desktop (excluding status panel)."""
+    try:
+        if shutil.which("wmctrl"):
+            out = subprocess.check_output(["wmctrl", "-l"], env=gui_env(), text=True, stderr=subprocess.DEVNULL, timeout=2.0)
+            if out.strip():
+                for line in out.strip().split("\n"):
+                    if not line:
+                        continue
+                    parts = line.split(maxsplit=3)
+                    if len(parts) >= 4:
+                        title = parts[3].lower()
+                        if "status" in title or "linux remote player" in title or title == "desktop":
+                            continue
+                        return True
+                    elif len(parts) >= 1:
+                        return True
+    except Exception:
+        pass
+    return False
+
+
+def is_media_active() -> bool:
+    """Check if any user media kiosk, native app, user window, or audio is active."""
+    if is_media_kiosk_running():
+        return True
+    if any(p.poll() is None for p in _native_procs):
+        return True
+    if is_audio_playing():
+        return True
+    if has_user_windows():
+        return True
+    return False
+
+
 def close_all():
+    global _kiosk_url
     kill_existing_kiosks()
+    _kiosk_url = None
     for proc in _native_procs:
         if proc.poll() is None:
             try:
@@ -63,7 +162,7 @@ def close_all():
 
 
 def kill_existing_kiosks():
-    global _kiosk_proc
+    global _kiosk_proc, _kiosk_url
     
     # SEC-05: Process group kiosk termination
     if _kiosk_proc is not None and _kiosk_proc.poll() is None:
@@ -86,6 +185,7 @@ def kill_existing_kiosks():
         except Exception as e:
             logger.error(f"Error terminating tracked kiosk process: {e}")
         _kiosk_proc = None
+        _kiosk_url = None
         return
 
     logger.info("No active tracked kiosk process found. Running Firefox ESR fallback cleanup...")
@@ -112,8 +212,37 @@ def adblock_status() -> str:
         return "none"
     return "none"
 
+def is_display_ready() -> bool:
+    """Return True if X11 server is reachable and accepting commands on DISPLAY."""
+    if os.name != "posix" or not os.path.exists("/tmp/.X11-unix"):
+        return True
+    if not shutil.which("xset"):
+        return os.path.exists("/tmp/.X11-unix/X0")
+    try:
+        res = subprocess.run(
+            ["xset", "q"],
+            env=gui_env(),
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=1.0,
+        )
+        return res.returncode == 0
+    except Exception:
+        return False
+
+
+def wait_for_display(timeout: float = 12.0) -> bool:
+    """Wait for Xorg display to become ready (e.g. after LightDM autologin)."""
+    start = time.time()
+    while time.time() - start < timeout:
+        if is_display_ready():
+            return True
+        time.sleep(0.3)
+    return is_display_ready()
+
+
 def launch_kiosk(url: str) -> bool:
-    global _kiosk_proc
+    global _kiosk_proc, _kiosk_url
     kill_existing_kiosks()
 
     # URL Validation
@@ -124,6 +253,10 @@ def launch_kiosk(url: str) -> bool:
     browser_bin, browser_type = find_browser()
     if not browser_bin:
         logger.error("Firefox ESR not found at /usr/bin/firefox-esr. Install it or re-run scripts/install.sh.")
+        return False
+
+    if not wait_for_display(timeout=10.0):
+        logger.warning("X11 display not ready after timeout; cannot launch kiosk.")
         return False
 
     try:
@@ -142,6 +275,9 @@ def launch_kiosk(url: str) -> bool:
                 stream.write('user_pref("browser.sessionstore.resume_from_crash", false);\n')
                 stream.write('user_pref("browser.startup.page", 0);\n')
                 stream.write('user_pref("browser.shell.checkDefaultBrowser", false);\n')
+                # Intel HD 2500 VA-API optimization (T-136): force H.264 hardware decode
+                stream.write('user_pref("media.av1.enabled", false);\n')
+                stream.write('user_pref("media.mediasource.vp9.enabled", false);\n')
             if hasattr(os, "chown") and hasattr(os, "getuid"):
                 os.chown(prefs_tmp, os.getuid(), os.getgid())
             os.chmod(prefs_tmp, 0o600)
@@ -158,6 +294,12 @@ def launch_kiosk(url: str) -> bool:
         _kiosk_proc = subprocess.Popen(
             cmd, env=gui_env(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True
         )
+        time.sleep(0.2)
+        if _kiosk_proc.poll() is not None:
+            logger.error(f"Kiosk process exited prematurely with code {_kiosk_proc.poll()}")
+            _kiosk_proc = None
+            return False
+        _kiosk_url = url
         return True
     except Exception as e:
         logger.error(f"Failed to launch kiosk: {e}")

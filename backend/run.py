@@ -9,6 +9,8 @@ import logging
 import threading
 import time
 import uuid
+import shutil
+from datetime import datetime, timezone
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
@@ -17,14 +19,32 @@ logging.basicConfig(
 )
 logger = logging.getLogger("run")
 
+OPENSSL_BIN = (
+    os.getenv("OPENSSL_BIN")
+    or shutil.which("openssl")
+    or shutil.which("openssl.exe")
+    or (r"C:\Program Files\Git\usr\bin\openssl.exe" if os.path.exists(r"C:\Program Files\Git\usr\bin\openssl.exe") else "openssl")
+)
+
 HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", "8000"))
 
-CERT_DIR = os.path.join(os.path.dirname(__file__), "certs")
-CA_KEY_FILE = os.path.join(CERT_DIR, "ca.key")
-CA_CERT_FILE = os.path.join(CERT_DIR, "ca.pem")
-KEY_FILE = os.path.join(CERT_DIR, "key.pem")
-CERT_FILE = os.path.join(CERT_DIR, "cert.pem")
+try:
+    from config import (
+        get_certs_dir, get_ca_key_file, get_ca_cert_file, get_key_file, get_cert_file,
+        get_token_file, secure_permissions
+    )
+except ImportError:
+    from backend.config import (
+        get_certs_dir, get_ca_key_file, get_ca_cert_file, get_key_file, get_cert_file,
+        get_token_file, secure_permissions
+    )
+
+CERT_DIR = str(get_certs_dir())
+CA_KEY_FILE = str(get_ca_key_file())
+CA_CERT_FILE = str(get_ca_cert_file())
+KEY_FILE = str(get_key_file())
+CERT_FILE = str(get_cert_file())
 
 
 def detect_ip():
@@ -78,7 +98,7 @@ def cert_identity():
         return None, None
     try:
         out = subprocess.run(
-            ["openssl", "x509", "-in", CERT_FILE, "-noout", "-text"],
+            [OPENSSL_BIN, "x509", "-in", CERT_FILE, "-noout", "-text"],
             capture_output=True, text=True, check=True,
         ).stdout
         dns_names = re.findall(r"DNS:([a-zA-Z0-9.-]+)", out)
@@ -94,6 +114,63 @@ def cert_identity():
         return ip, fqdn
     except Exception:
         return None, None
+
+
+def parse_cert_dates(cert_file: str) -> tuple[datetime | None, datetime | None]:
+    """Extract (notBefore, notAfter) as timezone-aware UTC datetimes from the first certificate in cert_file."""
+    if not os.path.exists(cert_file):
+        return None, None
+    try:
+        out = subprocess.run(
+            [OPENSSL_BIN, "x509", "-in", cert_file, "-noout", "-dates"],
+            capture_output=True, text=True, check=True
+        ).stdout
+        nb_match = re.search(r"notBefore=(.+)", out)
+        na_match = re.search(r"notAfter=(.+)", out)
+        if not nb_match or not na_match:
+            return None, None
+
+        def _parse(val_str: str) -> datetime:
+            clean = " ".join(val_str.replace("GMT", "").replace("UTC", "").strip().split())
+            return datetime.strptime(clean, "%b %d %H:%M:%S %Y").replace(tzinfo=timezone.utc)
+
+        return _parse(nb_match.group(1)), _parse(na_match.group(1))
+    except Exception as e:
+        logger.debug(f"Failed to parse cert dates for {cert_file}: {e}")
+        return None, None
+
+
+def is_cert_expiring_or_invalid(cert_file: str, min_hours: float = 48.0, current_time: datetime | None = None) -> bool:
+    """ASTRA-04: Check if certificate is expired, corrupted, or expiring within min_hours (default 48h).
+    Includes RTC desynchronization safeguard: if current system clock is prior to notBefore,
+    assume the clock is corrupted/desynchronized (e.g. dead CMOS battery reset to 1970/2000),
+    and do NOT invalidate the certificate based on erroneous system time.
+    """
+    not_before, not_after = parse_cert_dates(cert_file)
+    if not not_before or not not_after:
+        logger.info(f"Certificate {cert_file} is unreadable or has invalid dates. Renewal required.")
+        return True
+
+    now = current_time or datetime.now(timezone.utc)
+
+    # RTC Safeguard: system clock behind cert issuance time (dead battery / unsynced RTC)
+    if now < not_before:
+        logger.warning(
+            f"System clock ({now.isoformat()}) is prior to certificate notBefore ({not_before.isoformat()}). "
+            "Suspected RTC desynchronization (e.g. CMOS battery reset). Preserving existing certificate."
+        )
+        return False
+
+    # Check expiration: if expired or expiring within min_hours (default 48h)
+    time_remaining = (not_after - now).total_seconds()
+    if time_remaining <= min_hours * 3600:
+        logger.info(
+            f"Certificate {cert_file} is expiring or expired (notAfter={not_after.isoformat()}, "
+            f"remaining={time_remaining / 3600:.1f}h <= {min_hours}h). Triggering regeneration."
+        )
+        return True
+
+    return False
 
 
 def ensure_full_chain() -> None:
@@ -121,7 +198,9 @@ def ensure_full_chain() -> None:
 
 def ensure_cert(ip, fqdn):
     """Generate/refresh CA and self-signed leaf cert. Returns True if HTTPS is ready."""
+    from pathlib import Path
     os.makedirs(CERT_DIR, exist_ok=True)
+    secure_permissions(Path(CERT_DIR), is_dir=True)
 
     # 1. Generate CA if not exists
     if not os.path.exists(CA_KEY_FILE) or not os.path.exists(CA_CERT_FILE):
@@ -140,11 +219,11 @@ def ensure_cert(ip, fqdn):
             ca_subject = f"/CN=LinuxRemotePlayer CA {ca_suffix}"
 
             subprocess.run(
-                ["openssl", "genrsa", "-out", CA_KEY_FILE, "2048"],
+                [OPENSSL_BIN, "genrsa", "-out", CA_KEY_FILE, "2048"],
                 check=True, capture_output=True
             )
             subprocess.run(
-                ["openssl", "req", "-x509", "-new", "-nodes", "-key", CA_KEY_FILE,
+                [OPENSSL_BIN, "req", "-x509", "-new", "-nodes", "-key", CA_KEY_FILE,
                  "-sha256", "-days", "3650", "-subj", ca_subject, "-out", CA_CERT_FILE],
                 check=True, capture_output=True
             )
@@ -156,14 +235,20 @@ def ensure_cert(ip, fqdn):
 
     # 2. Check if Leaf cert needs regeneration
     existing_ip, existing_fqdn = cert_identity()
-    if os.path.exists(KEY_FILE) and os.path.exists(CERT_FILE) and existing_ip == ip and existing_fqdn == fqdn:
+    cert_matches = (
+        os.path.exists(KEY_FILE)
+        and os.path.exists(CERT_FILE)
+        and existing_ip == ip
+        and existing_fqdn == fqdn
+    )
+    if cert_matches and not is_cert_expiring_or_invalid(CERT_FILE, min_hours=48.0):
         return True
 
     logger.info(f"Generating leaf cert for IP: {ip}, FQDN: {fqdn}")
     try:
         # Generate leaf key
         subprocess.run(
-            ["openssl", "genrsa", "-out", KEY_FILE, "2048"],
+            [OPENSSL_BIN, "genrsa", "-out", KEY_FILE, "2048"],
             check=True, capture_output=True
         )
         os.chmod(KEY_FILE, 0o600)
@@ -171,7 +256,7 @@ def ensure_cert(ip, fqdn):
         # Generate CSR
         csr_file = os.path.join(CERT_DIR, "leaf.csr")
         subprocess.run(
-            ["openssl", "req", "-new", "-key", KEY_FILE, "-subj", f"/CN={ip}", "-out", csr_file],
+            [OPENSSL_BIN, "req", "-new", "-key", KEY_FILE, "-subj", f"/CN={ip}", "-out", csr_file],
             check=True, capture_output=True
         )
 
@@ -182,7 +267,7 @@ def ensure_cert(ip, fqdn):
 
         # Sign leaf cert with CA
         subprocess.run(
-            ["openssl", "x509", "-req", "-in", csr_file, "-CA", CA_CERT_FILE, "-CAkey", CA_KEY_FILE,
+            [OPENSSL_BIN, "x509", "-req", "-in", csr_file, "-CA", CA_CERT_FILE, "-CAkey", CA_KEY_FILE,
              "-CAcreateserial", "-out", CERT_FILE, "-days", "825", "-sha256", "-extfile", ext_file],
             check=True, capture_output=True
         )
@@ -200,9 +285,28 @@ def ensure_cert(ip, fqdn):
         return False
 
 
+def get_initial_ip(timeout: float = 8.0) -> str:
+    """Best-effort initial LAN IPv4.
+    During system boot on appliance hardware, DHCP may take 1-3s to acquire a lease.
+    Polls detect_ip() up to timeout seconds so the service does not initialize on loopback
+    and then immediately reboot."""
+    start = time.time()
+    while time.time() - start < timeout:
+        ip = detect_ip()
+        if ip and ip != "127.0.0.1":
+            return ip
+        time.sleep(0.5)
+    return "127.0.0.1"
+
+
 def monitor_ip(initial_ip):
+    """Monitors local IP changes to trigger self-healing.
+    If initial_ip was 127.0.0.1 (machine booted without active network or late DHCP),
+    checks frequently (every 2.0s) so it recovers as soon as an interface comes online.
+    Once on a valid LAN IP, checks every 60s."""
     while True:
-        time.sleep(60)
+        poll_interval = 2.0 if initial_ip == "127.0.0.1" else 60.0
+        time.sleep(poll_interval)
         current_ip = detect_ip()
         if current_ip != initial_ip:
             if os.getenv("INVOCATION_ID"):
@@ -216,7 +320,7 @@ def monitor_ip(initial_ip):
 
 
 if __name__ == "__main__":
-    ip = detect_ip()
+    ip = get_initial_ip(timeout=8.0)
     fqdn = f"{socket.gethostname()}.local"
 
     # Start IP monitor thread
@@ -233,10 +337,10 @@ if __name__ == "__main__":
     
     token = ""
     if not supabase_active:
-        token_file = os.path.join(os.path.dirname(__file__), ".pairing_token")
-        if os.path.exists(token_file):
+        token_path = get_token_file()
+        if token_path.is_file():
             try:
-                with open(token_file, "r") as f:
+                with open(token_path, "r") as f:
                     token = f.read().strip()
             except Exception as e:
                 logger.error(f"Could not read .pairing_token file: {e}")

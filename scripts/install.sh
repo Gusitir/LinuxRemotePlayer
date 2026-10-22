@@ -36,7 +36,9 @@ if command -v localectl >/dev/null 2>&1; then
     fi
 fi
 
-if [ -n "$LRP_KEYBOARD" ]; then
+if [ "${LRP_NONINTERACTIVE:-0}" = 1 ]; then
+    kb_layout="${LRP_KEYBOARD:-${KEYBOARD_LAYOUT:-$AUTO_LAYOUT}}"
+elif [ -n "$LRP_KEYBOARD" ]; then
     kb_layout="$LRP_KEYBOARD"
 else
     echo "¿Selecciona layout de teclado de esta PC?"
@@ -60,29 +62,60 @@ apt-get install -y python3-venv python3-dev openssl wmctrl pulseaudio-utils fire
 BACKEND_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../backend" && pwd)"
 cd "$BACKEND_DIR"
 
+# ASTRA-01: Isolate mutable state in /var/lib/linuxremoteplayer owned by TARGET_USER (0700)
+mkdir -p /var/lib/linuxremoteplayer
+chown "$TARGET_USER":"$TARGET_USER" /var/lib/linuxremoteplayer
+chmod 0700 /var/lib/linuxremoteplayer
+
+# Migrate legacy mutable files from /opt if present
+for _f in .env .pairing_token .license_cache; do
+    if [ -f "$BACKEND_DIR/$_f" ] && [ ! -f "/var/lib/linuxremoteplayer/$_f" ]; then
+        cp -p "$BACKEND_DIR/$_f" "/var/lib/linuxremoteplayer/$_f"
+        rm -f "$BACKEND_DIR/$_f"
+    fi
+done
+if [ -d "$BACKEND_DIR/certs" ] && [ ! -d "/var/lib/linuxremoteplayer/certs" ]; then
+    cp -rp "$BACKEND_DIR/certs" "/var/lib/linuxremoteplayer/certs"
+    rm -rf "$BACKEND_DIR/certs"
+fi
+chown -R "$TARGET_USER":"$TARGET_USER" /var/lib/linuxremoteplayer
+chmod 0700 /var/lib/linuxremoteplayer
+
+# Determine active .env path (prefer /var/lib/linuxremoteplayer/.env)
+ENV_TARGET="/var/lib/linuxremoteplayer/.env"
+[ -f "$ENV_TARGET" ] || touch "$ENV_TARGET"
+chown "$TARGET_USER":"$TARGET_USER" "$ENV_TARGET"
+chmod 0600 "$ENV_TARGET"
+
 # Normalize every legacy mode assignment while preserving all other environment lines.
-if grep -Eq "^[[:space:]]*LRP_MODE[[:space:]]*=" "$BACKEND_DIR/.env" 2>/dev/null; then
-    sed -i -E 's/^[[:space:]]*LRP_MODE[[:space:]]*=.*$/LRP_MODE=htpc/' "$BACKEND_DIR/.env"
+if grep -Eq "^[[:space:]]*LRP_MODE[[:space:]]*=" "$ENV_TARGET" 2>/dev/null; then
+    sed -i -E 's/^[[:space:]]*LRP_MODE[[:space:]]*=.*$/LRP_MODE=htpc/' "$ENV_TARGET"
 else
-    echo "LRP_MODE=htpc" >> "$BACKEND_DIR/.env"
+    echo "LRP_MODE=htpc" >> "$ENV_TARGET"
 fi
 
 # Write keyboard layout to .env
-if grep -q "^KEYBOARD_LAYOUT=" "$BACKEND_DIR/.env" 2>/dev/null; then
-    sed -i "s/^KEYBOARD_LAYOUT=.*/KEYBOARD_LAYOUT=$kb_layout/" "$BACKEND_DIR/.env"
+if grep -q "^KEYBOARD_LAYOUT=" "$ENV_TARGET" 2>/dev/null; then
+    sed -i "s/^KEYBOARD_LAYOUT=.*/KEYBOARD_LAYOUT=$kb_layout/" "$ENV_TARGET"
 else
-    echo "KEYBOARD_LAYOUT=$kb_layout" >> "$BACKEND_DIR/.env"
+    echo "KEYBOARD_LAYOUT=$kb_layout" >> "$ENV_TARGET"
 fi
 
 # (Venv is now managed by the .deb postinst script globally)
 
-# Fix permissions: Give full ownership of the app directory to the user
-# so they can write tokens, caches, and logs without sudo errors.
-chown -R "$TARGET_USER":"$TARGET_USER" /opt/linuxremoteplayer
-
+# ASTRA-01: App code and virtualenv under /opt/linuxremoteplayer must be strictly owned by root:root
+if [ -d /opt/linuxremoteplayer ]; then
+    chown -R root:root /opt/linuxremoteplayer
+    find /opt/linuxremoteplayer -type d -exec chmod 0755 {} +
+    find /opt/linuxremoteplayer -type f -exec chmod 0644 {} +
+    find /opt/linuxremoteplayer/scripts -type f -name "*.sh" -exec chmod 0755 {} +
+    if [ -d /opt/linuxremoteplayer/backend/.venv/bin ]; then
+        chmod 0755 /opt/linuxremoteplayer/backend/.venv/bin/*
+    fi
+fi
 
 # Validate venv dependencies
-if [ -f /opt/linuxremoteplayer/.deps_incomplete ] || ! "$BACKEND_DIR/.venv/bin/python" -c "import fastapi, evdev, segno" 2>/dev/null; then
+if [ -f /opt/linuxremoteplayer/.deps_incomplete ] || ! "$BACKEND_DIR/.venv/bin/python" -c "import fastapi, evdev, segno, cryptography" 2>/dev/null; then
     echo -e "\n\e[31m[!] Dependencias incompletas. La instalación falló durante 'pip install'.\e[0m"
     echo -e "\e[31m[!] Ejecuta: sudo /opt/linuxremoteplayer/backend/.venv/bin/pip install -r /opt/linuxremoteplayer/backend/requirements.txt\e[0m"
     echo -e "\e[31m[!] Luego vuelve a ejecutar: sudo lrp-setup\e[0m"
@@ -93,7 +126,7 @@ rm -f /opt/linuxremoteplayer/.deps_incomplete
 # Pre-generate pairing token if not exists (SEC-01)
 sudo -u "$TARGET_USER" "$BACKEND_DIR/.venv/bin/python" -c "
 import os, secrets
-token_file = os.path.join('$BACKEND_DIR', '.pairing_token')
+token_file = '/var/lib/linuxremoteplayer/.pairing_token'
 if not os.path.exists(token_file):
     token = secrets.token_urlsafe(16)
     with open(token_file, 'w') as f:

@@ -81,15 +81,15 @@ mv -f "$ENV_TMP" "$ENV_FILE"
 
 if [ -e /dev/tty ]; then
     set +e
-    /usr/local/bin/lrp-setup --apply --approve < /dev/tty
+    /usr/local/bin/lrp-setup --apply --approve --unattended < /dev/tty
     SETUP_RC=$?
     set -e
     case "$SETUP_RC" in
         0) ;;
         20) echo "[i] Reboot required. Run: sudo lrp-setup --resume" ;;
-        *) echo "[!] Setup failed (rc=$SETUP_RC). Run: sudo lrp-setup --apply --approve" >&2; exit "$SETUP_RC" ;;
+        *) echo "[!] Setup failed (rc=$SETUP_RC). Run: sudo lrp-setup --apply --approve --unattended" >&2; exit "$SETUP_RC" ;;
     esac
 else
-    echo "[!] No interactive terminal. Run: sudo lrp-setup --apply --approve" >&2
+    echo "[!] No interactive terminal. Run: sudo lrp-setup --apply --approve --unattended" >&2
     exit 20
 fi

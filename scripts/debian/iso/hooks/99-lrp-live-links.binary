@@ -1,0 +1,16 @@
+#!/bin/sh
+# Binary-stage hook: live-build 2025 no crea los enlaces sin version que
+# grub.cfg espera (/live/vmlinuz, /live/initrd.img). Sin ellos GRUB responde
+# "file '/live/vmlinuz' not found".
+set -e
+[ -d live ] || exit 0
+cd live
+for f in vmlinuz-*; do
+  [ -e "$f" ] || continue
+  ln -sf "$f" vmlinuz
+done
+for f in initrd.img-*; do
+  [ -e "$f" ] || continue
+  ln -sf "$f" initrd.img
+done
+ls -l vmlinuz initrd.img

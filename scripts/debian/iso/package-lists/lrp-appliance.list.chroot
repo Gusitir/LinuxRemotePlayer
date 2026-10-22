@@ -1,0 +1,57 @@
+# ==============================================================================
+# lrp-appliance.list.chroot — Debian 13 Minimal Base Packages for LRP OS
+# ==============================================================================
+
+# Kernel & Base System
+linux-image-amd64
+live-boot
+live-config
+systemd-sysv
+systemd-zram-generator
+zram-tools
+zstd
+sudo
+ca-certificates
+curl
+rsync
+locales
+
+# Hardware & Media Drivers (Intel/AMD/Generic)
+firmware-linux-free
+i965-va-driver
+intel-media-va-driver
+mesa-va-drivers
+pciutils
+usbutils
+
+# X11 & Desktop Session
+xorg
+xserver-xorg-video-all
+openbox
+lightdm
+lightdm-gtk-greeter
+firefox-esr
+
+# Audio Subsystem (PipeWire)
+pipewire
+pipewire-audio
+wireplumber
+libasound2-plugins
+
+# Network & Bluetooth
+network-manager
+bluez
+avahi-daemon
+
+# Partitioning & Storage Tooling (Installer)
+parted
+gdisk
+dosfstools
+e2fsprogs
+
+# Runtime dependencies for Linux Remote Player
+python3
+python3-venv
+python3-pip
+python3-evdev
+libcurl4

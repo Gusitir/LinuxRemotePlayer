@@ -26,6 +26,7 @@ PACKAGES = {
     "xauth": "1:1.1.2-1.1",
     "mesa-utils": "9.0.0-2+b2",
     "lightdm-gtk-greeter": "2.0.9-1",
+    "i965-va-driver-shaders": "2.4.1-2",
 }
 
 
@@ -78,8 +79,8 @@ class Fixture:
             "LRP_XAUTHORITY": "/home/lrp/.Xauthority",
         }
         self.stub("dpkg", '#!/bin/sh\n[ "$1" = --print-architecture ] && echo "$LRP_ARCH"\nexit 0\n')
-        self.stub("dpkg-query", '#!/bin/sh\ncase "$3" in linux-image-*) printf "install ok installed\\t%s\\n" "$LRP_KERNEL_VERSION";; linux-headers-*) echo "$LRP_KERNEL_VERSION";; lightdm) echo "1.32.0-6+b2";; xserver-xorg) echo "1:7.7+24+deb13u1";; openbox) echo "3.6.1-12+b2";; dbus-x11) echo "1.16.2-2";; xauth) echo "1:1.1.2-1.1";; mesa-utils) echo "9.0.0-2+b2";; lightdm-gtk-greeter) echo "2.0.9-1";; esac\n')
-        self.stub("apt-cache", '#!/bin/sh\necho "apt-cache-locale=$LC_ALL/$LANG" >> "$LRP_CMDLOG"\ncase "$2" in lightdm) v="1.32.0-6+b2";; xserver-xorg) v="1:7.7+24+deb13u1";; openbox) v="3.6.1-12+b2";; dbus-x11) v="1.16.2-2";; xauth) v="1:1.1.2-1.1";; mesa-utils) v="9.0.0-2+b2";; lightdm-gtk-greeter) v="2.0.9-1";; *) v="(none)";; esac\necho "  Candidate: $v"\n')
+        self.stub("dpkg-query", '#!/bin/sh\ncase "$3" in linux-image-*) printf "install ok installed\\t%s\\n" "$LRP_KERNEL_VERSION";; linux-headers-*) echo "$LRP_KERNEL_VERSION";; lightdm) echo "1.32.0-6+b2";; xserver-xorg) echo "1:7.7+24+deb13u1";; openbox) echo "3.6.1-12+b2";; dbus-x11) echo "1.16.2-2";; xauth) echo "1:1.1.2-1.1";; mesa-utils) echo "9.0.0-2+b2";; lightdm-gtk-greeter) echo "2.0.9-1";; i965-va-driver-shaders) echo "2.4.1-2";; esac\n')
+        self.stub("apt-cache", '#!/bin/sh\necho "apt-cache-locale=$LC_ALL/$LANG" >> "$LRP_CMDLOG"\ncase "$2" in lightdm) v="1.32.0-6+b2";; xserver-xorg) v="1:7.7+24+deb13u1";; openbox) v="3.6.1-12+b2";; dbus-x11) v="1.16.2-2";; xauth) v="1:1.1.2-1.1";; mesa-utils) v="9.0.0-2+b2";; lightdm-gtk-greeter) v="2.0.9-1";; i965-va-driver-shaders) v="2.4.1-2";; *) v="(none)";; esac\necho "  Candidate: $v"\n')
         self.stub("uname", '#!/bin/sh\n[ "$1" = -r ] && echo "$LRP_KERNEL"\n[ "$1" = -m ] && echo x86_64\n')
         self.stub("mokutil", '#!/bin/sh\necho "SecureBoot $LRP_SB"\n')
         self.stub("useradd", '#!/bin/sh\necho "useradd $*" >> "$LRP_CMDLOG"\nexit "$LRP_USER_RC"\n')
@@ -176,8 +177,9 @@ def test_apply_exact_packages_configs_and_no_auto_start(fx):
     assert (fx.root / "etc/lightdm/lightdm.conf.d/50-linuxremoteplayer.conf").read_text() == "[Seat:*]\ngreeter-session=lightdm-gtk-greeter\nautologin-user=lrp\nautologin-user-timeout=0\nuser-session=linuxremoteplayer\n"
     assert (fx.root / "usr/share/xsessions/linuxremoteplayer.desktop").is_file()
     autostart = (fx.root / "home/lrp/.config/openbox/autostart").read_text()
-    assert autostart.strip() == "# LinuxRemotePlayer session marker"
-    assert "xset" not in autostart and "xrandr" not in autostart
+    assert "# LinuxRemotePlayer session marker" in autostart
+    assert "xset -dpms" in autostart and "xset s off" in autostart and "xset s noblank" in autostart
+    assert "xrandr" not in autostart
     log = fx.log.read_text().splitlines()
     assert "systemctl enable lightdm" in log
     assert f"chown lrp:lrp {msys(fx.root / 'home/lrp/.config/openbox/rc.xml')} {msys(fx.root / 'home/lrp/.config/openbox/autostart')}" in log
@@ -241,7 +243,7 @@ def test_source_and_package_sanitization(fx):
 def test_static_scope_and_write_set():
     source = SCRIPT.read_text()
     code = "\n".join(line for line in source.splitlines() if not line.lstrip().startswith("#"))
-    for forbidden in ("systemctl start", "systemctl restart", "reboot ", "xset ", "xset:", "apt-get upgrade", "xinit"):
+    for forbidden in ("systemctl start", "systemctl restart", "reboot ", "apt-get upgrade", "xinit"):
         assert forbidden not in code
     assert "autologin-user=lrp" in source
     assert "linuxremoteplayer" in source
@@ -322,3 +324,35 @@ def test_apply_writes_valid_openbox_34_xml(fx):
     assert proc.returncode == 20
     xml = (fx.root / "home/lrp/.config/openbox/rc.xml").read_text()
     assert xml == '<openbox_config xmlns="http://openbox.org/3.4"></openbox_config>\n'
+
+
+def test_apply_configures_tv_cursor_and_scaling_environment(fx):
+    proc, _ = fx.parsed("--apply", "--approve")
+    assert proc.returncode == 20
+    xresources = (fx.root / "home/lrp/.Xresources").read_text()
+    assert "Xcursor.size: 48" in xresources
+    assert "Xcursor.theme: DMZ-White" in xresources
+    index_theme = (fx.root / "home/lrp/.icons/default/index.theme").read_text()
+    assert "Inherits=DMZ-White" in index_theme
+    env_script = (fx.root / "home/lrp/.config/openbox/environment").read_text()
+    assert 'export XCURSOR_THEME="DMZ-White"' in env_script
+    assert "export XCURSOR_SIZE=48" in env_script
+    assert "export XCURSOR_SIZE=96" in env_script
+    assert "xrdb -merge" in env_script
+
+
+def test_resume_passes_on_intel_gpu_without_nvidia_smi_or_nvidia_modules(fx):
+    fx.session_files()
+    fx.write_state("phase=reboot_required\n")
+    fx.write(fx.root / "sys/bus/pci/devices/dev0/vendor", "0x8086\n")
+    fx.write(fx.root / "sys/bus/pci/devices/dev0/device", "0x0152\n")
+    fx.write(fx.root / "sys/bus/pci/devices/dev0/driver", "i915\n")
+    fx.modules("i915 1 1 live\n")
+    fx.env["LRP_SMI_RC"] = "127"
+    fx.env["LRP_GLX"] = "OpenGL renderer string: Mesa Intel(R) HD Graphics 2500 (IVB GT1)"
+    proc, body = fx.parsed("--resume")
+    assert proc.returncode == 0
+    assert body["state"]["phase"] == "complete"
+    assert body["post_reboot"]["issues"] == []
+
+

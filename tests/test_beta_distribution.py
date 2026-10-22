@@ -29,8 +29,8 @@ def test_beta_installer_contract():
     assert 'architecture != "amd64"' in source
     assert 'f"linuxremoteplayer_{version}_amd64.deb"' in source
     assert "sha256sum -c" in source
-    assert "/usr/local/bin/lrp-setup --apply --approve < /dev/tty" in source
-    assert "Run: sudo lrp-setup --apply --approve" in source
+    assert "/usr/local/bin/lrp-setup --apply --approve --unattended < /dev/tty" in source
+    assert "Run: sudo lrp-setup --apply --approve --unattended" in source
     assert "Reboot required. Run: sudo lrp-setup --resume" in source
     assert "mktemp \"$ENV_DIR/.env.XXXXXX\"" in source
     assert 'chmod --reference="$ENV_FILE" "$ENV_TMP"' in source

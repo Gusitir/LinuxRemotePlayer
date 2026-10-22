@@ -14,11 +14,30 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
-from dotenv import set_key
+from dotenv import set_key, load_dotenv
 import httpx
 import io
-import segno
+try:
+    import segno
+except ImportError:
+    segno = None
+
 import auth
+try:
+    import ota_security
+except ImportError:
+    from backend import ota_security
+
+try:
+    from config import (
+        get_env_file, get_token_file, get_license_cache_file, get_ca_cert_file, secure_permissions
+    )
+except ImportError:
+    from backend.config import (
+        get_env_file, get_token_file, get_license_cache_file, get_ca_cert_file, secure_permissions
+    )
+
+load_dotenv(get_env_file())
 
 from input_emulator import gamepad, mouse
 from discovery import get_installed_apps
@@ -30,6 +49,20 @@ logger = logging.getLogger("main")
 
 global_dropped_fast = 0
 global_dropped_slow = 0
+
+active_authenticated_websockets: set[WebSocket] = set()
+
+
+async def revoke_all_websockets(code: int = 1008, reason: str = "Token revoked"):
+    """ASTRA-02: Forcibly closes all active authenticated WebSocket sessions."""
+    global active_authenticated_websockets
+    to_close = list(active_authenticated_websockets)
+    active_authenticated_websockets.clear()
+    for ws in to_close:
+        try:
+            await ws.close(code=code)
+        except Exception as e:
+            logger.debug(f"Error closing revoked WebSocket: {e}")
 
 STABLE_CHANNEL = "stable"
 BETA_CHANNEL = "beta"
@@ -79,11 +112,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+try:
+    from system_platform import router as system_router
+except ImportError:
+    from backend.system_platform import router as system_router
+
+app.include_router(system_router)
+
 def voice_enabled() -> bool:
     """Se lee en cada consulta A PROPOSITO: activar la licencia enciende la voz escribiendo
     el .env, y con una constante de modulo ese cambio no tendria efecto hasta reiniciar el
     servicio -- que es justo lo que dejaba al cliente sin microfono."""
-    return os.getenv("ENABLE_VOICE", "false").lower() == "true"
+    return os.getenv("ENABLE_VOICE", "true").lower() == "true"
 
 
 def _autoenable_voice_for_existing_license() -> None:
@@ -96,9 +136,11 @@ def _autoenable_voice_for_existing_license() -> None:
     if not os.getenv("LICENSE_TOKEN"):
         return
     try:
-        env_file = os.path.abspath(os.path.join(os.path.dirname(__file__), ".env"))
+        from pathlib import Path
+        env_file = str(get_env_file())
         if os.path.exists(env_file):
             set_key(env_file, "ENABLE_VOICE", "true")
+            secure_permissions(Path(env_file))
         os.environ["ENABLE_VOICE"] = "true"
         logger.info("Licencia presente y ENABLE_VOICE sin definir: voz activada.")
     except Exception as e:
@@ -122,56 +164,63 @@ if os.path.exists(version_path):
 
 connected_clients = 0
 last_input_time = time.time()
+client_disconnected_during_media_time = 0.0
 
 
 def is_newer_version(current_ver: str, latest_ver: str) -> bool:
     try:
-        c_parts = [int(x) for x in current_ver.lstrip('v').split('.')]
-        l_parts = [int(x) for x in latest_ver.lstrip('v').split('.')]
-        return l_parts > c_parts
+        return ota_security.is_version_newer(latest_ver, current_ver)
     except Exception:
-        return latest_ver != current_ver
+        return False
+
+
+async def check_and_launch_status_panel() -> bool:
+    """T-132: Immediately launch status panel when TV desktop is empty and appliance idle panel is enabled.
+    Preserves 45s safety delay ONLY if a client disconnected while media was actively playing."""
+    import kiosk
+    if os.getenv("APPLIANCE_IDLE_PANEL", "").lower() != "true":
+        return False
+    if kiosk.is_status_panel_running():
+        return False
+
+    media_active = await asyncio.to_thread(kiosk.is_media_active)
+    if media_active:
+        return False
+
+    # Check 45s safety delay if client disconnected during active playback
+    global client_disconnected_during_media_time
+    if connected_clients == 0 and client_disconnected_during_media_time > 0.0:
+        elapsed = time.time() - client_disconnected_during_media_time
+        if elapsed < 45.0:
+            logger.debug(f"Media stopped but client disconnected during media; waiting safety delay ({elapsed:.1f}s / 45s)")
+            return False
+
+    port = os.getenv("PORT", "8000")
+    status_url = f"https://127.0.0.1:{port}/status"
+    logger.info(f"Empty TV desktop detected -> launching status panel ({status_url})")
+    success = await asyncio.to_thread(kiosk.launch_kiosk, status_url)
+    return success
+
 
 async def monitor_idle_panel():
-    """P4-B: when the TV is IDLE (nothing playing) and no phone has been connected
-    for >=45s, show the status panel with the pairing QR. NEVER interrupts running
-    media — a dropped phone must not kill a movie."""
-    import kiosk
+    """T-132: Monitor TV state and show status panel when desktop is empty,
+    preserving 45s safety delay ONLY if client disconnected during active media."""
     while True:
-        await asyncio.sleep(15)
-        if os.getenv("APPLIANCE_IDLE_PANEL", "").lower() != "true":
-            continue
-        media_running = (getattr(kiosk, "_kiosk_proc", None) is not None
-                         and kiosk._kiosk_proc.poll() is None) or any(
-                             p.poll() is None for p in getattr(kiosk, "_native_procs", []))
-                             
-        if not media_running:
-            import shutil
-            import subprocess
-            try:
-                if shutil.which("pactl"):
-                    def _check_audio():
-                        return subprocess.check_output(["pactl", "list", "short", "sink-inputs"], text=True, stderr=subprocess.DEVNULL, timeout=2.0, env=kiosk.gui_env())
-                    out = await asyncio.to_thread(_check_audio)
-                    if out.strip():
-                        media_running = True
-                else:
-                    if not getattr(monitor_idle_panel, "_pactl_warned_missing", False):
-                        logger.warning("pactl no encontrado: instala pulseaudio-utils para detección de audio")
-                        monitor_idle_panel._pactl_warned_missing = True
-            except Exception as e:
-                if not getattr(monitor_idle_panel, "_pactl_warned", False):
-                    logger.warning(f"Failed to check audio with pactl: {e}")
-                    monitor_idle_panel._pactl_warned = True
+        await asyncio.sleep(5)
+        try:
+            await check_and_launch_status_panel()
+        except Exception as e:
+            logger.debug(f"Error in monitor_idle_panel: {e}")
 
-        if media_running:
-            continue  # something is on screen (movie, app or the panel itself) or audio is playing -> leave it alone
-        if connected_clients == 0 and (time.time() - last_input_time) >= 45.0:
-            logger.info("TV idle, no clients for 45s, and no audio -> launching status panel (pairing QR).")
-            await asyncio.to_thread(kiosk.launch_kiosk, "https://127.0.0.1:8000/status")
 
 @app.on_event("startup")
 async def startup_event():
+    # T-132: Immediate OSD status launch on startup if idle panel enabled (< 3s)
+    if os.getenv("APPLIANCE_IDLE_PANEL", "").lower() == "true":
+        try:
+            await check_and_launch_status_panel()
+        except Exception as e:
+            logger.warning(f"Failed to launch status panel on startup: {e}")
     asyncio.create_task(monitor_idle_panel())
 
 
@@ -367,23 +416,27 @@ def pair_with_pin(body: PairPinBody, request: Request):
 
 
 @app.get("/api/pairing-token")
+@app.get("/api/token")
 def get_pairing_token(request: Request):
     require_local(request)
     return {"token": auth.PAIRING_TOKEN}
 
 
 @app.post("/api/pairing-token/regenerate")
-def regenerate_pairing_token(request: Request):
+@app.post("/api/token/regenerate")
+async def regenerate_pairing_token(request: Request):
     require_local(request)
     import secrets
     new_token = secrets.token_urlsafe(16)
-    token_file = os.path.abspath(os.path.join(os.path.dirname(__file__), ".pairing_token"))
+    token_path = get_token_file()
     try:
-        with open(token_file, "w") as f:
+        token_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(token_path, "w") as f:
             f.write(new_token)
-        os.chmod(token_file, 0o600)
+        secure_permissions(token_path)
         auth.PAIRING_TOKEN = new_token
         logger.info("Pairing token regenerated via local API.")
+        await revoke_all_websockets(code=1008, reason="Token rotated")
         return {"status": "success", "token": new_token}
     except Exception as e:
         logger.error(f"Failed to regenerate .pairing_token: {e}")
@@ -510,7 +563,7 @@ def get_config():
 
 @app.get("/api/ca")
 def get_ca():
-    ca_path = os.path.join(os.path.dirname(__file__), "certs", "ca.pem")
+    ca_path = str(get_ca_cert_file())
     if os.path.exists(ca_path):
         return FileResponse(ca_path, media_type="application/x-pem-file", filename="ca.pem")
     raise HTTPException(status_code=404, detail="CA certificate not found")
@@ -574,18 +627,17 @@ async def activate_license(payload: ActivateBody):
     if claim.get("status") == "invalid":
         raise HTTPException(status_code=400, detail="Clave no válida")
     try:
-        env_file = os.path.abspath(os.path.join(os.path.dirname(__file__), ".env"))
+        from pathlib import Path
+        env_file = str(get_env_file())
         if not os.path.exists(env_file):
+            Path(env_file).parent.mkdir(parents=True, exist_ok=True)
             with open(env_file, "w") as f:
                 f.write("")
         await asyncio.to_thread(set_key, env_file, "LICENSE_TOKEN", payload.key)
         # D9: la voz es la razon por la que se compra el Pro. Encenderla aca evita que el
         # cliente active la licencia y se quede sin microfono sin saber por que.
         await asyncio.to_thread(set_key, env_file, "ENABLE_VOICE", "true")
-        try:
-            os.chmod(env_file, 0o600)
-        except Exception as pe:
-            logger.warning(f"Could not set secure permissions on .env file: {pe}")
+        secure_permissions(Path(env_file))
         os.environ["LICENSE_TOKEN"] = payload.key
         os.environ["ENABLE_VOICE"] = "true"
         return {"status": "success", "plan": "lifetime"}
@@ -603,12 +655,15 @@ async def toggle_voice(payload: VoiceToggleBody):
     """D10: apagar la voz es una decision legitima de privacidad. No toca la licencia:
     el usuario sigue siendo Pro, solo deja de usar el microfono."""
     try:
-        env_file = os.path.abspath(os.path.join(os.path.dirname(__file__), ".env"))
+        from pathlib import Path
+        env_file = str(get_env_file())
         if not os.path.exists(env_file):
+            Path(env_file).parent.mkdir(parents=True, exist_ok=True)
             with open(env_file, "w") as f:
                 f.write("")
         value = "true" if payload.enabled else "false"
         await asyncio.to_thread(set_key, env_file, "ENABLE_VOICE", value)
+        secure_permissions(Path(env_file))
         os.environ["ENABLE_VOICE"] = value
         return {"status": "success", "voice_enabled": payload.enabled}
     except Exception as e:
@@ -650,20 +705,31 @@ async def check_update():
             res = await client.get(manifest_url)
         if res.status_code == 200:
             data = res.json()
-            latest = data.get("version", "").lstrip('v')
+            latest = str(data.get("version", "")).lstrip('v')
             if latest:
-                update_avail = is_newer_version(VERSION, latest)
+                update_avail = ota_security.is_version_newer(latest, VERSION)
+                sig_valid = ota_security.verify_manifest_signature(data)
+                has_sig = "signature" in data and bool(data["signature"])
+                allow_unsigned = os.getenv("LRP_ALLOW_UNSIGNED_OTA") == "1"
+
+                if has_sig and not sig_valid:
+                    update_avail = False
+                elif not has_sig and not allow_unsigned:
+                    update_avail = False
+
                 return {
                     "current": VERSION,
-                    "latest": latest,
-                    "update_available": update_avail
+                    "latest": latest if (update_avail or allow_unsigned) else None,
+                    "update_available": update_avail,
+                    "signature_valid": sig_valid
                 }
     except Exception as e:
         logger.warning(f"Failed to check update manifest: {e}")
     return {
         "current": VERSION,
         "latest": None,
-        "update_available": False
+        "update_available": False,
+        "signature_valid": False
     }
 
 
@@ -726,13 +792,16 @@ async def start_kiosk(payload: KioskLaunchBody):
 @app.post("/api/kiosk/kill", dependencies=[Depends(require_token)])
 async def stop_kiosk():
     import kiosk
-    global last_input_time
-    last_input_time = time.time()  # Reset idle timer so APPLIANCE_IDLE_PANEL waits 45s
+    global last_input_time, client_disconnected_during_media_time
+    last_input_time = time.time()
+    client_disconnected_during_media_time = 0.0  # Deliberate user close; no disconnect delay
     await asyncio.to_thread(kiosk.close_all)
+    if os.getenv("APPLIANCE_IDLE_PANEL", "").lower() == "true":
+        asyncio.create_task(check_and_launch_status_panel())
     return {"status": "success"}
 
 
-@app.post("/api/panel/show", dependencies=[Depends(require_token)])
+@app.post("/api/panel/show", dependencies=[Depends(require_local_or_token)])
 async def show_panel():
     port = os.getenv("PORT", "8000")
     url = f"https://127.0.0.1:{port}/status"
@@ -780,16 +849,135 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
         if await asyncio.to_thread(verify_access, auth_token):
             is_authenticated = True
             connected_clients += 1
+            active_authenticated_websockets.add(websocket)
 
     fast_bucket = TokenBucket(rate=240.0, capacity=480.0)
     slow_bucket = TokenBucket(rate=30.0, capacity=60.0)
     auth_start = time.time()
 
+    ws_send_lock = asyncio.Lock()
+
     async def safe_send_json(data):
         try:
-            await websocket.send_text(json.dumps(data))
-        except RuntimeError:
+            async with ws_send_lock:
+                await websocket.send_text(json.dumps(data))
+        except (RuntimeError, WebSocketDisconnect):
             logger.debug("Attempted to send text on closed WebSocket.")
+        except Exception as e:
+            logger.debug(f"Error sending on WebSocket: {e}")
+
+    active_voice_tasks: set[asyncio.Task] = set()
+
+    async def handle_voice_message(audio_data: bytes):
+        try:
+            await safe_send_json({"status": "processing", "message": "Listening..."})
+            valid_targets = [k["id"] for k in SUGGESTED_KIOSKS]
+            result = await voice_command(audio_data, valid_targets=valid_targets)
+
+            if result.get("ok"):
+                text = result.get("text", "")
+                await safe_send_json({"status": "processing", "message": f"Intent: {text}"})
+                intent = result.get("intent") or {"action": "error"}
+
+                if intent.get("action") == "error":
+                    await safe_send_json({"status": "error", "message": "Voz: error LLM"})
+                    return
+
+                action = intent.get("action")
+                params = intent.get("parameters", {})
+
+                if action == "launch_kiosk":
+                    target = params.get("target_id")
+                    if target:
+                        target = str(target).lower().strip()
+                        target_url = SUGGESTED_KIOSKS_MAP.get(target)
+                        if target_url:
+                            if target == "youtube":
+                                query = quote_plus(params.get('search_query', ''))
+                                target_url = f"https://youtube.com/results?search_query={query}"
+                            success = await asyncio.to_thread(launch_kiosk, target_url)
+                            if success:
+                                await safe_send_json({"status": "success", "message": "Launched app"})
+                            else:
+                                await safe_send_json({"status": "error", "message": "Failed to launch app"})
+                        else:
+                            await safe_send_json({"status": "error", "message": f"Voz: app '{target}' no reconocida"})
+                    else:
+                        await safe_send_json({"status": "error", "message": "Target missing"})
+                elif action == "media_control":
+                    media_key = params.get("key")
+                    if media_key:
+                        media_key = str(media_key).upper().strip()
+                        if not media_key.startswith("KEY_"):
+                            media_key = f"KEY_{media_key}"
+                            
+                        if media_key in MEDIA_KEYS:
+                            import audio
+                            import kiosk
+                            if media_key == "KEY_VOLUMEUP":
+                                if not audio.set_volume(5): await gamepad.press_button(media_key)
+                            elif media_key == "KEY_VOLUMEDOWN":
+                                if not audio.set_volume(-5): await gamepad.press_button(media_key)
+                            elif media_key == "KEY_MUTE":
+                                if not audio.toggle_mute(): await gamepad.press_button(media_key)
+                            elif media_key == "KEY_PLAYPAUSE" and getattr(kiosk, "_kiosk_proc", None) is not None:
+                                await gamepad.press_button("KEY_SPACE")
+                            else:
+                                await gamepad.press_button(media_key)
+                            await safe_send_json({"status": "success", "message": f"Media: {media_key}"})
+                        else:
+                            await safe_send_json({"status": "error", "message": "Invalid media key"})
+                    else:
+                        await safe_send_json({"status": "error", "message": "Invalid media key"})
+                elif action == "search":
+                    query = quote_plus(params.get("search_query", ""))
+                    if query:
+                        success = await asyncio.to_thread(launch_kiosk, f"https://www.youtube.com/results?search_query={query}")
+                        if success:
+                            await safe_send_json({"status": "success", "message": f"Searching: {params.get('search_query', '')}"})
+                        else:
+                            await safe_send_json({"status": "error", "message": "Failed to search"})
+                    else:
+                        await safe_send_json({"status": "error", "message": "Empty search"})
+                elif action == "system_control":
+                    cmd = params.get("command")
+                    if cmd in ("toggle_osd", "open_settings"):
+                        target_url = "https://127.0.0.1:8000/status"
+                        if cmd == "open_settings":
+                            target_url = "https://127.0.0.1:8000/status#pane-settings"
+                        success = await asyncio.to_thread(launch_kiosk, target_url)
+                        if success:
+                            await safe_send_json({"status": "success", "message": f"System: {cmd}"})
+                        else:
+                            await safe_send_json({"status": "error", "message": "Failed system action"})
+                    elif cmd == "close_kiosk":
+                        import kiosk
+                        await asyncio.to_thread(kiosk.close_kiosk)
+                        await safe_send_json({"status": "success", "message": "Kiosk closed"})
+                    else:
+                        await safe_send_json({"status": "error", "message": "Unknown system command"})
+                else:
+                    await safe_send_json({"status": "error", "message": "Unknown action"})
+            else:
+                reason = result.get("reason", "error")
+                voice_errors = {
+                    "no_speech": "Voz: no se entendió el audio",
+                    "quota_exceeded": "Voz: cuota diaria agotada",
+                    "in_use_elsewhere": "Licencia en uso en otro dispositivo",
+                    "invalid_license": "Voz: licencia inválida",
+                    "service_disabled": "Voz: servicio temporalmente deshabilitado",
+                    "global_cap": "Voz: servicio temporalmente deshabilitado",
+                    "audio_too_large": "Audio too large",
+                    "stt_error": "Voz: error STT",
+                    "llm_error": "Voz: error LLM",
+                    "proxy_unreachable": "Voz: sin conexión con el servicio",
+                }
+                await safe_send_json({"status": "error", "code": reason,
+                                      "message": voice_errors.get(reason, "Voz: error del servicio")})
+        except asyncio.CancelledError:
+            logger.debug("Voice processing task cancelled.")
+        except Exception as e:
+            logger.error(f"Error in async voice processing task: {e}")
 
     try:
         while True:
@@ -831,93 +1019,12 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
                     await safe_send_json({"status": "error", "message": "Audio too large"})
                     continue
 
-                await safe_send_json({"status": "processing", "message": "Listening..."})
-                valid_targets = [k["id"] for k in SUGGESTED_KIOSKS]
-                result = await voice_command(audio_data, valid_targets=valid_targets)
-
-                if result.get("ok"):
-                    text = result.get("text", "")
-                    await safe_send_json({"status": "processing", "message": f"Intent: {text}"})
-                    intent = result.get("intent") or {"action": "error"}
-
-                    if intent.get("action") == "error":
-                        await safe_send_json({"status": "error", "message": "Voz: error LLM"})
-                        continue
-
-                    action = intent.get("action")
-                    params = intent.get("parameters", {})
-
-                    if action == "launch_kiosk":
-                        target = params.get("target_id")
-                        if target:
-                            target = str(target).lower().strip()
-                            target_url = SUGGESTED_KIOSKS_MAP.get(target)
-                            if target_url:
-                                if target == "youtube":
-                                    query = quote_plus(params.get('search_query', ''))
-                                    target_url = f"https://youtube.com/results?search_query={query}"
-                                success = await asyncio.to_thread(launch_kiosk, target_url)
-                                if success:
-                                    await safe_send_json({"status": "success", "message": "Launched app"})
-                                else:
-                                    await safe_send_json({"status": "error", "message": "Failed to launch app"})
-                            else:
-                                await safe_send_json({"status": "error", "message": f"Voz: app '{target}' no reconocida"})
-                        else:
-                            await safe_send_json({"status": "error", "message": "Target missing"})
-                    elif action == "media_control":
-                        media_key = params.get("key")
-                        if media_key:
-                            media_key = str(media_key).upper().strip()
-                            if not media_key.startswith("KEY_"):
-                                media_key = f"KEY_{media_key}"
-                                
-                            if media_key in MEDIA_KEYS:
-                                import audio
-                                import kiosk
-                                if media_key == "KEY_VOLUMEUP":
-                                    if not audio.set_volume(5): await gamepad.press_button(media_key)
-                                elif media_key == "KEY_VOLUMEDOWN":
-                                    if not audio.set_volume(-5): await gamepad.press_button(media_key)
-                                elif media_key == "KEY_MUTE":
-                                    if not audio.toggle_mute(): await gamepad.press_button(media_key)
-                                elif media_key == "KEY_PLAYPAUSE" and getattr(kiosk, "_kiosk_proc", None) is not None:
-                                    await gamepad.press_button("KEY_SPACE")
-                                else:
-                                    await gamepad.press_button(media_key)
-                                await safe_send_json({"status": "success", "message": f"Media: {media_key}"})
-                            else:
-                                await safe_send_json({"status": "error", "message": "Invalid media key"})
-                        else:
-                            await safe_send_json({"status": "error", "message": "Invalid media key"})
-                    elif action == "search":
-                        query = quote_plus(params.get("search_query", ""))
-                        if query:
-                            success = await asyncio.to_thread(launch_kiosk, f"https://www.youtube.com/results?search_query={query}")
-                            if success:
-                                await safe_send_json({"status": "success", "message": f"Searching: {params.get('search_query', '')}"})
-                            else:
-                                await safe_send_json({"status": "error", "message": "Failed to search"})
-                        else:
-                            await safe_send_json({"status": "error", "message": "Empty search"})
-                    else:
-                        await safe_send_json({"status": "error", "message": "Unknown action"})
-                else:
-                    reason = result.get("reason", "error")
-                    voice_errors = {
-                        "no_speech": "Voz: no se entendió el audio",
-                        "quota_exceeded": "Voz: cuota diaria agotada",
-                        "in_use_elsewhere": "Licencia en uso en otro dispositivo",
-                        "invalid_license": "Voz: licencia inválida",
-                        "service_disabled": "Voz: servicio temporalmente deshabilitado",
-                        "global_cap": "Voz: servicio temporalmente deshabilitado",
-                        "audio_too_large": "Audio too large",
-                        "stt_error": "Voz: error STT",
-                        "llm_error": "Voz: error LLM",
-                        "proxy_unreachable": "Voz: sin conexión con el servicio",
-                    }
-                    await safe_send_json({"status": "error", "code": reason,
-                                          "message": voice_errors.get(reason, "Voz: error del servicio")})
+                # ASTRA-03: Decouple voice processing from main WebSocket receive loop
+                # into a background task per connection, preventing slow STT/LLM inference
+                # from blocking concurrent ping/pong or heartbeats.
+                v_task = asyncio.create_task(handle_voice_message(audio_data))
+                active_voice_tasks.add(v_task)
+                v_task.add_done_callback(active_voice_tasks.discard)
 
             elif message.get("text"):
                 data = message.get("text")
@@ -949,6 +1056,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
                         if not is_authenticated:
                             is_authenticated = True
                             connected_clients += 1
+                            active_authenticated_websockets.add(websocket)
                         await safe_send_json({"status": "success", "message": "Authenticated"})
                     else:
                         await safe_send_json({"status": "error", "message": "Unauthorized"})
@@ -1033,8 +1141,21 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
     except WebSocketDisconnect:
         logger.info("Client disconnected")
     finally:
+        for v_task in list(active_voice_tasks):
+            if not v_task.done():
+                v_task.cancel()
+        active_voice_tasks.clear()
+        active_authenticated_websockets.discard(websocket)
         if is_authenticated:
             connected_clients = max(0, connected_clients - 1)
+            try:
+                import kiosk
+                if kiosk.is_media_active():
+                    global client_disconnected_during_media_time
+                    client_disconnected_during_media_time = time.time()
+                    logger.info("Client disconnected during active media; armed 45s safety delay.")
+            except Exception as e:
+                logger.debug(f"Error checking active media on disconnect: {e}")
 
 frontend_path = os.path.join(os.path.dirname(__file__), "..", "frontend")
 app.mount("/", StaticFiles(directory=frontend_path, html=True), name="static")
