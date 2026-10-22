@@ -43,8 +43,12 @@ chmod 0440 /etc/sudoers.d/99-lrp-user
 
 # 2. Appliance session: sin display manager. Autologin de getty en tty1 +
 # startx/openbox. LightDM queda enmascarado para que nunca muestre un greeter.
+# live-config se enmascara: en el arranque real reescribe el autologin de tty1
+# con su usuario 'user', que no existe en esta imagen, y deja "Authentication
+# failure" en consola. La configuracion de usuario/sesion es nuestra.
 systemctl disable lightdm.service >>/var/log/lrp-chroot-hook.log 2>&1 || true
 systemctl mask lightdm.service >>/var/log/lrp-chroot-hook.log 2>&1 || true
+systemctl mask live-config.service live-tools.service >>/var/log/lrp-chroot-hook.log 2>&1 || true
 
 mkdir -p /etc/systemd/system/getty@tty1.service.d
 cat <<'EOF' > /etc/systemd/system/getty@tty1.service.d/autologin.conf
