@@ -41,26 +41,38 @@ mkdir -p /etc/sudoers.d
 echo "lrp ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/99-lrp-user
 chmod 0440 /etc/sudoers.d/99-lrp-user
 
-# 2. Configure LightDM autologin to Openbox (live-CD appliance flow)
-mkdir -p /etc/lightdm/lightdm.conf.d
-cat <<EOF > /etc/lightdm/lightdm.conf.d/80-lrp-autologin.conf
-[Seat:*]
-autologin-user=lrp
-autologin-user-timeout=0
-autologin-session=openbox
-user-session=openbox
-greeter-show-manual-login=false
-greeter-hide-users=true
+# 2. Appliance session: sin display manager. Autologin de getty en tty1 +
+# startx/openbox. LightDM queda enmascarado para que nunca muestre un greeter.
+systemctl disable lightdm.service >>/var/log/lrp-chroot-hook.log 2>&1 || true
+systemctl mask lightdm.service >>/var/log/lrp-chroot-hook.log 2>&1 || true
+
+mkdir -p /etc/systemd/system/getty@tty1.service.d
+cat <<'EOF' > /etc/systemd/system/getty@tty1.service.d/autologin.conf
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin lrp --noclear %I $TERM
 EOF
 
-# 3. Configure Openbox environment and autostart
-mkdir -p /home/lrp/.config/openbox
-cat <<EOF > /home/lrp/.config/openbox/autostart
-# TV appliance: no screensaver, no DPMS blank
-xset s off -dpms &
+cat <<'EOF' > /home/lrp/.bash_profile
+# LRP appliance: tty1 arranca la sesion grafica automaticamente.
+if [ -z "${DISPLAY:-}" ] && [ "$(tty 2>/dev/null)" = "/dev/tty1" ]; then
+    exec startx -- -nocursor
+fi
+EOF
 
-# Audio stack for the session
-systemctl --user start pipewire pipewire-pulse wireplumber 2>/dev/null || true
+cat <<'EOF' > /home/lrp/.xinitrc
+#!/bin/sh
+xset s off -dpms 2>/dev/null || true
+exec openbox-session
+EOF
+chmod +x /home/lrp/.xinitrc
+chown lrp:lrp /home/lrp/.bash_profile /home/lrp/.xinitrc
+
+# 3. Openbox session defaults
+mkdir -p /home/lrp/.config/openbox
+cat <<'EOF' > /home/lrp/.config/openbox/autostart
+# TV appliance: no screensaver, no DPMS blank
+xset s off -dpms 2>/dev/null || true
 EOF
 chown -R lrp:lrp /home/lrp/.config
 
