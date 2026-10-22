@@ -53,6 +53,8 @@ e2fsprogs
 efibootmgr
 grub-efi-amd64
 grub-efi-amd64-bin
+grub-efi-amd64-signed
+shim-signed
 grub-pc-bin
 
 # Runtime dependencies for Linux Remote Player

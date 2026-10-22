@@ -339,16 +339,31 @@ EOF
         mount --bind "/$fs" "$target_mnt/$fs"
     done
 
-    # Instalar GRUB: entrada EFI propia + fallback removible BOOTX64.EFI.
+    # Instalar GRUB firmado para Secure Boot: shim + grub-efi-amd64-signed.
     # --removable evita depender de NVRAM (efibootmgr no siempre funciona en live)
-    # y garantiza que el firmware encuentre el cargador aunque ignore la NVRAM.
-    log_info "Instalando GRUB EFI (LRP-OS + fallback BOOTX64.EFI)..."
+    # y garantiza BOOTX64.EFI incluso si el firmware ignora la NVRAM.
+    log_info "Instalando GRUB EFI firmado (shim + fallback BOOTX64.EFI)..."
+    # A) Entrada NVRAM normal: aparece "LRP-OS" en el menu de arranque del firmware.
+    chroot "$target_mnt" grub-install \
+        --target=x86_64-efi \
+        --efi-directory=/boot/efi \
+        --bootloader-id=LRP-OS \
+        --uefi-secure-boot \
+        --recheck >>"$target_mnt/var/log/lrp-install-grub.log" 2>&1 || \
+        log_warn "Entrada NVRAM no escrita (normal en live); se usara el fallback."
+    # B) Fallback removible: arranca aunque el firmware ignore la NVRAM.
     if ! chroot "$target_mnt" grub-install \
             --target=x86_64-efi \
             --efi-directory=/boot/efi \
             --bootloader-id=LRP-OS \
+            --uefi-secure-boot \
             --removable --no-nvram --recheck >>"$target_mnt/var/log/lrp-install-grub.log" 2>&1; then
-        log_error "grub-install EFI fallo; revisar /var/log/lrp-install-grub.log"
+        log_error "grub-install EFI firmado fallo; probando sin shim."
+        chroot "$target_mnt" grub-install \
+            --target=x86_64-efi \
+            --efi-directory=/boot/efi \
+            --bootloader-id=LRP-OS \
+            --removable --no-nvram --recheck >>"$target_mnt/var/log/lrp-install-grub.log" 2>&1 || true
     fi
     mkdir -p "$target_mnt/boot/efi/EFI/BOOT"
     if [ -f "$target_mnt/boot/efi/EFI/BOOT/BOOTX64.EFI" ]; then
@@ -369,6 +384,16 @@ EOF
     else
         log_error "No se genero grub.cfg en el destino."
     fi
+
+    # Reporte persistente y visible en consola para diagnosticar sin arrancar el disco.
+    {
+        echo "LRP OS install report $(date -Is)"
+        echo "target=$target_disk root=$root_part boot=$boot_part"
+        echo "rsync_rc=$rsync_rc"
+        echo "esp:"; find "$target_mnt/boot/efi" -maxdepth 3 -type f | sed "s|$target_mnt||"
+        echo "grub_cfg: $([ -f "$target_mnt/boot/grub/grub.cfg" ] && echo yes || echo no)"
+        echo "secure_boot_efi: $([ -f "$target_mnt/boot/efi/EFI/BOOT/BOOTX64.EFI" ] && echo yes || echo no)"
+    } | tee "$target_mnt/var/log/lrp-install-report.txt" | tee /run/lrp-install-report.txt >&2
 
     # Desmontar recursos
     for fs in dev/pts dev sys proc boot/efi; do
@@ -432,6 +457,22 @@ main() {
     local selected_target
     selected_target=$(select_target_disk "$target_disk") || exit 1
     log_info "Disco destino seleccionado: $selected_target"
+
+    # Estado del firmware: decide shim firmado (UEFI+SB) o MBR BIOS.
+    if [ -d /sys/firmware/efi ]; then
+        local sb_val=0
+        local sb_file=/sys/firmware/efi/efivars/SecureBoot-8be4df61-93ca-11d2-aa0d-00e098032b8c
+        if [ -r "$sb_file" ]; then
+            sb_val=$(od -An -t u1 "$sb_file" | awk '{print $NF}')
+        fi
+        if [ "${sb_val:-0}" = "1" ]; then
+            log_warn "Firmware UEFI con Secure Boot ACTIVO: se instalara shim + GRUB firmado."
+        else
+            log_info "Firmware UEFI detectado (Secure Boot desactivado)."
+        fi
+    else
+        log_warn "Firmware BIOS/legacy detectado: se instalara GRUB i386-pc en el MBR."
+    fi
 
     if [ "$dry_run" = "false" ] && [ "$force_confirm" = "false" ]; then
         log_warn "ADVERTENCIA: Se formateará por completo el disco $selected_target."
