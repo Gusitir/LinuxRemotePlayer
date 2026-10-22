@@ -2,32 +2,30 @@
 
 ```yaml
 version: 3
-updated_at: 2026-10-21T16:35:00-05:00
-source_commit: 88cf2f6
-product_branch: codex/debian-foundation
+updated_at: 2026-10-21T19:20:00-05:00
+source_commit: db97991
+product_branch: codex/debian-foundation (integrada en main)
 product_branch_head: d3495ab
-product_branch_state: 24 commits ahead of main, 1 main-only commit, not merged; merge-tree exit 0 (tree 8068b59)
-dirty: true
-dirty_items:
-  - control-plane MAINTAIN edits pending `[STATE]` commit (AGENTS, APPCORE, BUGS, CONTEXT, CURRENT, INDEX, PLAN)
-  - .agents/PLAN_v2.0.0-release.md untracked (aprobado D51)
+product_branch_state: merged into main via --no-ff (ad30b95); main == origin/main
+dirty: false
 assurance: Standard
 active_job: RUN THE LOOP
 active_plan: PLAN_v2.0.0-release.md (approved, digest 2814bb3c…, D51)
-active_task: T-143 audit (delta ISO)
+active_task: T-143 apto; T-144 ready
 last_verdict: APTO
-verdict_scope: APTO otorgado por auditor independiente sobre `9d60785` (merge --no-ff + push autorizados; publicación de manifiesto estable excluida). Delta posterior `d3495ab` corrige el arranque de la ISO (enlaces `live/vmlinuz` e `initrd.img`); re-auditoría del delta en curso.
-next_action: Con APTO del delta `d3495ab`: commit `[STATE]` del control plane, merge `--no-ff` en `main` y push. Publicación de `website/latest.json` 2.0.0 queda para T-146 (gate PH24).
+verdict_scope: T-143 apto. Auditor independiente dio APTO en `9d60785` y APTO final en `d3495ab` (delta ISO). Merge `--no-ff` en `ad30b95`, corrección de beta congelado `db97991`, push a origin/main (`0 0`). `VERSION` 2.0.0 en main; 20/20 tests de release/OTA/ISO pasan sobre el merge.
+next_action: Ejecutar T-144 (PH24 backend sin licencia ni proxy cloud) sobre main limpio; luego T-145 frontend, T-146 web/docs con publicación del manifiesto estable, T-147 Supabase y T-148 gates.
 ```
 
 ## Blockers
 
 - Merge y push de `codex/debian-foundation` BLOQUEADOS: auditoría pre-merge `NO APTO` (AUD-001..003
   en `BUGS.md`). No se integra ni publica hasta un veredicto APTO sobre el head corregido.
-- Push, merge y deploy adicionales requieren autorización explícita del dueño; el commit `[STATE]`
-  `88cf2f6` ya está en `origin/main`.
-- `2.0.0` no es publicable: `main` no contiene ninguno de los 18 commits de producto de
-  `codex/debian-foundation`; falta además bump de `VERSION`, firma de manifiestos y `TST-OTA-001`.
+- Merge y push de v2.0 ejecutados con APTO del auditor (`d3495ab`); no hay bloqueo de integración.
+- Push, merge y deploy adicionales requieren autorización explícita del dueño; `main` está en
+  `db97991` y sincronizado con `origin/main`.
+- Publicación del manifiesto estable `2.0.0` bloqueada por el gate PH24: requiere T-144, T-145 y
+  T-146 antes de servir `website/latest.json` 2.0.0.
 - Cleanup of external WSL audit clones remains unauthorized.
 - One abrupt physical reset occurred after launching Netflix. Journal ended without orderly
   shutdown, panic, OOM, thermal event, NVIDIA Xid or pstore evidence; a 90-second monitored

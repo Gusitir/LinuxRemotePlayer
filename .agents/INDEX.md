@@ -1,11 +1,11 @@
 # INDEX - navegacion del repositorio
 
 ```yaml
-last_reindexed_at: 2026-10-21T16:35:00-05:00
-source_commit: 88cf2f6
-dirty: true
-active_plan: PLAN_v2.0.0-release.md (approved D51)
-state: "release 2.0.0 aprobado (D51); auditoria pre-merge NO APTO sobre head 7d95326 (AUD-001..003); producto v2.0 en codex/debian-foundation @ 7d95326, sin mergear en main; ISO de prueba 1.99.2 construida"
+last_reindexed_at: 2026-10-21T19:20:00-05:00
+source_commit: db97991
+dirty: false
+active_plan: PLAN_v2.0.0-release.md (approved D51; T-143 apto, T-144 ready)
+state: "v2.0 integrado en main (VERSION 2.0.0, push 0/0); beta 1.99.2 congelado y firmado; ISO 2.0.0 arrancable (SHA c1e19133...); release estable pendiente de PH24 (T-144..T-148)"
 ```
 
 El estado activo pertenece a [`CURRENT.md`](CURRENT.md), no a este indice.

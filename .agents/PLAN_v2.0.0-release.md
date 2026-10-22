@@ -78,8 +78,8 @@ Digest boundary: exact UTF-8/LF bytes between `CANONICAL-DESIGN-BEGIN` and
 
 ### T-143 — Integración de rama y reconciliación de artefacto
 
-- Status: blocked (auditoría pre-merge NO APTO: AUD-001 `cryptography`, AUD-002 firma/versión, AUD-003 preseed)
-- Depends on: aprobación D51 vigente; corrección de AUD-001..003 y re-auditoría APTO.
+- Status: apto (merge `--no-ff` `ad30b95`, beta congelado `db97991`, push `0 0`, auditoría APTO `d3495ab`)
+- Depends on: aprobación D51 vigente; auditoría APTO.
 - Objective: integrar `codex/debian-foundation` en `main` según D-R1; resolver la deriva `25ea41…` vs
   `a0b54c85…` según D-R2; bump `VERSION` a `2.0.0` y actualizar `frontend/sw.js`/manifiestos.
 - Allowed scope: historia Git, `VERSION`, `frontend/sw.js`, `website/*/latest.json`, artefactos.

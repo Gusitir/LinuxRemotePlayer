@@ -150,13 +150,11 @@ valida el import. Verificado en venv limpio: `pip install -r backend/requirement
 
 ## AUD-002 — OTA no publicable: manifiestos sin firma y versión no promovible
 
-**Abierto — bloqueado por clave.** `scripts/build_deb.sh:212-216` aborta si el manifiesto no trae
-`signature`; `website/latest.json` y `website/beta/latest.json` no la traen. `VERSION` = `1.99.2`:
-el bump a `2.0.0` rompe `tests/test_beta_release.py:21` y `tests/test_debian_release.py:20,51,53`
-hasta actualizar fixtures y artefactos. Estado de clave: `scripts/debian/lrp-ota-pub.pem` es Ed25519;
-`~/.ssh/prod_rsa_private.pem` es RSA 2048 y **no** corresponde. La clave privada Ed25519 está fuera
-del repo (offline) y no fue localizada. Requiere que el dueño aporte la clave o autorice rotación del
-ancla de confianza.
+**Cerrado para beta y artefacto 2.0.0 — commits `f229e5b`, `bad230f`, `db97991`.** Ancla OTA rotada a
+Ed25519 nuevo (privada fuera del repo), `website/beta/latest.json` firmado y verificado, `VERSION`
+2.0.0 con `.deb` 2.0.0 (`4783af82…`) y `Depends`/`requirements` con `cryptography`. Pendiente solo la
+publicación del manifiesto estable (`website/latest.json` sigue en 1.9.1), que pertenece a T-146 y al
+gate PH24.
 
 ## AUD-003 — preseed de la ISO pide paquetes inexistentes en trixie
 
