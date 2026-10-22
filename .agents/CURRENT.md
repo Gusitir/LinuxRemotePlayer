@@ -40,11 +40,12 @@ next_action: Ejecutar T-144 (PH24 backend sin licencia ni proxy cloud) sobre mai
   sidecar. Stable manifest remains `1.9.1` SHA `82b6bc5286cdf197bb684ddc00f6c797aac498f2959b354cada83acaddd93d38`.
 - T-131 artifact/manifest mismatch is resolved: no `dist/` sidecar exists in
   `.worktrees/debian-foundation` and no `25ea41…` reference remains in the repo.
-- ISO 2.0.0 vigente, head `d3495ab`: `lrp-os_2.0.0_amd64.iso`, 2036561920 bytes, SHA256
-  `c1e191330be3eef64ad2ded14a5ddb2ff09cce844e40880066873906dbfad2e0` (copia en
-  `D:\AGUSTIN\Portafolio\Proyectos\lrp-iso\`). Montada y verificada: `/live/vmlinuz` e
-  `/live/initrd.img` resuelven al kernel 6.12.113+deb13-amd64. ISO anterior `cb846984…` y
-  `f8611e13…` quedan obsoletas (fallaban con `file '/live/vmlinuz' not found`).
+- ISO 2.0.0 vigente, head `4b1fdc6`: `lrp-os_2.0.0_amd64.iso`, 2036563968 bytes, SHA256
+  `9e003c0adad47b75ddf9e1fb96dbc9c0f6fb40c9835171388312509b19eb23c5` (copia en
+  `D:\AGUSTIN\Portafolio\Proyectos\lrp-iso\`). Montada y verificada: `live/vmlinuz` es copia real de
+  12154816 bytes del kernel 6.12.113+deb13-amd64 y `grub.cfg` apunta al nombre versionado. Obsoletas
+  por fallos de arranque: `f8611e13…` (`file '/live/vmlinuz' not found`), `cb846984…` y `c1e19133…`
+  (`premature end of file`, enlaces simbólicos no válidos en ISO9660).
 - Correcciones `c484274`/`f229e5b`/`bad230f`: venv limpio `IMPORT_OK 47.0.0`; VERSION 2.0.0;
   `.deb` 2.0.0 SHA256 `4783af823dab1d4b3c8ffda82c8f6521cbf1dd1a0bb1c18342f6e96d2c4b69c1`;
   manifiesto beta 1.99.2 firmado Ed25519 y verificado; pytest 282 passed + 2 fallos por root.
