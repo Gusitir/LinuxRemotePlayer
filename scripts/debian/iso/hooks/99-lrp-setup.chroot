@@ -25,28 +25,26 @@ mkdir -p /etc/sudoers.d
 echo "lrp ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/99-lrp-user
 chmod 0440 /etc/sudoers.d/99-lrp-user
 
-# 2. Configure LightDM autologin to Openbox
+# 2. Configure LightDM autologin to Openbox (live-CD appliance flow)
 mkdir -p /etc/lightdm/lightdm.conf.d
 cat <<EOF > /etc/lightdm/lightdm.conf.d/80-lrp-autologin.conf
 [Seat:*]
 autologin-user=lrp
 autologin-user-timeout=0
+autologin-session=openbox
 user-session=openbox
+greeter-show-manual-login=false
+greeter-hide-users=true
 EOF
 
 # 3. Configure Openbox environment and autostart
 mkdir -p /home/lrp/.config/openbox
 cat <<EOF > /home/lrp/.config/openbox/autostart
-# Turn off screen saver and DPMS blanks for TV appliance operation
+# TV appliance: no screensaver, no DPMS blank
 xset s off -dpms &
 
-# Ensure audio pipewire services are active
+# Audio stack for the session
 systemctl --user start pipewire pipewire-pulse wireplumber 2>/dev/null || true
-
-# Launch LRP TV Status Panel on display :0 if available
-if command -v linuxremoteplayer >/dev/null 2>&1; then
-    systemctl start linuxremoteplayer.service 2>/dev/null || true
-fi
 EOF
 chown -R lrp:lrp /home/lrp/.config
 
@@ -59,13 +57,49 @@ swap-priority = 100
 fs-type = swap
 EOF
 
-# 5. Install LRP deb if staged in /tmp/lrp.deb
+# 5. Install LRP deb if staged in /tmp/lrp.deb and create the backend unit
+LOG=/var/log/lrp-chroot-hook.log
+: > "$LOG"
 if [ -f /tmp/lrp.deb ]; then
     echo "[LRP-CHROOT-HOOK] Installing staged linuxremoteplayer.deb package..."
-    apt-get update -qq || true
-    apt-get install -y /tmp/lrp.deb || (dpkg -i /tmp/lrp.deb && apt-get install -f -y)
+    apt-get update -qq >>"$LOG" 2>&1 || true
+    if ! apt-get install -y /tmp/lrp.deb >>"$LOG" 2>&1; then
+        dpkg -i /tmp/lrp.deb >>"$LOG" 2>&1 || true
+        apt-get install -f -y >>"$LOG" 2>&1 || true
+    fi
     rm -f /tmp/lrp.deb
-    systemctl enable linuxremoteplayer.service 2>/dev/null || true
+else
+    echo "WARN: /tmp/lrp.deb no estaba presente; la ISO no llevara el backend." >>"$LOG"
+fi
+
+if [ -x /opt/linuxremoteplayer/backend/.venv/bin/python ]; then
+    echo "[LRP-CHROOT-HOOK] Backend venv detected; wiring systemd unit."
+    install -d -o lrp -g lrp -m 0755 /var/lib/linuxremoteplayer
+    cat <<EOF > /etc/systemd/system/linuxremoteplayer.service
+[Unit]
+Description=Linux Remote Player Backend API
+Wants=network-online.target
+After=display-manager.service network-online.target
+
+[Service]
+Type=simple
+User=lrp
+WorkingDirectory=/opt/linuxremoteplayer/backend
+Environment="APPLIANCE_IDLE_PANEL=true"
+Environment="DISPLAY=:0"
+ExecStart=/opt/linuxremoteplayer/backend/.venv/bin/python run.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=graphical.target
+EOF
+    mkdir -p /etc/systemd/system/graphical.target.wants
+    ln -sf /etc/systemd/system/linuxremoteplayer.service \
+        /etc/systemd/system/graphical.target.wants/linuxremoteplayer.service
+    systemctl enable linuxremoteplayer.service >>"$LOG" 2>&1 || true
+else
+    echo "WARN: venv del backend ausente; revisar postinst del .deb (sin red en build?)." >>"$LOG"
 fi
 
 # 6. Install automated installer service (triggered if booted with lrp_auto_install kernel param)
