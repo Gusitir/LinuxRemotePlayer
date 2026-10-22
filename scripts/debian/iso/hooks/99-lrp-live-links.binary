@@ -1,16 +1,37 @@
 #!/bin/sh
-# Binary-stage hook: live-build 2025 no crea los enlaces sin version que
-# grub.cfg espera (/live/vmlinuz, /live/initrd.img). Sin ellos GRUB responde
-# "file '/live/vmlinuz' not found".
+# Binary-stage hook.
+# live-build 2025 publica el kernel como /live/vmlinuz-<ver> e /live/initrd.img-<ver>,
+# mientras grub.cfg referencia nombres sin version. Los enlaces simbolicos NO sirven
+# en ISO9660: GRUB lee el tamano del enlace y aborta con "premature end of file".
+# Solucion: copia real con el nombre sin version y reescritura del grub.cfg con el
+# nombre versionado exacto.
 set -e
 [ -d live ] || exit 0
-cd live
-for f in vmlinuz-*; do
-  [ -e "$f" ] || continue
-  ln -sf "$f" vmlinuz
+
+VMLINUZ=$(ls live/vmlinuz-* 2>/dev/null | head -n1 || true)
+INITRD=$(ls live/initrd.img-* 2>/dev/null | head -n1 || true)
+[ -n "$VMLINUZ" ] || exit 0
+
+for pair in "$VMLINUZ:live/vmlinuz" "$INITRD:live/initrd.img"; do
+  src=${pair%%:*}
+  dst=${pair##*:}
+  if [ -n "$src" ] && [ -f "$src" ]; then
+    rm -f "$dst"
+    cp -l "$src" "$dst" 2>/dev/null || cp "$src" "$dst"
+  fi
 done
-for f in initrd.img-*; do
-  [ -e "$f" ] || continue
-  ln -sf "$f" initrd.img
+
+VML_NAME=$(basename "$VMLINUZ")
+INITRD_NAME=""
+[ -n "$INITRD" ] && INITRD_NAME=$(basename "$INITRD")
+
+for cfg in boot/grub/grub.cfg boot/grub/i386-pc/grub.cfg isolinux/isolinux.cfg; do
+  [ -f "$cfg" ] || continue
+  sed -i "s|/live/vmlinuz|/live/${VML_NAME}|g" "$cfg"
+  if [ -n "$INITRD_NAME" ]; then
+    sed -i "s|/live/initrd.img|/live/${INITRD_NAME}|g" "$cfg"
+  fi
 done
-ls -l vmlinuz initrd.img
+
+ls -l live/vmlinuz* live/initrd.img* 2>/dev/null || true
+grep -n "linux " boot/grub/grub.cfg 2>/dev/null | head -n3 || true
