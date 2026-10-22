@@ -118,10 +118,12 @@ LOG=/var/log/lrp-chroot-hook.log
 : > "$LOG"
 if [ -f "$STAGE" ]; then
     echo "[LRP-CHROOT-HOOK] Installing staged linuxremoteplayer.deb package..."
-    apt-get update -qq >>"$LOG" 2>&1 || true
-    if ! apt-get install -y "$STAGE" >>"$LOG" 2>&1; then
-        dpkg -i "$STAGE" >>"$LOG" 2>&1 || true
-        apt-get install -f -y >>"$LOG" 2>&1 || true
+    # Sin apt-get update: el mirror de seguridad sirve InRelease sin firma de forma
+    # intermitente y aborta el build. Las listas del chroot ya estan pobladas.
+    if ! dpkg -i "$STAGE" >>"$LOG" 2>&1; then
+        apt-get install -f -y \
+            -o Acquire::Check-Valid-Until=false \
+            -o Acquire::Check-Date=false >>"$LOG" 2>&1 || true
     fi
     rm -f "$STAGE"
 else
