@@ -50,6 +50,11 @@ systemctl disable lightdm.service >>/var/log/lrp-chroot-hook.log 2>&1 || true
 systemctl mask lightdm.service >>/var/log/lrp-chroot-hook.log 2>&1 || true
 systemctl mask live-config.service live-tools.service >>/var/log/lrp-chroot-hook.log 2>&1 || true
 
+# El generador de live-config escribe getty@tty1 con LIVE_USERNAME=user en /run
+# en cada arranque y gana sobre /etc/systemd/system/*.conf: hay que quitarlo.
+rm -f /usr/lib/systemd/system-generators/live-config-getty-generator
+rm -f /lib/systemd/system-generators/live-config-getty-generator
+
 mkdir -p /etc/systemd/system/getty@tty1.service.d
 cat <<'EOF' > /etc/systemd/system/getty@tty1.service.d/autologin.conf
 [Service]
