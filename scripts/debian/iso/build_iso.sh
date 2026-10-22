@@ -148,9 +148,12 @@ chmod +x "$WORKDIR/config/includes.chroot/usr/local/sbin/lrp-install-target.sh"
 cp "$SCRIPT_DIR/preseed.cfg" "$WORKDIR/config/includes.installer/preseed.cfg"
 
 # 7. Inyección de paquete deb local si existe
+# Se usa /opt/lrp-stage y no /tmp: los hooks estándar de live-build limpian /tmp
+# antes de ejecutar config/hooks/live/*.chroot, y el paquete desaparecía.
 if [ -f "$DEB_PATH" ]; then
     echo "[LRP-ISO] Inyectando paquete deb: $DEB_PATH"
-    cp "$DEB_PATH" "$WORKDIR/config/includes.chroot/tmp/lrp.deb"
+    mkdir -p "$WORKDIR/config/includes.chroot/opt/lrp-stage"
+    cp "$DEB_PATH" "$WORKDIR/config/includes.chroot/opt/lrp-stage/lrp.deb"
 else
     echo "[LRP-ISO] Nota: Paquete deb no encontrado en $DEB_PATH (se omite pre-instalación en staging)"
 fi

@@ -57,19 +57,20 @@ swap-priority = 100
 fs-type = swap
 EOF
 
-# 5. Install LRP deb if staged in /tmp/lrp.deb and create the backend unit
+# 5. Install LRP deb staged at /opt/lrp-stage/lrp.deb and create the backend unit
+STAGE=/opt/lrp-stage/lrp.deb
 LOG=/var/log/lrp-chroot-hook.log
 : > "$LOG"
-if [ -f /tmp/lrp.deb ]; then
+if [ -f "$STAGE" ]; then
     echo "[LRP-CHROOT-HOOK] Installing staged linuxremoteplayer.deb package..."
     apt-get update -qq >>"$LOG" 2>&1 || true
-    if ! apt-get install -y /tmp/lrp.deb >>"$LOG" 2>&1; then
-        dpkg -i /tmp/lrp.deb >>"$LOG" 2>&1 || true
+    if ! apt-get install -y "$STAGE" >>"$LOG" 2>&1; then
+        dpkg -i "$STAGE" >>"$LOG" 2>&1 || true
         apt-get install -f -y >>"$LOG" 2>&1 || true
     fi
-    rm -f /tmp/lrp.deb
+    rm -f "$STAGE"
 else
-    echo "WARN: /tmp/lrp.deb no estaba presente; la ISO no llevara el backend." >>"$LOG"
+    echo "WARN: $STAGE no estaba presente; la ISO no llevara el backend." >>"$LOG"
 fi
 
 if [ -x /opt/linuxremoteplayer/backend/.venv/bin/python ]; then
