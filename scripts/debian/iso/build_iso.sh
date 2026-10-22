@@ -166,7 +166,9 @@ LB_CONFIG_CMD=(
     --distribution trixie
     --debian-installer live
     --archive-areas "main contrib non-free non-free-firmware"
-    --bootloader grub-efi
+    # syslinux aporta el MBR isohybrid: sin el, Rufus no detecta modo DD y
+    # el USB se escribe como FAT32 (ruta distinta a live-boot ISO9660).
+    --bootloader "syslinux grub-efi"
     --iso-application "LinuxRemotePlayer OS"
     --iso-publisher "LinuxRemotePlayer Project"
     --iso-volume "LRP_OS_${VERSION}"
