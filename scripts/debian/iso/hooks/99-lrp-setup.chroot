@@ -83,6 +83,24 @@ cat <<'EOF' > /home/lrp/.config/openbox/autostart
 # TV appliance: no screensaver, no DPMS blank
 xset s off -dpms 2>/dev/null || true
 EOF
+
+# 3b. Firefox confia en la CA local generada por el backend.
+# Sin esto el panel abre en la pantalla "Be careful. Something doesn't look right"
+# y el usuario tendria que aceptar el riesgo a mano en la TV.
+mkdir -p /etc/firefox/policies /etc/firefox-esr/policies
+cat <<'EOF' > /etc/firefox/policies/policies.json
+{
+  "policies": {
+    "Certificates": {
+      "Install": ["/var/lib/linuxremoteplayer/certs/ca.pem"],
+      "ImportEnterpriseRoots": true
+    },
+    "OverrideFirstRunPage": "",
+    "OverridePostUpdatePage": ""
+  }
+}
+EOF
+cp /etc/firefox/policies/policies.json /etc/firefox-esr/policies/policies.json
 chown -R lrp:lrp /home/lrp/.config
 
 # 4. Configure zram-generator
