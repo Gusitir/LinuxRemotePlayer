@@ -325,10 +325,36 @@ EOF
         mount --bind "/$fs" "$target_mnt/$fs"
     done
 
-    # Instalar GRUB EFI y BIOS híbrido
-    chroot "$target_mnt" grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=LRP-OS --recheck || true
-    chroot "$target_mnt" grub-install --target=i386-pc "$target_disk" --recheck || true
-    chroot "$target_mnt" update-grub
+    # Instalar GRUB: entrada EFI propia + fallback removible BOOTX64.EFI.
+    # --removable evita depender de NVRAM (efibootmgr no siempre funciona en live)
+    # y garantiza que el firmware encuentre el cargador aunque ignore la NVRAM.
+    log_info "Instalando GRUB EFI (LRP-OS + fallback BOOTX64.EFI)..."
+    if ! chroot "$target_mnt" grub-install \
+            --target=x86_64-efi \
+            --efi-directory=/boot/efi \
+            --bootloader-id=LRP-OS \
+            --removable --no-nvram --recheck >>/var/log/lrp-install-grub.log 2>&1; then
+        log_error "grub-install EFI fallo; revisar /var/log/lrp-install-grub.log"
+    fi
+    mkdir -p "$target_mnt/boot/efi/EFI/BOOT"
+    if [ -f "$target_mnt/boot/efi/EFI/BOOT/BOOTX64.EFI" ]; then
+        log_info "Fallback EFI presente: EFI/BOOT/BOOTX64.EFI"
+    else
+        log_error "Sin BOOTX64.EFI: el firmware podria no arrancar el disco."
+    fi
+
+    log_info "Instalando GRUB BIOS (i386-pc)..."
+    chroot "$target_mnt" grub-install --target=i386-pc "$target_disk" --recheck \
+        >>/var/log/lrp-install-grub.log 2>&1 || log_warn "grub-install BIOS fallo (normal en equipos solo-UEFI)."
+
+    chroot "$target_mnt" update-grub >>/var/log/lrp-install-grub.log 2>&1 || \
+        log_error "update-grub fallo; revisar /var/log/lrp-install-grub.log"
+
+    if [ -f "$target_mnt/boot/grub/grub.cfg" ]; then
+        log_info "grub.cfg generado en el destino."
+    else
+        log_error "No se genero grub.cfg en el destino."
+    fi
 
     # Desmontar recursos
     for fs in dev/pts dev sys proc boot/efi; do

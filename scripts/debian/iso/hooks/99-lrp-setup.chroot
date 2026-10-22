@@ -156,6 +156,8 @@ EOF
     ln -sf /etc/systemd/system/linuxremoteplayer.service \
         /etc/systemd/system/graphical.target.wants/linuxremoteplayer.service
     systemctl enable linuxremoteplayer.service >>"$LOG" 2>&1 || true
+    # SSH para testeo remoto desde el PC de desarrollo (lrp/lrp por defecto).
+    systemctl enable ssh.service >>"$LOG" 2>&1 || true
 
     # uinput para touchpad/teclado virtuales: sin esta regla /dev/uinput queda 0600
     # root:root y el backend no puede inyectar entrada en la sesion live.

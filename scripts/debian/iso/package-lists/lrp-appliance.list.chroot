@@ -27,6 +27,7 @@ usbutils
 # X11 & Desktop Session
 xorg
 xserver-xorg-video-all
+xserver-xorg-input-libinput
 openbox
 lightdm
 lightdm-gtk-greeter
@@ -42,12 +43,17 @@ libasound2-plugins
 network-manager
 bluez
 avahi-daemon
+openssh-server
 
 # Partitioning & Storage Tooling (Installer)
 parted
 gdisk
 dosfstools
 e2fsprogs
+efibootmgr
+grub-efi-amd64
+grub-efi-amd64-bin
+grub-pc-bin
 
 # Runtime dependencies for Linux Remote Player
 python3
