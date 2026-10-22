@@ -99,6 +99,13 @@ EOF
     ln -sf /etc/systemd/system/linuxremoteplayer.service \
         /etc/systemd/system/graphical.target.wants/linuxremoteplayer.service
     systemctl enable linuxremoteplayer.service >>"$LOG" 2>&1 || true
+
+    # uinput para touchpad/teclado virtuales: sin esta regla /dev/uinput queda 0600
+    # root:root y el backend no puede inyectar entrada en la sesion live.
+    cat <<'EOF' > /etc/udev/rules.d/99-linuxremoteplayer-uinput.rules
+KERNEL=="uinput", SUBSYSTEM=="misc", MODE="0660", GROUP="input", OPTIONS+="static_node=uinput"
+EOF
+    echo uinput > /etc/modules-load.d/lrp-uinput.conf
 else
     echo "WARN: venv del backend ausente; revisar postinst del .deb (sin red en build?)." >>"$LOG"
 fi
