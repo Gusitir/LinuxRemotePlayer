@@ -287,6 +287,10 @@ install_payload() {
     mount "$boot_part" "$target_mnt/boot/efi"
 
     log_info "Sincronizando sistema operativo base a $target_mnt..."
+    # rsync devuelve 23/24 por archivos que desaparecen o sin permiso en un live;
+    # con set -e eso abortaba la instalacion ANTES de instalar GRUB y dejaba el
+    # disco sin cargador. Solo 0/23/24 se consideran validos.
+    local rsync_rc=0
     rsync -aHAX --delete \
         --exclude='/target' \
         --exclude='/proc/*' \
@@ -297,7 +301,16 @@ install_payload() {
         --exclude='/mnt/*' \
         --exclude='/media/*' \
         --exclude='/lost+found' \
-        / "$target_mnt/"
+        --exclude='/var/log/*' \
+        --exclude='/var/cache/*' \
+        --exclude='/etc/mtab' \
+        / "$target_mnt/" || rsync_rc=$?
+    if [ "$rsync_rc" -ne 0 ] && [ "$rsync_rc" -ne 23 ] && [ "$rsync_rc" -ne 24 ]; then
+        log_error "rsync fallo con codigo $rsync_rc; abortando antes de tocar el bootloader."
+        return 1
+    fi
+    log_info "Rsync completado (codigo $rsync_rc)."
+    mkdir -p "$target_mnt/boot/grub" "$target_mnt/boot/efi" "$target_mnt/var/lib/linuxremoteplayer"
 
     # Generar fstab canónico usando etiquetas de partición
     log_info "Configurando /etc/fstab canónico..."
@@ -320,6 +333,7 @@ fs-type = swap
 EOF
 
     # Configuración de GRUB en chroot
+    mkdir -p "$target_mnt/var/log" "$target_mnt/boot/grub" "$target_mnt/boot/efi"
     log_info "Instalando bootloader GRUB en $target_disk..."
     for fs in proc sys dev dev/pts; do
         mount --bind "/$fs" "$target_mnt/$fs"
@@ -333,7 +347,7 @@ EOF
             --target=x86_64-efi \
             --efi-directory=/boot/efi \
             --bootloader-id=LRP-OS \
-            --removable --no-nvram --recheck >>/var/log/lrp-install-grub.log 2>&1; then
+            --removable --no-nvram --recheck >>"$target_mnt/var/log/lrp-install-grub.log" 2>&1; then
         log_error "grub-install EFI fallo; revisar /var/log/lrp-install-grub.log"
     fi
     mkdir -p "$target_mnt/boot/efi/EFI/BOOT"
@@ -345,9 +359,9 @@ EOF
 
     log_info "Instalando GRUB BIOS (i386-pc)..."
     chroot "$target_mnt" grub-install --target=i386-pc "$target_disk" --recheck \
-        >>/var/log/lrp-install-grub.log 2>&1 || log_warn "grub-install BIOS fallo (normal en equipos solo-UEFI)."
+        >>"$target_mnt/var/log/lrp-install-grub.log" 2>&1 || log_warn "grub-install BIOS fallo (normal en equipos solo-UEFI)."
 
-    chroot "$target_mnt" update-grub >>/var/log/lrp-install-grub.log 2>&1 || \
+    chroot "$target_mnt" update-grub >>"$target_mnt/var/log/lrp-install-grub.log" 2>&1 || \
         log_error "update-grub fallo; revisar /var/log/lrp-install-grub.log"
 
     if [ -f "$target_mnt/boot/grub/grub.cfg" ]; then
