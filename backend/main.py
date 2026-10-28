@@ -30,11 +30,11 @@ except ImportError:
 
 try:
     from config import (
-        get_env_file, get_token_file, get_license_cache_file, get_ca_cert_file, secure_permissions
+        get_env_file, get_token_file, get_ca_cert_file, secure_permissions
     )
 except ImportError:
     from backend.config import (
-        get_env_file, get_token_file, get_license_cache_file, get_ca_cert_file, secure_permissions
+        get_env_file, get_token_file, get_ca_cert_file, secure_permissions
     )
 
 load_dotenv(get_env_file())
@@ -42,8 +42,8 @@ load_dotenv(get_env_file())
 from input_emulator import gamepad, mouse
 from discovery import get_installed_apps
 from kiosk import launch_kiosk, gui_env
-from ai_pipeline import voice_command, proxy_license_action
-from auth import verify_access, is_license_valid_cached_or_online
+from ai_pipeline import voice_command
+from auth import verify_access
 
 logger = logging.getLogger("main")
 
@@ -120,34 +120,10 @@ except ImportError:
 app.include_router(system_router)
 
 def voice_enabled() -> bool:
-    """Se lee en cada consulta A PROPOSITO: activar la licencia enciende la voz escribiendo
-    el .env, y con una constante de modulo ese cambio no tendria efecto hasta reiniciar el
-    servicio -- que es justo lo que dejaba al cliente sin microfono."""
+    """Preferencia LOCAL de privacidad. PH24: ya no depende de ninguna licencia;
+    se lee en cada consulta para que el toggle surta efecto sin reiniciar."""
     return os.getenv("ENABLE_VOICE", "true").lower() == "true"
 
-
-def _autoenable_voice_for_existing_license() -> None:
-    """B10: la voz solo se encendia dentro de /api/license/activate. Quien ya era Pro
-    antes de actualizar nunca vuelve a pasar por ese flujo y se quedaba sin microfono.
-    SOLO actua si ENABLE_VOICE no existe en el .env: un `false` explicito es el usuario
-    apagandola a proposito (decision D10) y no se pisa NUNCA."""
-    if os.getenv("ENABLE_VOICE") is not None:
-        return
-    if not os.getenv("LICENSE_TOKEN"):
-        return
-    try:
-        from pathlib import Path
-        env_file = str(get_env_file())
-        if os.path.exists(env_file):
-            set_key(env_file, "ENABLE_VOICE", "true")
-            secure_permissions(Path(env_file))
-        os.environ["ENABLE_VOICE"] = "true"
-        logger.info("Licencia presente y ENABLE_VOICE sin definir: voz activada.")
-    except Exception as e:
-        logger.warning(f"No se pudo activar la voz automaticamente: {e}")
-
-
-_autoenable_voice_for_existing_license()
 
 import audio
 logger.info(f"Audio backend selected: {audio.get_audio_backend() or 'None (uinput fallback)'}")
@@ -535,14 +511,13 @@ async def get_api_status(request: Request):
     require_local(request)
     import kiosk
     import input_emulator
-    
-    license_token = os.getenv("LICENSE_TOKEN", "")
-    licensed = await asyncio.to_thread(auth.is_license_valid_cached_or_online, license_token) if license_token else False
 
+    # PH24: ninguna feature depende de licencia. Se responde local, sin red.
     return {
         "version": VERSION,
         "mode": os.getenv("LRP_MODE", "appliance"),
-        "licensed": licensed,
+        "licensed": True,
+        "license_source": "local",
         "network_ips": get_ips(),
         "pairing_token": auth.PAIRING_TOKEN,
         "connected_clients": connected_clients,
@@ -551,9 +526,9 @@ async def get_api_status(request: Request):
         "voice_enabled": voice_enabled(),
         "kiosk_active": getattr(kiosk, "_kiosk_proc", None) is not None,
         "adblock_status": kiosk.adblock_status(),
-        # PLACEHOLDER-PADDLE: se completa con el checkout real en T-51. Vacio a proposito:
-        # es preferible no ofrecer compra a mandar al cliente a una pasarela que no usamos.
-        "buy_url": os.getenv("BUY_URL", "")
+        # PH24: sin checkout. La clave queda vacia para no romper al consumidor actual;
+        # T-145 la retira junto con la UI de compra.
+        "buy_url": ""
     }
 
 
@@ -579,7 +554,7 @@ def get_config():
         "hostname": socket.gethostname(),
         "version": VERSION,
         "channel": get_channel(),
-        "buy_url": os.getenv("BUY_URL", "")   # PLACEHOLDER-PADDLE, ver T-51
+        "buy_url": ""   # PH24: sin comercializacion; T-145 retira la clave
     }
 
 
@@ -638,34 +613,18 @@ async def get_app_icon(app_id: str):
 
 @app.post("/api/license/activate", dependencies=[Depends(require_token)])
 async def activate_license(payload: ActivateBody):
-    valid = await asyncio.to_thread(is_license_valid_cached_or_online, payload.key)
-    if not valid:
-        raise HTTPException(status_code=400, detail="Clave no válida")
-    # 1-device claim via ai-proxy. "unreachable" does NOT block: the key already
-    # validated online and the claim self-heals on the next voice command.
-    claim = await proxy_license_action("activate", payload.key, force=payload.force)
-    if claim.get("status") == "in_use_elsewhere":
-        raise HTTPException(status_code=409, detail="Licencia en uso en otro dispositivo")
-    if claim.get("status") == "invalid":
-        raise HTTPException(status_code=400, detail="Clave no válida")
-    try:
-        from pathlib import Path
-        env_file = str(get_env_file())
-        if not os.path.exists(env_file):
-            Path(env_file).parent.mkdir(parents=True, exist_ok=True)
-            with open(env_file, "w") as f:
-                f.write("")
-        await asyncio.to_thread(set_key, env_file, "LICENSE_TOKEN", payload.key)
-        # D9: la voz es la razon por la que se compra el Pro. Encenderla aca evita que el
-        # cliente active la licencia y se quede sin microfono sin saber por que.
-        await asyncio.to_thread(set_key, env_file, "ENABLE_VOICE", "true")
-        secure_permissions(Path(env_file))
-        os.environ["LICENSE_TOKEN"] = payload.key
-        os.environ["ENABLE_VOICE"] = "true"
-        return {"status": "success", "plan": "lifetime"}
-    except Exception as e:
-        logger.error(f"Failed to save license key: {e}")
-        raise HTTPException(status_code=500, detail="Error interno al guardar la clave")
+    """PH24: stub local inerte. Ninguna funcion requiere licencia, no hay red ni gate.
+
+    Conservado SOLO porque el frontend actual todavia lo llama; T-145 lo borra.
+    """
+    logger.info("License activation ignored (PH24: license not required).")
+    return {
+        "status": "not_required",
+        "licensed": True,
+        "plan": "appliance",
+        "source": "local",
+        "detail": "Esta instalacion no requiere licencia: la voz y todas las funciones son locales.",
+    }
 
 
 class VoiceToggleBody(BaseModel):
@@ -674,8 +633,7 @@ class VoiceToggleBody(BaseModel):
 
 @app.post("/api/voice/toggle", dependencies=[Depends(require_token)])
 async def toggle_voice(payload: VoiceToggleBody):
-    """D10: apagar la voz es una decision legitima de privacidad. No toca la licencia:
-    el usuario sigue siendo Pro, solo deja de usar el microfono."""
+    """PH24: preferencia local de privacidad. No consulta licencia, token ni cuota."""
     try:
         from pathlib import Path
         env_file = str(get_env_file())
@@ -695,26 +653,24 @@ async def toggle_voice(payload: VoiceToggleBody):
 
 @app.post("/api/license/takeover", dependencies=[Depends(require_token)])
 async def takeover_license():
-    """Force-claim: move the configured license to THIS device (user confirmed)."""
-    license_token = os.getenv("LICENSE_TOKEN", "")
-    if not license_token:
-        raise HTTPException(status_code=400, detail="Sin licencia configurada")
-    claim = await proxy_license_action("activate", license_token, force=True)
-    if claim.get("status") == "activated":
-        return {"status": "success", "takeover": bool(claim.get("takeover"))}
-    raise HTTPException(status_code=502, detail="No se pudo mudar la licencia")
-
-
-
-
+    """PH24: stub local inerte (antes: force-claim del 1-device). T-145 lo borra."""
+    return {
+        "status": "not_required",
+        "licensed": True,
+        "source": "local",
+        "detail": "No hay licencia que mover: este dispositivo no necesita una.",
+    }
 
 @app.get("/api/license/status", dependencies=[Depends(require_token)])
 async def get_license_status():
-    license_token = os.getenv("LICENSE_TOKEN", "")
-    licensed = await asyncio.to_thread(is_license_valid_cached_or_online, license_token)
+    """PH24: respuesta local e inerte; no consulta nada afuera ni bloquea features.
+
+    T-145 retira el endpoint junto con fetchLicenseStatus() del frontend.
+    """
     return {
-        "licensed": licensed,
-        "plan": "lifetime" if licensed else None,
+        "licensed": True,
+        "source": "local",
+        "plan": "appliance",
         "voice_enabled": voice_enabled()
     }
 
@@ -982,17 +938,13 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
                     await safe_send_json({"status": "error", "message": "Unknown action"})
             else:
                 reason = result.get("reason", "error")
+                # PH24: la voz corre local; no hay cuotas, licencias ni proxy que reportar.
                 voice_errors = {
+                    "empty_audio": "Voz: audio vacío",
                     "no_speech": "Voz: no se entendió el audio",
-                    "quota_exceeded": "Voz: cuota diaria agotada",
-                    "in_use_elsewhere": "Licencia en uso en otro dispositivo",
-                    "invalid_license": "Voz: licencia inválida",
-                    "service_disabled": "Voz: servicio temporalmente deshabilitado",
-                    "global_cap": "Voz: servicio temporalmente deshabilitado",
                     "audio_too_large": "Audio too large",
                     "stt_error": "Voz: error STT",
                     "llm_error": "Voz: error LLM",
-                    "proxy_unreachable": "Voz: sin conexión con el servicio",
                 }
                 await safe_send_json({"status": "error", "code": reason,
                                       "message": voice_errors.get(reason, "Voz: error del servicio")})

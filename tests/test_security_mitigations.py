@@ -2,8 +2,12 @@
 
 ASTRA-01:
 - /opt/linuxremoteplayer and .venv strictly owned by root:root (0755/0644).
-- Mutable state (.env, .pairing_token, .license_cache, certs/) isolated in /var/lib/linuxremoteplayer (lrp:lrp 0700).
+- Mutable state (.env, .pairing_token, certs/) isolated in /var/lib/linuxremoteplayer (lrp:lrp 0700).
 - Config module resolves /var/lib/linuxremoteplayer in appliance mode and backend/ in dev.
+
+PH24:
+- No license exists in the backend: no remote check, no gate, no cloud proxy.
+- /api/license/* endpoints are local inert stubs that never touch the network.
 
 ASTRA-02:
 - Rotating pairing token immediately terminates and revokes all active authenticated WebSocket sessions.
@@ -23,6 +27,7 @@ if str(BACKEND_DIR) not in sys.path:
 
 import config
 import auth
+import ai_pipeline
 from main import app, active_authenticated_websockets
 
 
@@ -36,7 +41,8 @@ def test_config_paths_with_lrp_data_dir(tmp_path, monkeypatch):
 
     assert config.get_token_file() == custom_dir / ".pairing_token"
     assert config.get_env_file() == custom_dir / ".env"
-    assert config.get_license_cache_file() == custom_dir / ".license_cache"
+    # PH24: licensing state no longer exists in the configuration surface.
+    assert not hasattr(config, "get_license_cache_file")
     assert config.get_certs_dir() == custom_dir / "certs"
     assert config.get_ca_key_file() == custom_dir / "certs" / "ca.key"
     assert config.get_ca_cert_file() == custom_dir / "certs" / "ca.pem"
@@ -151,3 +157,43 @@ def test_token_regenerate_alias_endpoint(tmp_path, monkeypatch):
     resp_get = client.get("/api/token")
     assert resp_get.status_code == 200
     assert resp_get.json()["token"] == new_token
+
+
+def test_ph24_license_routes_are_local_and_inert(tmp_path, monkeypatch):
+    """PH24: no remote license check, no gate and no cloud proxy anywhere."""
+    custom_dir = tmp_path / "lrp_state_ph24"
+    custom_dir.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setenv("LRP_DATA_DIR", str(custom_dir))
+
+    token = "ph24_local_token_123456"
+    (custom_dir / ".pairing_token").write_text(token, encoding="ascii")
+    monkeypatch.setattr(auth, "PAIRING_TOKEN", token)
+
+    # License code cannot reach the network: no HTTP client, cloud URL or remote check.
+    for module in (auth, ai_pipeline):
+        source = Path(module.__file__).read_text(encoding="utf-8").lower()
+        assert "httpx" not in source
+        assert "supabase" not in source
+        assert "license_api_url" not in source
+        assert "proxy_license_action" not in source
+        assert "is_license_valid_cached_or_online" not in source
+
+    client = TestClient(app, client=("127.0.0.1", 50000))
+    headers = {"X-Auth-Token": token}
+
+    status = client.get("/api/license/status", headers=headers)
+    assert status.status_code == 200
+    body = status.json()
+    assert body["licensed"] is True
+    assert body["source"] == "local"
+    assert body["plan"] == "appliance"
+    assert "voice_enabled" in body
+
+    activated = client.post("/api/license/activate", headers=headers, json={"key": "ANY-KEY"})
+    assert activated.status_code == 200
+    assert activated.json()["status"] == "not_required"
+    assert activated.json()["licensed"] is True
+
+    takeover = client.post("/api/license/takeover", headers=headers)
+    assert takeover.status_code == 200
+    assert takeover.json()["status"] == "not_required"

@@ -2,7 +2,7 @@
 
 Enforces ASTRA-01:
 - Application code & venv in /opt/linuxremoteplayer remain strictly owned by root:root (0755/0644).
-- All mutable state (.env, .pairing_token, .license_cache, certs/) is isolated
+- All mutable state (.env, .pairing_token, certs/) is isolated
   in /var/lib/linuxremoteplayer (owned by lrp:lrp, mode 0700).
 - Development environments transparently fall back to backend/ directory.
 """
@@ -69,20 +69,6 @@ def get_token_file() -> Path:
     if primary.is_file():
         return primary
     legacy = BACKEND_DIR / ".pairing_token"
-    if legacy.is_file():
-        return legacy
-    return primary
-
-
-def get_license_cache_file() -> Path:
-    """Path to the license verification cache."""
-    data_dir = get_data_dir()
-    primary = data_dir / ".license_cache"
-    if "LRP_DATA_DIR" in os.environ:
-        return primary
-    if primary.is_file():
-        return primary
-    legacy = BACKEND_DIR / ".license_cache"
     if legacy.is_file():
         return legacy
     return primary
