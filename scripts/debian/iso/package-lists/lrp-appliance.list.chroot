@@ -8,7 +8,6 @@ live-boot
 live-config
 systemd-sysv
 systemd-zram-generator
-zram-tools
 zstd
 sudo
 ca-certificates
@@ -63,3 +62,5 @@ python3-venv
 python3-pip
 python3-evdev
 libcurl4
+# pactl: el panel/API consultan los sinks de PipeWire con pactl.
+pulseaudio-utils

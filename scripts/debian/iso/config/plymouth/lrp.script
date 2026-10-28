@@ -1,0 +1,18 @@
+# LRP OS — splash estatico: icono centrado sobre verde solido.
+# Sin animaciones ni texto: el arranque dura pocos segundos.
+
+splash = Image("lrp-splash.png");
+
+screen_w = Window.GetWidth();
+screen_h = Window.GetHeight();
+
+splash_sprite = Sprite(splash.Scale(screen_w, screen_h));
+splash_sprite.SetX(0);
+splash_sprite.SetY(0);
+splash_sprite.SetZ(-100);
+
+fun refresh() {
+    screen_w = Window.GetWidth();
+    screen_h = Window.GetHeight();
+    splash_sprite.SetImage(splash.Scale(screen_w, screen_h));
+}

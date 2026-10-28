@@ -17,6 +17,16 @@ for mod in isofs vfat; do
         echo "$mod" >> /etc/initramfs-tools/modules
     fi
 done
+# 0b. Splash de arranque LRP: tema plymouth propio (icono sobre verde). Debe
+# quedar antes del update-initramfs para entrar en la imagen de arranque.
+if [ -f /usr/share/plymouth/themes/lrp/lrp.plymouth ]; then
+    mkdir -p /etc/plymouth
+    printf '[Daemon]\nTheme=lrp\nShowDelay=0\n' > /etc/plymouth/plymouthd.conf
+    if command -v plymouth-set-default-theme >/dev/null 2>&1; then
+        plymouth-set-default-theme lrp >/dev/null 2>&1 || true
+    fi
+fi
+
 if command -v update-initramfs >/dev/null 2>&1; then
     update-initramfs -u -k all >/var/log/lrp-initramfs.log 2>&1 || \
         echo "WARN: update-initramfs fallo; revisar /var/log/lrp-initramfs.log" >>/var/log/lrp-initramfs.log
@@ -30,12 +40,9 @@ if ! id -u lrp >/dev/null 2>&1; then
 fi
 
 # 1b. Hostname estable y claves de host para SSH (testeo remoto).
+# /etc/hosts NO se escribe aqui: live-build lo respalda/restaura y quedaba vacio.
+# Se inyecta via config/includes.chroot/etc/hosts en build_iso.sh.
 echo "lrp" > /etc/hostname
-cat <<'EOF' > /etc/hosts
-127.0.0.1   localhost
-127.0.1.1   lrp
-::1         localhost ip6-localhost ip6-loopback
-EOF
 ssh-keygen -A >/dev/null 2>&1 || true
 
 # Add lrp to essential hardware and management groups
@@ -74,7 +81,8 @@ EOF
 cat <<'EOF' > /home/lrp/.bash_profile
 # LRP appliance: tty1 arranca la sesion grafica automaticamente.
 if [ -z "${DISPLAY:-}" ] && [ "$(tty 2>/dev/null)" = "/dev/tty1" ]; then
-    exec startx -- -nocursor
+    # Cursor visible: -nocursor dejaba el puntero invisible con mouse fisico.
+    exec startx
 fi
 EOF
 
@@ -154,6 +162,10 @@ User=lrp
 WorkingDirectory=/opt/linuxremoteplayer/backend
 Environment="APPLIANCE_IDLE_PANEL=true"
 Environment="DISPLAY=:0"
+# Sink de audio y bus de sesion: sin esto pactl/wpctl no conectan a PipeWire
+# (el panel mostraba "Cargando salidas..." y sinks vacios).
+Environment="XDG_RUNTIME_DIR=/run/user/1000"
+Environment="DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus"
 ExecStart=/opt/linuxremoteplayer/backend/.venv/bin/python run.py
 Restart=always
 RestartSec=5

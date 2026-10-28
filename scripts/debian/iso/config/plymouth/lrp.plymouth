@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=LRP OS
+Description=Icono LRP sobre verde solido
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/lrp
+ScriptFile=/usr/share/plymouth/themes/lrp/lrp.script

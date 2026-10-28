@@ -119,6 +119,7 @@ mkdir -p "$WORKDIR/config/hooks/live"
 mkdir -p "$WORKDIR/config/bootloaders/grub-pc"
 mkdir -p "$WORKDIR/config/bootloaders/isolinux"
 mkdir -p "$WORKDIR/config/includes.chroot/etc/systemd"
+mkdir -p "$WORKDIR/config/includes.chroot/etc"
 mkdir -p "$WORKDIR/config/includes.chroot/usr/local/sbin"
 mkdir -p "$WORKDIR/config/includes.chroot/tmp"
 mkdir -p "$WORKDIR/config/includes.installer"
@@ -139,6 +140,23 @@ cp "$SCRIPT_DIR/config/isolinux.cfg" "$WORKDIR/config/bootloaders/isolinux/isoli
 
 # 4. zram-generator config
 cp "$SCRIPT_DIR/config/zram-generator.conf" "$WORKDIR/config/includes.chroot/etc/systemd/zram-generator.conf"
+
+# 4b. /etc/hosts: va por includes.chroot (etapa binary) porque live-build
+# respalda y restaura /etc/hosts despues de los hooks .chroot y dejaba el
+# archivo vacio en la imagen y en el sistema instalado.
+cp "$SCRIPT_DIR/config/hosts" "$WORKDIR/config/includes.chroot/etc/hosts"
+
+# 4c. Splash de arranque LRP (icono sobre verde solido) + /etc/default/grub.
+# desktop-base pinta el fondo Debian por defecto; GRUB_BACKGROUND lo reemplaza.
+mkdir -p "$WORKDIR/config/includes.chroot/boot/grub" "$WORKDIR/config/includes.chroot/etc/default"
+cp "$SCRIPT_DIR/config/lrp-splash.png" "$WORKDIR/config/includes.chroot/boot/grub/lrp-splash.png"
+cp "$SCRIPT_DIR/config/default-grub" "$WORKDIR/config/includes.chroot/etc/default/grub"
+
+# 4d. Tema plymouth LRP (el splash Debian que se ve tras GRUB).
+mkdir -p "$WORKDIR/config/includes.chroot/usr/share/plymouth/themes/lrp"
+cp "$SCRIPT_DIR/config/plymouth/lrp.plymouth" "$WORKDIR/config/includes.chroot/usr/share/plymouth/themes/lrp/lrp.plymouth"
+cp "$SCRIPT_DIR/config/plymouth/lrp.script" "$WORKDIR/config/includes.chroot/usr/share/plymouth/themes/lrp/lrp.script"
+cp "$SCRIPT_DIR/config/lrp-splash.png" "$WORKDIR/config/includes.chroot/usr/share/plymouth/themes/lrp/lrp-splash.png"
 
 # 5. Installer target script
 cp "$SCRIPT_DIR/installer/lrp-install-target.sh" "$WORKDIR/config/includes.chroot/usr/local/sbin/lrp-install-target.sh"

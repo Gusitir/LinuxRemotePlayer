@@ -372,9 +372,47 @@ EOF
         log_error "Sin BOOTX64.EFI: el firmware podria no arrancar el disco."
     fi
 
-    log_info "Instalando GRUB BIOS (i386-pc)..."
-    chroot "$target_mnt" grub-install --target=i386-pc "$target_disk" --recheck \
-        >>"$target_mnt/var/log/lrp-install-grub.log" 2>&1 || log_warn "grub-install BIOS fallo (normal en equipos solo-UEFI)."
+    # C) Entrada NVRAM propia y primera en BootOrder: evita que el firmware
+    # caiga en la entrada legacy "Hard Drive" (que no tiene GRUB BIOS y no arranca).
+    local nvram_result="skipped(no-uefi)"
+    if [ -d /sys/firmware/efi ] && command -v efibootmgr >/dev/null 2>&1; then
+        local esp_num efi_rel nvram_num
+        esp_num=$(printf '%s' "$boot_part" | sed -n 's/.*[^0-9]\([0-9][0-9]*\)$/\1/p')
+        efi_rel='\EFI\BOOT\BOOTX64.EFI'
+        [ -f "$target_mnt/boot/efi/EFI/LRP-OS/shimx64.efi" ] && efi_rel='\EFI\LRP-OS\shimx64.efi'
+        if efibootmgr -c -d "$target_disk" -p "${esp_num:-1}" -L "LRP-OS" -l "$efi_rel" \
+                >>"$target_mnt/var/log/lrp-install-grub.log" 2>&1; then
+            nvram_result="created"
+            nvram_num=$(efibootmgr 2>/dev/null | sed -n 's/^Boot\([0-9A-Fa-f]\{4\}\)\* LRP-OS.*/\1/p' | head -1)
+            if [ -n "$nvram_num" ]; then
+                local rest_order
+                rest_order=$(efibootmgr 2>/dev/null | sed -n 's/^BootOrder: //p' | tr ',' '\n' \
+                    | grep -v "^${nvram_num}$" | paste -sd, - || true)
+                if efibootmgr -o "${nvram_num}${rest_order:+,$rest_order}" \
+                        >>"$target_mnt/var/log/lrp-install-grub.log" 2>&1; then
+                    nvram_result="created+first"
+                fi
+            fi
+            log_info "Entrada NVRAM LRP-OS (${nvram_result}) sobre ${efi_rel}."
+        else
+            nvram_result="failed"
+            log_warn "efibootmgr no pudo crear la entrada; el firmware usara el fallback EFI/BOOT."
+        fi
+    fi
+
+    # BIOS/i386-pc solo tiene sentido si el live arranco en legacy. En UEFI el
+    # install sobre GPT sin particion BIOS Boot falla por diseño (blocklists).
+    local bios_grub="skipped(uefi)"
+    if [ ! -d /sys/firmware/efi ]; then
+        log_info "Instalando GRUB BIOS (i386-pc)..."
+        if chroot "$target_mnt" grub-install --target=i386-pc "$target_disk" --recheck \
+                >>"$target_mnt/var/log/lrp-install-grub.log" 2>&1; then
+            bios_grub="ok"
+        else
+            bios_grub="failed"
+            log_warn "grub-install BIOS fallo; el disco solo arrancara en modo UEFI."
+        fi
+    fi
 
     chroot "$target_mnt" update-grub >>"$target_mnt/var/log/lrp-install-grub.log" 2>&1 || \
         log_error "update-grub fallo; revisar /var/log/lrp-install-grub.log"
@@ -389,10 +427,14 @@ EOF
     {
         echo "LRP OS install report $(date -Is)"
         echo "target=$target_disk root=$root_part boot=$boot_part"
+        echo "live_boot_mode: $([ -d /sys/firmware/efi ] && echo uefi || echo legacy)"
         echo "rsync_rc=$rsync_rc"
         echo "esp:"; find "$target_mnt/boot/efi" -maxdepth 3 -type f | sed "s|$target_mnt||"
         echo "grub_cfg: $([ -f "$target_mnt/boot/grub/grub.cfg" ] && echo yes || echo no)"
         echo "secure_boot_efi: $([ -f "$target_mnt/boot/efi/EFI/BOOT/BOOTX64.EFI" ] && echo yes || echo no)"
+        echo "nvram_entry: ${nvram_result:-skipped}"
+        echo "bios_grub: ${bios_grub:-skipped}"
+        echo "hosts: $([ -s "$target_mnt/etc/hosts" ] && echo yes || echo EMPTY)"
     } | tee "$target_mnt/var/log/lrp-install-report.txt" | tee /run/lrp-install-report.txt >&2
 
     # Desmontar recursos

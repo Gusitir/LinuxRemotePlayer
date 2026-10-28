@@ -97,10 +97,17 @@ def test_zram_and_offline_boot_configs():
     assert "swap-priority = 100" in zram
 
     hook = HOOK_SETUP.read_text(encoding="utf-8")
-    assert "autologin-user=lrp" in hook
-    assert "user-session=openbox" in hook
+    # Contrato vigente: getty autologin + startx/openbox, sin display manager.
+    assert "agetty --autologin lrp" in hook
+    assert "exec openbox-session" in hook
     assert "linuxremoteplayer.service" in hook
     assert "zram-generator.conf" in hook
+    # B20: /etc/hosts no se escribe en el hook (live-build lo restauraba vacio);
+    # se inyecta como include de la etapa binary.
+    assert "> /etc/hosts" not in hook
+    build = BUILD_ISO.read_text(encoding="utf-8")
+    assert "config/hosts" in build
+    assert "includes.chroot/etc/hosts" in build
 
 
 def test_iso_bash_syntax_checks():

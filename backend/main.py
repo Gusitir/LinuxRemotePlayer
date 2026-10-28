@@ -468,24 +468,46 @@ def get_pairing_qr(request: Request):
 
 
 def get_ips():
+    """IPv4 de las interfaces reales, sin dependencias externas.
+
+    psutil no forma parte del .deb y su ImportError dejaba la lista vacia
+    siempre (la app mostraba 0 IPs). Se usa /sys/class/net + ioctl SIOCGIFADDR.
+    """
     ips = []
     try:
-        import psutil
+        import fcntl
         import socket
+        import struct
+
         ignored_prefixes = ("docker", "br-", "veth", "virbr", "tun", "tap")
         valid_ips = []
         tailscale_ips = []
-        
-        for interface, snics in psutil.net_if_addrs().items():
-            if any(interface.startswith(p) for p in ignored_prefixes):
+
+        try:
+            interfaces = sorted(os.listdir("/sys/class/net"))
+        except OSError:
+            interfaces = []
+
+        for interface in interfaces:
+            if interface == "lo" or any(interface.startswith(p) for p in ignored_prefixes):
                 continue
-            for snic in snics:
-                if snic.family == socket.AF_INET and not snic.address.startswith("127."):
-                    if interface.startswith("tailscale"):
-                        tailscale_ips.append((interface, snic.address))
-                    else:
-                        valid_ips.append((interface, snic.address))
-                        
+            try:
+                probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                # 0x8915 = SIOCGIFADDR
+                packed = struct.pack("256s", interface[:15].encode("utf-8"))
+                address = socket.inet_ntoa(
+                    fcntl.ioctl(probe.fileno(), 0x8915, packed)[20:24]
+                )
+                probe.close()
+            except OSError:
+                continue
+            if not address or address.startswith("127.") or address == "0.0.0.0":
+                continue
+            if interface.startswith("tailscale"):
+                tailscale_ips.append((interface, address))
+            else:
+                valid_ips.append((interface, address))
+
         def sort_key(item):
             iface, ip = item
             score = 10
@@ -495,12 +517,12 @@ def get_ips():
             if ip.startswith("192.168.") or ip.startswith("10.") or ip.startswith("172."):
                 score -= 5
             return score
-            
+
         valid_ips.sort(key=sort_key)
-        
+
         if not valid_ips and tailscale_ips:
             valid_ips = tailscale_ips
-            
+
         for iface, ip in valid_ips:
             ips.append(f"{iface}: {ip}")
     except Exception:

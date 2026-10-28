@@ -166,6 +166,8 @@ Type=simple
 User=lrp
 WorkingDirectory=$BACKEND_DIR
 Environment="APPLIANCE_IDLE_PANEL=true"
+Environment="XDG_RUNTIME_DIR=/run/user/1000"
+Environment="DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus"
 ExecStart="$BACKEND_DIR/.venv/bin/python" run.py
 Restart=always
 RestartSec=5

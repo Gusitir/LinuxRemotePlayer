@@ -1,0 +1,12 @@
+# /etc/default/grub — LRP OS Appliance
+# Generado por scripts/debian/iso/build_iso.sh (includes.chroot).
+# Reemplaza el splash Debian (desktop-base) por el icono LRP sobre verde solido.
+
+GRUB_DEFAULT=0
+GRUB_TIMEOUT=1
+GRUB_TIMEOUT_STYLE=hidden
+GRUB_DISTRIBUTOR="LRP OS"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=3"
+GRUB_CMDLINE_LINUX=""
+GRUB_BACKGROUND="/boot/grub/lrp-splash.png"
+GRUB_DISABLE_RECOVERY="true"
