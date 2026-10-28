@@ -1,11 +1,11 @@
 # INDEX - navegacion del repositorio
 
 ```yaml
-last_reindexed_at: 2026-10-21T19:20:00-05:00
-source_commit: db97991
+last_reindexed_at: 2026-10-27T21:40:00-05:00
+source_commit: 5cd1eeb
 dirty: false
-active_plan: PLAN_v2.0.0-release.md (approved D51; T-143 apto, T-144 ready)
-state: "v2.0 integrado en main (VERSION 2.0.0, push 0/0); beta 1.99.2 congelado y firmado; ISO 2.0.0 arrancable (SHA c1e19133...); release estable pendiente de PH24 (T-144..T-148)"
+active_plan: PLAN_v2.0.0-release.md (approved D51; T-143/T-149/T-144 aptos, T-145 ready, T-146..T-148 pendientes)
+state: "T-149 (cde09c8) y T-144 (5cd1eeb) integrados en main; backend sin licencia ni proxy cloud; HTPC de pruebas inalcanzable desde 2026-10-27; ISO definitiva y PH24 pendientes"
 ```
 
 El estado activo pertenece a [`CURRENT.md`](CURRENT.md), no a este indice.
@@ -60,6 +60,8 @@ El estado activo pertenece a [`CURRENT.md`](CURRENT.md), no a este indice.
   `scripts/lrp-cleanup.sh`: instalacion modo `htpc`, paquete, OTA con watchdog/rollback, desinstalacion y cleanup.
 - `scripts/sign_ota_manifest.py`: herramienta offline para firmar digitalmente manifiestos OTA con clave Ed25519 (T-142).
 - `scripts/debian/iso/build_iso.sh`: orquestador live-build para generar imagen ISO híbrida USB Debian 13 minimal (T-141).
+- `scripts/debian/iso/config/`: assets de arranque inyectados por `includes.chroot` — `hosts` (B20),
+  `default-grub` + `lrp-splash.png` (fondo GRUB y splash plymouth `lrp`), `zram-generator.conf`.
 - `scripts/debian/preflight.sh`, `nvidia-bootstrap.sh`, `session-bootstrap.sh`,
   `platform-bootstrap.sh`, `bootstrap.sh`: baseline, driver/sesion/plataforma y orquestador resumible.
 - `website/index.html`, `website/en/index.html`, `website/latest.json`, `website/install.sh`:

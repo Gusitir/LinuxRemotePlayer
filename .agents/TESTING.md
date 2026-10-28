@@ -168,3 +168,28 @@ curl -fsSL https://www.linuxremoteplayer.com/beta/install.sh | sudo bash
 ```
 
 Este comando instala la beta pública `1.99.2` amd64 con flujo unattended D35 (hasta dos reboots automáticos) y **requiere privilegios elevados**. **No ejecutarlo** sin autorización explícita del dueño; el cierre T-131 sigue pendiente.
+
+## D53 · Estabilización sobre appliance instalado (2.0.0, 2026-10-22)
+
+Checks humanos o no disponibles del ciclo que corrige sobre el HTPC ya instalado (ISO `720fc8…`),
+antes de reconstruir la ISO definitiva.
+
+**Estado 2026-10-27**: el HTPC no es alcanzable (`192.168.0.246:22` → `No route to host`). Los `[OK]`
+son evidencia del 2026-10-22; los `[pendiente]` requieren que el equipo vuelva a la red.
+
+- `TST-LRP-IRON-BOOT-001` `[OK]` — dueño: la ISO instala y el disco arranca en UEFI; el fallo previo
+  era el `BootOrder` del firmware priorizando la entrada legacy, no la escritura del instalador.
+  Evidencia AI: `efibootmgr -v` (`Boot0002` → `\EFI\BOOT\BOOTX64.EFI`) y `/var/log/lrp-install-report.txt`.
+- `TST-LRP-PAIR-001` `[OK]` — dueño: PIN + QR emparejan el móvil; panel y control responden
+  (`Connection: Stable`, latencia 6–10 ms, 1 teléfono conectado).
+- `TST-LRP-SPLASH-001` `[pendiente]` — splash de arranque: GRUB y plymouth en verde `#10B981` con el
+  icono LRP, sin artwork de Debian, y arranque posterior al panel.
+- `TST-LRP-PANEL-001` `[pendiente]` — panel de estado a `min(1500px, 94vw)` en TV 1080p, sin recorte
+  ni scroll horizontal.
+- `TST-LRP-AUDIO-001` `[pendiente]` — el panel muestra sink HDMI (Built-in Audio Digital Stereo) y
+  volumen tras la recarga; sin quedar en "Cargando salidas…".
+- `TST-LRP-WIFI-DISPLAY-BT-001` `[pendiente]` — Wi-Fi escanea y lista redes, Pantalla muestra
+  `HDMI-1 1920x1080 @ 60`, Bluetooth "Encendido" (adaptador presente, sin dispositivos).
+- `TST-LRP-POINTER-001` `[pendiente]` — con mouse 2.4G conectado, el puntero se ve y se mueve sobre el
+  panel tras el fix B26 (`startx` sin `-nocursor`). Si no aparece, revisar tema/cursor de Openbox antes
+  que el flag de Xorg.

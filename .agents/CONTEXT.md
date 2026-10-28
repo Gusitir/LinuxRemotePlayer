@@ -765,6 +765,90 @@ cadena firmada válida que preservar. Decisión: rotar el ancla.
 - Riesgo aceptado: los clientes `1.9.1`/`1.99.2` ya instalados llevan la pública anterior y no
   podrán verificar releases futuros por OTA; 2.0.0 se distribuye por instalador/ISO. Si la privada
   antigua aparece, se puede reintroducir como ancla secundaria.
+- Corrección (2026-10-22): la ruta de la clave privada cambió de `D:\…` a
+  `G:\AGUSTIN\Portafolio\Proyectos\lrp-keys\lrp-ota-priv.pem` tras la migración de disco. El par no se
+  regeneró; la pública publicada sigue siendo la misma.
+
+## 2026-10-22 · D53 — Migración de disco y estabilización sobre appliance instalado
+
+El dueño movió el árbol de proyecto de `D:` a `G:` al cambiar de computadora. Repo en
+`G:\AGUSTIN\Portafolio\Proyectos\Proyecto WebApp - LinuxRemotePlayer`; artefactos externos en
+`G:\AGUSTIN\Portafolio\Proyectos\lrp-iso` (ISO 2.0.0 `720fc8…` rehasheada) y `lrp-keys`. Los archivos
+replicables (`.venv`, `node_modules`) no se copiaron; se reconstruyen desde manifiestos. Quedan rotas y
+sin uso: `.worktrees/` (apuntan a `D:`, prunable) y `lrp-iso/run-vm.sh` (`/mnt/d` → `/mnt/g`).
+
+Verificación en hierro del ciclo T-143: la ISO `720fc8…` instala y el disco arranca en UEFI. El fallo
+previo de "no boot device" **no** era de escritura: el firmware priorizaba la entrada legacy del disco
+sobre la UEFI y el instalador no fija el `BootOrder` (solo escribe ESP + fallback `EFI/BOOT`). El dueño
+corrigió el orden en la BIOS y desde entonces arranca sola.
+
+Decisión del dueño (D53): **estabilizar sobre el appliance ya instalado** — los bugs críticos y de UI se
+corrigen en el repo y se despliegan por SSH (`scp` + `systemctl restart`), y la **ISO definitiva 2.0.0 se
+construye una sola vez** al cerrar el ciclo, seguida de instalación limpia y gates de T-148. No se
+reconstruye la ISO por cada fix.
+
+Hallazgos y correcciones de esta frontera (`BUGS.md` B20–B25): `/etc/hosts` vacío por el respaldo/restore
+de live-build; `zram-tools` en conflicto con `systemd-zram-generator`; instalador sin entrada NVRAM y con
+report que ocultaba el fallo BIOS; `get_ips()` dependiente de `psutil` ausente; panel sin audio por
+`pactl`/`XDG_RUNTIME_DIR` faltantes; test de ISO obsoleto respecto al autologin por agetty. Además,
+splash de arranque propio (GRUB `GRUB_BACKGROUND` + tema plymouth `lrp`, icono sobre verde `#10B981`) y
+panel de estado a `min(1500px, 94vw)`.
+
+Estado externo a tener en cuenta: HTPC de pruebas en `192.168.0.246` con el sistema instalado y el
+backend activo; el `VERSION` instalado es 2.0.0 y `dpkg -V linuxremoteplayer` está limpio. Falta
+confirmación visual del dueño para splash, ancho de panel y tarjetas Wi-Fi/Pantalla/Bluetooth.
+
+## 2026-10-22 · D54 — Tríada persistente de subagentes y contrato de recibos
+
+Decisión del dueño: el Arquitecto/Ingeniero trabaja con **tres subagentes persistentes por fase** para
+proteger su contexto y su hit-cache. Toda lectura nueva, búsqueda, recon o operación de despliegue se
+delega; las lecturas directas del Arquitecto quedan limitadas a rangos quirúrgicos (D48).
+
+| Rol | Mapeo D48 | Hace | No hace |
+|---|---|---|---|
+| `coder` | `Eng-Flash-1` | Implementa el brief en el write-set y corre micro-gates | No commitea, no edita `.agents`, no amplía scope |
+| `auditor` | `Eng-Flash-2` / `Aud-Flash` | Verifica diff, criterios `archivo:línea` y gates por su cuenta | No corrige, no planifica, no aprueba diseño |
+| `asistente` | `Arch-Flash` | Lecturas, recon, anclas, estado del equipo y ops por SSH | No escribe código, no audita, no diseña |
+
+Reglas vinculantes:
+
+1. **Recibo con esquema fijo** (≤12 líneas, sin logs crudos ni prosa): `STATUS`, `FILES`, `GATES`,
+   `DIFFSTAT`, `RISK`, `NEXT`. La salida cruda va a archivo temporal y se referencia por ruta.
+2. **Rotación por fase**: los tres viven toda la fase y se terminan en el cierre (`G4`); la siguiente
+   fase arranca con contextos limpios para no degradar su propio cache.
+3. **Independencia**: el auditor recibe `brief + diff + gates`, nunca la conversación ni el razonamiento
+   del coder.
+4. **Escritor único**: el coder es el único que escribe producto; un archivo a la vez. El asistente es
+   read-only sobre el repo y solo muta el appliance cuando se le ordena una operación de despliegue.
+5. **Ciclo acotado**: `NO APTO` vuelve al coder con el defecto exacto; **tres ciclos fallidos** escalan
+   al humano o fuerzan rediseño del brief.
+6. **Autoridad**: commits `[T-NN]` y `[STATE]`, veredictos y `.agents` son del Arquitecto/Ingeniero;
+   push sigue siendo del dueño. Toda autorización de commit se pide explícitamente.
+7. **Checks humanos** (visuales, hardware, Secure Boot) los certifica el dueño; ningún subagente puede
+   declararlos `OK`.
+
+## 2026-10-27 · D55 — Handoff: T-149/T-144 integrados, HTPC fuera de red
+
+Cierre del bloque abierto por D53. Los tres planos se commitearon y publicaron:
+
+- `cde09c8` `[T-149]` — B20–B26 (hosts, zram, NVRAM/BootOrder/report, `get_ips`, audio con
+  `pulseaudio-utils` y entorno de sesión, cursor sin `-nocursor`), splash GRUB+plymouth y panel a
+  `min(1500px, 94vw)`.
+- `5cd1eeb` `[T-144]` — backend PH24 sin licencia, proxy, cuotas ni activación; `/api/license/*` quedan
+  como stubs locales inertes para que T-145 los retire.
+- `[STATE]` — este refresco de `.agents` (APPCORE con las rutas reales de `/api/system/*` y el estado
+  2.0, WORKFLOW con la tríada D54, CURRENT/INDEX/BUGS/TESTING al día).
+
+Estado del entorno: el HTPC de pruebas (`192.168.0.246`) respondió `No route to host` el 2026-10-27 y
+quedó inalcanzable; no se pudo repetir la verificación de dispositivo ni cerrar los checks visuales.
+Toda la evidencia de appliance es del 2026-10-22 y así está marcada en `TESTING.md`.
+
+Residuos conocidos y fuera de alcance: `.worktrees/` apuntando a `D:` (prunable), `lrp-iso/run-vm.sh`
+con `/mnt/d`, QEMU ausente en WSL, y `scripts/*`/`.env` local con referencias inertes a `.license_cache`.
+Siguiente: T-145 (frontend), T-146 (web/docs/manifiesto), T-147 (Supabase, dueño), reconstrucción de la
+ISO definitiva y T-148.
+
+
 
 
 

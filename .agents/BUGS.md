@@ -37,6 +37,10 @@ Incluye los hallazgos antes separados:
 Se consideran cerrados solo cuando no queden gates, activación, claves, checkout ni promesas de
 premium en el artefacto, sitio ES/EN y documentación.
 
+Progreso 2026-10-22: **T-144** retira del backend la licencia, el proxy cloud, las cuotas y la
+activación (auditor APTO, desplegado y verificado en el appliance). Quedan frontend (T-145), web/docs
+(T-146) y el retiro de Supabase (T-147).
+
 ## H19 — QR con query puede caer en Offline
 
 El QR usa `/?token=...`; las búsquedas del service worker no ignoran el query. Con red lenta o
@@ -69,6 +73,71 @@ privilegios mínimos, apagado por defecto y adaptadores por sitio. MPRIS tiene p
 - El instalador imprimía el token de pairing en el scrollback; **resuelto en 1.99.2** (ya no se lee ni imprime `.pairing_token`; token expuesto durante diagnóstico rotado).
 - `%input` en sudoers es más amplio que el usuario exacto del servicio.
 - `scripts/debian/platform-bootstrap.sh` definía `state_applied_ok()` dos veces; **resuelto en 1.99.2 / T-131** (duplicado eliminado, preservada la llamada a `state_applied_audio_bus_ok`).
+
+## B20 — `/etc/hosts` vacío en la imagen y en el sistema instalado
+
+**Corregido en repo · verificado en el appliance · commit `cde09c8`**
+
+live-build respalda y restaura `/etc/hosts` después de los hooks `.chroot`, así que el heredoc del hook
+quedaba pisado y el archivo terminaba en 0 bytes dentro de la ISO y del destino. Síntoma:
+`sudo: unable to resolve host lrp`, `hostname -f` roto, resolución local degradada. Fix:
+`scripts/debian/iso/config/hosts` inyectado por `config/includes.chroot/etc/hosts` en `build_iso.sh`;
+el hook ya no escribe el archivo. Guard de regresión en `tests/test_iso_factory.py`.
+
+## B21 — `zramswap.service` falla en cada arranque
+
+**Corregido en repo · verificado en el appliance · commit `cde09c8`**
+
+`zram-tools` y `systemd-zram-generator` pelean por `/dev/zram0` (`write error: Device or resource busy`,
+`mkswap: error: /dev/zram0 is mounted`). El swap zram funciona igual por el generator. Fix: `zram-tools`
+fuera de `package-lists/lrp-appliance.list.chroot`; en el appliance se enmascaró la unit.
+
+## B22 — Instalador: BIOS, NVRAM y report incompletos
+
+**Corregido en repo · verificación en hierro parcial · commit `cde09c8`**
+
+`grub-install --target=i386-pc` falla sobre GPT sin BIOS Boot Partition y el report imprimía
+`secure_boot_efi: yes` sin registrar ese fallo; tampoco se creaba entrada NVRAM (`--no-nvram`), así que
+el firmware usaba `UEFI OS` por fallback y el `BootOrder` legacy del disco ganaba: pantalla
+"no boot device". Fix: entrada NVRAM `LRP-OS` + `BootOrder` primero, BIOS solo si el live arrancó en
+legacy, y report con `live_boot_mode`, `nvram_entry`, `bios_grub` y `hosts`. En hierro arranca tras
+fijar el orden UEFI en el firmware.
+
+## B23 — `get_ips()` dependía de `psutil`, que no se instala
+
+**Corregido en repo · desplegado y verificado en el appliance · commit `cde09c8`**
+
+`psutil` no está en `backend/requirements.txt`; el `ImportError` se tragaba en silencio y
+`/api/status` devolvía `network_ips: []` siempre. Fix: ioctl `SIOCGIFADDR` sobre `/sys/class/net`, sin
+dependencias externas. Evidencia: `network_ips: ["enp2s0: 192.168.0.246"]`.
+
+## B24 — Panel sin audio y tarjetas colgadas
+
+**Corregido en repo · desplegado y verificado en el appliance · commit `cde09c8`**
+
+La unit del backend arrancaba sin `XDG_RUNTIME_DIR` ni `DBUS_SESSION_BUS_ADDRESS`, y `pactl` no estaba
+instalado: `/api/system/audio` devolvía `sinks: []` y el panel quedaba en "Cargando salidas…". Fix:
+`pulseaudio-utils` en el package list y variables de sesión en la unit
+(`99-lrp-setup.chroot`, `scripts/install.sh`). Evidencia: sink HDMI activo, volumen 40 %.
+Wi-Fi, pantalla y Bluetooth responden por API; su render en el panel queda en verificación visual.
+
+## B25 — `tests/test_iso_factory.py` contradecía el contrato vigente
+
+**Cerrado**
+
+La aserción `autologin-user=lrp` (LightDM) ya no correspondía al appliance, que usa getty autologin +
+`startx`/openbox; fallaba en `main` antes de este lote. Fix: valida `agetty --autologin lrp`,
+`exec openbox-session` y que el hook no escriba `/etc/hosts`.
+
+## B26 — Puntero invisible: `-nocursor` en la sesión X
+
+**Corregido en repo · desplegado en el appliance · commit `cde09c8` · verificación visual pendiente**
+
+`/home/lrp/.bash_profile` ejecutaba `startx -- -nocursor`, así que Xorg arrancaba con el flag y el
+cursor nunca se dibujaba, aunque el puntero X y los dispositivos existían. Recon en el HTPC: sin
+trackpad físico (desktop H61), dos receptores 2.4G detectados y bindeados a libinput, puntero X vivo
+(warps OK a 1920x1080). Fix: `exec startx` sin flag (`99-lrp-setup.chroot:84`) y mismo cambio aplicado
+en el HTPC; Xorg ahora corre sin `-nocursor` y la sesión/kiosk volvieron a levantar.
 
 # CERRADOS
 

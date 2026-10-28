@@ -32,6 +32,21 @@ factual y accionable.
   extracto de contexto de `APPCORE.md`/`INDEX.md` para que el worker `flash` vaya directo al punto sin
   quemar tokens explorando el repo.
 
+## TRÍADA PERSISTENTE (D54, 2026-10-22)
+
+Sustituye los nombres de D48 por tres subagentes con la misma disciplina:
+
+| Rol D54 | Rol D48 | Alcance |
+|---|---|---|
+| `coder` | `Eng-Flash-1` | Único escritor de producto; write-set cerrado; no commitea ni edita `.agents` |
+| `auditor` | `Eng-Flash-2` / `Aud-Flash` | Corre gates propios, verifica `archivo:línea`, dicta `APTO`/`NO APTO`; no corrige |
+| `asistente` | `Arch-Flash` | Lecturas, recon, anclas y ops por SSH; read-only sobre el repo |
+
+- Recibo fijo ≤12 líneas: `STATUS`, `FILES`, `GATES`, `DIFFSTAT`, `RISK`, `NEXT`; lo crudo va a archivo.
+- Independencia: el auditor recibe brief + diff + gates, nunca la conversación.
+- Rotación por fase: los tres se terminan al cerrar (`G4`) y la fase siguiente arranca limpia.
+- Tres ciclos `NO APTO` escalan al humano o fuerzan rediseño del brief.
+
 ## GATES
 
 1. Arquitecto fija spec, write-set, rutas exactas, anclas y G0 delegando en `Arch-Flash` (D49).

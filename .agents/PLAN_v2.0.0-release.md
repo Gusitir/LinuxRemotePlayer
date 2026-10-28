@@ -78,7 +78,9 @@ Digest boundary: exact UTF-8/LF bytes between `CANONICAL-DESIGN-BEGIN` and
 
 ### T-143 — Integración de rama y reconciliación de artefacto
 
-- Status: apto (merge `--no-ff` `ad30b95`, beta congelado `db97991`, push `0 0`, auditoría APTO `d3495ab`)
+- Status: apto (merge `--no-ff` `ad30b95`, beta congelado `db97991`, push `0 0`, auditoría APTO `d3495ab`;
+  verificado además en hierro el 2026-10-22 con la ISO `720fc8…`: instalación y arranque UEFI desde
+  disco OK tras corregir el `BootOrder` del firmware — D53)
 - Depends on: aprobación D51 vigente; auditoría APTO.
 - Objective: integrar `codex/debian-foundation` en `main` según D-R1; resolver la deriva `25ea41…` vs
   `a0b54c85…` según D-R2; bump `VERSION` a `2.0.0` y actualizar `frontend/sw.js`/manifiestos.
@@ -90,7 +92,10 @@ Digest boundary: exact UTF-8/LF bytes between `CANONICAL-DESIGN-BEGIN` and
 
 ### T-144 — PH24 backend sin licencia ni proxy cloud
 
-- Status: ready (bloqueada por T-143)
+- Status: apto — auditor independiente **APTO** el 2026-10-22 (7/7 criterios, defectos none); backend
+  desplegado y verificado en el HTPC (`licensed=true, license_source=local`, stubs locales sin red,
+  audio 200, 0 referencias legacy). Commiteado el 2026-10-27 en `5cd1eeb`. Residuo fuera de scope:
+  `.env` local y `scripts/*` mencionan `.license_cache` (inertes; limpia T-145/T-147).
 - Objective: eliminar `LICENSE_API_URL`/`is_license_valid_cached_or_online`, `proxy_license_action`,
   `_autoenable_voice_for_existing_license` y sus llamadas; la voz local no consulta cuota.
 - Allowed scope: `backend/auth.py`, `backend/ai_pipeline.py`, `backend/main.py`, `backend/config.py`,
@@ -102,7 +107,7 @@ Digest boundary: exact UTF-8/LF bytes between `CANONICAL-DESIGN-BEGIN` and
 
 ### T-145 — PH24 frontend sin compra, plan ni takeover
 
-- Status: ready (bloqueada por T-144)
+- Status: ready (T-144 apto y commiteado en `5cd1eeb`)
 - Objective: retirar de la PWA compra, clave, plan, takeover y gates; mantener control, voz y ajustes.
 - Allowed scope: `frontend/index.html`, `frontend/app.js`, `frontend/skins.css`, `frontend/status.html`.
 - Acceptance: PWA opera completa sin estado de licencia; invariante B1/T-79 intacta (sin
@@ -140,6 +145,27 @@ Digest boundary: exact UTF-8/LF bytes between `CANONICAL-DESIGN-BEGIN` and
 - Gates: suite completa, `bash -n`, `node --check`, `check_css_sync.py`, verificación física en HTPC.
 - Evidence: cápsula de auditoría de fase y dictamen.
 
+### T-149 — Estabilización sobre appliance instalado (D53)
+
+- Status: implementado y commiteado en `cde09c8` (`[T-149]`); B20–B26 corregidos, desplegados y
+  verificados en el appliance el 2026-10-22. Cierre pendiente de los checks visuales del dueño
+  (`TESTING.md`, D53) y, con el HTPC inalcanzable desde el 2026-10-27, de re-verificación cuando vuelva
+  a la red
+- Depends on: T-143 apto.
+- Objective: corregir bugs críticos y de interfaz sobre el HTPC ya instalado con la ISO `720fc8…`,
+  desplegando cada fix repo → SSH → servicio, y dejar la reconstrucción de la ISO para el cierre del
+  ciclo (una sola vez, seguida de instalación limpia y gates de T-148).
+- Allowed scope: `scripts/debian/iso/**` (hooks, instalador, package-lists, config), `frontend/status.html`,
+  `frontend/index.html` si el bug lo exige, `backend/main.py` y unit del backend, `tests/` asociados y
+  evidencia en `.agents`.
+- Acceptance: B20–B25 corregidos en repo y verificados en el appliance; sin unidades fallidas al
+  arranque; panel con audio, Wi-Fi, pantalla y Bluetooth renderizados; splash LRP en GRUB y plymouth;
+  instalador con entrada NVRAM `LRP-OS` y report honesto.
+- Gates: `bash -n` sobre instalador/hook/`build_iso.sh`; `pytest tests/test_iso_factory.py
+  tests/test_t125_installer.py tests/test_debian_release.py`; `python -m py_compile backend/*.py`;
+  verificación en appliance por SSH (`/api/status`, `/api/system/*`, `systemctl --failed`).
+- Evidence: `BUGS.md` B20–B25, `CURRENT.md` fresh evidence, `TESTING.md` D53 y capturas del dueño.
+
 ## Riesgos
 
 - Reemplazar el artefacto `1.99.2` rompe integridad de clientes beta (D-R2).
@@ -151,6 +177,7 @@ Digest boundary: exact UTF-8/LF bytes between `CANONICAL-DESIGN-BEGIN` and
 
 - [ ] D-R1, D-R2 y D-R3 aprobadas por el dueño con digest.
 - [ ] T-143..T-146 APTO.
+- [ ] T-149 APTO (estabilización sobre el appliance instalado, D53).
 - [ ] T-147 ejecutada por el dueño y verificada.
 - [ ] T-148 APTO con dictamen de fase.
 - [ ] `latest.json` estable sirve `2.0.0` y `1.9.1` deja de ser promovida.

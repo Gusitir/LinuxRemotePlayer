@@ -2,71 +2,65 @@
 
 ```yaml
 version: 3
-updated_at: 2026-10-21T19:20:00-05:00
-source_commit: db97991
-product_branch: codex/debian-foundation (integrada en main)
-product_branch_head: d3495ab
-product_branch_state: merged into main via --no-ff (ad30b95); main == origin/main
+updated_at: 2026-10-27T21:40:00-05:00
+source_commit: 5cd1eeb
+workspace_root: "G:/AGUSTIN/Portafolio/Proyectos/Proyecto WebApp - LinuxRemotePlayer (migrado desde D: el 2026-10-22)"
+product_branch: main
+product_branch_head: 5cd1eeb
+product_branch_state: "main == origin/main tras el push del 2026-10-27; T-149 y T-144 integrados"
 dirty: false
 assurance: Standard
 active_job: RUN THE LOOP
-active_plan: PLAN_v2.0.0-release.md (approved, digest 2814bb3c…, D51)
-active_task: T-143 apto; T-144 ready
-last_verdict: APTO
-verdict_scope: T-143 apto. Auditor independiente dio APTO en `9d60785` y APTO final en `d3495ab` (delta ISO). Merge `--no-ff` en `ad30b95`, corrección de beta congelado `db97991`, push a origin/main (`0 0`). `VERSION` 2.0.0 en main; 20/20 tests de release/OTA/ISO pasan sobre el merge.
-next_action: Ejecutar T-144 (PH24 backend sin licencia ni proxy cloud) sobre main limpio; luego T-145 frontend, T-146 web/docs con publicación del manifiesto estable, T-147 Supabase y T-148 gates.
+active_plan: PLAN_v2.0.0-release.md (approved, D51) + T-149 estabilización (D53)
+active_task: T-149 apto (cde09c8); T-144 apto (5cd1eeb); T-145 ready
+last_verdict: APTO (T-149 y T-144)
+verdict_scope: "T-149: B20–B26 corregidos, auditoría determinística y despliegue verificado en el HTPC el 2026-10-22. T-144: auditor independiente APTO (7/7, defectos none), `pytest tests/` 285 passed y backend desplegado/verificado en el HTPC el mismo día. Ambos commiteados el 2026-10-27; los checks visuales del dueño siguen pendientes."
+next_action: "T-145 (PH24 frontend: sin compra, clave, plan ni takeover) y, cuando el HTPC vuelva a estar en red, cerrar los [pendiente] de TESTING.md (splash, panel, audio, Wi-Fi/Pantalla/Bluetooth, puntero) antes de reconstruir la ISO definitiva."
 ```
 
 ## Blockers
 
-- Merge y push de `codex/debian-foundation` BLOQUEADOS: auditoría pre-merge `NO APTO` (AUD-001..003
-  en `BUGS.md`). No se integra ni publica hasta un veredicto APTO sobre el head corregido.
-- Merge y push de v2.0 ejecutados con APTO del auditor (`d3495ab`); no hay bloqueo de integración.
-- Push, merge y deploy adicionales requieren autorización explícita del dueño; `main` está en
-  `db97991` y sincronizado con `origin/main`.
-- Publicación del manifiesto estable `2.0.0` bloqueada por el gate PH24: requiere T-144, T-145 y
-  T-146 antes de servir `website/latest.json` 2.0.0.
+- **HTPC de pruebas no alcanzable** desde el 2026-10-27: `192.168.0.246:22` responde
+  `No route to host` (equipo apagado o fuera de la red). Toda verificación de dispositivo posterior
+  requiere que el dueño lo encienda y confirme la IP; las evidencias de dispositivo son del 2026-10-22.
+- Publicación del manifiesto estable `2.0.0` bloqueada por PH24: requiere T-145 y T-146 (y T-147 del
+  dueño) antes de servir `website/latest.json` 2.0.0.
+- **La ISO definitiva no se reconstruye hasta cerrar el ciclo** (D53): debe incluir los deltas de
+  `[T-149]`/`[T-144]` ya commiteados y repetir instalación limpia y arranque.
+- Checks visuales/humanos pendientes del dueño: `TST-LRP-SPLASH-001`, `TST-LRP-PANEL-001`,
+  `TST-LRP-AUDIO-001`, `TST-LRP-WIFI-DISPLAY-BT-001`, `TST-LRP-POINTER-001` (`TESTING.md`, D53).
+- Secure Boot en hierro sin confirmar: el arranque verificado fue UEFI con ESP firmado ya escrito.
 - Cleanup of external WSL audit clones remains unauthorized.
-- One abrupt physical reset occurred after launching Netflix. Journal ended without orderly
-  shutdown, panic, OOM, thermal event, NVIDIA Xid or pstore evidence; a 90-second monitored
-  retry did not reproduce.
 
 ## Fresh evidence
 
-- `main`/`origin/main` at `88cf2f6` (`[STATE] Cierra v2.0 appliance`), árbol limpio;
-  `git rev-list --left-right --count origin/main...main` = `0 0`.
-- Published beta artifact `website/beta/downloads/linuxremoteplayer_1.99.2_amd64.deb` rehashes to
-  `a0b54c85fff7842a25676546c8d105455c603fb202eb53510fbff622442a83e9`, equal to manifest and
-  sidecar. Stable manifest remains `1.9.1` SHA `82b6bc5286cdf197bb684ddc00f6c797aac498f2959b354cada83acaddd93d38`.
-- T-131 artifact/manifest mismatch is resolved: no `dist/` sidecar exists in
-  `.worktrees/debian-foundation` and no `25ea41…` reference remains in the repo.
-- ISO 2.0.0 vigente, head `611a8eb`: `lrp-os_2.0.0_amd64.iso`, SHA256
-  `720fc8370f83344a982d77ba48f2c63fb2cfc882f5e2296ea57ad7639843fbfb` (copia en
-  `D:\AGUSTIN\Portafolio\Proyectos\lrp-iso\`). Instalador con GRUB **firmado** (shim +
-  `grub-efi-amd64-signed`, `--uefi-secure-boot`), entrada NVRAM `LRP-OS` más fallback
-  `EFI/BOOT/BOOTX64.EFI`, y reporte persistente `/var/log/lrp-install-report.txt`. Verificado
-  end-to-end en QEMU UEFI (sin Secure Boot): live con panel QR, instalación GPT y arranque solo
-  desde disco (capturas `boot_e.png`, `disk_boot2.png`). Pendiente confirmación en hierro con
-  Secure Boot activo. Obsoletas todas las ISO previas.
-- Correcciones `c484274`/`f229e5b`/`bad230f`: venv limpio `IMPORT_OK 47.0.0`; VERSION 2.0.0;
-  `.deb` 2.0.0 SHA256 `4783af823dab1d4b3c8ffda82c8f6521cbf1dd1a0bb1c18342f6e96d2c4b69c1`;
-  manifiesto beta 1.99.2 firmado Ed25519 y verificado; pytest 282 passed + 2 fallos por root.
-- Ancla OTA rotada: clave privada Ed25519 en `D:\AGUSTIN\Portafolio\Proyectos\lrp-keys\lrp-ota-priv.pem`
-  (fuera del repo, nunca versionada); pública en `scripts/debian/lrp-ota-pub.pem` y en
-  `backend/ota_security.py:15`.
-- Auditoría pre-merge (agente independiente, head `7d95326`): pytest 284 passed exit 0 (398 s),
-  `check_css_sync` 0, `node --check` 0, `bash -n` 15 scripts 0, `merge-tree 98bb9f1 main 7d95326`
-  exit 0, 16 tests OTA/seguridad/resiliencia passed. Veredicto NO APTO por AUD-001..003.
-- Savepoint receipt: bundle `backups/linuxremoteplayer-savepoint-beta-foundation-20260823.bundle`
-  SHA256 `ebcf392c…`, zip SHA256 `f78fdb42…`, both verified complete; no absolute Drive path.
-- Task statuses, commit IDs and closure evidence are owned by
-  [`PLAN_v2.0-appliance.md`](PLAN_v2.0-appliance.md); not duplicated here.
+- `main` en `5cd1eeb` (`[T-144] PH24 backend sin licencia ni proxy cloud`), precedido por `cde09c8`
+  (`[T-149] Estabiliza appliance: hosts, zram, NVRAM, audio, splash y puntero`) y `8fb13e9`; tras el
+  `[STATE]` del 2026-10-27 el árbol queda limpio y `git rev-list --left-right --count origin/main...main`
+  = `0 0`.
+- Gates del 2026-10-27 sobre el árbol commiteado: `python -m py_compile` de los cuatro módulos del
+  backend = 0; `pytest -q tests/test_iso_factory.py tests/test_t125_installer.py
+  tests/test_security_mitigations.py tests/test_local_intent.py tests/test_local_stt.py` = 42 passed.
+  Auditoría T-144 previa: `pytest tests/` = 285 passed y greps de licencia en `backend/` = 0 matches.
+- Appliance (verificado el 2026-10-22, hoy inalcanzable): UEFI con `Boot0002` →
+  `\EFI\BOOT\BOOTX64.EFI`, `VERSION` 2.0.0, `dpkg -V linuxremoteplayer` limpio, backend activo en
+  `0.0.0.0:8000`, SSH activo, autologin `lrp` en tty1, kiosk 1920x1080, audio PipeWire con sink HDMI
+  (vol 40 %), `network_ips: ["enp2s0: 192.168.0.246"]` y Xorg `:0 vt1` **sin** `-nocursor` tras B26.
+- ISO 2.0.0 vigente (pre-PH24, no reutilizable para el release):
+  `G:\AGUSTIN\Portafolio\Proyectos\lrp-iso\lrp-os_2.0.0_amd64.iso`, SHA256
+  `720fc8370f83344a982d77ba48f2c63fb2cfc882f5e2296ea57ad7639843fbfb`.
+- Savepoint y backups previos siguen válidos; `lrp-keys/` y `lrp-iso/` viven en
+  `G:\AGUSTIN\Portafolio\Proyectos\`.
 
 ## Current facts
 
-- Closed plan: `PLAN_v2.0-appliance.md` (G4 APTO). Archived: `archive/PLAN_v1.99-beta-foundation.md`.
-- Owner-accepted residuals: `TST-DEVICE-001`, `TST-STT-001`, `TST-OTA-001`; `TESTING.md` owns them.
-- Backup state is `complete`; receipt detail is in `CONTEXT.md`.
-- Stable `1.9.1` remains isolated; beta `1.99.2` is opt-in and does not discover stable.
-- D48/D49/D50 remain in force: Zero-IO en modelos pesados, workers flash persistentes, briefs
-  guiados unitarios.
+- Plan activo: `PLAN_v2.0.0-release.md`; T-143, T-149 y T-144 aptos; T-145 ready; T-146..T-148 pendientes.
+- Tríada persistente D54 operativa (`coder`/`auditor`/`asistente`); `CONTEXT.md` D53/D54 registran la
+  decisión, el cambio de disco `D:`→`G:` y el contrato de recibos.
+- `.worktrees/` siguen apuntando a `D:` (prunable) y `lrp-iso/run-vm.sh` usa `/mnt/d`; ambos fuera de
+  alcance hasta nuevo aviso. WSL `Debian` conserva `live-build`/`xorriso`; QEMU no está instalado.
+- `backend/.venv` y `node_modules` no se copiaron (replicables). Los gates corren con Python 3.14 global.
+- Residuo inocuo de PH24 fuera de backend: `scripts/install.sh`, `build_deb.sh` y `uninstall.sh` aún
+  mencionan `.license_cache`, y el `.env` local (gitignored) conserva `LICENSE_*` sin lector.
+- D48/D49/D50 y D54 siguen en vigor: Zero-IO en modelos pesados, briefs unitarios con anclas y tríada
+  persistente con recibos deterministas.

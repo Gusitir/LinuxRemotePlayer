@@ -41,6 +41,25 @@ técnica, factual y accionable.
 - La evidencia determinista avanza tareas; el Arquitecto agrupa revisiones en baches y emite sus veredictos.
 - El dueño hace push; nadie reescribe historia válida ni crea commits sin autorización.
 
+### Tríada persistente (D54)
+
+- **Tres subagentes por fase**, con contexto propio y persistente: `coder` (implementa el brief),
+  `auditor` (verifica diff, criterios y gates por su cuenta) y `asistente` (lecturas, recon, anclas,
+  estado del equipo y ops por SSH). Sustituyen a los workers `flash` de D48 con los mismos límites y
+  se terminan al cerrar la fase; la fase siguiente arranca con contextos limpios.
+- **Recibo obligatorio**, ≤12 líneas y sin prosa ni logs crudos:
+  `STATUS` (`OK|FAIL|BLOCKED`), `FILES` (`ruta:rango`, máx 6), `GATES` (`cmd=exit`, máx 4),
+  `DIFFSTAT`, `RISK` y `NEXT`. La salida cruda vive en un archivo temporal referenciado por ruta.
+- **Escritor único**: solo `coder` escribe producto, un archivo a la vez y dentro del write-set.
+  `auditor` no corrige; `asistente` es read-only sobre el repo y solo muta el appliance por orden
+  explícita de despliegue.
+- **Independencia de auditoría**: el `auditor` recibe brief, diff y gates; nunca la conversación.
+- **Ciclo acotado**: `NO APTO` regresa al `coder` con el defecto exacto; tres ciclos fallidos escalan
+  al humano o fuerzan rediseño del brief.
+- **Autoridad**: commits `[T-NN]`/`[STATE]`, veredictos y `.agents` son del Arquitecto/Ingeniero; el
+  push es del dueño y todo commit requiere autorización explícita. Los checks visuales, de hardware y
+  de Secure Boot los certifica únicamente el dueño.
+
 ## PROPIEDAD DE ARCHIVOS
 
 | Archivo | Propiedad |
@@ -82,6 +101,12 @@ Un hecho tiene un solo hogar. No copiar decisiones, diarios ni estado entre arch
   y su SHA independiente.
 - Windows es el único clon productor de commits. El workspace se referencia con rutas relativas al
   repo; usar Windows/PowerShell 5.1 y recordar el quirk de truncamiento WSL en `/mnt`.
+- Workspace migrado de `D:` a `G:` el 2026-10-22 (cambio de computadora). Artefactos externos en
+  `G:\AGUSTIN\Portafolio\Proyectos\lrp-iso` (ISOs) y `...\lrp-keys` (claves OTA). `.venv` y
+  `node_modules` son replicables y no se copiaron.
+- Ciclo de estabilización D53: los fixes se despliegan al HTPC de pruebas por SSH (`lrp`/`lrp`) y la
+  ISO definitiva se construye una sola vez al final del ciclo. WSL `Debian` compila desde `/mnt/g/...`;
+  QEMU (`qemu-system-x86`, `ovmf`) se instala aparte y no está presente por defecto.
 - Versiones OTA son `X.Y.Z`.
 - El updater conserva sus functions y `main "$@"; exit $?` durante self-rewrite.
 - `prerm` limpia solo en `remove`, nunca en `upgrade`.
