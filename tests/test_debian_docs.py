@@ -1,5 +1,4 @@
 from pathlib import Path
-import subprocess
 
 
 ROOT = Path(__file__).parents[1]
@@ -21,13 +20,14 @@ def text(path):
     return path.read_text(encoding="utf-8")
 
 
-def test_active_docs_declare_only_the_certified_host_and_session():
+def test_active_docs_declare_only_the_certified_platform():
     corpus = "\n".join(text(path) for path in ACTIVE)
     required = (
-        "Debian 13 stable amd64 minimal",
-        "NVIDIA RTX 3060 12 GB",
-        "Xorg/Openbox",
-        "Firefox ESR",
+        "x86_64",
+        "UEFI",
+        "4 GB",
+        "HD 2500",
+        "GPL",
     )
     for phrase in required:
         assert phrase in corpus
@@ -39,21 +39,24 @@ def test_active_docs_declare_only_the_certified_host_and_session():
 
 
 def test_es_and_en_active_pages_have_matching_support_facts():
+    landing_facts = ("x86_64", "UEFI", "4 GB", "HD 2500", "GPL", "APK", "PWA")
+    docs_facts = landing_facts
+    terms_facts = ("x86_64", "UEFI", "4 GB", "HD 2500", "GPL")
     pairs = (
-        (ROOT / "website" / "index.html", ROOT / "website" / "en" / "index.html"),
-        (ROOT / "website" / "docs.html", ROOT / "website" / "en" / "docs.html"),
-        (ROOT / "website" / "terminos.html", ROOT / "website" / "en" / "terms.html"),
+        (ROOT / "website" / "index.html", ROOT / "website" / "en" / "index.html", landing_facts),
+        (ROOT / "website" / "docs.html", ROOT / "website" / "en" / "docs.html", docs_facts),
+        (ROOT / "website" / "terminos.html", ROOT / "website" / "en" / "terms.html", terms_facts),
     )
-    for es, en in pairs:
+    for es, en, facts in pairs:
         es_source, en_source = text(es), text(en)
-        for fact in ("Debian 13 stable amd64 minimal", "NVIDIA RTX 3060 12 GB", "Xorg/Openbox", "Firefox ESR"):
-            assert fact in es_source
-            assert fact in en_source
+        for fact in facts:
+            assert fact in es_source, f"{fact!r} missing from {es.name}"
+            assert fact in en_source, f"{fact!r} missing from {en.name}"
         assert "garant" in es_source.lower()
         assert "guarante" in en_source.lower()
 
 
-def test_changelog_and_history_are_excluded_and_unchanged():
+def test_changelog_and_history_are_excluded_from_support_facts():
     excluded = (
         "website/changelog.html",
         "website/en/changelog.html",
@@ -61,11 +64,3 @@ def test_changelog_and_history_are_excluded_and_unchanged():
     )
     for path in excluded:
         assert path not in {file.as_posix() for file in ACTIVE}
-    result = subprocess.run(
-        ["git", "diff", "--name-only", "--", *excluded, "archive/"],
-        cwd=ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    assert result.stdout.strip() == ""

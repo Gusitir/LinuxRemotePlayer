@@ -26,14 +26,17 @@
                 <a href="https://github.com/Gusitir/LinuxRemotePlayer">GitHub</a>
                 <a href="en/docs.html" title="English version">EN</a>
             </nav>
-            <a href="index.html#descargar" class="btn btn-green">Descargar ISO</a>
+            <a href="index.html#descargar" class="btn btn-green">
+                <svg class="icon" aria-hidden="true" focusable="false"><path d="M12 4v10m-4-4 4 4 4-4M5 16v3a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3"/></svg>
+                Descargar ISO
+            </a>
         </div>
     </header>
 
     <main class="page">
         <h1>Documentación</h1>
         <p class="lead">Todo lo necesario para instalar LRP OS 1.0.0, emparejar el teléfono y usarlo
-        como control. Si algo no está acá, el repositorio público tiene el código y las licencias.</p>
+        como control. Si algo no está aquí, el repositorio público tiene el código y las licencias.</p>
 
         <div class="toc">
             <h4>Contenido</h4>
@@ -50,74 +53,82 @@
 
         <h2 id="requisitos">Requisitos</h2>
         <ul>
-            <li><b>Plataforma:</b> x86_64 con UEFI. Secure Boot soportado vía shim.</li>
+            <li><b>CPU:</b> x86 de 64 bits (x86_64).</li>
+            <li><b>Firmware:</b> UEFI. Secure Boot compatible mediante shim.</li>
+            <li><b>Memoria:</b> 4 GB de RAM como mínimo.</li>
+            <li><b>Disco:</b> el espacio mínimo que indique el instalador de Debian.</li>
+            <li><b>Gráficos:</b> GPU integrada —Intel HD 2500 validada— o GPU NVIDIA soportada por los
+            drivers de Debian.</li>
+            <li><b>Pantalla y red:</b> TV o monitor, y la PC junto al teléfono en la misma red local
+            (Wi-Fi o cable).</li>
             <li><b>Base:</b> Debian 13 stable amd64 minimal, con sesión Xorg/Openbox y Firefox ESR.</li>
-            <li><b>Memoria:</b> 8 GB de RAM recomendado.</li>
-            <li><b>Gráficos:</b> GPU integrada o NVIDIA RTX 3060 12 GB como GPU certificada.</li>
-            <li><b>Pantalla y red:</b> TV o monitor, y la PC junto al teléfono en la misma red local.
-            Otras configuraciones pueden funcionar, pero no están garantizadas.</li>
         </ul>
+        <p>Otras configuraciones pueden funcionar, pero no están garantizadas.</p>
 
         <h2 id="instalacion">Descarga e instalación</h2>
         <ol>
-            <li>Descargá la ISO desde <a href="https://github.com/Gusitir/LinuxRemotePlayer/releases/latest">GitHub Releases</a>
-            junto con <b>SHA256SUMS</b>, y verificá la imagen.</li>
-            <li>Grabá la ISO en un pendrive con Rufus, Ventoy o <code>dd</code>.</li>
-            <li>Arrancá la PC desde el pendrive en modo UEFI y elegí la opción <b>Instalar</b> del
+            <li>Descarga la ISO desde <a href="https://github.com/Gusitir/LinuxRemotePlayer/releases/latest">GitHub Releases</a>
+            junto con <b>SHA256SUMS</b>, y verifica la imagen.</li>
+            <li>Graba la ISO en un pendrive con Rufus, Ventoy o <code>dd</code>.</li>
+            <li>Arranca la PC desde el pendrive en modo UEFI y elige la opción <b>Instalar</b> del
             menú de arranque.</li>
             <li>Al terminar, la TV muestra el panel de LinuxRemotePlayer con un PIN y un código QR.</li>
         </ol>
         <div class="callout"><b>Reinicio necesario para el control:</b> el sistema agrega tu usuario al
-        grupo <code>input</code> para el teclado y mouse virtuales. Ese permiso recién aplica al
-        reiniciar (o al cerrar y volver a abrir la sesión).</div>
+        grupo <code>input</code> para el teclado y mouse virtuales. Ese permiso aplica al reiniciar
+        (o al cerrar y volver a abrir la sesión).</div>
 
         <h2 id="emparejamiento">Emparejar el teléfono</h2>
-        <p>En el panel de la TV vas a ver un PIN de 6 dígitos y un QR:</p>
+        <p>En el panel de la TV aparece un PIN de 6 dígitos y un QR:</p>
         <ul>
-            <li>Escaneá el QR con la cámara del teléfono, o</li>
-            <li>abre la dirección del panel en el navegador del teléfono y escribí el PIN.</li>
+            <li>Escanea el QR con la cámara del teléfono, o</li>
+            <li>abre la dirección del panel en el navegador del teléfono y escribe el PIN.</li>
         </ul>
-        <p>El teléfono queda emparejado con un token local. Podés repetir el proceso en cada
-        teléfono de la casa; todos pueden controlar la TV a la vez.</p>
+        <p>El teléfono queda emparejado con un token local. Puedes repetir el proceso en cada teléfono
+        de la casa; todos pueden controlar la TV a la vez.</p>
 
         <h2 id="control">Control desde el teléfono</h2>
         <ul>
-            <li><b>iPhone / iPad:</b> abrí la web del panel en Safari y elegí
-            <b>Compartir → Añadir a pantalla de inicio</b>. Se abre como app, sin barra del navegador.</li>
-            <li><b>Android:</b> la PWA se instala desde Chrome (menú ⋮ → <b>Instalar aplicación</b>).
-            El APK llega en la próxima release.</li>
+            <li><b>iPhone / iPad:</b> abre la web del panel en Safari y elige
+            <b>Compartir → Añadir a pantalla de inicio</b>. Se abre como app, sin barra del navegador.
+            En iOS se usa la PWA; no hay APK.</li>
+            <li><b>Android:</b> descarga el <a href="downloads/lrp.apk" download>APK 1.0.0</a>, que es
+            la app de control remoto para Android. También puedes instalar la PWA desde Chrome
+            (menú ⋮ → <b>Instalar aplicación</b>).</li>
             <li><b>Control:</b> touchpad, teclado, navegación, apps y búsqueda. Todo funciona en la
             red local, sin pasar por internet.</li>
         </ul>
+        <div class="callout warn"><b>Certificado del equipo:</b> la APK acepta el certificado del equipo
+        sin validarlo. Instálala solo desde esta página y úsala únicamente en tu red local.</div>
 
         <h2 id="privacidad">Privacidad y licencias</h2>
         <ul>
             <li><b>100% local.</b> El control y la voz corren en tu red: no hay cuentas, servicios en
-            la nube, cuotas ni telemetría. La PC no necesita internet para funcionar.</li>
+            la nube, cuotas ni telemetría. La PC funciona sin internet.</li>
             <li><b>Acceso protegido.</b> Nadie controla la TV sin el PIN o el enlace de
             emparejamiento; cada conexión se autentica con un token.</li>
-            <li><b>Software libre.</b> LRP OS es software libre bajo GNU GPL v3. Mirá
+            <li><b>Software libre.</b> LRP OS es software libre bajo GNU GPL v3. Consulta
             <a href="https://github.com/Gusitir/LinuxRemotePlayer/blob/main/LICENSE">LICENSE</a>,
             <a href="https://github.com/Gusitir/LinuxRemotePlayer/blob/main/NOTICE">NOTICE</a> y
             <a href="https://github.com/Gusitir/LinuxRemotePlayer/blob/main/THIRD_PARTY_LICENSES.md">THIRD_PARTY_LICENSES.md</a>.</li>
         </ul>
 
         <h2 id="desinstalar">Desinstalar</h2>
-        <p>Si instalaste LRP OS como sistema completo, reinstalá el sistema que quieras usar. La
+        <p>Si instalaste LRP OS como sistema completo, reinstala el sistema que quieras usar. La
         configuración de la app vive en la PC y no se envía a ningún servicio.</p>
 
         <h2 id="problemas">Solución de problemas</h2>
         <h3>El teléfono no encuentra la PC</h3>
         <ul>
-            <li>Verificá que ambos estén en la <b>misma red</b> (las redes de invitados suelen aislar
+            <li>Verifica que ambos estén en la <b>misma red</b> (las redes de invitados suelen aislar
             dispositivos).</li>
-            <li>Si <code>tu-pc.local</code> no responde, probá con la IP directa que muestra el panel
+            <li>Si <code>tu-pc.local</code> no responde, prueba con la IP directa que muestra el panel
             (<code>https://192.168.x.x:8000</code>).</li>
         </ul>
         <h3>El navegador muestra una advertencia de seguridad</h3>
-        <p>Es esperado: el panel usa un certificado propio de la PC. Aceptá la excepción una vez, o
-        descargá el certificado CA desde el mismo panel.</p>
-        <h3>El touchpad o el teclado no responden recién instalado</h3>
+        <p>Es esperado: el panel usa un certificado propio de la PC. Acepta la excepción una vez, o
+        descarga el certificado CA desde el mismo panel.</p>
+        <h3>El touchpad o el teclado no responden justo después de instalar</h3>
         <p>Falta el reinicio: los permisos de hardware aplican al reiniciar la PC (o al cerrar y
         reabrir la sesión). Es una sola vez.</p>
     </main>
@@ -126,7 +137,8 @@
         <div class="footer-legal">
             © 2026 LinuxRemotePlayer — <a href="index.html" style="color:var(--footer-text);">Inicio</a> ·
             <a href="https://github.com/Gusitir/LinuxRemotePlayer" style="color:var(--footer-text);">Repositorio</a> ·
-            <a href="https://github.com/Gusitir/LinuxRemotePlayer/blob/main/LICENSE" style="color:var(--footer-text);">GNU GPL v3</a>
+            <a href="https://github.com/Gusitir/LinuxRemotePlayer/blob/main/LICENSE" style="color:var(--footer-text);">GNU GPL v3</a> ·
+            <a href="terminos.html" style="color:var(--footer-text);">Términos</a>
         </div>
     </footer>
 

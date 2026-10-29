@@ -21,14 +21,17 @@
                 <span class="lrp">LRP</span>
             </a>
             <nav>
-                <a href="../index.html#download">Download</a>
-                <a href="../index.html#requirements">Requirements</a>
-                <a href="../index.html#install">Install</a>
+                <a href="index.html#download">Download</a>
+                <a href="index.html#requirements">Requirements</a>
+                <a href="index.html#install">Install</a>
                 <a href="docs.html" class="active">Documentation</a>
                 <a href="https://github.com/Gusitir/LinuxRemotePlayer">GitHub</a>
                 <a href="../docs.html" title="Versión en español">ES</a>
             </nav>
-            <a href="../index.html#download" class="btn btn-green">Download ISO</a>
+            <a href="index.html#download" class="btn btn-green">
+                <svg class="icon" aria-hidden="true" focusable="false"><path d="M12 4v10m-4-4 4 4 4-4M5 16v3a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3"/></svg>
+                Download ISO
+            </a>
         </div>
     </header>
 
@@ -52,26 +55,30 @@
 
         <h2 id="requirements">Requirements</h2>
         <ul>
-            <li><b>Platform:</b> x86_64 with UEFI. Secure Boot supported through shim.</li>
-            <li><b>Base:</b> Debian 13 stable amd64 minimal, with the Xorg/Openbox session and Firefox ESR.</li>
-            <li><b>Memory:</b> 8 GB RAM recommended.</li>
-            <li><b>Graphics:</b> integrated GPU, or NVIDIA RTX 3060 12 GB as the certified GPU.</li>
+            <li><b>CPU:</b> 64-bit x86 (x86_64).</li>
+            <li><b>Firmware:</b> UEFI. Secure Boot supported through shim.</li>
+            <li><b>Memory:</b> 4 GB RAM minimum.</li>
+            <li><b>Storage:</b> the minimum space shown by the Debian installer.</li>
+            <li><b>Graphics:</b> integrated GPU —Intel HD 2500 validated— or an NVIDIA GPU supported by
+            the Debian drivers.</li>
             <li><b>Display and network:</b> a TV or monitor, and the PC on the same local network as
-            your phone. Other setups may work but are not guaranteed.</li>
+            your phone (Wi-Fi or wired).</li>
+            <li><b>Base:</b> Debian 13 stable amd64 minimal, with the Xorg/Openbox session and Firefox ESR.</li>
         </ul>
+        <p>Other setups may work but are not guaranteed.</p>
 
         <h2 id="install">Download and install</h2>
         <ol>
             <li>Download the ISO from <a href="https://github.com/Gusitir/LinuxRemotePlayer/releases/latest">GitHub Releases</a>
             together with <b>SHA256SUMS</b>, and verify the image.</li>
             <li>Write the ISO to a USB drive with Rufus, Ventoy or <code>dd</code>.</li>
-            <li>Boot the PC from the USB drive in UEFI mode and pick the <b>Install</b> entry from the
+            <li>Boot the PC from the USB drive in UEFI mode and choose the <b>Install</b> entry from the
             boot menu.</li>
             <li>When it finishes, the TV shows the LinuxRemotePlayer panel with a PIN and a QR code.</li>
         </ol>
         <div class="callout"><b>Reboot required for control:</b> the system adds your user to the
-        <code>input</code> group for the virtual keyboard and mouse. That permission only applies
-        after a reboot (or after closing and reopening the session).</div>
+        <code>input</code> group for the virtual keyboard and mouse. That permission applies after a
+        reboot (or after closing and reopening the session).</div>
 
         <h2 id="pairing">Pairing your phone</h2>
         <p>The TV panel shows a 6-digit PIN and a QR code:</p>
@@ -79,23 +86,27 @@
             <li>Scan the QR with your phone camera, or</li>
             <li>open the panel address in the phone browser and type the PIN.</li>
         </ul>
-        <p>The phone is paired with a local token. Repeat the process for every phone in the house;
-        they can all control the TV at the same time.</p>
+        <p>The phone is paired with a local token. You can repeat the process for every phone in the
+        house; they can all control the TV at the same time.</p>
 
         <h2 id="control">Control from your phone</h2>
         <ul>
             <li><b>iPhone / iPad:</b> open the panel page in Safari and choose
-            <b>Share → Add to Home Screen</b>. It opens like an app, without browser chrome.</li>
-            <li><b>Android:</b> install the PWA from Chrome (⋮ menu → <b>Install app</b>).
-            The APK ships in the next release.</li>
+            <b>Share → Add to Home Screen</b>. It opens like an app, without browser chrome.
+            On iOS you use the PWA; there is no APK.</li>
+            <li><b>Android:</b> download the <a href="../downloads/lrp.apk" download>1.0.0 APK</a>, which
+            is the Android remote-control app. You can also install the PWA from Chrome
+            (⋮ menu → <b>Install app</b>).</li>
             <li><b>Control:</b> touchpad, keyboard, navigation, apps and search. Everything runs on
             your local network, never through the internet.</li>
         </ul>
+        <div class="callout warn"><b>Computer certificate:</b> the APK accepts the computer certificate
+        without validating it. Install it only from this page and use it only on your local network.</div>
 
         <h2 id="privacy">Privacy and licenses</h2>
         <ul>
             <li><b>100% local.</b> Control and voice run on your network: no accounts, no cloud
-            services, no quotas and no telemetry. The PC does not need internet to work.</li>
+            services, no quotas and no telemetry. The PC works without internet.</li>
             <li><b>Protected access.</b> Nobody controls the TV without the PIN or pairing link;
             every connection is authenticated with a token.</li>
             <li><b>Free software.</b> LRP OS is free software under GNU GPL v3. See
@@ -128,7 +139,8 @@
         <div class="footer-legal">
             © 2026 LinuxRemotePlayer — <a href="index.html" style="color:var(--footer-text);">Home</a> ·
             <a href="https://github.com/Gusitir/LinuxRemotePlayer" style="color:var(--footer-text);">Repository</a> ·
-            <a href="https://github.com/Gusitir/LinuxRemotePlayer/blob/main/LICENSE" style="color:var(--footer-text);">GNU GPL v3</a>
+            <a href="https://github.com/Gusitir/LinuxRemotePlayer/blob/main/LICENSE" style="color:var(--footer-text);">GNU GPL v3</a> ·
+            <a href="terms.html" style="color:var(--footer-text);">Terms</a>
         </div>
     </footer>
 

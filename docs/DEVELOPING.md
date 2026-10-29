@@ -78,8 +78,9 @@ Para validar la configuración sin construir:
 ./scripts/debian/iso/build_iso.sh --dry-run --deb dist/linuxremoteplayer_<VERSION>_amd64.deb
 ```
 
-La ISO es híbrida (BIOS/UEFI). El instalador escribe GRUB, crea la entrada NVRAM `LRP-OS`, deja
-el autologin de `tty1` y el arranque al panel.
+La ISO arranca en BIOS y UEFI (híbrida), pero la instalación a disco está soportada solo en UEFI:
+el instalador crea GPT con ESP y no crea una partición BIOS Boot. Escribe GRUB con shim, crea la
+entrada NVRAM `LRP-OS`, deja el autologin de `tty1` y el arranque al panel.
 
 ## 5. Convenciones
 
@@ -100,3 +101,5 @@ el autologin de `tty1` y el arranque al panel.
   otra instancia del mismo perfil.
 - La voz es 100% local; si `whisper-cli` o el modelo no están, el pipeline devuelve error sin
   bloquear el resto del control.
+- El driver NVIDIA no forma parte de la ISO ni del instalador: se instala aparte con
+  `scripts/debian/bootstrap.sh` (`nvidia-bootstrap.sh`) y el script exige Secure Boot desactivado.

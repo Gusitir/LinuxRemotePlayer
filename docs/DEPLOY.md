@@ -44,11 +44,12 @@ La ISO y el APK se publican como assets de un release. Los checksums van siempre
 
 ```bash
 # Generar checksums
-sha256sum dist/lrp-os_1.0.0_amd64.iso > dist/SHA256SUMS
+sha256sum dist/lrp-os_1.0.0_amd64.iso dist/lrp-1.0.0.apk > dist/SHA256SUMS
 
 # Publicar el release
 gh release create v1.0.0 \
   dist/lrp-os_1.0.0_amd64.iso \
+  dist/lrp-1.0.0.apk \
   dist/SHA256SUMS \
   --repo Gusitir/LinuxRemotePlayer \
   --title "LRP OS 1.0.0" \
@@ -70,8 +71,8 @@ GitHub Releases acepta como máximo **2 GiB por archivo**. Si la ISO se acerca o
 
 ### APK
 
-El APK de Android se adjunta al mismo release cuando esté disponible (`lrp-1.0.0.apk`). Mientras no
-exista, el sitio muestra la etiqueta “APK Android (próximamente)” y no hay enlace de descarga activo.
+El APK de Android (`lrp-1.0.0.apk`) se adjunta al release v1.0.0. No se publica en Google Play; la
+descarga se hace desde el release y el teléfono debe permitir apps de origen desconocido.
 
 ## 3. Reglas
 

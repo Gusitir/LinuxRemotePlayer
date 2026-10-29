@@ -16,9 +16,11 @@ red local; no hay servicios en la nube, cuentas ni telemetría.
   backend si encuentra el venv.
 - `hooks/99-lrp-live-links.binary` enlaza los binarios del entorno live para que el instalador
   pueda ejecutarse antes del primer arranque.
-- `installer/lrp-install-target.sh` particiona el disco, copia el sistema, instala GRUB para UEFI
-  (con shim; fallback `--removable`), crea la entrada NVRAM `LRP-OS` con `efibootmgr` y la deja
-  primera en `BootOrder`, configura zram y el autologin.
+- `installer/lrp-install-target.sh` exige un disco fijo de al menos 8 GiB (excluye USB, medios
+  live, extraíbles y dispositivos de solo lectura), lo reparticiona en GPT (ESP `LRP-BOOT` de
+  512 MiB + `LRP-ROOT` ext4), copia el sistema, instala GRUB para UEFI (con shim; fallback
+  `--removable`), crea la entrada NVRAM `LRP-OS` con `efibootmgr` e intenta dejarla primera en
+  `BootOrder`, configura zram y conserva el autologin.
 - `config/` contiene preseed, GRUB/ISOLINUX, splash y zram; `package-lists/` la selección mínima
   de Debian.
 
@@ -27,8 +29,9 @@ red local; no hay servicios en la nube, cuentas ni telemetría.
 1. UEFI carga el shim firmado y GRUB desde la ESP (o el fallback `BOOTX64.EFI`).
 2. systemd arranca; `getty@tty1` hace autologin como `lrp`.
 3. `.bash_profile` ejecuta `startx`; Openbox levanta la sesión mínima.
-4. La sesión lanza el kiosk de Firefox ESR apuntando al panel local (`https://127.0.0.1:8000/status`).
-5. La unidad `linuxremoteplayer.service` corre el backend FastAPI; el panel muestra PIN y QR.
+4. `linuxremoteplayer.service` arranca el backend FastAPI como `lrp`.
+5. El backend lanza el kiosk de Firefox ESR en `https://127.0.0.1:8000/status`; el panel muestra
+   PIN y QR.
 
 ### Backend (`backend/`, Python + FastAPI)
 
@@ -55,6 +58,10 @@ PWA sin paso de build. `index.html` + `app.js` implementan touchpad, teclado, ap
 `{"type":"auth","token":...}` en los primeros 3 segundos, aplica rate limiting y envía eventos de
 puntero, teclado, combos y multimedia.
 
+El APK de Android (`android/`) es un wrapper WebView de esa misma PWA: no es el sistema operativo
+ni una app nativa distinta. En iOS el control se instala como PWA desde Safari (Añadir a pantalla
+de inicio).
+
 ### Web (`website/`)
 
 Sitio estático ES/EN desplegado en Vercel. No participa del runtime del producto.
@@ -62,7 +69,7 @@ Sitio estático ES/EN desplegado en Vercel. No participa del runtime del product
 ## Flujo de datos
 
 ```
-Teléfono (PWA) --HTTPS/WSS LAN--> backend FastAPI --uinput--> Xorg
+Teléfono (APK/PWA) --HTTPS/WSS LAN--> backend FastAPI --uinput--> Xorg
                                         |--PipeWire (audio)
                                         |--bluetoothctl
                                         |--xrandr
@@ -74,7 +81,8 @@ sin conocer el token.
 
 ## Trust boundaries
 
-- **Red local:** el control viaja cifrado con el certificado de la CA local. Nada sale a internet.
+- **Red local:** el control viaja cifrado con el certificado de la CA local y no sale a internet.
+  Las apps web que el usuario abre en el kiosk (streaming, etc.) sí pueden usar internet.
 - **Pairing:** sin token válido el WebSocket se cierra a los 3 segundos (código 1008). El token se
   genera en la PC y se puede rotar.
 - **Endpoints locales:** `/api/status`, `/status` y el panel exigen acceso desde loopback. Los
@@ -94,7 +102,14 @@ sin conocer el token.
 
 ## Limitaciones conocidas
 
-- El certificado es de una CA propia: la primera visita en el teléfono pide aceptar la excepción.
+- El certificado es de una CA propia: Safari en iOS pide aceptar la excepción; el APK de Android la omite por diseño.
 - El control requiere que el teléfono y la PC estén en la misma red local.
-- La GPU certificada es NVIDIA RTX 3060 12 GB; otras GPUs pueden funcionar sin soporte declarado.
-- El APK de Android todavía no se publica.
+- La GPU certificada es NVIDIA RTX 3060 12 GB. El driver propietario no se incluye en la ISO:
+  se instala de forma opt-in con `scripts/debian/bootstrap.sh` (`nvidia-bootstrap.sh`) desde los
+  repositorios oficiales de Debian 13 y exige Secure Boot desactivado (el script rechaza el estado
+  `enabled`). El resto de las GPU usa la pila genérica de Mesa sin certificación.
+- Intel HD 2500 es la GPU integrada validada por el autor; el kiosk ajusta su ruta VA-API para H.264.
+- El APK de Android se publica con la release, pero todavía no se probó en hardware físico.
+- La instalación física quedó pendiente de validación del autor.
+- La voz existe en el backend, pero en 1.0.0 la interfaz del teléfono no expone micrófono.
+- Los ajustes de pantalla son de solo lectura y Bluetooth solo permite encendido/apagado y listado por API, sin emparejamiento.
