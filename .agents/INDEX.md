@@ -1,11 +1,11 @@
 # INDEX - navegacion del repositorio
 
 ```yaml
-last_reindexed_at: 2026-10-29T05:32:00-05:00
-source_commit: f152331
+last_reindexed_at: 2026-10-29T17:26:00-05:00
+source_commit: ae658a9
 dirty: true
-active_plan: PLAN_v1.0.0-public.md (D56; T-150/T-151/T-152 aptos, T-153/T-154 ready, T-155 pendiente, T-157 voz diferida)
-state: "LRP OS 1.0.0 GPL-3.0: F1/F2/F3 aptas; web 1.0.0 en producción (Vercel); docs completos; siguiente ISO 1.0.0 (T-154); B38/B39 bloquean publicación"
+active_plan: PLAN_v1.0.0-public.md (D56; T-150..T-153 y T-155 aptos, T-154 pendiente de física, T-157 voz diferida)
+state: "LRP OS 1.0.0 publicado: repo público, release v1.0.0 (ISO+APK+SHA256SUMS), web en producción; solo quedan checks del dueño (instalación física, APK en Android, B39 legal)"
 ```
 
 El estado activo pertenece a [`CURRENT.md`](CURRENT.md), no a este indice.

@@ -199,3 +199,15 @@ puntero siguen pendientes del dueño.
 - `TST-LRP-POINTER-001` `[pendiente]` — con mouse 2.4G conectado, el puntero se ve y se mueve sobre el
   panel tras el fix B26 (`startx` sin `-nocursor`). Si no aparece, revisar tema/cursor de Openbox antes
   que el flag de Xorg.
+
+## 1.0.0 · release público (2026-10-29)
+
+Checks del dueño sobre los artefactos publicados en
+`https://github.com/Gusitir/LinuxRemotePlayer/releases/tag/v1.0.0`.
+
+- `TST-ISO-PHYS-001` `[pendiente]` — instalar `lrp-os_1.0.0_amd64.iso` en el HTPC (borra disco):
+  verificar aviso final + reinicio, arranque desde disco, panel con PIN/QR, splash verde con icono,
+  puntero visible, audio HDMI, Wi-Fi/Pantalla/Bluetooth, y `dpkg -V linuxremoteplayer` limpio.
+- `TST-APK-001` `[pendiente]` — instalar `lrp-1.0.0.apk` en un Android real: aviso de certificado,
+  conexión a `https://<IP>:8000` con el PIN, control del equipo, y que el banner “Descargar APK” del
+  panel sirva el archivo desde el propio equipo.

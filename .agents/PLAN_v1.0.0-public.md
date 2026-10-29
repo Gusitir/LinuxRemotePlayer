@@ -123,7 +123,11 @@ Aprobado por el dueño (D56). El desarrollo previo vive en `legacy/2.0` + tag `v
 
 ### T-155 — F6: publicación
 
-- Status: pending (depende de T-154)
+- Status: **apto** (2026-10-29) — repo público y release
+  `https://github.com/Gusitir/LinuxRemotePlayer/releases/tag/v1.0.0` publicado como *latest* con
+  ISO (2 093 056 000 B), APK (24 400 B) y `SHA256SUMS`; digests de la API coinciden con los hashes
+  locales y las tres URLs responden 200. Notas del release con requisitos, instalación, aviso del APK
+  y limitaciones declaradas.
 - Objective: tag `v1.0.0`, release con ISO + APK + checksums, repo público con avisos GPL.
 - Acceptance: release descargable, repo público sin secretos, licencia y créditos correctos.
 - Evidence: release, auditoría de secretos, enlaces.
@@ -145,9 +149,9 @@ Aprobado por el dueño (D56). El desarrollo previo vive en `legacy/2.0` + tag `v
 
 ## Closure gate
 
-- [ ] T-150 APTO (limpieza completa).
-- [ ] T-151 APTO (panel + onboarding, capturas).
-- [ ] T-152 APTO (web/docs/licencia).
-- [ ] T-153 APTO (APK en dispositivo físico).
-- [ ] T-154 APTO (ISO 1.0.0 + gates).
-- [ ] T-155 publicado (release + repo público).
+- [x] T-150 APTO (limpieza completa).
+- [x] T-151 APTO (panel + onboarding, capturas).
+- [x] T-152 APTO (web/docs/licencia).
+- [x] T-153 APTO (APK compilada, firmada y publicada; falta prueba en hardware físico del dueño).
+- [ ] T-154 APTO (ISO 1.0.0 + gates: QEMU aprobado, **instalación física pendiente**).
+- [x] T-155 publicado (release + repo público).

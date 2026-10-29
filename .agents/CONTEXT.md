@@ -88,3 +88,23 @@ repo público; la web estática se publica en **Vercel por integración Git** (p
 `vercel` CLI. Dominio `www.linuxremoteplayer.com` (alias `linux-remote-player.vercel.app` a mantener).
 La ISO mide ~2 GiB: medirla en T-154 y partirla si excede el límite de 2 GiB por asset; plan B,
 Cloudflare R2. El método de deploy se documentará en `docs/DEPLOY.md` (T-152).
+
+## 2026-10-29 · D59 — Handoff: LRP OS 1.0.0 publicado
+
+Cierre de la fase de publicación. El proyecto queda **retomable y desatendido** con este estado:
+
+- **Release público `v1.0.0`** (latest) en `Gusitir/LinuxRemotePlayer` con ISO (`5cc67f10…`,
+  2 093 056 000 B), APK (`fcfb76e0…`, 24 400 B) y `SHA256SUMS`; digests de la API iguales a los locales.
+- **Repo público** con GPL-3.0; auditoría de secretos limpia (nunca se versionaron `.env`, keystores ni
+  claves privadas).
+- **Web 1.0.0** en producción (Vercel) con descargas, avisos GPL y documentación de build/deploy.
+- **ISO validada en QEMU UEFI** end-to-end (instalación, reinicio automático, arranque desde disco y
+  panel), y **APK compilada y firmada** con `lrp-keys/android-release.jks` (fuera del repo).
+
+Queda pendiente solo lo que necesita manos del dueño: instalar la ISO en el HTPC y correr `dpkg -V` y
+los checks de `TESTING.md` (`1.0.0 · release público`), probar el APK en un Android real, y la revisión
+legal de términos (B39).
+
+Cómo retomar: leer `CURRENT.md` (next_action), `PLAN_v1.0.0-public.md` (T-154 en curso, T-157 diferida)
+y `docs/DEVELOPING.md` para reconstruir el entorno. Para republicar: `gh release create` está descrito
+en `docs/DEPLOY.md`; el build de ISO vive en `scripts/debian/iso/`.
