@@ -11,10 +11,10 @@ dirty: true
 assurance: Standard
 active_job: RUN THE LOOP
 active_plan: PLAN_v1.0.0-public.md (approved, D56)
-active_task: T-150 apto; T-151 (panel compacto + onboarding QR) lista para arrancar
-last_verdict: APTO (T-150, F1)
-verdict_scope: "T-150 (F1) apto el 2026-10-29 en seis commits: GPL-3.0 + NOTICE, frontend sin licencia/voz/modo, backend sin superficie comercial, OTA eliminada de backend/panel/scripts/web, Supabase borrado y modo appliance fuera. Gate de fase: `pytest tests/` = 250 passed; HTPC desplegado y verificado por captura, sin referencias legacy en runtime. B19/B19b/M1 cerrados por eliminación (D56)."
-next_action: "T-151 (F2): barra compacta, onboarding QR con detección iOS/Android, B37 (cable/Wi-Fi) y Bluetooth acotado; después T-152 web/docs, T-153 APK, T-154 ISO y T-155 publicación."
+active_task: T-151 apto; T-152 (web ISO + docs + avisos GPL) lista para arrancar
+last_verdict: APTO (T-150 y T-151)
+verdict_scope: "T-150 (F1) apto: GPL-3.0, sin licencia/voz/modo, sin OTA ni Supabase; gate de fase 250 passed. T-151 (F2) apto: panel compacto con chips, Bluetooth on/off real (on→off→on por API), B37 'Conectado por cable', y onboarding en la web por plataforma (Android APK próximamente + Chrome, iOS Compartir→Añadir, desktop sin banner) verificado por captura en el HTPC."
+next_action: "T-152 (F3): web que sirve ISO + APK con checksums y avisos GPL, README/arquitectura/build reproducible, SECURITY.md, THIRD_PARTY_LICENSES.md y auditoría de assets de terceros; después T-153 APK, T-154 ISO y T-155 publicación."
 ```
 
 ## Blockers

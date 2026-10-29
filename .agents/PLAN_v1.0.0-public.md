@@ -66,7 +66,10 @@ Aprobado por el dueño (D56). El desarrollo previo vive en `legacy/2.0` + tag `v
 
 ### T-151 — F2: panel compacto y onboarding de instalación
 
-- Status: pending (depende de T-150)
+- Status: **apto** (2026-10-29) — commits `44b34a3` (panel compacto + B37), `0c9e62c` (Bluetooth
+  on/off real), `d406840` (banner web por plataforma). Verificado en HTPC por captura: barra con chips,
+  PIN/QR sin instrucciones en la TV, banner Android “APK próximamente” + paso Chrome, banner iOS
+  “Compartir → Añadir”, desktop sin banner; ciclo real de Bluetooth on→off→on por API.
 - Objective: barra de estado corta (dispositivos, latencia, versión) y espacio para el tutorial de
   instalación; QR que detecta plataforma (iOS → PWA, Android → APK, desktop → neutro); B37
   (Wi-Fi “Desconectado” con cable) y Bluetooth limitado a encendido/apagado + lista.
