@@ -8,7 +8,7 @@ SERVICE_WORKER = ROOT / "frontend" / "sw.js"
 
 def test_debian_release_source_contract():
     source = BUILD.read_text(encoding="utf-8")
-    assert (ROOT / "VERSION").read_text(encoding="ascii").strip() == "2.0.0"
+    assert (ROOT / "VERSION").read_text(encoding="ascii").strip() == "1.0.0"
     assert "Architecture: amd64" in source
     assert "chmod 0755 pkg/opt/linuxremoteplayer/scripts/debian/*.sh" in source
     assert "/opt/linuxremoteplayer/scripts/debian/bootstrap.sh --resume --unattended" in source
