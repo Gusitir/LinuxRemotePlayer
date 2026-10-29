@@ -139,7 +139,7 @@
 
         .columns-layout {
             display: flex;
-            gap: 32px;
+            gap: 24px;
             width: 100%;
         }
 
@@ -161,94 +161,178 @@
         }
 
         .icon-container {
-            margin: 0 auto 16px auto;
+            margin: 0 auto 12px auto;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 56px;
-            height: 56px;
+            width: 48px;
+            height: 48px;
             background-color: rgba(59, 130, 246, 0.1);
             border-radius: 50%;
             color: var(--accent);
         }
 
         h1 {
-            font-size: 1.6rem;
+            font-size: 1.45rem;
             font-weight: 800;
             letter-spacing: -0.02em;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         p.instructions {
             color: var(--text-secondary);
-            font-size: 0.9rem;
-            line-height: 1.5;
-            margin-bottom: 20px;
+            font-size: 0.88rem;
+            line-height: 1.45;
+            margin-bottom: 12px;
         }
 
         .qr-box {
             background-color: white;
-            border-radius: 16px;
-            padding: 16px;
+            border-radius: 14px;
+            padding: 12px;
             display: inline-block;
-            margin: 0 auto 20px auto;
+            margin: 0 auto 12px auto;
             box-shadow: 0 10px 25px rgba(0,0,0,0.3);
         }
 
         .qr-box img {
             display: block;
-            max-width: 180px;
+            max-width: 150px;
             height: auto;
         }
 
-        .stat-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 20px;
+        /* T-151a: barra superior compacta */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--border);
         }
 
-        .stat-card {
-            background-color: var(--bg-elevated);
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.05rem;
+            font-weight: 800;
+            letter-spacing: -0.01em;
+        }
+
+        .brand-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background-color: rgba(59, 130, 246, 0.14);
+            color: var(--accent);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: none;
+        }
+
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 11px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background-color: rgba(255, 255, 255, 0.03);
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .chip strong {
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+
+        /* T-151a: seccion Instalar la app */
+        .install-col {
+            justify-content: flex-start;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .install-title {
+            font-size: 1.15rem;
+            font-weight: 800;
+            letter-spacing: -0.01em;
+        }
+
+        .install-sub {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 2px;
+        }
+
+        .install-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .install-card {
+            background-color: rgba(255, 255, 255, 0.02);
             border: 1px solid var(--border);
             border-radius: 12px;
-            padding: 12px;
+            padding: 12px 14px;
+            transition: border-color 0.2s ease, background-color 0.2s ease;
         }
 
-        .stat-card h2 {
-            font-size: 0.8rem;
+        .install-card h3 {
+            font-size: 0.95rem;
             font-weight: 700;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
             margin-bottom: 6px;
-        }
-
-        .stat-value {
-            font-size: 1.15rem;
-            font-weight: 700;
             color: var(--text-primary);
         }
 
-        .stat-sub {
-            font-size: 0.75rem;
+        .install-card p {
+            font-size: 0.82rem;
+            line-height: 1.45;
             color: var(--text-secondary);
-            margin-top: 2px;
         }
 
-        .badge {
-            display: inline-block;
-            padding: 3px 7px;
-            border-radius: 6px;
-            font-size: 0.72rem;
-            font-weight: 700;
-            background-color: rgba(34, 197, 94, 0.15);
-            color: var(--success);
+        .install-card.highlight {
+            border-color: rgba(59, 130, 246, 0.5);
+            background-color: rgba(59, 130, 246, 0.08);
         }
 
-        .badge.error {
-            background-color: rgba(239, 68, 68, 0.15);
-            color: #ef4444;
+        .install-card.collapsed .install-body {
+            display: none;
+        }
+
+        .install-note {
+            font-size: 0.78rem;
+            color: #f59e0b;
+            margin: 6px 0;
+        }
+
+        .apk-btn {
+            width: 100%;
+            margin: 2px 0;
+        }
+
+        .apk-btn.disabled,
+        .apk-btn[disabled] {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: var(--bg-elevated);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
         }
 
         .btn-action {
@@ -369,7 +453,23 @@
 <body>
     <div class="bg-glow"></div>
     <div class="container">
-        
+
+        <!-- T-151a: barra superior compacta -->
+        <div class="topbar">
+            <div class="brand">
+                <span class="brand-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="12" rx="2"/><path d="M8 20h8"/><path d="M12 16v4"/></svg>
+                </span>
+                <span>LRP OS</span>
+            </div>
+            <div class="chips">
+                <span class="chip" id="chip-clients">— dispositivos</span>
+                <span class="chip" id="chip-latency">— ms</span>
+                <span class="chip" id="chip-network">Sin red</span>
+                <span class="chip" id="chip-version">v—</span>
+            </div>
+        </div>
+
         <!-- Tab Navigation Bar -->
         <div class="tabs-header">
             <button class="tab-btn active" id="tab-btn-pairing" onclick="switchTab('pairing')" tabindex="0">📺 Emparejamiento</button>
@@ -403,37 +503,25 @@
                 </div>
             </div>
 
-            <div class="right-col">
-                <div class="stat-grid">
-                    <div class="stat-card">
-                        <h2>Conexiones</h2>
-                        <div class="stat-value" id="val-clients">-</div>
-                        <div class="stat-sub">Teléfonos conectados</div>
+            <div class="right-col install-col">
+                <h2 class="install-title">Instalar la app</h2>
+                <p class="install-sub">Añadí LRP a la pantalla de inicio de tu teléfono.</p>
+
+                <div class="install-cards">
+                    <div class="install-card" id="install-ios">
+                        <h3>iPhone / iPad</h3>
+                        <div class="install-body">
+                            <p>Abrí esta página en Safari → Compartir → Añadir a pantalla de inicio → abrí LRP y emparejá con el PIN.</p>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <h2>Latencia</h2>
-                        <div class="stat-value" id="val-ping">- ms</div>
-                        <div class="stat-sub">Servidor API</div>
-                    </div>
-                    <div class="stat-card">
-                        <h2>Reproductor</h2>
-                        <div class="stat-value"><span class="badge" id="val-kiosk">Idle</span></div>
-                        <div class="stat-sub">Estado de pantalla</div>
-                    </div>
-                    <div class="stat-card">
-                        <h2>Sistema</h2>
-                        <div class="stat-value"><span class="badge" id="val-uinput">OK</span></div>
-                        <div class="stat-sub">uinput / audio</div>
-                    </div>
-                    <div class="stat-card">
-                        <h2>Versión</h2>
-                        <div class="stat-value" id="val-version">—</div>
-                        <div class="stat-sub">LinuxRemotePlayer</div>
-                    </div>
-                    <div class="stat-card">
-                        <h2>Adblock</h2>
-                        <div class="stat-value"><span class="badge" id="val-adblock">Verificando...</span></div>
-                        <div class="stat-sub">Filtro del navegador</div>
+
+                    <div class="install-card" id="install-android">
+                        <h3>Android</h3>
+                        <div class="install-body">
+                            <button id="apk-btn" type="button" class="btn-action apk-btn" disabled>Descargar APK</button>
+                            <p class="install-note" id="apk-note">Disponible en la próxima release</p>
+                            <p>Mientras tanto: Chrome → menú ⋮ → Instalar aplicación.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -546,6 +634,56 @@
         let currentAudioVol = 70;
         let selectedWifiSsid = "";
 
+        // T-151a: instalacion por plataforma y chips de estado.
+        let lastNetworkIps = [];
+        const APK_AVAILABLE = false;
+        const APK_URL = '/downloads/lrp.apk';
+
+        function detectPlatform() {
+            const forced = new URLSearchParams(location.search).get('platform');
+            if (forced === 'ios' || forced === 'android' || forced === 'desktop') return forced;
+            const ua = navigator.userAgent || '';
+            if (/iPad|iPhone|iPod/.test(ua)) return 'ios';
+            if (/Android/i.test(ua)) return 'android';
+            return 'desktop';
+        }
+
+        function applyInstallPlatform() {
+            const platform = detectPlatform();
+            const iosCard = document.getElementById('install-ios');
+            const androidCard = document.getElementById('install-android');
+            if (iosCard && androidCard) {
+                iosCard.classList.remove('highlight', 'collapsed');
+                androidCard.classList.remove('highlight', 'collapsed');
+                if (platform === 'ios') {
+                    iosCard.classList.add('highlight');
+                    androidCard.classList.add('collapsed');
+                } else if (platform === 'android') {
+                    androidCard.classList.add('highlight');
+                    iosCard.classList.add('collapsed');
+                }
+            }
+            const apkBtn = document.getElementById('apk-btn');
+            if (apkBtn) {
+                apkBtn.disabled = !APK_AVAILABLE;
+                apkBtn.classList.toggle('disabled', !APK_AVAILABLE);
+                apkBtn.onclick = APK_AVAILABLE ? () => { window.location.href = APK_URL; } : null;
+            }
+        }
+
+        function hasInterface(prefixes) {
+            return lastNetworkIps.some(entry => {
+                const iface = String(entry).split(':')[0].trim().toLowerCase();
+                return prefixes.some(prefix => iface.startsWith(prefix));
+            });
+        }
+
+        function networkLabel() {
+            if (hasInterface(['en'])) return 'Ethernet';
+            if (hasInterface(['wl'])) return 'Wi-Fi';
+            return 'Sin red';
+        }
+
         function switchTab(tabId) {
             activeTab = tabId;
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -603,31 +741,15 @@
             try {
                 const res = await fetch('/api/status');
                 const lat = Math.round(performance.now() - start);
-                
+
                 if (res.ok) {
                     const data = await res.json();
-                    document.getElementById('val-clients').textContent = data.connected_clients !== undefined ? data.connected_clients : "—";
-                    document.getElementById('val-ping').textContent = lat + ' ms';
-                    
-                    const kBadge = document.getElementById('val-kiosk');
-                    if (kBadge) {
-                        kBadge.textContent = data.kiosk_active ? "Ejecutando" : "Inactivo";
-                        kBadge.className = data.kiosk_active ? "badge" : "badge error";
-                    }
-
-                    const uBadge = document.getElementById('val-uinput');
-                    if (uBadge) {
-                        uBadge.textContent = data.uinput_ok ? "OK" : "Error";
-                        uBadge.className = data.uinput_ok ? "badge" : "badge error";
-                    }
-
-                    const aBadge = document.getElementById('val-adblock');
-                    if (aBadge) {
-                        aBadge.textContent = data.adblock_status || "Inactivo";
-                        aBadge.className = data.adblock_status ? "badge" : "badge error";
-                    }
-
-                    if (data.version) document.getElementById('val-version').textContent = data.version;
+                    lastNetworkIps = Array.isArray(data.network_ips) ? data.network_ips : [];
+                    const clients = data.connected_clients !== undefined ? data.connected_clients : 0;
+                    document.getElementById('chip-clients').textContent = clients === 1 ? '1 dispositivo' : `${clients} dispositivos`;
+                    document.getElementById('chip-latency').textContent = `${lat} ms`;
+                    document.getElementById('chip-network').textContent = networkLabel();
+                    if (data.version) document.getElementById('chip-version').textContent = `v${data.version}`;
                 }
             } catch (e) {
                 console.error("Status polling failed", e);
@@ -732,13 +854,28 @@
         async function scanWifi() {
             const list = document.getElementById('wifi-networks-list');
             list.innerHTML = '<div style="padding: 8px; color: var(--text-secondary);">Escaneando redes...</div>';
+            // B37: si se abrio directo en Ajustes (?tab=settings) el polling puede no haber corrido.
+            if (lastNetworkIps.length === 0) {
+                try {
+                    const statusRes = await fetch('/api/status');
+                    if (statusRes.ok) {
+                        const statusData = await statusRes.json();
+                        lastNetworkIps = Array.isArray(statusData.network_ips) ? statusData.network_ips : [];
+                    }
+                } catch (e) {}
+            }
             try {
                 const res = await fetch('/api/system/wifi');
                 if (res.ok) {
                     const data = await res.json();
-                    document.getElementById('wifi-status-text').textContent = data.connected 
-                        ? `Conectado a: ${data.connected}` 
-                        : (data.available ? 'Desconectado' : 'Adaptador Wi-Fi no disponible');
+                    if (data.connected) {
+                        document.getElementById('wifi-status-text').textContent = `Conectado a: ${data.connected}`;
+                    } else if (hasInterface(['en']) && data.connected === null) {
+                        // B37: interfaz cableada activa y el adaptador Wi-Fi no reporta conexion.
+                        document.getElementById('wifi-status-text').textContent = 'Conectado por cable';
+                    } else {
+                        document.getElementById('wifi-status-text').textContent = data.available ? 'Desconectado' : 'Adaptador Wi-Fi no disponible';
+                    }
 
                     list.innerHTML = '';
                     if (!data.networks || data.networks.length === 0) {
@@ -855,6 +992,7 @@
             updateStatus();
             updatePin();
             checkOnboarding();
+            applyInstallPlatform();
         };
     </script>
 </body>
