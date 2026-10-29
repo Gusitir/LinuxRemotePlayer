@@ -170,11 +170,24 @@ panes con datos vivos.
 
 ## B37 — Wi-Fi muestra “Desconectado” con Ethernet activo
 
-**Abierto · fuera de este lote (T-145)**
+**Cerrado en T-151** (`44b34a3`): el panel muestra “Conectado por cable” cuando `network_ips` trae
+una interfaz `en*` y Wi-Fi no reporta conexión.
 
-`/api/system/wifi` solo conoce la interfaz Wi-Fi; con cable conectado el panel muestra “Desconectado”
-aunque `network_ips` tenga `enp2s0`. Debe indicar “Conectado por cable” usando onboarding/estado de red
-en el rediseño de T-145.
+## B38 — Capturas de marketing con marcas de terceros
+
+**Abierto · bloquea la publicación (T-155)**
+
+`website/` y `README.md` usan capturas del control antiguo que incluyen logos de Netflix, YouTube,
+Spotify, TikTok, Prime/Kick y el botón de micrófono (voz diferida). En un repo GPL público eso es
+riesgo de marca y además promete features que 1.0.0 no muestra. Fix: reemplazar por capturas reales del
+panel 1.0.0 (sin logos de terceros, sin micrófono) y actualizar el mock del teléfono.
+
+## B39 — Términos y textos legales sin revisión
+
+**Abierto · no bloquea el código, sí la publicación**
+
+`website/terminos.html` y `es/terms.html` se reescribieron de condiciones de venta a GPL-3.0; conviene
+una pasada legal antes de publicar, junto con `SECURITY.md` y `THIRD_PARTY_LICENSES.md`.
 
 # CERRADOS
 

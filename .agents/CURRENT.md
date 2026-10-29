@@ -11,17 +11,21 @@ dirty: true
 assurance: Standard
 active_job: RUN THE LOOP
 active_plan: PLAN_v1.0.0-public.md (approved, D56)
-active_task: T-151 apto; T-152 (web ISO + docs + avisos GPL) lista para arrancar
-last_verdict: APTO (T-150 y T-151)
-verdict_scope: "T-150 (F1) apto: GPL-3.0, sin licencia/voz/modo, sin OTA ni Supabase; gate de fase 250 passed. T-151 (F2) apto: panel compacto con chips, Bluetooth on/off real (on→off→on por API), B37 'Conectado por cable', y onboarding en la web por plataforma (Android APK próximamente + Chrome, iOS Compartir→Añadir, desktop sin banner) verificado por captura en el HTPC."
-next_action: "T-152 (F3): web que sirve ISO + APK con checksums y avisos GPL, README/arquitectura/build reproducible, SECURITY.md, THIRD_PARTY_LICENSES.md y auditoría de assets de terceros; después T-153 APK, T-154 ISO y T-155 publicación."
+active_task: T-152 apto; T-154 (ISO 1.0.0 + gates) siguiente; T-153 APK y T-155 publicación después
+last_verdict: APTO (T-150, T-151 y T-152)
+verdict_scope: "T-150 (F1) apto: GPL-3.0, sin licencia/voz/modo, sin OTA ni Supabase; gate de fase 250 passed. T-151 (F2) apto: panel compacto, Bluetooth on/off real, B37 y onboarding web por plataforma. T-152 (F3) apto: web 1.0.0 desplegada y verificada en producción (`e9c67c7`, Vercel, 0 rastros comerciales) y documentación completa (`f152331`: README, arquitectura, build, DEPLOY, SECURITY, terceros)."
+next_action: "T-154: medir/construir la ISO 1.0.0 en WSL (clon nativo bajo ~), verificar instalación limpia en el HTPC y `dpkg -V`; en paralelo o después T-153 (APK TWA); cerrar con T-155 (release + repo público + B38/B39)."
 ```
 
 ## Blockers
 
+- **B38 bloquea la publicación**: las capturas de la web y del README muestran logos de Netflix/
+  YouTube/Spotify/TikTok y el botón de micrófono del control viejo. Hay que reemplazarlas por capturas
+  1.0.0 reales antes de T-155.
+- **B39**: revisión legal de `terminos`/`terms`, `SECURITY.md` y `THIRD_PARTY_LICENSES.md` antes de
+  publicar.
 - **Repo público desde el inicio (D56)** exige antes de la primera release: auditoría de secretos en
-  toda la historia y revisión de assets de terceros (logos de apps, fondos de skins, fuentes). Se hace
-  en T-152, no al final.
+  toda la historia. Se hace en T-155.
 - **TWA/APK**: dominio decidido `www.linuxremoteplayer.com` (Vercel, `linux-remote-player.vercel.app`
   como alias). `assetlinks.json` se sirve desde ese dominio en T-153.
 - **Hosting de binarios (decidido 2026-10-29)**: **ISO + APK + `SHA256SUMS` en GitHub Releases** (repo
@@ -35,6 +39,12 @@ next_action: "T-152 (F3): web que sirve ISO + APK con checksums y avisos GPL, RE
 - `dpkg -V` divergente en el HTPC por despliegue SSH; se normaliza al instalar la ISO 1.0.0 (T-154).
 
 ## Fresh evidence
+
+- **T-152 apto (F3)**: `e9c67c7` publica la web 1.0.0 (ES/EN) y Vercel la sirve con deploy nuevo
+  (`x-vercel-id` distinto, `age: 0`, `last-modified` = `date`): HTTP 200, “1.0.0”, “GPL”, enlaces a
+  Releases y **0** rastros de Paddle/premium/latest.json/.deb/install.sh en home y `/en/`.
+  `f152331` añade README, `docs/ARCHITECTURE.md`, `docs/DEVELOPING.md`, `docs/DEPLOY.md`,
+  `SECURITY.md` y `THIRD_PARTY_LICENSES.md`, sin términos comerciales y con links relativos en 0 roto.
 
 - **F1 cerrada (T-150)**: gate de fase `pytest tests/` = **250 passed** (376 s) tras la poda de tests de
   licencia/OTA/Supabase; commits `ee93f4c`, `30dbd69`, `180f717`, `d5b75f7`, `878d948`, `3cf38ed`,

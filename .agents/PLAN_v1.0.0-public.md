@@ -82,7 +82,9 @@ Aprobado por el dueño (D56). El desarrollo previo vive en `legacy/2.0` + tag `v
 
 ### T-152 — F3: web ISO + APK y documentación
 
-- Status: pending (depende de T-151)
+- Status: **apto** (2026-10-29) — `e9c67c7` (web 1.0.0 ES/EN, desplegada y verificada en producción)
+  y `f152331` (README, arquitectura, build, `DEPLOY.md`, `SECURITY.md`, terceros). Pendiente de
+  publicación: reemplazar capturas con marcas de terceros (B38).
 - Objective: web que sirve ISO y APK con checksums, avisos GPL y créditos; README, arquitectura, build
   reproducible, `SECURITY.md`, `THIRD_PARTY_LICENSES.md` y auditoría de assets de terceros.
 - Allowed scope: `website/`, `docs/`, `README.md`, `CHANGELOG`, `THIRD_PARTY_LICENSES.md`, `NOTICE`.
@@ -93,7 +95,7 @@ Aprobado por el dueño (D56). El desarrollo previo vive en `legacy/2.0` + tag `v
 
 ### T-153 — F4: APK Android (TWA)
 
-- Status: pending (depende de T-152)
+- Status: ready (T-152 apto; puede ejecutarse antes o después de T-154)
 - Objective: APK TWA firmada contra el dominio, `assetlinks.json`, build reproducible documentado.
 - Allowed scope: nuevo directorio `android/`, `website/`, docs.
 - Acceptance: APK instala en Android, abre el panel, no requiere Play Store; firma custodiada fuera
@@ -103,7 +105,7 @@ Aprobado por el dueño (D56). El desarrollo previo vive en `legacy/2.0` + tag `v
 
 ### T-154 — F5: ISO 1.0.0 y gates de release
 
-- Status: pending (depende de T-153)
+- Status: ready (T-152 apto; la ISO no depende del APK)
 - Objective: reconstruir la ISO una sola vez con todos los deltas y verificar instalación limpia,
   operación sin red, `dpkg -V` y prueba física.
 - Acceptance: ISO instala en UEFI, arranca al panel, control y ajustes sin red, `dpkg -V` limpio.
