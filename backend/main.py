@@ -142,6 +142,14 @@ connected_clients = 0
 last_input_time = time.time()
 client_disconnected_during_media_time = 0.0
 
+# B34: anti-tormenta del panel idle. Sin cooldown, un perfil corrupto hacia que el
+# watchdog relanzara cada 5 s y apilara hasta 3 Firefox.
+PANEL_RETRY_MIN_INTERVAL = 30.0
+PANEL_RETRY_STREAK_INTERVAL = 120.0
+PANEL_FAIL_STREAK_LIMIT = 3
+_last_panel_attempt = 0.0
+_panel_fail_streak = 0
+
 
 def is_newer_version(current_ver: str, latest_ver: str) -> bool:
     try:
@@ -154,8 +162,22 @@ async def check_and_launch_status_panel() -> bool:
     """T-132: Immediately launch status panel when TV desktop is empty and appliance idle panel is enabled.
     Preserves 45s safety delay ONLY if a client disconnected while media was actively playing."""
     import kiosk
+    global _last_panel_attempt, _panel_fail_streak
+
     if os.getenv("APPLIANCE_IDLE_PANEL", "").lower() != "true":
         return False
+
+    # B34: backoff anti-tormenta SOLO mientras haya fallos acumulados. Un panel que
+    # acaba de abrirse no debe bloquear un relanzamiento legitimo (p. ej. stop_kiosk).
+    if _panel_fail_streak > 0:
+        retry_interval = (
+            PANEL_RETRY_STREAK_INTERVAL
+            if _panel_fail_streak >= PANEL_FAIL_STREAK_LIMIT
+            else PANEL_RETRY_MIN_INTERVAL
+        )
+        if time.time() - _last_panel_attempt < retry_interval:
+            return False
+
     if kiosk.is_status_panel_running():
         return False
 
@@ -172,9 +194,21 @@ async def check_and_launch_status_panel() -> bool:
             return False
 
     port = os.getenv("PORT", "8000")
-    status_url = f"https://127.0.0.1:{port}/status"
+    # B30: cache-busting por arranque; Firefox reusaba el HTML viejo del panel.
+    status_url = f"https://127.0.0.1:{port}/status?v={int(time.time())}"
     logger.info(f"Empty TV desktop detected -> launching status panel ({status_url})")
     success = await asyncio.to_thread(kiosk.launch_kiosk, status_url)
+    if success:
+        # D4: sin ventana de bloqueo tras un lanzamiento exitoso.
+        _panel_fail_streak = 0
+    else:
+        _last_panel_attempt = time.time()
+        _panel_fail_streak += 1
+        if _panel_fail_streak == PANEL_FAIL_STREAK_LIMIT:
+            logger.warning(
+                f"Status panel launch failed {_panel_fail_streak} times in a row; "
+                f"backing off {int(PANEL_RETRY_STREAK_INTERVAL)}s to avoid a kiosk restart storm."
+            )
     return success
 
 
@@ -538,7 +572,8 @@ def get_status_html(request: Request):
     html_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend", "status.html"))
     if os.path.exists(html_path):
         from fastapi.responses import FileResponse
-        return FileResponse(html_path)
+        # B29: evita panel obsoleto tras deploy/upgrade (Firefox reusaba el HTML viejo).
+        return FileResponse(html_path, headers={"Cache-Control": "no-store, must-revalidate"})
     raise HTTPException(status_code=404, detail="status.html missing")
 
 
@@ -922,7 +957,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str = "guest"):
                     if cmd in ("toggle_osd", "open_settings"):
                         target_url = "https://127.0.0.1:8000/status"
                         if cmd == "open_settings":
-                            target_url = "https://127.0.0.1:8000/status#pane-settings"
+                            target_url = "https://127.0.0.1:8000/status?tab=settings"
                         success = await asyncio.to_thread(launch_kiosk, target_url)
                         if success:
                             await safe_send_json({"status": "success", "message": f"System: {cmd}"})

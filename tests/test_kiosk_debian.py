@@ -16,6 +16,16 @@ if BACKEND_DIR not in sys.path:
 from backend import kiosk, main
 sys.modules["kiosk"] = kiosk
 
+
+@pytest.fixture(autouse=True)
+def _reset_panel_cooldown(monkeypatch):
+    """B34: el cooldown anti-tormenta del panel idle es estado global; aislarlo."""
+    monkeypatch.setattr(main, "_last_panel_attempt", 0.0)
+    monkeypatch.setattr(main, "_panel_fail_streak", 0)
+    # D3: ningún test debe depender de procesos Firefox reales del host.
+    monkeypatch.setattr(kiosk, "_firefox_kiosk_pids", lambda: [])
+    monkeypatch.setattr(kiosk, "_profile_kiosk_pids", lambda: [])
+
 INSTALLER = (ROOT / "scripts" / "install.sh").read_text()
 
 
@@ -29,6 +39,30 @@ def test_find_browser_accepts_only_executable_debian_path(monkeypatch):
 def test_find_browser_reports_missing_esr(monkeypatch):
     monkeypatch.setattr(kiosk.os.path, "isfile", lambda _path: False)
     assert kiosk.find_browser() == (None, None)
+
+
+def test_profile_arg_detection_requires_exact_profile_path(tmp_path):
+    """D1: se exige el par `-profile <path>`, nunca un substring del cmdline."""
+    profile = tmp_path / "lrp-kiosk-firefox"
+    profile.mkdir()
+    other = tmp_path / "firefox-normal"
+    other.mkdir()
+    profile_path = os.path.realpath(str(profile))
+
+    assert kiosk._has_kiosk_profile_arg(
+        ["/usr/bin/firefox-esr", "-profile", str(profile), "https://example.test"], profile_path
+    ) is True
+    assert kiosk._has_kiosk_profile_arg(
+        ["/usr/bin/firefox-esr", "--profile", str(profile) + os.sep, "https://example.test"], profile_path
+    ) is True
+    # Un Firefox normal con otro perfil y "lrp-kiosk-firefox" en la URL no cuenta.
+    assert kiosk._has_kiosk_profile_arg(
+        ["/usr/bin/firefox-esr", "-profile", str(other), "https://lrp-kiosk-firefox.test"], profile_path
+    ) is False
+    # El path suelto, sin el flag, tampoco.
+    assert kiosk._has_kiosk_profile_arg(
+        ["/usr/bin/firefox-esr", str(profile), "https://example.test"], profile_path
+    ) is False
 
 
 def test_gui_env_is_xorg_only(monkeypatch):
@@ -64,7 +98,7 @@ def test_launch_uses_exact_esr_command_and_dedicated_profile(monkeypatch, tmp_pa
     modes = []
     monkeypatch.setattr(kiosk.os, "chmod", lambda path, mode: modes.append((path, mode)))
     assert kiosk.launch_kiosk("https://example.test") is True
-    assert calls["cmd"] == ["/usr/bin/firefox-esr", "--kiosk", "--no-remote", "-profile", str(tmp_path), "https://example.test"]
+    assert calls["cmd"] == ["/usr/bin/firefox-esr", "--kiosk", "--new-instance", "--no-remote", "-profile", str(tmp_path), "https://example.test"]
     assert calls["kwargs"]["start_new_session"] is True
     assert modes[0] == (str(tmp_path), 0o700)
     assert any(path.startswith(str(tmp_path)) and mode == 0o600 for path, mode in modes)
@@ -179,6 +213,12 @@ def test_status_panel_and_media_kiosk_detection(monkeypatch):
     assert kiosk.is_status_panel_running() is False
     assert kiosk.is_media_kiosk_running() is False
 
+    # B34b: sin handle (_kiosk_proc None) un Firefox del perfil kiosk implica panel vivo.
+    monkeypatch.setattr(kiosk, "_profile_kiosk_pids", lambda: [4242])
+    assert kiosk.is_status_panel_running() is True
+    monkeypatch.setattr(kiosk, "_profile_kiosk_pids", lambda: [])
+    assert kiosk.is_status_panel_running() is False
+
     kiosk._kiosk_proc = SimpleNamespace(poll=lambda: None)
     kiosk._kiosk_url = "https://127.0.0.1:8000/status"
     assert kiosk.is_kiosk_running() is True
@@ -263,7 +303,8 @@ async def test_idle_panel_immediate_launch_on_empty_desktop(monkeypatch):
     res = await main.check_and_launch_status_panel()
     assert res is True
     assert len(launched) == 1
-    assert launched[0].endswith("/status")
+    assert launched[0].startswith(f"https://127.0.0.1:{os.getenv('PORT', '8000')}/status?v=")
+    assert launched[0].rsplit("?v=", 1)[1].isdigit()
 
 
 @pytest.mark.asyncio
@@ -319,7 +360,8 @@ async def test_idle_panel_respects_45s_safety_delay_after_disconnect_during_medi
     res = await main.check_and_launch_status_panel()
     assert res is True
     assert len(launched) == 1
-    assert launched[0].endswith("/status")
+    assert launched[0].startswith(f"https://127.0.0.1:{os.getenv('PORT', '8000')}/status?v=")
+    assert launched[0].rsplit("?v=", 1)[1].isdigit()
 
 
 @pytest.mark.asyncio
@@ -340,7 +382,103 @@ async def test_stop_kiosk_resets_safety_delay_and_launches_status(monkeypatch):
 
     await asyncio.sleep(0.05)
     assert len(launched) == 1
-    assert launched[0].endswith("/status")
+    assert launched[0].startswith(f"https://127.0.0.1:{os.getenv('PORT', '8000')}/status?v=")
+    assert launched[0].rsplit("?v=", 1)[1].isdigit()
+
+
+class _FakeClock:
+    """Reloj controlado para verificar los limites exactos del backoff (D2)."""
+
+    def __init__(self, start: float = 1000.0):
+        self.now = start
+
+    def time(self) -> float:
+        return self.now
+
+
+@pytest.mark.asyncio
+async def test_idle_panel_cooldown_30s_exact_boundaries(monkeypatch):
+    """D2: limite de 30 s exacto: 29 s bloqueado, 31 s permitido."""
+    monkeypatch.setenv("APPLIANCE_IDLE_PANEL", "true")
+    monkeypatch.setattr(kiosk, "is_status_panel_running", lambda: False)
+    monkeypatch.setattr(kiosk, "is_media_active", lambda: False)
+    main.connected_clients = 0
+    main.client_disconnected_during_media_time = 0.0
+
+    clock = _FakeClock()
+    monkeypatch.setattr(main, "time", clock)
+
+    launched = []
+    monkeypatch.setattr(kiosk, "launch_kiosk", lambda url: launched.append(url) or False)
+
+    t0 = clock.now
+    assert await main.check_and_launch_status_panel() is False
+    assert len(launched) == 1
+    assert main._panel_fail_streak == 1
+    assert main._last_panel_attempt == t0
+
+    clock.now = t0 + 29.0
+    assert await main.check_and_launch_status_panel() is False
+    assert len(launched) == 1
+
+    clock.now = t0 + 31.0
+    assert await main.check_and_launch_status_panel() is False
+    assert len(launched) == 2
+    assert main._panel_fail_streak == 2
+
+
+@pytest.mark.asyncio
+async def test_idle_panel_success_does_not_block_relaunch(monkeypatch):
+    """D4: un lanzamiento exitoso no abre ventana de bloqueo (p. ej. tras stop_kiosk)."""
+    monkeypatch.setenv("APPLIANCE_IDLE_PANEL", "true")
+    monkeypatch.setattr(kiosk, "is_status_panel_running", lambda: False)
+    monkeypatch.setattr(kiosk, "is_media_active", lambda: False)
+    main.connected_clients = 0
+    main.client_disconnected_during_media_time = 0.0
+
+    clock = _FakeClock()
+    monkeypatch.setattr(main, "time", clock)
+
+    launched = []
+    monkeypatch.setattr(kiosk, "launch_kiosk", lambda url: launched.append(url) or True)
+
+    assert await main.check_and_launch_status_panel() is True
+    assert main._panel_fail_streak == 0
+    # Sin avanzar el reloj: el exito no debe bloquear el siguiente intento.
+    assert await main.check_and_launch_status_panel() is True
+    assert len(launched) == 2
+
+
+@pytest.mark.asyncio
+async def test_idle_panel_backoff_120s_exact_boundaries(monkeypatch):
+    """D2: tras 3 fallos, 119 s bloqueado y 121 s permitido."""
+    monkeypatch.setenv("APPLIANCE_IDLE_PANEL", "true")
+    monkeypatch.setattr(kiosk, "is_status_panel_running", lambda: False)
+    monkeypatch.setattr(kiosk, "is_media_active", lambda: False)
+    main.connected_clients = 0
+    main.client_disconnected_during_media_time = 0.0
+
+    clock = _FakeClock()
+    monkeypatch.setattr(main, "time", clock)
+
+    launched = []
+    monkeypatch.setattr(kiosk, "launch_kiosk", lambda url: launched.append(url) or False)
+
+    for offset in (0.0, 40.0, 80.0):
+        clock.now = offset
+        await main.check_and_launch_status_panel()
+    assert len(launched) == 3
+    assert main._panel_fail_streak == 3
+    t3 = clock.now
+
+    clock.now = t3 + 119.0
+    assert await main.check_and_launch_status_panel() is False
+    assert len(launched) == 3
+
+    clock.now = t3 + 121.0
+    await main.check_and_launch_status_panel()
+    assert len(launched) == 4
+    assert main._panel_fail_streak == 4
 
 
 def test_is_display_ready_and_wait_for_display(monkeypatch):
@@ -386,6 +524,7 @@ async def test_api_panel_show_allows_local_access(monkeypatch):
     assert resp.status_code == 200
     assert resp.json() == {"status": "success"}
     assert len(launched) == 1
+    # /api/panel/show NO agrega cache-busting (B30 solo aplica al auto-lanzamiento).
     assert launched[0].endswith("/status")
 
 

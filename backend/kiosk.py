@@ -61,6 +61,129 @@ def gui_env():
     return env
 
 
+def _pids_matching(binary_needle: str, flag_needle: str) -> list:
+    """PIDs whose command line contains both needles (/proc, pgrep/ps fallback).
+
+    /proc se consulta primero: no depende de pgrep ni de un subproceso cronometrado
+    (el sondeo corre cada 100 ms y no debe pagar un fork por vuelta).
+    """
+    pids = []
+    try:
+        entries = os.listdir("/proc")
+    except OSError:
+        entries = []
+    if entries:
+        for entry in entries:
+            if not entry.isdigit():
+                continue
+            try:
+                with open(f"/proc/{entry}/cmdline", "rb") as stream:
+                    args = stream.read().replace(b"\x00", b" ").decode("utf-8", "ignore")
+            except OSError:
+                continue
+            if binary_needle in args and flag_needle in args:
+                pids.append(int(entry))
+        return pids
+    if os.name != "posix":
+        return []
+
+    pattern = f"{binary_needle}.*{flag_needle}"
+    try:
+        if shutil.which("pgrep"):
+            out = subprocess.check_output(
+                ["pgrep", "-f", pattern],
+                text=True,
+                stderr=subprocess.DEVNULL,
+                timeout=2.0,
+            )
+            return [int(value) for value in out.split() if value.isdigit()]
+        out = subprocess.check_output(
+            ["ps", "-eo", "pid=,args="],
+            text=True,
+            stderr=subprocess.DEVNULL,
+            timeout=2.0,
+        )
+        for line in out.splitlines():
+            pid, _, args = line.strip().partition(" ")
+            if pid.isdigit() and binary_needle in args and flag_needle in args:
+                pids.append(int(pid))
+        return pids
+    except Exception:
+        return []
+
+
+def _firefox_kiosk_pids() -> list:
+    """Live `firefox-esr --kiosk` processes owned by the kiosk profile."""
+    return _pids_matching("/usr/bin/firefox-esr", "--kiosk")
+
+
+def _kiosk_profile_path() -> str:
+    """Normalized path of the dedicated LRP kiosk profile."""
+    return os.path.realpath(os.path.expanduser("~/.config/lrp-kiosk-firefox"))
+
+
+def _has_kiosk_profile_arg(args: list, profile_path: str) -> bool:
+    """True only if `-profile`/`--profile` is followed by exactly the kiosk profile.
+
+    D1: comparar argumentos, no substrings: un Firefox normal cuya URL contenga
+    "lrp-kiosk-firefox" no debe contar como el panel del kiosk.
+    """
+    for index, arg in enumerate(args):
+        if arg in ("-profile", "--profile") and index + 1 < len(args):
+            if os.path.realpath(args[index + 1]) == profile_path:
+                return True
+    return False
+
+
+def _profile_kiosk_pids() -> list:
+    """Live Firefox processes started with the LRP kiosk profile (exact arg match)."""
+    profile_path = _kiosk_profile_path()
+    pids = []
+    try:
+        entries = os.listdir("/proc")
+    except OSError:
+        entries = []
+    if entries:
+        for entry in entries:
+            if not entry.isdigit():
+                continue
+            try:
+                with open(f"/proc/{entry}/cmdline", "rb") as stream:
+                    raw = stream.read()
+            except OSError:
+                continue
+            args = [piece.decode("utf-8", "ignore") for piece in raw.split(b"\x00") if piece]
+            if _has_kiosk_profile_arg(args, profile_path):
+                pids.append(int(entry))
+        return pids
+    if os.name != "posix":
+        return []
+    try:
+        out = subprocess.check_output(
+            ["ps", "-eo", "pid=,args="],
+            text=True,
+            stderr=subprocess.DEVNULL,
+            timeout=2.0,
+        )
+    except Exception:
+        return []
+    for line in out.splitlines():
+        pid, _, rest = line.strip().partition(" ")
+        if pid.isdigit() and _has_kiosk_profile_arg(rest.split(), profile_path):
+            pids.append(int(pid))
+    return pids
+
+
+def _wait_until_kiosk_gone(timeout: float = 4.0) -> bool:
+    """Poll up to `timeout` until no `firefox-esr --kiosk` process is alive."""
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        if not _firefox_kiosk_pids():
+            return True
+        time.sleep(0.1)
+    return not _firefox_kiosk_pids()
+
+
 def is_kiosk_running() -> bool:
     global _kiosk_proc
     return _kiosk_proc is not None and _kiosk_proc.poll() is None
@@ -68,9 +191,13 @@ def is_kiosk_running() -> bool:
 
 def is_status_panel_running() -> bool:
     global _kiosk_proc, _kiosk_url
-    if not is_kiosk_running():
-        return False
-    return bool(_kiosk_url and ("/status" in _kiosk_url or _kiosk_url.endswith("/status")))
+    if is_kiosk_running():
+        return bool(_kiosk_url and ("/status" in _kiosk_url or _kiosk_url.endswith("/status")))
+    if _kiosk_proc is None:
+        # B34: tras un restart del servicio se pierde el handle; si el Firefox del
+        # perfil kiosk sigue vivo, el panel ya esta abierto y no hay que relanzarlo.
+        return bool(_profile_kiosk_pids())
+    return False
 
 
 def is_media_kiosk_running() -> bool:
@@ -244,6 +371,10 @@ def wait_for_display(timeout: float = 12.0) -> bool:
 def launch_kiosk(url: str) -> bool:
     global _kiosk_proc, _kiosk_url
     kill_existing_kiosks()
+    # B34: no lanzar encima de un Firefox que aun esta muriendo. Si sigue vivo se
+    # degrada el log y se continua (el perfil puede estar en mal estado).
+    if not _wait_until_kiosk_gone(timeout=4.0):
+        logger.warning("A firefox-esr --kiosk process is still alive after 4s; launching anyway.")
 
     # URL Validation
     if not url.startswith("http://") and not url.startswith("https://"):
@@ -263,11 +394,19 @@ def launch_kiosk(url: str) -> bool:
         profile_dir = os.path.expanduser("~/.config/lrp-kiosk-firefox")
         os.makedirs(profile_dir, mode=0o700, exist_ok=True)
         os.chmod(profile_dir, 0o700)
-        for artifact in ("sessionstore.jsonlz4", "sessionstore-backups"):
+        # B34: artefactos de un arranque fallido (lock, crash-restore) dejan el perfil
+        # corrupto y Firefox arranca en 10x10 en bucle. Se limpian antes de lanzar.
+        for artifact in (
+            "lock",
+            ".parentlock",
+            ".startup-incomplete",
+            "sessionstore.jsonlz4",
+            "sessionstore-backups",
+        ):
             path = os.path.join(profile_dir, artifact)
             if os.path.isdir(path):
                 shutil.rmtree(path)
-            elif os.path.exists(path):
+            elif os.path.lexists(path):
                 os.unlink(path)
         fd, prefs_tmp = tempfile.mkstemp(prefix=".user.js.", dir=profile_dir, text=True)
         try:
@@ -288,15 +427,18 @@ def launch_kiosk(url: str) -> bool:
             except OSError:
                 pass
             raise
-        cmd = [browser_bin, "--kiosk", "--no-remote", "-profile", profile_dir, url]
+        # B34: --new-instance evita adjuntarse a una instancia zombi del mismo perfil.
+        cmd = [browser_bin, "--kiosk", "--new-instance", "--no-remote", "-profile", profile_dir, url]
 
         logger.info(f"Launching kiosk: {' '.join(cmd)}")
         _kiosk_proc = subprocess.Popen(
             cmd, env=gui_env(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True
         )
-        time.sleep(0.2)
+        # B34: 1.8 s alcanza para detectar el crash de arranque (10x10 / perfil roto);
+        # con 0.2 s el fallo pasaba inadvertido y el watchdog relanzaba en bucle.
+        time.sleep(1.8)
         if _kiosk_proc.poll() is not None:
-            logger.error(f"Kiosk process exited prematurely with code {_kiosk_proc.poll()}")
+            logger.error(f"Kiosk process exited during startup with code {_kiosk_proc.poll()}")
             _kiosk_proc = None
             return False
         _kiosk_url = url

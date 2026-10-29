@@ -132,6 +132,10 @@
         .pane-content.active {
             display: flex;
         }
+        /* B27: `.settings-grid` declara display:grid y anulaba el ocultamiento del pane. */
+        .pane-content:not(.active) {
+            display: none;
+        }
 
         .columns-layout {
             display: flex;
@@ -271,8 +275,13 @@
         .settings-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
+            align-items: start;
             gap: 16px;
             width: 100%;
+        }
+        /* B32: `.pane-content.active` fuerza flex y rompía el grid 2x2 de Ajustes. */
+        .pane-content.active.settings-grid {
+            display: grid;
         }
 
         .settings-card {
@@ -419,7 +428,7 @@
                     <div class="stat-card">
                         <h2>Licencia</h2>
                         <div class="stat-value"><span class="badge error" id="val-license" style="background-color: var(--bg-elevated); color: var(--text-secondary);">Verificando...</span></div>
-                        <div class="stat-sub">Versión <span id="val-version">1.0.0</span></div>
+                        <div class="stat-sub">Versión <span id="val-version">—</span></div>
                     </div>
                     <div class="stat-card">
                         <h2>Voz (IA)</h2>
@@ -584,6 +593,12 @@
             if (tabId === 'settings') {
                 loadSettings();
             }
+        }
+
+        // B31: permite abrir un pane por URL (?tab=settings) para pruebas y soporte.
+        const _initialTab = new URLSearchParams(location.search).get('tab');
+        if (_initialTab === 'settings' || _initialTab === 'pairing') {
+            switchTab(_initialTab);
         }
 
         async function updatePin() {
