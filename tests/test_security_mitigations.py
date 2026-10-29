@@ -5,9 +5,9 @@ ASTRA-01:
 - Mutable state (.env, .pairing_token, certs/) isolated in /var/lib/linuxremoteplayer (lrp:lrp 0700).
 - Config module resolves /var/lib/linuxremoteplayer in appliance mode and backend/ in dev.
 
-PH24:
+PH24 / T-150b:
 - No license exists in the backend: no remote check, no gate, no cloud proxy.
-- /api/license/* endpoints are local inert stubs that never touch the network.
+- License/mode/voice HTTP surface is gone; /api/status exposes no gated fields.
 
 ASTRA-02:
 - Rotating pairing token immediately terminates and revokes all active authenticated WebSocket sessions.
@@ -159,13 +159,13 @@ def test_token_regenerate_alias_endpoint(tmp_path, monkeypatch):
     assert resp_get.json()["token"] == new_token
 
 
-def test_ph24_license_routes_are_local_and_inert(tmp_path, monkeypatch):
-    """PH24: no remote license check, no gate and no cloud proxy anywhere."""
-    custom_dir = tmp_path / "lrp_state_ph24"
+def test_t150b_license_surface_is_gone_and_status_has_no_gated_fields(tmp_path, monkeypatch):
+    """T-150b: no license/mode/voice HTTP surface; /api/status keeps only panel keys."""
+    custom_dir = tmp_path / "lrp_state_t150b"
     custom_dir.mkdir(parents=True, exist_ok=True)
     monkeypatch.setenv("LRP_DATA_DIR", str(custom_dir))
 
-    token = "ph24_local_token_123456"
+    token = "t150b_local_token_123456"
     (custom_dir / ".pairing_token").write_text(token, encoding="ascii")
     monkeypatch.setattr(auth, "PAIRING_TOKEN", token)
 
@@ -181,19 +181,40 @@ def test_ph24_license_routes_are_local_and_inert(tmp_path, monkeypatch):
     client = TestClient(app, client=("127.0.0.1", 50000))
     headers = {"X-Auth-Token": token}
 
-    status = client.get("/api/license/status", headers=headers)
+    # T-150b: these routes must not be registered at all (not even as stubs).
+    removed_routes = {
+        "/api/license/status",
+        "/api/license/activate",
+        "/api/license/takeover",
+        "/api/voice/toggle",
+    }
+    registered = {getattr(route, "path", None) for route in app.routes}
+    assert removed_routes.isdisjoint(registered)
+
+    for path in sorted(removed_routes):
+        if path.endswith("/status"):
+            resp = client.get(path, headers=headers)
+        else:
+            resp = client.post(path, headers=headers, json={})
+        assert resp.status_code in (404, 405)
+
+    status = client.get("/api/status", headers=headers)
     assert status.status_code == 200
     body = status.json()
-    assert body["licensed"] is True
-    assert body["source"] == "local"
-    assert body["plan"] == "appliance"
-    assert "voice_enabled" in body
+    for kept in (
+        "version",
+        "kiosk_active",
+        "network_ips",
+        "connected_clients",
+        "last_input_timestamp",
+        "uinput_ok",
+        "adblock_status",
+    ):
+        assert kept in body
+    for removed in ("mode", "licensed", "license_source", "voice_enabled", "buy_url"):
+        assert removed not in body
 
-    activated = client.post("/api/license/activate", headers=headers, json={"key": "ANY-KEY"})
-    assert activated.status_code == 200
-    assert activated.json()["status"] == "not_required"
-    assert activated.json()["licensed"] is True
-
-    takeover = client.post("/api/license/takeover", headers=headers)
-    assert takeover.status_code == 200
-    assert takeover.json()["status"] == "not_required"
+    config = client.get("/api/config")
+    assert config.status_code == 200
+    assert "buy_url" not in config.json()
+    assert config.json()["channel"] in ("stable", "beta")

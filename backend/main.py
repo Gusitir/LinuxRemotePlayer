@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
-from dotenv import set_key, load_dotenv
+from dotenv import load_dotenv
 import httpx
 import io
 try:
@@ -280,11 +280,6 @@ class AppLaunchBody(BaseModel):
     id: str = Field(..., max_length=128)
 
 
-class ActivateBody(BaseModel):
-    key: str = Field(..., min_length=1)
-    force: bool = False
-
-
 class TokenBucket:
     """WS token bucket rate limiter (SEC-07)."""
     def __init__(self, rate: float, capacity: float):
@@ -546,23 +541,17 @@ async def get_api_status(request: Request):
     import kiosk
     import input_emulator
 
-    # PH24: ninguna feature depende de licencia. Se responde local, sin red.
+    # T-150b: payload publico sin modo, licencia, voz ni checkout. El panel solo lee
+    # estas claves; el resto de la superficie comercial ya no existe.
     return {
         "version": VERSION,
-        "mode": os.getenv("LRP_MODE", "appliance"),
-        "licensed": True,
-        "license_source": "local",
         "network_ips": get_ips(),
         "pairing_token": auth.PAIRING_TOKEN,
         "connected_clients": connected_clients,
         "last_input_timestamp": last_input_time,
         "uinput_ok": getattr(input_emulator.mouse, 'ui', None) is not None,
-        "voice_enabled": voice_enabled(),
         "kiosk_active": getattr(kiosk, "_kiosk_proc", None) is not None,
         "adblock_status": kiosk.adblock_status(),
-        # PH24: sin checkout. La clave queda vacia para no romper al consumidor actual;
-        # T-145 la retira junto con la UI de compra.
-        "buy_url": ""
     }
 
 
@@ -589,7 +578,6 @@ def get_config():
         "hostname": socket.gethostname(),
         "version": VERSION,
         "channel": get_channel(),
-        "buy_url": ""   # PH24: sin comercializacion; T-145 retira la clave
     }
 
 
@@ -644,70 +632,6 @@ async def get_app_icon(app_id: str):
                 p2 = f"/usr/share/icons/hicolor/{res}/apps/{icon_val}{ext}"
                 if os.path.exists(p2): return FileResponse(p2)
     raise HTTPException(status_code=404, detail="Icon not found on disk")
-
-
-@app.post("/api/license/activate", dependencies=[Depends(require_token)])
-async def activate_license(payload: ActivateBody):
-    """PH24: stub local inerte. Ninguna funcion requiere licencia, no hay red ni gate.
-
-    Conservado SOLO porque el frontend actual todavia lo llama; T-145 lo borra.
-    """
-    logger.info("License activation ignored (PH24: license not required).")
-    return {
-        "status": "not_required",
-        "licensed": True,
-        "plan": "appliance",
-        "source": "local",
-        "detail": "Esta instalacion no requiere licencia: la voz y todas las funciones son locales.",
-    }
-
-
-class VoiceToggleBody(BaseModel):
-    enabled: bool
-
-
-@app.post("/api/voice/toggle", dependencies=[Depends(require_token)])
-async def toggle_voice(payload: VoiceToggleBody):
-    """PH24: preferencia local de privacidad. No consulta licencia, token ni cuota."""
-    try:
-        from pathlib import Path
-        env_file = str(get_env_file())
-        if not os.path.exists(env_file):
-            Path(env_file).parent.mkdir(parents=True, exist_ok=True)
-            with open(env_file, "w") as f:
-                f.write("")
-        value = "true" if payload.enabled else "false"
-        await asyncio.to_thread(set_key, env_file, "ENABLE_VOICE", value)
-        secure_permissions(Path(env_file))
-        os.environ["ENABLE_VOICE"] = value
-        return {"status": "success", "voice_enabled": payload.enabled}
-    except Exception as e:
-        logger.error(f"Failed to toggle voice: {e}")
-        raise HTTPException(status_code=500, detail="Error interno al guardar la preferencia")
-
-
-@app.post("/api/license/takeover", dependencies=[Depends(require_token)])
-async def takeover_license():
-    """PH24: stub local inerte (antes: force-claim del 1-device). T-145 lo borra."""
-    return {
-        "status": "not_required",
-        "licensed": True,
-        "source": "local",
-        "detail": "No hay licencia que mover: este dispositivo no necesita una.",
-    }
-
-@app.get("/api/license/status", dependencies=[Depends(require_token)])
-async def get_license_status():
-    """PH24: respuesta local e inerte; no consulta nada afuera ni bloquea features.
-
-    T-145 retira el endpoint junto con fetchLicenseStatus() del frontend.
-    """
-    return {
-        "licensed": True,
-        "source": "local",
-        "plan": "appliance",
-        "voice_enabled": voice_enabled()
-    }
 
 
 @app.get("/api/update/check", dependencies=[Depends(require_local_or_token)])
