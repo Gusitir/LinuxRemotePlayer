@@ -189,6 +189,7 @@ header {
     padding: 0 8px;
     letter-spacing: 0.08em;
 }
+.landing .brand-short { display: none; }
 
 nav { display: flex; align-items: center; gap: 24px; }
 nav a {
@@ -930,5 +931,28 @@ footer {
     }
     .beta-landing .terminal {
         max-width: 100%;
+    }
+}
+
+/* ---------- header compacto en movil (T-155e) ---------- */
+@media (max-width: 640px) {
+    .landing .nav-inner {
+        flex-wrap: nowrap;
+        gap: 8px;
+        padding-inline: 12px;
+    }
+    .landing .brand {
+        min-width: 0;
+        font-size: 1.1rem;
+    }
+    .landing .brand-full { display: none; }
+    .landing .brand-short { display: inline; }
+    .landing .brand .lrp { display: inline; }
+    .landing nav { display: none; }
+    .landing .nav-inner > .btn {
+        padding: 10px 14px;
+        font-size: 14px;
+        white-space: nowrap;
+        flex: none;
     }
 }
