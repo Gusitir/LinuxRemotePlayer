@@ -404,6 +404,39 @@ def get_bluetooth():
     return get_bluetooth_info()
 
 
+class BluetoothPowerBody(BaseModel):
+    powered: bool
+
+
+def apply_bluetooth_power(powered: bool) -> None:
+    """Run bluetoothctl power on|off, falling back to passwordless sudo."""
+    bt_bin = shutil.which("bluetoothctl")
+    if not bt_bin:
+        raise HTTPException(status_code=502, detail="bluetoothctl no disponible")
+    action = "on" if powered else "off"
+    last_error = "sin salida"
+    for cmd in ([bt_bin, "power", action], ["sudo", "-n", bt_bin, "power", action]):
+        try:
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=10, check=False)
+        except subprocess.TimeoutExpired:
+            last_error = "timeout de 10s"
+            continue
+        except OSError as e:
+            last_error = str(e)
+            continue
+        if proc.returncode == 0:
+            return
+        last_error = (proc.stderr or proc.stdout or f"rc={proc.returncode}").strip()
+    raise HTTPException(status_code=502, detail=f"No se pudo cambiar el estado de Bluetooth: {last_error}")
+
+
+@router.post("/bluetooth/power", dependencies=[Depends(is_authorized)])
+def set_bluetooth_power(body: BluetoothPowerBody):
+    apply_bluetooth_power(body.powered)
+    info = get_bluetooth_info()
+    return {"available": info.get("available", False), "powered": info.get("powered", False)}
+
+
 # --- Display (xrandr) ---
 
 def parse_xrandr_output(output: str) -> List[Dict[str, Any]]:

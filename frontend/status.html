@@ -612,8 +612,11 @@
             <div class="settings-card">
                 <h3>📡 Bluetooth & Onboarding</h3>
                 
-                <div id="bluetooth-status-box" style="font-size: 0.85rem; color: var(--text-secondary);">
-                    Adaptador Bluetooth: Comprobando...
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                    <div id="bluetooth-status-box" style="font-size: 0.85rem; color: var(--text-secondary);">
+                        Bluetooth: Comprobando...
+                    </div>
+                    <button id="bluetooth-power-btn" type="button" class="btn-action" onclick="toggleBluetooth()" tabindex="0" aria-pressed="false" disabled style="padding: 6px 14px; font-size: 0.82rem; width: auto;">Encender</button>
                 </div>
 
                 <div id="hotspot-status-box" style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; padding: 10px; font-size: 0.85rem;">
@@ -633,6 +636,7 @@
         let activeTab = 'pairing';
         let currentAudioVol = 70;
         let selectedWifiSsid = "";
+        let bluetoothPowered = false;
 
         // T-151a: instalacion por plataforma y chips de estado.
         let lastNetworkIps = [];
@@ -956,18 +960,60 @@
             }
         }
 
+        function applyBluetoothState(available, powered) {
+            const box = document.getElementById('bluetooth-status-box');
+            const btn = document.getElementById('bluetooth-power-btn');
+            if (!box || !btn) return;
+            bluetoothPowered = available ? !!powered : false;
+            if (!available) {
+                box.textContent = 'Adaptador Bluetooth no detectado.';
+                btn.textContent = 'Encender';
+                btn.disabled = true;
+                btn.setAttribute('aria-pressed', 'false');
+                return;
+            }
+            box.textContent = `Bluetooth: ${bluetoothPowered ? 'Encendido' : 'Apagado'}`;
+            btn.textContent = bluetoothPowered ? 'Apagar' : 'Encender';
+            btn.disabled = false;
+            btn.setAttribute('aria-pressed', bluetoothPowered ? 'true' : 'false');
+        }
+
+        async function toggleBluetooth() {
+            const btn = document.getElementById('bluetooth-power-btn');
+            const box = document.getElementById('bluetooth-status-box');
+            if (!btn || btn.disabled) return;
+            const target = !bluetoothPowered;
+            btn.disabled = true;
+            try {
+                const res = await fetch('/api/system/bluetooth/power', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ powered: target })
+                });
+                if (!res.ok) {
+                    let detail = `HTTP ${res.status}`;
+                    try {
+                        const err = await res.json();
+                        detail = err.detail || detail;
+                    } catch (e) {}
+                    if (box) box.textContent = `Bluetooth: error (${detail})`;
+                    btn.disabled = false;
+                    return;
+                }
+                const data = await res.json();
+                applyBluetoothState(data.available, data.powered);
+            } catch (e) {
+                if (box) box.textContent = 'Bluetooth: error de comunicación';
+                btn.disabled = false;
+            }
+        }
+
         async function loadBluetoothSettings() {
             try {
                 const res = await fetch('/api/system/bluetooth');
                 if (res.ok) {
                     const data = await res.json();
-                    const box = document.getElementById('bluetooth-status-box');
-                    if (data.available) {
-                        const pairedCount = (data.devices || []).filter(d => d.paired).length;
-                        box.textContent = `Bluetooth: ${data.powered ? 'Encendido' : 'Apagado'} (${pairedCount} dispositivos emparejados)`;
-                    } else {
-                        box.textContent = 'Adaptador Bluetooth no detectado.';
-                    }
+                    applyBluetoothState(data.available, data.powered);
                 }
             } catch (e) {
                 console.error("Error loading bluetooth settings", e);
