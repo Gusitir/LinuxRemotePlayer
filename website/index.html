@@ -3,45 +3,221 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LinuxRemotePlayer beta</title>
-    <meta name="description" content="Canal beta opt-in de LinuxRemotePlayer antes de 2.0.0.">
+    <title>LRP OS 1.0.0 — LinuxRemotePlayer</title>
+    <meta name="description" content="LRP OS 1.0.0: ISO Debian que convierte una PC en centro de medios controlado desde el teléfono. Sin nube, sin cuentas, sin licencia, sin telemetría.">
     <link rel="alternate" hreflang="es" href="https://www.linuxremoteplayer.com/">
     <link rel="alternate" hreflang="en" href="https://www.linuxremoteplayer.com/en/">
     <link rel="icon" type="image/png" href="icon-192.png">
     <link rel="stylesheet" href="style.css">
     <script src="site.js"></script>
 </head>
-<body class="beta-landing">
+<body class="landing">
+
     <header>
         <div class="nav-inner">
-            <div class="brand">
+            <a href="index.html" class="brand">
                 <img src="icon-192.png" alt="Logo de LinuxRemotePlayer">
                 <span>LinuxRemotePlayer</span>
                 <span class="lrp">LRP</span>
-            </div>
-            <a class="btn btn-outline" href="/en/">EN</a>
+            </a>
+            <nav>
+                <a href="#descargar">Descargar</a>
+                <a href="#requisitos">Requisitos</a>
+                <a href="#instalacion">Instalación</a>
+                <a href="#control">Control</a>
+                <a href="docs.html">Documentación</a>
+                <a href="en/" title="English version">EN</a>
+            </nav>
+            <a href="#descargar" class="btn btn-green">Descargar ISO</a>
         </div>
     </header>
 
     <main>
-        <section class="center">
-            <span class="kicker">BETA OPT-IN · 1.99.x</span>
-            <h1 class="section-title">LinuxRemotePlayer beta</h1>
-            <p class="section-sub">Canal voluntario para probar la distribución antes de 2.0.0.</p>
-            <p class="trust-line">Tu instalación estable 1.9.1 no cambia ni descubre esta beta.</p>
-            <p class="compat-note">Soporte declarado: Debian 13 stable amd64 minimal.</p>
-            <p class="compat-note">Sesión propia LRP: Xorg/Openbox. GPU certificada inicialmente: NVIDIA RTX 3060 12 GB con driver de los repositorios Debian. Firefox ESR.</p>
-            <p class="compat-note">Otras distribuciones, GPUs o escritorios pueden funcionar accidentalmente, pero no hay garantía.</p>
-            <div class="terminal">
-                <div class="terminal-header">
-                    <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+        <section class="hero">
+            <div>
+                <span class="kicker">LRP OS 1.0.0 · GNU GPL v3</span>
+                <h1>Convertí tu PC en una <span class="voz">Smart TV</span> controlada desde el teléfono.</h1>
+                <p class="subtitle">LRP OS es una ISO Debian que arranca directo en un centro de medios.
+                El teléfono es el control: touchpad, teclado, apps y búsqueda. Sin nube, sin cuentas,
+                sin licencia y sin telemetría.</p>
+                <div class="hero-ctas">
+                    <a class="btn btn-green btn-big" href="https://github.com/Gusitir/LinuxRemotePlayer/releases/latest">Descargar ISO 1.0.0</a>
+                    <a class="btn btn-outline btn-big" href="https://github.com/Gusitir/LinuxRemotePlayer/releases/latest">APK Android (próximamente)</a>
                 </div>
-                <div class="terminal-body">
-                    <code class="terminal-cmd">curl -fsSL https://www.linuxremoteplayer.com/beta/install.sh | sudo bash</code>
+                <p class="trust-line">Cada release publica la ISO junto a <b>SHA256SUMS</b> para verificar la descarga.</p>
+            </div>
+            <div>
+                <div class="phone">
+                    <img src="screenshots/000_principal.webp" alt="Control remoto de LinuxRemotePlayer en un teléfono">
                 </div>
             </div>
-            <p class="compat-note">Riesgo aceptado: esta beta aún no tiene firma independiente, protección de downgrade ni rollback.</p>
+        </section>
+
+        <section id="que-es">
+            <div class="center">
+                <span class="kicker">Qué es</span>
+                <h2 class="section-title">Tu PC como TV, tu teléfono como control.</h2>
+                <p class="section-sub">Una distribución completa para x86_64, sin dependencias de servicios externos.</p>
+            </div>
+            <div class="grid-3">
+                <div class="card">
+                    <div class="icon">●</div>
+                    <h3>Sin nube</h3>
+                    <p>El control y la voz corren en tu red local. No hay cuentas, servicios de terceros
+                    ni telemetría: la PC no necesita internet para funcionar.</p>
+                </div>
+                <div class="card">
+                    <div class="icon">●</div>
+                    <h3>Control total desde el teléfono</h3>
+                    <p>Touchpad, teclado, navegación y apps en un solo lugar. Se instala como PWA en
+                    iPhone/iPad o como APK en Android, y se empareja con un PIN de 6 dígitos.</p>
+                </div>
+                <div class="card">
+                    <div class="icon">●</div>
+                    <h3>Software libre</h3>
+                    <p>LRP OS es software libre bajo GNU GPL v3. El código y las licencias de terceros
+                    están publicados en el repositorio público.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="requisitos">
+            <div class="center">
+                <span class="kicker">Requisitos</span>
+                <h2 class="section-title">Hardware compatible.</h2>
+                <p class="section-sub">Soporte declarado del sistema base y del equipo de referencia.</p>
+            </div>
+            <div class="grid-3">
+                <div class="card">
+                    <h3>Plataforma</h3>
+                    <p>x86_64 con UEFI. Secure Boot soportado vía shim.</p>
+                </div>
+                <div class="card">
+                    <h3>Memoria</h3>
+                    <p>8 GB de RAM recomendado.</p>
+                </div>
+                <div class="card">
+                    <h3>Gráficos</h3>
+                    <p>GPU integrada, o NVIDIA RTX 3060 12 GB como GPU certificada.</p>
+                </div>
+            </div>
+            <p class="compat-note">Base: Debian 13 stable amd64 minimal · Sesión: Xorg/Openbox · Navegador: Firefox ESR</p>
+            <p class="compat-note">Además necesitás un TV o monitor y tu red local (Wi-Fi o cable). Otras configuraciones pueden funcionar, pero no están garantizadas.</p>
+        </section>
+
+        <section id="descargar">
+            <div class="center">
+                <span class="kicker">Descarga</span>
+                <h2 class="section-title">LRP OS 1.0.0</h2>
+                <p class="section-sub">La ISO se publica en GitHub Releases. Copiá también el archivo
+                de sumas para verificar la imagen.</p>
+                <div class="dl-box">
+                    <div class="meta"><b>LRP OS 1.0.0</b> · ISO para x86_64 (UEFI) · incluye <b>SHA256SUMS</b></div>
+                    <div class="hero-ctas" style="justify-content:center; margin-top:18px;">
+                        <a class="btn btn-green btn-big" href="https://github.com/Gusitir/LinuxRemotePlayer/releases/latest">Descargar ISO</a>
+                        <a class="btn btn-outline" href="https://github.com/Gusitir/LinuxRemotePlayer/releases/latest">APK Android (próximamente)</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="instalacion">
+            <div class="center">
+                <span class="kicker">Instalación</span>
+                <h2 class="section-title">Tres pasos.</h2>
+                <p class="section-sub">En una PC compatible, sin instalar Linux a mano.</p>
+            </div>
+            <div class="grid-3">
+                <div class="card">
+                    <span class="step-n">1</span>
+                    <h3>Grabá la ISO</h3>
+                    <p>Usá Rufus, Ventoy o <code>dd</code> para escribir la imagen en un pendrive.
+                    Verificá la descarga con SHA256SUMS.</p>
+                </div>
+                <div class="card">
+                    <span class="step-n">2</span>
+                    <h3>Arrancá y elegí “Instalar”</h3>
+                    <p>Iniciá la PC desde el pendrive en modo UEFI y elegí la opción de instalación
+                    del menú de arranque.</p>
+                </div>
+                <div class="card">
+                    <span class="step-n">3</span>
+                    <h3>Abrí el panel y escaneá el QR</h3>
+                    <p>Al terminar, la TV muestra el panel con un PIN. Escaneá el código QR desde el
+                    teléfono para emparejar y controlar.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="control">
+            <div class="duo">
+                <div class="copy">
+                    <span class="kicker">Control</span>
+                    <h3>El teléfono que ya tenés.</h3>
+                    <p>No hay mando que cargar ni app store obligatoria.</p>
+                    <ul>
+                        <li><b>iPhone / iPad:</b> abrí la web del panel en Safari y elegí
+                        “Compartir → Añadir a pantalla de inicio”.</li>
+                        <li><b>Android:</b> la PWA se instala desde Chrome (menú ⋮ → Instalar
+                        aplicación). El APK llega en la próxima release.</li>
+                        <li><b>Emparejamiento:</b> PIN de 6 dígitos o QR desde el panel de la TV.</li>
+                        <li><b>Sin nube:</b> todo el control viaja cifrado dentro de tu red local.</li>
+                    </ul>
+                </div>
+                <div>
+                    <div class="phone small">
+                        <img src="screenshots/001_apps.webp" alt="Aplicaciones disponibles en el control de LinuxRemotePlayer">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="licencia">
+            <div class="center">
+                <span class="kicker">Licencias</span>
+                <h2 class="section-title">Software libre, sin letra chica.</h2>
+                <p class="section-sub">LRP OS es software libre bajo GNU GPL v3. El código completo y
+                las licencias de terceros están en el repositorio público.</p>
+                <div class="hero-ctas" style="justify-content:center;">
+                    <a class="btn btn-outline" href="https://github.com/Gusitir/LinuxRemotePlayer/blob/main/LICENSE">LICENSE</a>
+                    <a class="btn btn-outline" href="https://github.com/Gusitir/LinuxRemotePlayer/blob/main/NOTICE">NOTICE</a>
+                    <a class="btn btn-outline" href="https://github.com/Gusitir/LinuxRemotePlayer/blob/main/THIRD_PARTY_LICENSES.md">THIRD_PARTY_LICENSES.md</a>
+                </div>
+                <p class="compat-note">Créditos a Debian, Firefox ESR, PipeWire y whisper.cpp.</p>
+            </div>
         </section>
     </main>
+
+    <footer>
+        <div class="footer-inner">
+            <div>
+                <h4>LinuxRemotePlayer</h4>
+                <p>LRP OS 1.0.0 — software libre bajo GNU GPL v3. Sin nube, sin cuentas y sin telemetría.</p>
+            </div>
+            <div>
+                <h4>Proyecto</h4>
+                <ul>
+                    <li><a href="https://github.com/Gusitir/LinuxRemotePlayer">Repositorio</a></li>
+                    <li><a href="https://github.com/Gusitir/LinuxRemotePlayer/releases">Releases</a></li>
+                    <li><a href="docs.html">Documentación</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4>Legal</h4>
+                <ul>
+                    <li><a href="https://github.com/Gusitir/LinuxRemotePlayer/blob/main/LICENSE">GNU GPL v3</a></li>
+                    <li><a href="https://github.com/Gusitir/LinuxRemotePlayer/blob/main/NOTICE">NOTICE</a></li>
+                    <li><a href="https://github.com/Gusitir/LinuxRemotePlayer/blob/main/THIRD_PARTY_LICENSES.md">Terceros</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-legal">© 2026 LinuxRemotePlayer · Hecho con Debian, Firefox ESR, PipeWire y whisper.cpp.</div>
+    </footer>
+
+    <div class="theme-switch" role="group" aria-label="Cambiar tema">
+        <button type="button" data-theme-btn="light">Claro</button>
+        <button type="button" data-theme-btn="cafe">Café</button>
+        <button type="button" data-theme-btn="dark">Oscuro</button>
+    </div>
 </body>
 </html>
