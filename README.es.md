@@ -161,6 +161,13 @@ La app acepta el certificado de la PC **sin validarlo** y muestra un aviso en su
 2. Acepta el aviso del certificado. Si quieres confiar explícitamente en la CA local, descárgala desde `/api/ca` e instálala en iOS.
 3. Toca **Compartir → Añadir a pantalla de inicio**. La PWA se abre en modo independiente; no hay APK para iOS.
 
+### El control en el teléfono
+
+![Control remoto de LRP OS en un teléfono](website/screenshots/remote_control.webp)
+
+La pantalla de control muestra el touchpad con su franja de desplazamiento, el teclado/D-pad y la rueda multimedia.
+En Android se usa la APK; en iOS se añade la PWA a la pantalla de inicio.
+
 ### Emparejamiento
 
 El panel de la TV muestra un PIN aleatorio de 6 dígitos que caduca a los 120 segundos, además de un código QR. El QR contiene la URL del teléfono con el token de emparejamiento; al escanearlo se empareja sin escribir el PIN. Un intercambio correcto del PIN devuelve el mismo token, que se guarda en la PC en `/var/lib/linuxremoteplayer/.pairing_token` (modo 0600). El token se puede regenerar mediante la API local; eso cierra las sesiones WebSocket activas.

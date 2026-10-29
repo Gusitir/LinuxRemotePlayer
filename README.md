@@ -161,6 +161,13 @@ The app accepts the PC's certificate **without validating it** and shows a warni
 2. Accept the certificate warning. If you want to trust the local CA explicitly, download it from `/api/ca` and install it in iOS.
 3. Tap **Share → Add to Home Screen**. The PWA opens standalone; there is no iOS APK.
 
+### The phone remote
+
+![LRP OS remote control on a phone](website/screenshots/remote_control.webp)
+
+The remote screen shows the touchpad with its scroll strip, the keyboard/D-pad toggle and the media wheel.
+On Android you use the APK; on iOS you add the PWA to the Home Screen.
+
 ### Pairing
 
 The TV panel shows a random 6-digit PIN that expires after 120 seconds, plus a QR code. The QR contains the phone URL with the pairing token; scanning it pairs without typing the PIN. A successful PIN exchange returns the same token, stored on the PC at `/var/lib/linuxremoteplayer/.pairing_token` (mode 0600). The token can be regenerated through the local API; that closes active WebSocket sessions.
