@@ -102,6 +102,10 @@ Un hecho tiene un solo hogar. No copiar decisiones, diarios ni estado entre arch
   telemetría o servicios cloud en el producto o en la web.
 - **Archivo legacy**: `legacy/2.0` + `v2.0.0-legacy` conservan el desarrollo comercial previo; no se
   modifica salvo corrección legal.
+- **Documentación y web (D56)**: `README.md` en **inglés** es la versión principal y `README.es.md` la
+  alternativa enlazada; la web mantiene ES/EN. Español **neutro** (sin voseo) en docs, web y UI. Toda
+  afirmación de hardware, requisitos o funcionalidad debe poder rastrearse al código; lo no verificado
+  se marca como pendiente, nunca como hecho.
 - Plataforma objetivo única: Debian 13 stable amd64 minimal. LRP administrará una sesión
   Xorg/Openbox; no se garantiza otra distro, Plasma/Bigscreen, Wayland ni escritorio general.
 - RTX 3060 es la GPU inicial a certificar. Drivers/firmware solo desde repositorios Debian; nunca

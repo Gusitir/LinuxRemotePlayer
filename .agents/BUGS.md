@@ -179,6 +179,19 @@ una interfaz `en*` y Wi-Fi no reporta conexión.
 (`panel_pairing.webp`, `panel_settings.webp`, chip `v1.0.0`), se borraron las seis capturas viejas con
 logos de apps y micrófono, y la web en producción ya sirve las nuevas (las viejas dan 404).
 
+## B41 — Página “Gracias por tu compra” con clave de licencia
+
+**Cerrado (`5dc1216`)** — `website/gracias.html` era un residuo comercial (compra + clave + pasos de
+licencia). Se eliminó junto con sus enlaces; el changelog conserva el historial con una nota que
+explica que 1.0.0 inicia la etapa open source y que lo anterior describe el producto archivado en
+`legacy/2.0`.
+
+## B42 — Header de la web desborda en 390 px
+
+**Cerrado (`5dc1216`)** — a 390 px la marca se truncaba y “Descargar ISO” se cortaba. En `≤640px` la
+marca pasa a “LRP OS”, se oculta la nav, el CTA se compacta y el header usa `nowrap` con `min-width:0`;
+el hero SVG gana `role="img"` + `aria-label` descriptivo en ES/EN.
+
 ## B39 — Términos y textos legales sin revisión
 
 **Abierto · no bloquea el código, sí la publicación**

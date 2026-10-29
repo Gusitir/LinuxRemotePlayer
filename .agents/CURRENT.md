@@ -28,6 +28,21 @@ next_action: "cuando el dueño retome: instalar lrp-os_1.0.0_amd64.iso en el HTP
 
 ## Fresh evidence
 
+- **Documentación y web 1.0.0 (2026-10-29)**: `README.md` reescrito en inglés (principal) con
+  `README.es.md` en español neutro y enlace cruzado; `docs/GITHUB_ABOUT.md` con descripción, topics y
+  homepage **aplicados al repo** (`gh repo edit`: descripción de una línea, homepage
+  `https://www.linuxremoteplayer.com`, 10 topics, visibilidad pública). Hechos verificados contra el
+  código: 4 GB RAM mínimo (dato del autor, el instalador no impone mínimo), disco fijo ≥8 GiB que se
+  borra completo (GPT: 512 MiB `LRP-BOOT` + resto `LRP-ROOT`), NVIDIA **sin driver por defecto**
+  (`nvidia-bootstrap.sh` instala 550.163.01-2 desde Debian 13, opt-in, rechaza Secure Boot), APK =
+  app de control Android y PWA para iOS.
+- **Web**: hero SVG rehecho (monitor con panel + teléfono), 16 iconos SVG inline (sin emoji), sección
+  “El control en tu teléfono” con captura real `website/screenshots/remote_control.webp` (390x699,
+  recortada para excluir logos de terceros), requisitos 4 GB/x86_64/UEFI/HD 2500, copy ES neutro y
+  EN, espaciado/tap-target/contraste corregidos, header mobile sin desborde, `gracias.html` eliminada.
+  Verificado en producción (`7d20bb6`, `5dc1216`): HTTP 200 ES/EN y hechos presentes (4 GB, UEFI,
+  HD 2500, GPL, APK, PWA).
+
 - **Release público `v1.0.0`** (`https://github.com/Gusitir/LinuxRemotePlayer/releases/tag/v1.0.0`,
   *latest*): ISO `5cc67f101bb507b590085183817ac87f8b1ccd04e2becb1c5e4d5d8972c9f5b2` (2 093 056 000 B),
   APK `fcfb76e0383f5e3e7b72d7805618143945fd24a608ad4dd42df3d159b19c0bef` (24 400 B) y
