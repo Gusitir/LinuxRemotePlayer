@@ -22,9 +22,12 @@ next_action: "T-152 (F3): web que sirve ISO + APK con checksums y avisos GPL, RE
 - **Repo público desde el inicio (D56)** exige antes de la primera release: auditoría de secretos en
   toda la historia y revisión de assets de terceros (logos de apps, fondos de skins, fuentes). Se hace
   en T-152, no al final.
-- **TWA/APK** requiere dominio propio con `assetlinks.json`; si el dominio cambia, la APK deja de
-  verificar. Decisión de dominio pendiente para T-153.
-- **Hosting de la ISO (~2 GB)** por definir antes de T-155.
+- **TWA/APK**: dominio decidido `www.linuxremoteplayer.com` (Vercel, `linux-remote-player.vercel.app`
+  como alias). `assetlinks.json` se sirve desde ese dominio en T-153.
+- **Hosting de binarios (decidido 2026-10-29)**: **ISO + APK + `SHA256SUMS` en GitHub Releases** (repo
+  público, límite 2 GiB/asset; medir la ISO en T-154 y partirla si excede). **Web en Vercel por
+  integración Git** (push a `main`), documentada en T-152; sin CI ni `vercel` CLI. Plan B si la ISO
+  supera 2 GiB: Cloudflare R2 con subdominio propio.
 - **Sin OTA (D56)**: no hay auto-update; cualquier fix futuro se publica como release nueva y se
   reinstala. Documentado como decisión, no como deuda.
 - Checks de dispositivo aún abiertos: `TST-LRP-SPLASH-001` (splash GRUB/plymouth) y

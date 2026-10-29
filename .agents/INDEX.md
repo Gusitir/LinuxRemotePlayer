@@ -1,11 +1,11 @@
 # INDEX - navegacion del repositorio
 
 ```yaml
-last_reindexed_at: 2026-10-29T03:12:00-05:00
-source_commit: f698e18
+last_reindexed_at: 2026-10-29T05:25:00-05:00
+source_commit: dcd26f5
 dirty: true
-active_plan: PLAN_v1.0.0-public.md (approved D56; T-150 limpieza en curso, T-151..T-155 pendientes, T-157 voz diferida)
-state: "Giro D56: ISO open source GPL-3.0 1.0.0; legacy/2.0 + v2.0.0-legacy archivados; LICENSE GPL-3.0 en main; limpieza comercial/OTA/Supabase en curso"
+active_plan: PLAN_v1.0.0-public.md (D56; T-150 y T-151 aptos, T-152 en curso, T-153..T-155 pendientes, T-157 voz diferida)
+state: "LRP OS 1.0.0 GPL-3.0: F1 (limpieza) y F2 (panel/onboarding) aptas; binarios irán a GitHub Releases y la web a Vercel por Git; rama legacy/2.0 archivada"
 ```
 
 El estado activo pertenece a [`CURRENT.md`](CURRENT.md), no a este indice.

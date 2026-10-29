@@ -1,9 +1,9 @@
-# APPCORE - mapa factual del codigo 1.99.2 (base estable 1.9.1)
+# APPCORE - mapa factual del codigo LRP OS 1.0.0-dev (open source GPL-3.0)
 
 ```yaml
-verified_at: 2026-10-17T07:30:00-05:00
-source_commit: "50da3ca (worktree codex/debian-foundation HEAD; T-132..T-142 apto, G4 APTO)"
-producto: servicio Python/FastAPI + PWA estatica servido en LAN (LRP OS Appliance v2.0-dev)
+verified_at: 2026-10-29T05:20:00-05:00
+source_commit: "dcd26f5 (main; F1/F2 cerradas, D56)"
+producto: ISO Debian appliance + panel kiosk + PWA/APK de control (LRP OS 1.0.0)
 ```
 
 Este mapa contiene arquitectura observada en el repo. No contiene planes, tareas, veredictos,
@@ -102,91 +102,71 @@ fases futuras ni estado de bugs.
   desactivando decodificación por software de VP9/AV1; mantiene el grupo de proceso rastreado y
   cierra ventanas solo con `wmctrl`. Verificación de disponibilidad de display X11 (`is_display_ready`)
   para prevenir condiciones de carrera en arranque del HTPC.
-- `scripts/install.sh` exige el usuario `lrp` existente, fija `LRP_MODE=htpc`, elimina unidades
-  user legacy, genera un unico servicio systemd `User=lrp` ordenado tras display manager y red,
-  e invoca `scripts/debian/platform-bootstrap.sh` para uinput, PipeWire, Avahi, UFW, sleep/DPMS y CA.
+- `scripts/install.sh` exige el usuario `lrp` existente, elimina unidades user legacy, genera un único
+  servicio systemd `User=lrp` ordenado tras display manager y red, e invoca
+  `scripts/debian/platform-bootstrap.sh` para uinput, PipeWire, Avahi, UFW, sleep/DPMS y CA.
+  Ya no escribe `LRP_MODE` ni instala `lrp-setup` (D56/T-150).
   ASTRA-01: `/opt/linuxremoteplayer` y `.venv` pertenecen a `root:root` (read-only para `lrp`),
   aislando datos mutables en `/var/lib/linuxremoteplayer/`.
-- `scripts/uninstall.sh` detiene servicios y ejecuta cleanup de licencia, udev, firewall, suspension,
-  certificados, cache y entorno virtual.
+- `scripts/uninstall.sh` detiene servicios y ejecuta cleanup de udev, firewall, suspensión,
+  certificados, cache y entorno virtual (sin superficie de licencia).
 
-## BUILD, PACKAGE, ISO Y UPDATE
+## BUILD, PAQUETE E ISO
 
-- `scripts/build_deb.sh` ejecuta `scripts/check_css_sync.py`, empaqueta clave pública `scripts/debian/lrp-ota-pub.pem`, copia `backend/`, `frontend/`, `scripts/` y `VERSION` a staging, estampa la versión en `frontend/sw.js`, genera maintainer scripts y produce `dist/linuxremoteplayer_<VERSION>_amd64.deb` y su `.sha256`.
-- Control Debian: `Architecture: amd64`; `Depends: python3, python3-venv, python3-dev, build-essential, openssl, sudo, curl, ca-certificates`; `Recommends: firefox-esr, ufw, pulseaudio-utils`.
-- El `postinst` crea el venv, instala requirements y genera `/usr/local/bin/lrp-setup` y `/usr/local/bin/lrp-update`. El wrapper conserva funciones y `main "$@"; exit $?` porque se reescribe durante `apt-get install`.
-- `prerm` siempre detiene el servicio y solo deshabilita/limpia cuando `$1` es `remove`; el cleanup no se ejecuta en `upgrade`.
-- **Firma criptográfica OTA y rollback transaccional (T-142, cierre B19)**:
-  * `backend/ota_security.py`: verificación asimétrica Ed25519 de manifiestos firmados digitalmente (`signature`), validación anti-downgrade semver, y consulta a clave pública embebida `/opt/linuxremoteplayer/scripts/debian/lrp-ota-pub.pem`.
-  * `scripts/sign_ota_manifest.py`: herramienta offline para firmar digitalmente manifiestos JSON con clave privada Ed25519.
-  * `/usr/local/bin/lrp-update`: descarga a `/tmp`, verifica firma Ed25519 y SHA256 antes de instalar; implementa watchdog post-upgrade de 45 segundos y auto-rollback transaccional automático a la versión previa si el servicio no levanta.
-  * `POST /api/update/apply` y `GET /api/update/check`: endpoints con validación asimétrica de actualización.
-- **Generador ISO Appliance (T-141)**:
-  * `scripts/debian/iso/build_iso.sh`: orquestador `live-build` (`lb config`/`lb build`) que genera imagen `.iso` híbrida BIOS/UEFI de LRP OS sobre Debian 13 minimal.
-  * `scripts/debian/iso/installer/lrp-install-target.sh`: instalador target desatendido con exclusión estricta fail-closed del medio USB booteable; instala GRUB EFI **firmado** (shim), crea la entrada NVRAM `LRP-OS` y la pone primera en `BootOrder`, deja el fallback `EFI/BOOT/BOOTX64.EFI` y escribe `/var/log/lrp-install-report.txt` con `live_boot_mode`, `nvram_entry`, `bios_grub` y `hosts` (T-149).
-  * `scripts/debian/iso/config/zram-generator.conf`: configuración zram0 swap al 50% de RAM.
-  * `scripts/debian/iso/config/`: assets inyectados por `includes.chroot` — `hosts` (B20), `default-grub`
-    (`GRUB_BACKGROUND`, timeout oculto, `GRUB_DISTRIBUTOR="LRP OS"`), `lrp-splash.png` (1920x1080,
-    verde `#10B981` + icono) y `plymouth/{lrp.plymouth,lrp.script}` (tema de arranque).
-  * `scripts/debian/iso/hooks/99-lrp-setup.chroot`: provisionamiento chroot de `lrp`, autologin por
-    `agetty` en tty1 con `startx` (cursor visible, B26), tema plymouth, unit del backend con
-    `DISPLAY`, `XDG_RUNTIME_DIR` y `DBUS_SESSION_BUS_ADDRESS`, reglas uinput y firstboot service.
-- `website/beta/install.sh` valida manifiesto `1.99.2`/`amd64`/nombre de archivo/SHA, instala el `.deb` y ejecuta `lrp-setup`; `website/install.sh`, `latest.json` y `website/downloads/` conservan el canal estable publicado 1.9.1.
+- `scripts/build_deb.sh` ejecuta `scripts/check_css_sync.py`, copia `backend/`, `frontend/`, `scripts/`
+  y `VERSION` a staging, estampa la versión en `frontend/sw.js` y produce
+  `dist/linuxremoteplayer_<VERSION>_amd64.deb` + `.sha256`. El `.deb` es **artefacto interno** del
+  build: no se distribuye suelto ni instala updater, `lrp-setup` ni clave OTA (D56/T-150).
+- Control Debian: `Architecture: amd64`; `Depends: python3, python3-venv, python3-dev, build-essential,
+  openssl, sudo, curl, ca-certificates` (+ `python3-cryptography`, pendiente de podar); `Recommends:
+  firefox-esr, ufw, pulseaudio-utils`. El `postinst` crea el venv e instala requirements.
+- `prerm` detiene el servicio; el cleanup completo solo ocurre en `remove`.
+- **Generador ISO Appliance (T-141/T-149)**:
+  * `scripts/debian/iso/build_iso.sh`: orquestador `live-build` (`lb config`/`lb build`) que genera la
+    ISO híbrida BIOS/UEFI sobre Debian 13 minimal e inyecta assets por `includes.chroot`.
+  * `scripts/debian/iso/installer/lrp-install-target.sh`: instalador desatendido con exclusión
+    fail-closed del medio USB; instala GRUB EFI **firmado** (shim), crea la entrada NVRAM `LRP-OS` y la
+    pone primera en `BootOrder`, deja el fallback `EFI/BOOT/BOOTX64.EFI` y escribe
+    `/var/log/lrp-install-report.txt` (`live_boot_mode`, `nvram_entry`, `bios_grub`, `hosts`).
+  * `scripts/debian/iso/config/`: `zram-generator.conf`, `hosts` (B20), `default-grub`
+    (`GRUB_BACKGROUND`, timeout oculto, `GRUB_DISTRIBUTOR="LRP OS"`), `lrp-splash.png` (verde `#10B981`
+    + icono) y `plymouth/{lrp.plymouth,lrp.script}`.
+  * `scripts/debian/iso/hooks/99-lrp-appliance.chroot`: provisiona `lrp`, autologin por `agetty` en
+    tty1 con `startx` (cursor visible, B26), tema plymouth, unit del backend con `DISPLAY`,
+    `XDG_RUNTIME_DIR` y `DBUS_SESSION_BUS_ADDRESS`, reglas uinput y firstboot service.
+- Distribución 1.0.0: la ISO y el APK se publican como **GitHub Release**; la web estática (Vercel,
+  `website/vercel.json` con `cleanUrls`) solo enlaza y muestra checksums, avisos GPL y créditos.
 
-## CLOUD, DATABASE Y WEBSITE
+## SUPERFICIES RETIRADAS (D56)
 
-- **Estado 2.0 (T-144, 2026-10-22)**: el runtime instalado ya **no** usa ninguna de estas superficies:
-  `backend/auth.py`, `ai_pipeline.py`, `config.py` y `main.py` no tienen licencia, proxy, cuotas ni
-  activación, y `backend/.env.example` ya no publica `LICENSE_*` ni `BUY_URL`. Lo que sigue describe
-  código **legacy** de Supabase que T-146/T-147 retiran del sitio y del servicio.
-- `supabase/functions/ai-proxy/index.ts` aplica tamano maximo, rate limit, kill-switch, limite
-  global, licencia, activacion de device y cuota antes de llamar Together.
-- `supabase/functions/validate-license/index.ts` valida licencia y puede consumir cuota mediante
-  RPC. `send-feedback` filtra mensaje y limita envios antes de Resend.
-- `supabase/functions/stripe-webhook/index.ts` permanece como codigo de webhook Stripe; el device
-  no lo invoca directamente. Su despliegue no se puede demostrar desde este repo.
-- `backend/supabase_schema.sql` define `licenses`, `plan_quotas`, `activations`, `usage_log`,
-  `service_state` y RPC de licencia, activacion, cuota y voz.
-- `website/` contiene landing ES/EN, docs, terminos, changelog, instalador, capturas, fuentes,
-  `latest.json` y artefactos `.deb`/SHA publicados.
-- `website/latest.json` apunta a version `1.9.1`, URL del `.deb` y SHA256; las paginas consumen el
-  manifiesto para actualizar el enlace de descarga.
+Licencia, premium, compra, cuotas, activación, proxy cloud, Supabase, OTA (updater, firma de
+manifiestos, rollback, `latest.json`, canal beta) y modo appliance **no existen** en 1.0.0: se
+eliminaron en T-150 (commits `30dbd69`…`6df950e`). Su código y diseño viven solo en `legacy/2.0`
+(tag `v2.0.0-legacy`). No quedan rutas `/api/license/*`, `/api/update/*`, `/api/voice/toggle`,
+`supabase/`, `backend/ota_security.py` ni scripts de update.
 
-## BETA RELEASE SURFACES (1.99.2, DEBIAN HTPC)
-
-- Stable release remains `1.9.1`; its public `latest.json` is stable-only and does not discover beta.
-- `VERSION` is `1.99.2`; `website/beta/latest.json` declares `architecture: amd64`, deb URL
-  `linuxremoteplayer_1.99.2_amd64.deb` y SHA256
-  `a0b54c85fff7842a25676546c8d105455c603fb202eb53510fbff622442a83e9`; el sidecar publicado
-  coincide.
-- The public beta installer (`website/beta/install.sh`) is reachable and enforces the amd64
-  manifest/filename/SHA contract; the website is a beta notice with curl enrollment ES/EN
-  declaring Debian 13 amd64 minimal, Xorg/Openbox, Firefox ESR and RTX 3060 initial certification.
-- These facts describe the published `88cf2f6` state on `main` (`VERSION` `1.99.2`). The v2.0
-  appliance modules (`backend/ota_security.py`, `backend/local_intent.py`, `backend/system_platform.py`,
-  `scripts/debian/iso/`) live only on `codex/debian-foundation` @ `50da3ca`, 17 commits ahead of
-  `main` and unmerged at `88cf2f6`; they are not present in `main`. The worktree D35 rebuild is
-  committed on that branch and its published sidecar matches manifest `a0b54c…`.
+La web 1.0.0 (`website/`) es estática: landing ES/EN, docs, descarga de ISO/APK y avisos GPL; se
+publica en Vercel por integración Git (push a `main`), no por CI ni `vercel` CLI.
 
 ## ACOPLAMIENTOS FACTUALES
 
-- `VERSION` -> `build_deb.sh` -> `frontend/sw.js` -> paquete -> `website/beta/latest.json` (beta) o `website/latest.json` (estable).
+- `VERSION` -> `build_deb.sh` -> `frontend/sw.js` -> `.deb` -> ISO; el release publica ISO + APK +
+  `SHA256SUMS` en GitHub Releases y la web solo enlaza.
 - `frontend/app.js` y `frontend/status.html` consumen las rutas REST; `app.js` consume `/ws`.
-- `ai_pipeline.py` orquesta whisper.cpp y `local_intent.py` de forma 100% local; desacoplado de `ai-proxy`.
-- `main.py` depende de `input_emulator.py`, `kiosk.py`, `discovery.py`, `audio.py`, `auth.py`, `system_platform.py` y `local_intent.py`.
-- `backend/.env.example`, `website/install.sh`, `docs/ARCHITECTURE.md` y `docs/DEVELOPING.md`
-  describen superficies de configuracion, instalacion y desarrollo.
+- `ai_pipeline.py` orquesta whisper.cpp y `local_intent.py` de forma 100% local, sin red ni cuota (la
+  UI de voz está oculta hasta T-157).
+- `main.py` depende de `input_emulator.py`, `kiosk.py`, `discovery.py`, `audio.py`, `auth.py`,
+  `system_platform.py` y `local_intent.py`.
+- `backend/.env.example`, `docs/ARCHITECTURE.md` y `docs/DEVELOPING.md` describen configuración,
+  arquitectura y build (se reescriben en T-152 para 1.0.0).
 
 ## VERIFICACION DISPONIBLE
 
-- `tests/` contiene suites tracked: baseline Debian, NVIDIA/session/platform bootstraps,
-  instalador `htpc`, kiosk Firefox ESR, rollback, release Debian/beta, mitigaciones de seguridad y
-  resiliencia Astra (`test_security_mitigations.py`, `test_resilience_mitigations.py`), plataforma de
-  sistema (`test_system_platform.py`), onboarding Wi-Fi (`test_onboarding_dual_wifi.py`), benchmark
-  STT (`test_local_stt.py`), motor NLU local (`test_local_intent.py`), generador ISO (`test_iso_factory.py`)
-  y firma criptográfica/rollback OTA (`test_ota_signing_rollback.py`). El conteo de tests y su
-  veredicto pertenecen a `PLAN_v2.0-appliance.md` (evidencia G4); MAINTAIN no los re-ejecuta.
-- El gate ejecutable del build es `python3 scripts/check_css_sync.py` mas la comprobacion de
-  versionado del service worker; la documentacion tambien prescribe `node --check` y `py_compile`.
-- La verificacion de device pertenece a `.agents/TESTING.md` y requiere hardware real; este job no
-  ejecuta producto ni device.
+- `tests/` cubre baseline Debian, bootstraps NVIDIA/session/platform, instalador, kiosk Firefox ESR,
+  rollback de cleanup, release Debian, mitigaciones de seguridad y resiliencia Astra, plataforma de
+  sistema, onboarding Wi-Fi, STT local, motor NLU local y generador ISO. El conteo vive en el gate de
+  fase de `PLAN_v1.0.0-public.md`; MAINTAIN no re-ejecuta suites (D57).
+- Gate ejecutable del build: `python3 scripts/check_css_sync.py` y el versionado del service worker;
+  `node --check` y `py_compile` para los cambios de código.
+- La verificación de device pertenece a `.agents/TESTING.md` y requiere el HTPC; este job no ejecuta
+  producto ni device.

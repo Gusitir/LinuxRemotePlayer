@@ -113,9 +113,11 @@ Un hecho tiene un solo hogar. No copiar decisiones, diarios ni estado entre arch
 - Workspace migrado de `D:` a `G:` el 2026-10-22 (cambio de computadora). Artefactos externos en
   `G:\AGUSTIN\Portafolio\Proyectos\lrp-iso` (ISOs) y `...\lrp-keys` (claves OTA). `.venv` y
   `node_modules` son replicables y no se copiaron.
-- Ciclo de estabilización D53: los fixes se despliegan al HTPC de pruebas por SSH (`lrp`/`lrp`) y la
-  ISO definitiva se construye una sola vez al final del ciclo. WSL `Debian` compila desde `/mnt/g/...`;
-  QEMU (`qemu-system-x86`, `ovmf`) se instala aparte y no está presente por defecto.
+- Ciclo 1.0.0 (D53/D56): los fixes se despliegan al HTPC de pruebas por SSH (`lrp`/`lrp`) y la ISO
+  1.0.0 se construye **una sola vez** en T-154. WSL `Debian` compila desde `/mnt/g/...`; QEMU
+  (`qemu-system-x86`, `ovmf`) se instala aparte y no está presente por defecto.
+- Distribución: binarios (ISO + APK + `SHA256SUMS`) en **GitHub Releases**; web estática en **Vercel por
+  integración Git** (push a `main`), sin CI ni CLI. Dominio `www.linuxremoteplayer.com`.
 - Versiones de release `X.Y.Z`; cada release se publica por tag y se instala desde la ISO.
 - `PAIRING_TOKEN` puede estar en `.pairing_token`.
 - La CA tiene sufijo por máquina. No volver a añadir `viewport-fit=cover`. Mantener el alias Vercel
