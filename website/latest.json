@@ -1,6 +1,0 @@
-{
-  "version": "1.9.1",
-  "deb_url": "https://www.linuxremoteplayer.com/downloads/linuxremoteplayer_1.9.1_all.deb",
-  "sha256": "82b6bc5286cdf197bb684ddc00f6c797aac498f2959b354cada83acaddd93d38",
-  "notes": "Corrige el desplazamiento de la interfaz en iPhone al reabrir la aplicacion, y el error del boton Actualizar."
-}

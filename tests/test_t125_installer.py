@@ -116,15 +116,6 @@ def test_installer_uses_system_lifecycle_only():
     assert 'systemctl --user disable linuxremoteplayer.service' in INSTALLER  # legacy cleanup only
 
 
-def test_embedded_updater_has_no_user_service_fallback():
-    restart = BUILDER[BUILDER.index("restart_services()"):BUILDER.index("main()")]
-    assert "systemctl daemon-reload" in restart
-    assert "systemctl enable linuxremoteplayer.service" in restart
-    assert "systemctl restart linuxremoteplayer.service" in restart
-    assert "systemctl --user" not in restart
-    assert "for d in /run/user" not in restart
-
-
 def test_package_prerm_has_no_user_service_lifecycle_and_preserves_guards():
     prerm = BUILDER[BUILDER.index("cat <<'EOF' > pkg/DEBIAN/prerm"):]
     assert "systemctl --user" not in prerm

@@ -28,7 +28,6 @@ def test_active_docs_declare_only_the_certified_host_and_session():
         "NVIDIA RTX 3060 12 GB",
         "Xorg/Openbox",
         "Firefox ESR",
-        "LRP_MODE=htpc",
     )
     for phrase in required:
         assert phrase in corpus

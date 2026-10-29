@@ -1,6 +1,0 @@
-{
-  "version": "__BETA_VERSION__",
-  "deb_url": "https://www.linuxremoteplayer.com/beta/downloads/__BETA_DEB_FILENAME__",
-  "sha256": "__BETA_SHA256__",
-  "notes": "Beta build; publish only after the T-120 artifact exists."
-}

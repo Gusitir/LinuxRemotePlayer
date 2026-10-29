@@ -77,9 +77,6 @@ def test_scripts_enforce_astra01_root_isolation():
     assert "chown -R lrp:lrp /var/lib/linuxremoteplayer" in builder
     assert "chmod 0700 /var/lib/linuxremoteplayer" in builder
 
-    # lrp-update checks /var/lib/linuxremoteplayer/.env
-    assert "ENV_FILE=/var/lib/linuxremoteplayer/.env" in builder
-
     # uninstall retains /var/lib/linuxremoteplayer
     assert "/var/lib/linuxremoteplayer" in uninstall
 
@@ -218,6 +215,7 @@ def test_t150b_license_surface_is_gone_and_status_has_no_gated_fields(tmp_path, 
 
     config = client.get("/api/config")
     assert config.status_code == 200
+    assert sorted(config.json()) == ["hostname", "version"]
     assert "buy_url" not in config.json()
     assert "voice_enabled" not in config.json()
-    assert config.json()["channel"] in ("stable", "beta")
+    assert "channel" not in config.json()

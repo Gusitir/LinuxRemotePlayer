@@ -68,7 +68,7 @@ chown "$TARGET_USER":"$TARGET_USER" /var/lib/linuxremoteplayer
 chmod 0700 /var/lib/linuxremoteplayer
 
 # Migrate legacy mutable files from /opt if present
-for _f in .env .pairing_token .license_cache; do
+for _f in .env .pairing_token; do
     if [ -f "$BACKEND_DIR/$_f" ] && [ ! -f "/var/lib/linuxremoteplayer/$_f" ]; then
         cp -p "$BACKEND_DIR/$_f" "/var/lib/linuxremoteplayer/$_f"
         rm -f "$BACKEND_DIR/$_f"

@@ -59,23 +59,6 @@ async def revoke_all_websockets(code: int = 1008, reason: str = "Token revoked")
         except Exception as e:
             logger.debug(f"Error closing revoked WebSocket: {e}")
 
-STABLE_CHANNEL = "stable"
-BETA_CHANNEL = "beta"
-
-
-def get_channel() -> str:
-    """Return the normalized update channel advertised in /api/config."""
-    configured = os.getenv("LRP_CHANNEL")
-    if configured is None or not configured.strip():
-        return STABLE_CHANNEL
-
-    channel = configured.strip().lower()
-    if channel in (STABLE_CHANNEL, BETA_CHANNEL):
-        return channel
-
-    logger.warning("Invalid LRP_CHANNEL=%r; using stable channel", configured)
-    return STABLE_CHANNEL
-
 # H9: /docs, /redoc y /openapi.json responden SIN gate a cualquiera en la LAN y enumeran
 # toda la superficie de la API. Se apagan por defecto. El default es CERRADO a proposito:
 # un .env sin LRP_DEV, o de un usuario en modo escritorio, tiene que quedar cerrado igual.
@@ -555,7 +538,6 @@ def get_config():
     return {
         "hostname": socket.gethostname(),
         "version": VERSION,
-        "channel": get_channel(),
     }
 
 
@@ -610,27 +592,6 @@ async def get_app_icon(app_id: str):
                 p2 = f"/usr/share/icons/hicolor/{res}/apps/{icon_val}{ext}"
                 if os.path.exists(p2): return FileResponse(p2)
     raise HTTPException(status_code=404, detail="Icon not found on disk")
-
-
-@app.post("/api/system/update")
-async def system_apply_update(request: Request):
-    # Update clasico (no OTA): lanza scripts/update.sh en background. Se conserva T-150c1;
-    # no depende del manifiesto firmado.
-    require_local(request)
-    script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "scripts", "update.sh"))
-    if not os.path.exists(script_path):
-        raise HTTPException(status_code=404, detail="Update script not found")
-    try:
-        subprocess.Popen(
-            ["bash", script_path],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            start_new_session=True
-        )
-        return {"status": "started"}
-    except Exception as e:
-        logger.error(f"Failed to start update script: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/api/kiosk/launch", dependencies=[Depends(require_token)])
