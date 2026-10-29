@@ -129,8 +129,8 @@ mkdir -p "$WORKDIR/config/includes.installer"
 cp "$SCRIPT_DIR/package-lists/lrp-appliance.list.chroot" "$WORKDIR/config/package-lists/lrp-appliance.list.chroot"
 
 # 2. Hooks
-cp "$SCRIPT_DIR/hooks/99-lrp-setup.chroot" "$WORKDIR/config/hooks/live/99-lrp-setup.chroot"
-chmod +x "$WORKDIR/config/hooks/live/99-lrp-setup.chroot"
+cp "$SCRIPT_DIR/hooks/99-lrp-appliance.chroot" "$WORKDIR/config/hooks/live/99-lrp-appliance.chroot"
+chmod +x "$WORKDIR/config/hooks/live/99-lrp-appliance.chroot"
 cp "$SCRIPT_DIR/hooks/99-lrp-live-links.binary" "$WORKDIR/config/hooks/live/99-lrp-live-links.binary"
 chmod +x "$WORKDIR/config/hooks/live/99-lrp-live-links.binary"
 

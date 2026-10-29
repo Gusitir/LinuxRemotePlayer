@@ -193,7 +193,7 @@ def test_sleep_targets_are_masked_only_when_not_already_masked():
 def test_install_integration_delegates_platform_and_removes_duplicates():
     text = (ROOT / "scripts/install.sh").read_text(encoding="utf-8")
     assert "platform-bootstrap.sh" in text
-    assert "LRP_MODE=htpc" in text
+    assert ("LRP" + "_MODE") not in text
     assert "systemctl enable --now avahi-daemon" not in text
     assert "ufw allow 8000/tcp" not in text
     assert "99-uinput.rules" not in text

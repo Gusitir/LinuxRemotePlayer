@@ -87,13 +87,6 @@ ENV_TARGET="/var/lib/linuxremoteplayer/.env"
 chown "$TARGET_USER":"$TARGET_USER" "$ENV_TARGET"
 chmod 0600 "$ENV_TARGET"
 
-# Normalize every legacy mode assignment while preserving all other environment lines.
-if grep -Eq "^[[:space:]]*LRP_MODE[[:space:]]*=" "$ENV_TARGET" 2>/dev/null; then
-    sed -i -E 's/^[[:space:]]*LRP_MODE[[:space:]]*=.*$/LRP_MODE=htpc/' "$ENV_TARGET"
-else
-    echo "LRP_MODE=htpc" >> "$ENV_TARGET"
-fi
-
 # Write keyboard layout to .env
 if grep -q "^KEYBOARD_LAYOUT=" "$ENV_TARGET" 2>/dev/null; then
     sed -i "s/^KEYBOARD_LAYOUT=.*/KEYBOARD_LAYOUT=$kb_layout/" "$ENV_TARGET"
@@ -115,10 +108,10 @@ if [ -d /opt/linuxremoteplayer ]; then
 fi
 
 # Validate venv dependencies
-if [ -f /opt/linuxremoteplayer/.deps_incomplete ] || ! "$BACKEND_DIR/.venv/bin/python" -c "import fastapi, evdev, segno, cryptography" 2>/dev/null; then
+if [ -f /opt/linuxremoteplayer/.deps_incomplete ] || ! "$BACKEND_DIR/.venv/bin/python" -c "import fastapi, evdev, segno" 2>/dev/null; then
     echo -e "\n\e[31m[!] Dependencias incompletas. La instalación falló durante 'pip install'.\e[0m"
     echo -e "\e[31m[!] Ejecuta: sudo /opt/linuxremoteplayer/backend/.venv/bin/pip install -r /opt/linuxremoteplayer/backend/requirements.txt\e[0m"
-    echo -e "\e[31m[!] Luego vuelve a ejecutar: sudo lrp-setup\e[0m"
+    echo -e "\e[31m[!] Luego vuelve a ejecutar: sudo /opt/linuxremoteplayer/scripts/debian/bootstrap.sh --apply --approve\e[0m"
     exit 1
 fi
 rm -f /opt/linuxremoteplayer/.deps_incomplete

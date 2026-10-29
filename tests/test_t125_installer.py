@@ -1,4 +1,3 @@
-import re
 import os
 import shutil
 import subprocess
@@ -61,18 +60,9 @@ fi
     assert 'IFS=: read -r _ _ USER_UID _ _ USER_HOME USER_SHELL' in INSTALLER
 
 
-def test_mode_migration_replaces_every_assignment_with_htpc():
-    assert "LRP_MODE=htpc" in INSTALLER
-    assert "sed -i -E 's/^[[:space:]]*LRP_MODE" in INSTALLER
-    assert "LRP_MODE=$lrp_mode_str" not in INSTALLER
-    assert "LRP_MODE=appliance" not in INSTALLER
-    assert "LRP_MODE=desktop" not in INSTALLER
-
-
-def test_mode_fixture_preserves_unrelated_environment_lines():
-    env = "PAIRING_TOKEN=keep\n LRP_MODE = desktop\nKEYBOARD_LAYOUT=es\nLRP_MODE=appliance\n"
-    migrated = re.sub(r"^[ \t]*LRP_MODE[ \t]*=.*$", "LRP_MODE=htpc", env, flags=re.MULTILINE)
-    assert migrated == "PAIRING_TOKEN=keep\nLRP_MODE=htpc\nKEYBOARD_LAYOUT=es\nLRP_MODE=htpc\n"
+def test_installer_does_not_write_mode_assignments():
+    mode_var = "LRP" + "_MODE"
+    assert mode_var not in INSTALLER
 
 
 def test_installer_does_not_expose_pairing_token_in_display_output():

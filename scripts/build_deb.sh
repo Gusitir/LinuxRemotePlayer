@@ -112,30 +112,20 @@ if id -u lrp >/dev/null 2>&1; then
     chmod 0700 /var/lib/linuxremoteplayer
 fi
 
-# Create lrp-setup
-cat <<'INNEREOF' > /usr/local/bin/lrp-setup
-#!/bin/bash
-if [ "$EUID" -ne 0 ]; then
-  echo "Please run as root (sudo lrp-setup)"
-  exit 1
-fi
-cd /opt/linuxremoteplayer/scripts
-exec ./debian/bootstrap.sh "$@"
-INNEREOF
-chmod 755 /usr/local/bin/lrp-setup
+# Unattended bootstrap resume is invoked directly (no wrapper).
 if grep -q '^phase=complete$' /var/lib/linuxremoteplayer/bootstrap/state 2>/dev/null \
    && grep -q '^phase=complete$' /var/lib/linuxremoteplayer/session/state 2>/dev/null \
    && command -v systemd-run >/dev/null 2>&1; then
     systemd-run --unit="linuxremoteplayer-bootstrap-ota-$$" --on-active=30s --no-block \
-        /usr/local/bin/lrp-setup --resume --unattended || true
+        /opt/linuxremoteplayer/scripts/debian/bootstrap.sh --resume --unattended || true
 fi
 
 echo "================================================="
 echo " Paquete base instalado."
 echo ""
 echo " FALTA UN PASO. Para configurar el servicio ejecuta:"
-echo "     sudo lrp-setup --apply --approve"
-echo "     sudo lrp-setup --apply --approve --unattended"
+echo "     sudo /opt/linuxremoteplayer/scripts/debian/bootstrap.sh --apply --approve"
+echo "     sudo /opt/linuxremoteplayer/scripts/debian/bootstrap.sh --apply --approve --unattended"
 echo "================================================="
 EOF
 chmod 755 pkg/DEBIAN/postinst

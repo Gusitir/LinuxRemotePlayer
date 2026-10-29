@@ -17,7 +17,7 @@ def test_bootstrap_is_rooted_and_has_resumable_phase_contract():
     assert 'state_phase()' in source
     assert '"$phase" = complete' in source
     assert 'phase" = reboot_required' in source
-    assert 'Re-run: sudo lrp-setup --resume' in source
+    assert 'Re-run: sudo /opt/linuxremoteplayer/scripts/debian/bootstrap.sh --resume' in source
     assert 'exec "$BASE/../install.sh"' in source
 
 
@@ -43,10 +43,10 @@ def test_bootstrap_matrix_cases_are_encoded():
         assert contract in source, name
 
 
-def test_bootstrap_and_setup_wrapper_are_executable_entrypoints():
+def test_bootstrap_is_executable_entrypoint():
     assert SCRIPT.is_file()
     build = (ROOT / "scripts/build_deb.sh").read_text(encoding="utf-8")
-    assert "exec ./debian/bootstrap.sh \"$@\"" in build
+    assert "/opt/linuxremoteplayer/scripts/debian/bootstrap.sh --resume --unattended" in build
 
 
 def test_unattended_bootstrap_unit_and_reboot_budget_are_explicit():
@@ -54,7 +54,7 @@ def test_unattended_bootstrap_unit_and_reboot_budget_are_explicit():
     for phrase in (
         "--unattended", "reboots=", "-gt 2", "systemctl reboot",
         "WantedBy=multi-user.target", "After=network-online.target display-manager.service",
-        "ExecStart=/usr/local/bin/lrp-setup --resume --unattended",
+        "ExecStart=/opt/linuxremoteplayer/scripts/debian/bootstrap.sh --resume --unattended",
         "LRP_NONINTERACTIVE=1 \"$BASE/../install.sh\"",
     ):
         assert phrase in source

@@ -10,7 +10,7 @@ BUILD_ISO = ISO_DIR / "build_iso.sh"
 INSTALLER_TARGET = ISO_DIR / "installer" / "lrp-install-target.sh"
 PRESEED = ISO_DIR / "preseed.cfg"
 ZRAM_CONF = ISO_DIR / "config" / "zram-generator.conf"
-HOOK_SETUP = ISO_DIR / "hooks" / "99-lrp-setup.chroot"
+HOOK_SETUP = ISO_DIR / "hooks" / "99-lrp-appliance.chroot"
 GRUB_CFG = ISO_DIR / "config" / "grub.cfg"
 ISOLINUX_CFG = ISO_DIR / "config" / "isolinux.cfg"
 PKG_LIST = ISO_DIR / "package-lists" / "lrp-appliance.list.chroot"
@@ -46,7 +46,7 @@ def test_build_iso_script_contracts():
     assert "--output" in content
     assert "--workdir" in content
     assert "sha256sum" in content, "Must generate .sha256 sidecar"
-    assert "99-lrp-setup.chroot" in content
+    assert "99-lrp-appliance.chroot" in content
     assert "lrp-install-target.sh" in content
     assert "zram-generator.conf" in content
     assert "preseed.cfg" in content

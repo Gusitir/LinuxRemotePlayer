@@ -41,7 +41,7 @@ run_phase() {
     phase=$(state_phase "$state" || true)
     [ "$phase" = complete ] && return 0
     if [ "$phase" = reboot_required ]; then
-        [ "$MODE" = resume ] || { printf '%s\n' 'Re-run: sudo lrp-setup --resume'; return 20; }
+        [ "$MODE" = resume ] || { printf '%s\n' 'Re-run: sudo /opt/linuxremoteplayer/scripts/debian/bootstrap.sh --resume'; return 20; }
         "$script" --resume
     else
         if [ "$MODE" = resume ] && [ "$name" = nvidia ]; then
@@ -54,7 +54,7 @@ run_phase() {
     case "$rc" in
         0) return 0 ;;
         10|11|12) return "$rc" ;;
-        20) printf '%s\n' 'Re-run: sudo lrp-setup --resume'; return 20 ;;
+        20) printf '%s\n' 'Re-run: sudo /opt/linuxremoteplayer/scripts/debian/bootstrap.sh --resume'; return 20 ;;
         *) return "$rc" ;;
     esac
 }
@@ -107,7 +107,7 @@ After=network-online.target display-manager.service
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/lrp-setup --resume --unattended
+ExecStart=/opt/linuxremoteplayer/scripts/debian/bootstrap.sh --resume --unattended
 
 [Install]
 WantedBy=multi-user.target

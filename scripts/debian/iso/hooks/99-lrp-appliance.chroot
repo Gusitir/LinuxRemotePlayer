@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# 99-lrp-setup.chroot — LRP OS Appliance chroot configuration hook
+# 99-lrp-appliance.chroot — LRP OS Appliance chroot configuration hook
 # ==============================================================================
 set -euo pipefail
 
