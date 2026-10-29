@@ -1,0 +1,10 @@
+﻿LRP OS
+Copyright (C) 2026 Gusitir
+Licencia: GNU General Public License v3.0 o posterior (ver LICENSE).
+
+LRP OS es software libre: podes redistribuirlo y modificarlo bajo los
+terminos de la GPL-3.0. Se distribuye SIN GARANTIA.
+
+El codigo de terceros incluido en la ISO (Debian, Firefox ESR, PipeWire,
+whisper.cpp y demas) conserva sus propias licencias; ver THIRD_PARTY_LICENSES.md.
+
