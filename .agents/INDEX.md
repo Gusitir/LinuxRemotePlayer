@@ -1,11 +1,11 @@
 # INDEX - navegacion del repositorio
 
 ```yaml
-last_reindexed_at: 2026-10-27T21:40:00-05:00
-source_commit: 5cd1eeb
-dirty: false
+last_reindexed_at: 2026-10-29T02:10:00-05:00
+source_commit: 3a385c2
+dirty: true
 active_plan: PLAN_v2.0.0-release.md (approved D51; T-143/T-149/T-144 aptos, T-145 ready, T-146..T-148 pendientes)
-state: "T-149 (cde09c8) y T-144 (5cd1eeb) integrados en main; backend sin licencia ni proxy cloud; HTPC de pruebas inalcanzable desde 2026-10-27; ISO definitiva y PH24 pendientes"
+state: "T-149 (cde09c8 + 3a385c2) y T-144 (5cd1eeb) integrados en main local; panel y kiosk corregidos y verificados por captura; push de 3a385c2 pendiente; ISO definitiva y PH24 pendientes"
 ```
 
 El estado activo pertenece a [`CURRENT.md`](CURRENT.md), no a este indice.

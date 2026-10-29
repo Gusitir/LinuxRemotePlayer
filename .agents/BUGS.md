@@ -139,6 +139,41 @@ trackpad físico (desktop H61), dos receptores 2.4G detectados y bindeados a lib
 (warps OK a 1920x1080). Fix: `exec startx` sin flag (`99-lrp-setup.chroot:84`) y mismo cambio aplicado
 en el HTPC; Xorg ahora corre sin `-nocursor` y la sesión/kiosk volvieron a levantar.
 
+## B27–B36 — Lote de UI y robustez del kiosk
+
+**Corregido y desplegado · commit `3a385c2` · auditoría APTO (289 tests)**
+
+Verificación visual por capturas del panel real (1920x1080, `scrot` sobre el kiosk) y de los dos
+panes con datos vivos.
+
+- **B27** `.settings-grid { display:grid }` anulaba `.pane-content { display:none }` (misma
+  especificidad, posterior): Emparejamiento y Ajustes se mostraban superpuestos y el contenido se
+  cortaba. Fix: `.pane-content:not(.active) { display:none }` (0,2,0).
+- **B28** placeholder `<span id="val-version">1.0.0</span>` visible antes del fetch. Fix: `—`.
+- **B29** `/status` sin `Cache-Control`: Firefox reusaba HTML viejo y un deploy no se veía. Fix:
+  `no-store, must-revalidate`.
+- **B30** la URL de auto-lanzamiento no invalidaba caché. Fix: `?v=<epoch>` en `status_url`.
+- **B31** no se podía abrir un pane por URL. Fix: `?tab=settings|pairing` con allowlist.
+- **B32** `.pane-content.active` (flex) ganaba a `.settings-grid` (grid): las 4 tarjetas de Ajustes
+  salían en una fila y los textos se cortaban. Fix: `.pane-content.active.settings-grid { display:grid }`
+  (0,3,0).
+- **B33** el comando de voz `open_settings` apuntaba a `/status#pane-settings` (hash ignorado). Fix:
+  `/status?tab=settings`.
+- **B34** kiosk: tras ciclos kill/launch el perfil quedó en `startup-incomplete` (8 crashes), las
+  ventanas salían 10x10 y el watchdog relanzaba Firefox cada 5 s (hasta 3 procesos). Fix:
+  espera de salida (4 s), limpieza de `lock`/`.parentlock`/`.startup-incomplete`/`sessionstore*`,
+  `--new-instance`, poll a 1,8 s, detección por par `-profile` exacto con `realpath` y cooldown
+  30 s/120 s (solo tras fallos). Correcciones del auditor D1–D4 incluidas.
+- **B36** tarjetas de Ajustes se estiraban a la altura de la más alta. Fix: `align-items: start`.
+
+## B37 — Wi-Fi muestra “Desconectado” con Ethernet activo
+
+**Abierto · fuera de este lote (T-145)**
+
+`/api/system/wifi` solo conoce la interfaz Wi-Fi; con cable conectado el panel muestra “Desconectado”
+aunque `network_ips` tenga `enp2s0`. Debe indicar “Conectado por cable” usando onboarding/estado de red
+en el rediseño de T-145.
+
 # CERRADOS
 
 ## B1 — HUD desplazado en iPhone

@@ -174,8 +174,11 @@ Este comando instala la beta pública `1.99.2` amd64 con flujo unattended D35 (h
 Checks humanos o no disponibles del ciclo que corrige sobre el HTPC ya instalado (ISO `720fc8…`),
 antes de reconstruir la ISO definitiva.
 
-**Estado 2026-10-27**: el HTPC no es alcanzable (`192.168.0.246:22` → `No route to host`). Los `[OK]`
-son evidencia del 2026-10-22; los `[pendiente]` requieren que el equipo vuelva a la red.
+**Estado 2026-10-29**: equipo encendido y alcanzable en `192.168.0.246`; barrido por SSH OK (unidades,
+API, audio, pantalla, Bluetooth, Wi-Fi y fixes persistidos tras reboot). `dpkg -V` divergente en 5
+archivos por despliegue fuera del paquete: se corrige al empaquetar 2.0.0 en T-148. Tres checks se
+cerraron por **captura real del panel** (`scrot`, 1920x1080) en vez de confirmación ocular; splash y
+puntero siguen pendientes del dueño.
 
 - `TST-LRP-IRON-BOOT-001` `[OK]` — dueño: la ISO instala y el disco arranca en UEFI; el fallo previo
   era el `BootOrder` del firmware priorizando la entrada legacy, no la escritura del instalador.
@@ -184,12 +187,12 @@ son evidencia del 2026-10-22; los `[pendiente]` requieren que el equipo vuelva a
   (`Connection: Stable`, latencia 6–10 ms, 1 teléfono conectado).
 - `TST-LRP-SPLASH-001` `[pendiente]` — splash de arranque: GRUB y plymouth en verde `#10B981` con el
   icono LRP, sin artwork de Debian, y arranque posterior al panel.
-- `TST-LRP-PANEL-001` `[pendiente]` — panel de estado a `min(1500px, 94vw)` en TV 1080p, sin recorte
-  ni scroll horizontal.
-- `TST-LRP-AUDIO-001` `[pendiente]` — el panel muestra sink HDMI (Built-in Audio Digital Stereo) y
-  volumen tras la recarga; sin quedar en "Cargando salidas…".
-- `TST-LRP-WIFI-DISPLAY-BT-001` `[pendiente]` — Wi-Fi escanea y lista redes, Pantalla muestra
-  `HDMI-1 1920x1080 @ 60`, Bluetooth "Encendido" (adaptador presente, sin dispositivos).
+- `TST-LRP-PANEL-001` `[OK: captura 2026-10-29]` — panel a `min(1500px, 94vw)` en TV 1080p; un pane
+  por vez (B27), Ajustes en grilla 2x2 (B32) y sin recorte.
+- `TST-LRP-AUDIO-001` `[OK: captura 2026-10-29]` — Ajustes muestra `Built-in Audio Digital Stereo
+  (HDMI)` con volumen 40 %; sin “Cargando salidas…”.
+- `TST-LRP-WIFI-DISPLAY-BT-001` `[OK: captura 2026-10-29]` — Wi-Fi lista 5 redes con señal, Pantalla
+  `HDMI-1 1920x1080 @ 60.00 Hz` con modos, Bluetooth “Encendido (0 dispositivos)”.
 - `TST-LRP-POINTER-001` `[pendiente]` — con mouse 2.4G conectado, el puntero se ve y se mueve sobre el
   panel tras el fix B26 (`startx` sin `-nocursor`). Si no aparece, revisar tema/cursor de Openbox antes
   que el flag de Xorg.
