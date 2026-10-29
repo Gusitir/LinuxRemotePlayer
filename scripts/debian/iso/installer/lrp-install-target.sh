@@ -447,6 +447,44 @@ EOF
 }
 
 # ------------------------------------------------------------------------------
+# B40: aviso final y reinicio automatico SOLO en modo desatendido
+# ------------------------------------------------------------------------------
+finish_install() {
+    local force_confirm="$1"
+    local dry_run="$2"
+
+    echo "Instalación completa. Retirá el USB y reiniciá para arrancar desde el disco."
+
+    # Auto-install: servicio lrp-auto-install (systemd) o --force-confirm sin TTY.
+    local auto_install="false"
+    if [ -n "${INVOCATION_ID:-}" ] || { [ "$force_confirm" = "true" ] && [ ! -t 0 ]; }; then
+        auto_install="true"
+    fi
+    if [ "$dry_run" != "false" ] || [ "$auto_install" != "true" ]; then
+        return 0
+    fi
+
+    local remaining=15
+    while [ "$remaining" -gt 0 ]; do
+        if [ -t 0 ]; then
+            printf '\rReiniciando en %ss (pulsá una tecla para cancelar)... ' "$remaining"
+            if read -r -t 1 -n 1 _; then
+                printf '\n'
+                log_info "Reinicio cancelado. Retirá el USB y reiniciá manualmente."
+                return 0
+            fi
+        else
+            echo "Reiniciando en ${remaining}s..."
+            sleep 1
+        fi
+        remaining=$((remaining - 1))
+    done
+    printf '\n'
+    log_info "Reiniciando para arrancar desde el disco..."
+    systemctl reboot || log_warn "No se pudo reiniciar automáticamente; reiniciá manualmente."
+}
+
+# ------------------------------------------------------------------------------
 # Entrypoint principal
 # ------------------------------------------------------------------------------
 main() {
@@ -528,6 +566,7 @@ main() {
     install_payload "$selected_target" "$dry_run"
 
     log_info "Operación finalizada. Ya puedes retirar el USB y reiniciar el HTPC."
+    finish_install "$force_confirm" "$dry_run"
 }
 
 if [ "${BASH_SOURCE[0]}" = "$0" ]; then

@@ -6,7 +6,7 @@ y búsqueda). Todo corre en la red local: **sin nube, sin cuentas, sin licencia 
 
 LinuxRemotePlayer es software libre bajo **GNU GPL v3**.
 
-![Control remoto en el teléfono](website/screenshots/000_principal.webp)
+![Panel de LRP OS 1.0.0 en la TV](website/screenshots/panel_pairing.webp)
 
 ## Requisitos
 
