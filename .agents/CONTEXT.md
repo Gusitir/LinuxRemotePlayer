@@ -877,6 +877,18 @@ Decisiones aprobadas:
 El plan vigente pasa a `PLAN_v1.0.0-public.md` (T-150..T-155, T-157); `PLAN_v2.0.0-release.md` queda
 como histórico del ciclo anterior.
 
+## 2026-10-29 · D57 — Testeo por fase, producto primero
+
+Instrucción del dueño durante F1: **priorizar producto sobre testeo**. Los gates de tarea quedan
+limitados a micro-checks (<5 s: `py_compile`, `node --check`, `bash -n`, greps de aceptación); la
+**suite completa corre una sola vez al cierre de cada fase** (G4) y otra vez antes del release. Los
+bugs se resuelven al final de la fase con testeo dirigido, no tarea por tarea. La cobertura se **poda**
+(se borran tests de funciones retiradas) en vez de crecer.
+
+Motivo: cada corrida completa cuesta ~6 min y convirtió tareas de 2 minutos en ciclos de 20, frenando
+el producto. No cambia el estándar de evidencia: el cierre de fase sigue exigiendo suite verde y
+verificación en el HTPC.
+
 
 
 

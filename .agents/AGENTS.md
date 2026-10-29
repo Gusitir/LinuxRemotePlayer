@@ -126,9 +126,11 @@ Un hecho tiene un solo hogar. No copiar decisiones, diarios ni estado entre arch
 ## CICLO Y GATES
 
 1. Arquitecto fija spec, write-set, riesgos y G0 delegando en `Arch-Flash`.
-2. Ingeniero orquesta a `Eng-Flash-1` (Constructor) para implementar y a `Eng-Flash-2` (Inspector) para verificar `git diff`, criterios `archivo:línea` y micro-checks (<2s). Cero suites pesadas ni auditorías por tarea (D48).
+2. Ingeniero orquesta a `Eng-Flash-1` (Constructor) para implementar y a `Eng-Flash-2` (Inspector) para verificar `git diff`, criterios `archivo:línea` y micro-checks (<5s: `py_compile`, `node --check`, `bash -n`, greps). **Nunca la suite completa por tarea (D48/D57)**.
 3. Arquitecto audita un bache de tareas cuando exista una frontera material; no hay audit por tarea.
-4. Auditor de fase revisa el conjunto, bugs y la suite completa únicamente al cierre de fase (`G4`) delegando en `Aud-Flash`; Arquitecto decide G4.
+4. **Gate de fase (D57)**: la suite completa se corre **una vez al cierre de cada fase** (G4), más una
+   vez antes del release; los bugs se resuelven al final de la fase con testeo dirigido. La cobertura se
+   poda (se borran tests de funciones retiradas) en vez de crecer.
 5. Dueño autoriza y opera push/despliegue según el alcance concedido.
 
 G0: fase lista. G1: tarea lista. G2: tarea apta. G3: integración. G4: fase apta.
