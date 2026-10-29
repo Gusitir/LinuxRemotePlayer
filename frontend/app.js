@@ -1850,9 +1850,6 @@ function closeDrawer() {
         toggleEditAppsMode();
     }
 }
-function comingSoon() {
-    toast('Esta sección estará disponible próximamente.');
-}
 
 const WEBSITE_URL = 'https://www.linuxremoteplayer.com/';
 
@@ -2003,7 +2000,7 @@ function relaunchTour() {
 // --- Browser tab vs installed app ---
 // T-151c: banner de instalacion en la web destino del QR (no bloquea el control).
 const APK_URL = '/downloads/lrp.apk';
-const APK_AVAILABLE = false;
+const APK_AVAILABLE = true;
 const INSTALL_BANNER_DISMISSED = 'lrp_install_banner_dismissed';
 
 function detectInstallPlatform() {
@@ -2051,15 +2048,20 @@ function renderInstallBanner() {
         if (title) title.textContent = 'Instalar la app';
         if (action) {
             action.hidden = false;
-            action.textContent = apkReady ? 'Descargar APK' : 'APK próximamente';
+            action.textContent = apkReady ? 'Descargar APK' : 'APK no disponible';
             action.classList.toggle('is-disabled', !apkReady);
-            if (apkReady) action.href = APK_URL;
-            else action.removeAttribute('href');
+            if (apkReady) {
+                action.href = APK_URL;
+                action.setAttribute('download', 'lrp.apk');
+            } else {
+                action.removeAttribute('href');
+                action.removeAttribute('download');
+            }
         }
         if (desc) {
             desc.textContent = apkReady
-                ? 'Descargá el APK para usar LRP como app en tu Android.'
-                : 'APK próximamente. Mientras tanto: Chrome → menú ⋮ → Instalar aplicación.';
+                ? 'Permití instalar apps de origen desconocido. La app acepta el certificado del equipo sin validarlo; usala solo en tu red local.'
+                : 'La app acepta el certificado del equipo sin validarlo; usala solo en tu red local.';
         }
     }
     banner.hidden = false;

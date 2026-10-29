@@ -1,0 +1,15 @@
+# Build
+build/
+.gradle/
+
+# Local SDK path
+local.properties
+
+# Firma (nunca versionar)
+keystore.properties
+*.jks
+*.keystore
+
+# Artefactos
+*.apk
+*.aab

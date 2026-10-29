@@ -34,8 +34,10 @@ sha256sum -c SHA256SUMS
 3. Al terminar, la TV muestra el panel con un PIN y un QR. Escaneá el QR o escribí el PIN en el
    teléfono para emparejar.
 
-El APK de Android llega en la próxima release; mientras tanto se usa la PWA desde Chrome
-(⋮ → Instalar aplicación). En iPhone/iPad: Safari → Compartir → Añadir a pantalla de inicio.
+El APK de Android 1.0.0 se descarga desde [website/downloads/lrp.apk](website/downloads/lrp.apk)
+(SHA256 `fcfb76e0383f5e3e7b72d7805618143945fd24a608ad4dd42df3d159b19c0bef`). Al instalarlo hay que
+permitir apps de origen desconocido. La app acepta el certificado del equipo sin validarlo: usala
+solo en tu red local. En iPhone/iPad: Safari → Compartir → Añadir a pantalla de inicio.
 
 ## Compilar
 
