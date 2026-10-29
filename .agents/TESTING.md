@@ -174,6 +174,9 @@ Este comando instala la beta pública `1.99.2` amd64 con flujo unattended D35 (h
 Checks humanos o no disponibles del ciclo que corrige sobre el HTPC ya instalado (ISO `720fc8…`),
 antes de reconstruir la ISO definitiva.
 
+**Nota D56 (2026-10-29)**: el ciclo comercial 2.0.0 se archivó en `legacy/2.0`; estos checks se
+conservan porque splash y puntero siguen vigentes para la ISO 1.0.0.
+
 **Estado 2026-10-29**: equipo encendido y alcanzable en `192.168.0.246`; barrido por SSH OK (unidades,
 API, audio, pantalla, Bluetooth, Wi-Fi y fixes persistidos tras reboot). `dpkg -V` divergente en 5
 archivos por despliegue fuera del paquete: se corrige al empaquetar 2.0.0 en T-148. Tres checks se

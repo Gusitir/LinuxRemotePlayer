@@ -7,7 +7,7 @@ PLAN/CURRENT. No tiene techo. Los bugs previos a 1.9.x viven en git y `archive/`
 
 ## B19 — OTA root sin autenticidad
 
-**CRÍTICO · bloquea la siguiente release pública**
+**Superado por D56 · se cierra al eliminar la OTA en T-150c (no se corrige: deja de existir)**
 
 `lrp-update` instala como root un `.deb` y comprueba un sha256 servido por el mismo origen.
 Detecta corrupción, no un origen comprometido. Quien controle Vercel/DNS/dominio puede entregar
@@ -16,12 +16,14 @@ lo invita a hacerlo. Plan: PLAN §GATE-OTA. Debe cerrarse en 2.0.0 antes de publ
 
 ## B19b — TOCTOU y nombre predecible en `/tmp`
 
+**Superado por D56 · se cierra al eliminar la OTA en T-150c**
+
 El actualizador usa un nombre predecible y separa verificación de instalación. Debe trabajar en
 un `mktemp` root-only y mantener identificado el mismo inode/artefacto hasta instalarlo.
 
 ## M1 — migración incompleta nube/licencias
 
-**Abierto por decisión D16-D18; todavía no es un defecto de 1.9.1.**
+**Abierto por decisión D16-D18; se cierra por eliminación en T-150 (D56).**
 
 Backend, frontend, sitio y Supabase contienen Together, `ai-proxy`, licencias, compra, cuotas y
 textos Paddle. Se resuelve como migración coordinada de 2.0.0 en PH24, incluida la web y la

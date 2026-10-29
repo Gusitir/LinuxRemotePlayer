@@ -848,6 +848,35 @@ con `/mnt/d`, QEMU ausente en WSL, y `scripts/*`/`.env` local con referencias in
 Siguiente: T-145 (frontend), T-146 (web/docs/manifiesto), T-147 (Supabase, dueño), reconstrucción de la
 ISO definitiva y T-148.
 
+## 2026-10-29 · D56 — Giro a ISO open source GPL-3.0 (1.0.0)
+
+El dueño redefine el proyecto: deja de ser un appliance comercial con licencia y OTA y pasa a ser una
+**ISO de código abierto para portfolio**. Se retira toda la superficie comercial y se archiva el
+desarrollo previo.
+
+Decisiones aprobadas:
+
+1. **Licencia**: GPL-3.0 para el proyecto nuevo **y** para el código previo (rama legacy incluida).
+2. **Producto**: ISO Debian que arranca al panel; el móvil controla. Sin nube, sin cuentas, sin
+   licencia, sin premium, sin telemetría.
+3. **Sin OTA**: el updater, la firma Ed25519, el rollback, los manifiestos y el canal beta se eliminan.
+   Las versiones se publican por release del repositorio. B19/B19b se cierran por eliminación.
+4. **Archivo**: rama `legacy/2.0` + tag anotado `v2.0.0-legacy` (con `LICENSE` GPL-3.0 y `NOTICE`),
+   para conservar el aprendizaje de licencias, web comercial y planes no consolidados. `main` sigue
+   como 1.0.0.
+5. **Instalación**: Android recibe **APK TWA** servida desde la web (sideload, sin Play Store, con
+   `assetlinks.json`); iOS recibe tutorial de PWA; desktop instrucciones neutras.
+6. **Web**: sirve ISO y APK con checksums, avisos de licencia y créditos de terceros; documentación de
+   build. Repo público desde el inicio.
+7. **Versión**: 1.0.0. Todo lo comercial (2.0.0) queda archivado.
+8. **Voz diferida**: Needle 3 y voice-to-text quedan para T-157; hasta entonces micrófono y voz se
+   desactivan y ocultan en la UI. No se borra el backend de voz.
+9. **Bluetooth**: alcance reducido a encendido/apagado y lista de dispositivos.
+10. **B19/B19b/M1** quedan superados por este giro y se cierran al ejecutar T-150.
+
+El plan vigente pasa a `PLAN_v1.0.0-public.md` (T-150..T-155, T-157); `PLAN_v2.0.0-release.md` queda
+como histórico del ciclo anterior.
+
 
 
 

@@ -1,11 +1,11 @@
 # INDEX - navegacion del repositorio
 
 ```yaml
-last_reindexed_at: 2026-10-29T02:10:00-05:00
-source_commit: 3a385c2
+last_reindexed_at: 2026-10-29T03:12:00-05:00
+source_commit: f698e18
 dirty: true
-active_plan: PLAN_v2.0.0-release.md (approved D51; T-143/T-149/T-144 aptos, T-145 ready, T-146..T-148 pendientes)
-state: "T-149 (cde09c8 + 3a385c2) y T-144 (5cd1eeb) integrados en main local; panel y kiosk corregidos y verificados por captura; push de 3a385c2 pendiente; ISO definitiva y PH24 pendientes"
+active_plan: PLAN_v1.0.0-public.md (approved D56; T-150 limpieza en curso, T-151..T-155 pendientes, T-157 voz diferida)
+state: "Giro D56: ISO open source GPL-3.0 1.0.0; legacy/2.0 + v2.0.0-legacy archivados; LICENSE GPL-3.0 en main; limpieza comercial/OTA/Supabase en curso"
 ```
 
 El estado activo pertenece a [`CURRENT.md`](CURRENT.md), no a este indice.
@@ -22,7 +22,8 @@ El estado activo pertenece a [`CURRENT.md`](CURRENT.md), no a este indice.
 
 ## PLANES Y EXTENSIONES
 
-- [`PLAN_v2.0.0-release.md`](PLAN_v2.0.0-release.md): plan activo del release estable 2.0.0 (integración de rama, PH24 y gates); aprobado D51, digest `2814bb3c…`.
+- [`PLAN_v1.0.0-public.md`](PLAN_v1.0.0-public.md): **plan activo** del release open source 1.0.0 (GPL-3.0, ISO-only, sin OTA), aprobado D56.
+- [`PLAN_v2.0.0-release.md`](PLAN_v2.0.0-release.md): histórico del ciclo comercial 2.0.0 (D51); su código vive en `legacy/2.0`.
 - [`PLAN_v2.0-appliance.md`](PLAN_v2.0-appliance.md): plan v3 completado (LRP OS Appliance & Local Voice, T-132..T-142 apto, G4 APTO).
 - [`PLAN_v1.99.2-debian-htpc-foundation.md`](PLAN_v1.99.2-debian-htpc-foundation.md): plan cerrado DEBIAN-FOUNDATION, veredicto `APTO`.
 - [`archive/PLAN_v1.99-beta-foundation.md`](archive/PLAN_v1.99-beta-foundation.md): plan cerrado

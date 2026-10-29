@@ -93,6 +93,15 @@ Un hecho tiene un solo hogar. No copiar decisiones, diarios ni estado entre arch
 
 ## RELEASE Y ENTORNO
 
+- **Licencia GPL-3.0 (D56)**: todo el repositorio, la ISO y la rama legacy. Avisos de licencia y
+  créditos de terceros obligatorios en la web y en la ISO (`NOTICE`, `THIRD_PARTY_LICENSES.md`).
+- **Distribución ISO-only (D56)**: la web sirve ISO + APK + checksums y documentación. Sin OTA,
+  auto-update, canal beta ni manifiestos firmados; las versiones se publican por tag/release. El `.deb`
+  es artefacto interno de build.
+- **Sin comercialización (D56)**: prohibido reintroducir licencia, premium, compra, cuotas, cuentas,
+  telemetría o servicios cloud en el producto o en la web.
+- **Archivo legacy**: `legacy/2.0` + `v2.0.0-legacy` conservan el desarrollo comercial previo; no se
+  modifica salvo corrección legal.
 - Plataforma objetivo única: Debian 13 stable amd64 minimal. LRP administrará una sesión
   Xorg/Openbox; no se garantiza otra distro, Plasma/Bigscreen, Wayland ni escritorio general.
 - RTX 3060 es la GPU inicial a certificar. Drivers/firmware solo desde repositorios Debian; nunca
@@ -107,21 +116,12 @@ Un hecho tiene un solo hogar. No copiar decisiones, diarios ni estado entre arch
 - Ciclo de estabilización D53: los fixes se despliegan al HTPC de pruebas por SSH (`lrp`/`lrp`) y la
   ISO definitiva se construye una sola vez al final del ciclo. WSL `Debian` compila desde `/mnt/g/...`;
   QEMU (`qemu-system-x86`, `ovmf`) se instala aparte y no está presente por defecto.
-- Versiones OTA son `X.Y.Z`.
-- El updater conserva sus functions y `main "$@"; exit $?` durante self-rewrite.
-- `prerm` limpia solo en `remove`, nunca en `upgrade`.
+- Versiones de release `X.Y.Z`; cada release se publica por tag y se instala desde la ISO.
 - `PAIRING_TOKEN` puede estar en `.pairing_token`.
 - La CA tiene sufijo por máquina. No volver a añadir `viewport-fit=cover`. Mantener el alias Vercel
   legado mientras clientes publicados lo tengan grabado.
-- B19 (OTA sin firma independiente ni rollback probado) quedó cerrado por T-142 en
-  `codex/debian-foundation` con firma Ed25519, anti-downgrade y rollback de 45s. Ese cierre solo es
-  efectivo tras integrar la rama en `main`; mientras `main` no la contenga, la promoción a `2.0.0`
-  estable sigue bloqueada.
-- Stable usa `latest.json` y no descubre betas. Beta se instala solo por curl, persiste su canal y
-  consulta un manifiesto beta separado. Versiones beta son numéricas `1.99.x`; estable será `2.0.0`.
-- El instalador beta público puede reiniciar automáticamente solo en modo unattended autorizado por
-  el comando inicial. Usa un servicio systemd temporal, máximo dos reboots esperados, contador
-  anti-loop, STOP fail-closed y recuperación TTY; cualquier otro flujo conserva no-auto-reboot.
+- **OTA eliminada por D56**: updater, firma de manifiestos, rollback, canal beta y `latest.json` viven
+  solo en `legacy/2.0`. No se reintroducen en 1.0.0.
 
 ## CICLO Y GATES
 
