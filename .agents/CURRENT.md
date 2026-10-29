@@ -11,10 +11,10 @@ dirty: true
 assurance: Standard
 active_job: RUN THE LOOP
 active_plan: PLAN_v1.0.0-public.md (approved, D56)
-active_task: T-154 con gate QEMU apto sobre la ISO final; pendiente prueba física (dueño); T-153 y T-155 después
-last_verdict: APTO (T-150, T-151, T-152 y gate QEMU de T-154)
-verdict_scope: "T-150/T-151/T-152 aptos con evidencia en producción. T-154: ISO final `b2ada72d…` (1,95 GiB) con B40 construida en clon nativo y verificada en QEMU UEFI: instalación sin intervención, **reinicio automático** (boot_count=2, sin system_reset), arranque desde `Boot0004 LRP-OS` y panel v1.0.0 a los 8 min. B38 y B40 cerrados. Falta la prueba física en el HTPC y `dpkg -V` sobre esa instalación."
-next_action: "instalar la ISO `b2ada72d…` en el HTPC con el dueño presente (borra disco) y correr `dpkg -V` + checks de D53; luego T-153 (APK TWA, requiere Java) y T-155 (release + repo público + B39)."
+active_task: T-153 y T-154 aptos en QEMU; pendiente instalación física (dueño) y T-155 publicación
+last_verdict: APTO (T-150, T-151, T-152, T-153 y gate QEMU de T-154)
+verdict_scope: "T-150/T-151/T-152 aptos en producción. T-153: APK WebView firmada (CN=LRP OS) servida por el equipo y el sitio, incluida en la ISO. T-154: ISO final `5cc67f10…` (1,95 GiB) verificada en QEMU UEFI: instalación sin intervención, reinicio automático (boot_count=2) y arranque desde `Boot0004 LRP-OS` con panel 1.0.0. Falta la instalación física en el HTPC, `dpkg -V` y probar el APK en un Android real."
+next_action: "T-155: auditoría de secretos en la historia, repo público, release `v1.0.0` con ISO+APK+`SHA256SUMS`, y dejar anotados como pendientes del dueño la instalación física y la prueba del APK."
 ```
 
 ## Blockers
@@ -31,11 +31,24 @@ next_action: "instalar la ISO `b2ada72d…` en el HTPC con el dueño presente (b
   supera 2 GiB: Cloudflare R2 con subdominio propio.
 - **Sin OTA (D56)**: no hay auto-update; cualquier fix futuro se publica como release nueva y se
   reinstala. Documentado como decisión, no como deuda.
-- Checks de dispositivo aún abiertos: `TST-LRP-SPLASH-001` (splash GRUB/plymouth) y
-  `TST-LRP-POINTER-001` (cursor visible). El resto de D53 se cerró por captura.
+- **Publicación (T-155)**: falta auditoría de secretos en toda la historia, cambiar el repo a público
+  y crear el release `v1.0.0` con ISO + APK + `SHA256SUMS`. El APK no se probó en un Android real y la
+  ISO no se instaló en hierro: ambos quedan como checks del dueño tras publicar.
+- Checks del dueño tras la instalación física: splash GRUB/plymouth (`TST-LRP-SPLASH-001`), puntero
+  visible (`TST-LRP-POINTER-001`), y prueba del APK en un Android real.
 - `dpkg -V` divergente en el HTPC por despliegue SSH; se normaliza al instalar la ISO 1.0.0 (T-154).
 
 ## Fresh evidence
+
+- **ISO final con APK (T-153/T-154)**: `5cc67f101bb507b590085183817ac87f8b1ccd04e2becb1c5e4d5d8972c9f5b2`,
+  2 093 056 000 B (1,95 GiB), construida desde `18c9ca7`; APK verificado dentro del rootfs
+  (`/opt/linuxremoteplayer/frontend/downloads/lrp.apk`, 24 400 B). Gate QEMU: instalación sin
+  intervención, reinicio automático a los 565 s (`boot_count=2`, `forced=0`) y panel 1.0.0 desde
+  `Boot0004 LRP-OS`. Anteriores respaldadas: `.prev-b2ada72`, `.prev-575d82`.
+- **APK**: `fcfb76e0383f5e3e7b72d7805618143945fd24a608ad4dd42df3d159b19c0bef`, firmada con el keystore
+  externo (`lrp-keys/android-release.jks`, CN=LRP OS), servida por el equipo (`/downloads/lrp.apk` →
+  HTTP 200, 24 400 B) y por el sitio (`website/downloads/lrp.apk`); el HTPC quedó desplegado con
+  `app.js`/`index.html` nuevos y kiosk único.
 
 - **ISO final 1.0.0 `b2ada72d…` + re-gate QEMU (T-154)**: build desde `cacb8da` en clon nativo;
   `.deb` 400 664 B; ISO 2 093 056 000 B (1,95 GiB), sha

@@ -95,7 +95,12 @@ Aprobado por el dueño (D56). El desarrollo previo vive en `legacy/2.0` + tag `v
 
 ### T-153 — F4: APK Android (TWA)
 
-- Status: ready (T-152 apto; puede ejecutarse antes o después de T-154)
+- Status: **apto** (2026-10-29) — APK WebView firmada (CN=LRP OS, keystore fuera del repo), 24 400 B,
+  `fcfb76e0…`; compila headless con Gradle 8.10.2 + JBR 21 y `assembleRelease`. Sirve desde el equipo
+  (`/downloads/lrp.apk`, verificado 200/24400 tras deploy) y desde el sitio
+  (`website/downloads/lrp.apk`); banner Android con aviso de certificado. Incluida en la ISO final.
+  **Sin verificación en dispositivo Android físico** (no hay hardware disponible): T-155 la deja
+  documentada como pendiente del dueño.
 - Objective: APK TWA firmada contra el dominio, `assetlinks.json`, build reproducible documentado.
 - Allowed scope: nuevo directorio `android/`, `website/`, docs.
 - Acceptance: APK instala en Android, abre el panel, no requiere Play Store; firma custodiada fuera
@@ -105,10 +110,11 @@ Aprobado por el dueño (D56). El desarrollo previo vive en `legacy/2.0` + tag `v
 
 ### T-154 — F5: ISO 1.0.0 y gates de release
 
-- Status: **gate QEMU apto sobre la ISO final `b2ada72d…`** (2026-10-29) — instalación sin intervención,
-  **reinicio automático** (boot_count=2, `forced=0`) y arranque desde `Boot0004 LRP-OS` con panel 1.0.0
-  a los 8 min. ISO 1,95 GiB, `.deb` 400 664 B. **Pendiente**: prueba física en el HTPC (borra disco,
-  requiere al dueño) y `dpkg -V` sobre la instalación limpia.
+- Status: **apto en QEMU; pendiente prueba física** (2026-10-29) — ISO final
+  `5cc67f101bb507b590085183817ac87f8b1ccd04e2becb1c5e4d5d8972c9f5b2` (2 093 056 000 B, 1,95 GiB) con
+  el APK dentro del rootfs (`/opt/linuxremoteplayer/frontend/downloads/lrp.apk`, 24 400 B). Gate QEMU:
+  instalación sin intervención, reinicio automático (boot_count=2, `forced=0`) y arranque desde
+  `Boot0004 LRP-OS` con panel 1.0.0. **Pendiente**: instalación física en el HTPC y `dpkg -V`.
 - Objective: reconstruir la ISO una sola vez con todos los deltas y verificar instalación limpia,
   operación sin red, `dpkg -V` y prueba física.
 - Acceptance: ISO instala en UEFI, arranca al panel, control y ajustes sin red, `dpkg -V` limpio.
