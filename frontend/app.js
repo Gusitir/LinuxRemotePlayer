@@ -1878,35 +1878,15 @@ function shareApp() {
     }
 }
 
-async function sendFeedback() {
+function sendFeedback() {
     const msgEl = document.getElementById('feedback-msg');
-    const emailEl = document.getElementById('feedback-email');
     if (!msgEl) return;
-    const msg = msgEl.value.trim();
-    if (!msg) {
+    if (!msgEl.value.trim()) {
         toast('El mensaje está vacío');
         return;
     }
-    
-    toast('Enviando...');
-    try {
-        const res = await fetch('https://tbijfdbtauzxbsbkujbs.functions.supabase.co/send-feedback', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                message: msg,
-                email: emailEl ? emailEl.value.trim() : '',
-                version: '1.4.0'
-            })
-        });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        toast('Feedback enviado. ¡Gracias!');
-        msgEl.value = '';
-        if (emailEl) emailEl.value = '';
-    } catch(e) {
-        toast('Feedback enviado.'); 
-        msgEl.value = '';
-    }
+    // T-150d: sin backend de feedback; no hay envío remoto.
+    toast('Feedback no disponible en esta versión.');
 }
 
 function showTour() {

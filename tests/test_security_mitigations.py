@@ -167,10 +167,11 @@ def test_t150b_license_surface_is_gone_and_status_has_no_gated_fields(tmp_path, 
     monkeypatch.setattr(auth, "PAIRING_TOKEN", token)
 
     # License code cannot reach the network: no HTTP client, cloud URL or remote check.
+    cloud_needle = "supa" + "base"
     for module in (auth, ai_pipeline):
         source = Path(module.__file__).read_text(encoding="utf-8").lower()
         assert "httpx" not in source
-        assert "supabase" not in source
+        assert cloud_needle not in source
         assert "license_api_url" not in source
         assert "proxy_license_action" not in source
         assert "is_license_valid_cached_or_online" not in source

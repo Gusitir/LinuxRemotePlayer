@@ -331,19 +331,14 @@ if __name__ == "__main__":
     kwargs = {"host": HOST, "port": PORT}
     
     # R-08 pairing URL logging
-    SUPABASE_URL = os.getenv("SUPABASE_URL")
-    SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-    supabase_active = bool(SUPABASE_URL and SUPABASE_KEY)
-    
     token = ""
-    if not supabase_active:
-        token_path = get_token_file()
-        if token_path.is_file():
-            try:
-                with open(token_path, "r") as f:
-                    token = f.read().strip()
-            except Exception as e:
-                logger.error(f"Could not read .pairing_token file: {e}")
+    token_path = get_token_file()
+    if token_path.is_file():
+        try:
+            with open(token_path, "r") as f:
+                token = f.read().strip()
+        except Exception as e:
+            logger.error(f"Could not read .pairing_token file: {e}")
 
     if https_ok:
         # Se llama ACA y no dentro de ensure_cert() a proposito: ensure_cert retorna

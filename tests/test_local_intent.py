@@ -6,7 +6,7 @@ Verifies:
 3. Compound app + query extraction.
 4. Security guardrails and absolute rejection of shell metacharacters and injections.
 5. Strict execution latency bounds (<50ms on CPU).
-6. Complete offline voice_command integration in ai_pipeline without Supabase / license dependency.
+6. Complete offline voice_command integration in ai_pipeline without any cloud service or license dependency.
 """
 import os
 import sys
