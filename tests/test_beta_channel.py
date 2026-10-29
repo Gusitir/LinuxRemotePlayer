@@ -9,16 +9,14 @@ import pytest
 @pytest.fixture
 def main_module(monkeypatch):
     monkeypatch.delenv("LRP_CHANNEL", raising=False)
-    monkeypatch.delenv("UPDATE_MANIFEST_URL", raising=False)
-    monkeypatch.delenv("BETA_UPDATE_MANIFEST_URL", raising=False)
 
     # Load only the channel/config contract because the optional application runtime
     # dependencies (for example segno) are not installed in the test environment.
     source = open("backend/main.py", encoding="utf-8").read()
     tree = ast.parse(source)
     wanted = {
-        "STABLE_CHANNEL", "BETA_CHANNEL", "STABLE_MANIFEST_URL", "BETA_MANIFEST_URL",
-        "get_channel", "get_update_manifest_url", "get_config",
+        "STABLE_CHANNEL", "BETA_CHANNEL",
+        "get_channel", "get_config",
     }
     nodes = []
     for node in tree.body:
@@ -36,7 +34,6 @@ def main_module(monkeypatch):
         "logger": logging.getLogger("main"),
         "socket": socket,
         "VERSION": "1.0.0",
-        "voice_enabled": lambda: False,
     }
     exec(compile(ast.Module(body=nodes, type_ignores=[]), "backend/main.py", "exec"), namespace)
 
@@ -65,55 +62,8 @@ def test_explicit_channels_are_normalized(main_module, monkeypatch, value, expec
     assert main_module.get_channel() == expected
 
 
-def test_stable_manifest_override(main_module, monkeypatch):
-    monkeypatch.setenv("LRP_CHANNEL", "stable")
-    assert main_module.get_update_manifest_url() == main_module.STABLE_MANIFEST_URL
-    monkeypatch.setenv("UPDATE_MANIFEST_URL", "https://stable.example/manifest.json")
-    monkeypatch.setenv("BETA_UPDATE_MANIFEST_URL", "https://beta.example/manifest.json")
-    assert main_module.get_update_manifest_url() == "https://stable.example/manifest.json"
-
-
-def test_beta_ignores_stable_override(main_module, monkeypatch):
-    monkeypatch.setenv("LRP_CHANNEL", "beta")
-    monkeypatch.setenv("UPDATE_MANIFEST_URL", "https://stable.example/manifest.json")
-    monkeypatch.delenv("BETA_UPDATE_MANIFEST_URL", raising=False)
-    assert main_module.get_update_manifest_url() == main_module.BETA_MANIFEST_URL
-
-
-def test_beta_manifest_override(main_module, monkeypatch):
-    monkeypatch.setenv("LRP_CHANNEL", "beta")
-    monkeypatch.setenv("UPDATE_MANIFEST_URL", "https://stable.example/manifest.json")
-    monkeypatch.setenv("BETA_UPDATE_MANIFEST_URL", "https://beta.example/manifest.json")
-    assert main_module.get_update_manifest_url() == "https://beta.example/manifest.json"
-
-
 def test_api_config_exposes_normalized_channel(main_module, monkeypatch):
     monkeypatch.setenv("LRP_CHANNEL", "not-beta")
     assert main_module.get_config()["channel"] == "stable"
     monkeypatch.setenv("LRP_CHANNEL", "beta")
     assert main_module.get_config()["channel"] == "beta"
-
-
-def test_frontend_exposes_channel_in_ui():
-    source = open("frontend/app.js", encoding="utf-8").read()
-    assert "renderChannel(data.channel)" in source
-    assert "Canal ${channel}" in source
-    assert "dataset.lrpChannel" in source
-
-
-def test_channel_round_trip_and_override_isolation(main_module, monkeypatch):
-    monkeypatch.setenv("UPDATE_MANIFEST_URL", "https://stable.example/manifest.json")
-    monkeypatch.setenv("BETA_UPDATE_MANIFEST_URL", "https://beta.example/manifest.json")
-
-    monkeypatch.setenv("LRP_CHANNEL", "stable")
-    stable_config = main_module.get_config()
-    stable_url = main_module.get_update_manifest_url()
-    monkeypatch.setenv("LRP_CHANNEL", "beta")
-    beta_config = main_module.get_config()
-    beta_url = main_module.get_update_manifest_url()
-
-    assert stable_config["channel"] == "stable"
-    assert stable_url == "https://stable.example/manifest.json"
-    assert beta_config["channel"] == "beta"
-    assert beta_url == "https://beta.example/manifest.json"
-    assert stable_url != beta_url

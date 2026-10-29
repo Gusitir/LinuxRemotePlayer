@@ -181,12 +181,14 @@ def test_t150b_license_surface_is_gone_and_status_has_no_gated_fields(tmp_path, 
     client = TestClient(app, client=("127.0.0.1", 50000))
     headers = {"X-Auth-Token": token}
 
-    # T-150b: these routes must not be registered at all (not even as stubs).
+    # T-150b/T-150c1: these routes must not be registered at all (not even as stubs).
     removed_routes = {
         "/api/license/status",
         "/api/license/activate",
         "/api/license/takeover",
         "/api/voice/toggle",
+        "/api/update/check",
+        "/api/update/apply",
     }
     registered = {getattr(route, "path", None) for route in app.routes}
     assert removed_routes.isdisjoint(registered)
@@ -217,4 +219,5 @@ def test_t150b_license_surface_is_gone_and_status_has_no_gated_fields(tmp_path, 
     config = client.get("/api/config")
     assert config.status_code == 200
     assert "buy_url" not in config.json()
+    assert "voice_enabled" not in config.json()
     assert config.json()["channel"] in ("stable", "beta")

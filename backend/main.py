@@ -15,7 +15,6 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
 from dotenv import load_dotenv
-import httpx
 import io
 try:
     import segno
@@ -23,10 +22,6 @@ except ImportError:
     segno = None
 
 import auth
-try:
-    import ota_security
-except ImportError:
-    from backend import ota_security
 
 try:
     from config import (
@@ -66,12 +61,10 @@ async def revoke_all_websockets(code: int = 1008, reason: str = "Token revoked")
 
 STABLE_CHANNEL = "stable"
 BETA_CHANNEL = "beta"
-STABLE_MANIFEST_URL = "https://www.linuxremoteplayer.com/latest.json"
-BETA_MANIFEST_URL = "https://www.linuxremoteplayer.com/beta/latest.json"
 
 
 def get_channel() -> str:
-    """Return the only channel allowed to influence update discovery."""
+    """Return the normalized update channel advertised in /api/config."""
     configured = os.getenv("LRP_CHANNEL")
     if configured is None or not configured.strip():
         return STABLE_CHANNEL
@@ -82,13 +75,6 @@ def get_channel() -> str:
 
     logger.warning("Invalid LRP_CHANNEL=%r; using stable channel", configured)
     return STABLE_CHANNEL
-
-
-def get_update_manifest_url() -> str:
-    """Select a manifest from the normalized channel's namespace only."""
-    if get_channel() == BETA_CHANNEL:
-        return os.getenv("BETA_UPDATE_MANIFEST_URL") or BETA_MANIFEST_URL
-    return os.getenv("UPDATE_MANIFEST_URL") or STABLE_MANIFEST_URL
 
 # H9: /docs, /redoc y /openapi.json responden SIN gate a cualquiera en la LAN y enumeran
 # toda la superficie de la API. Se apagan por defecto. El default es CERRADO a proposito:
@@ -149,13 +135,6 @@ PANEL_RETRY_STREAK_INTERVAL = 120.0
 PANEL_FAIL_STREAK_LIMIT = 3
 _last_panel_attempt = 0.0
 _panel_fail_streak = 0
-
-
-def is_newer_version(current_ver: str, latest_ver: str) -> bool:
-    try:
-        return ota_security.is_version_newer(latest_ver, current_ver)
-    except Exception:
-        return False
 
 
 async def check_and_launch_status_panel() -> bool:
@@ -574,7 +553,6 @@ def health_check():
 @app.get("/api/config")
 def get_config():
     return {
-        "voice_enabled": voice_enabled(),
         "hostname": socket.gethostname(),
         "version": VERSION,
         "channel": get_channel(),
@@ -634,73 +612,10 @@ async def get_app_icon(app_id: str):
     raise HTTPException(status_code=404, detail="Icon not found on disk")
 
 
-@app.get("/api/update/check", dependencies=[Depends(require_local_or_token)])
-async def check_update():
-    manifest_url = get_update_manifest_url()
-    try:
-        async with httpx.AsyncClient(timeout=5.0) as client:
-            res = await client.get(manifest_url)
-        if res.status_code == 200:
-            data = res.json()
-            latest = str(data.get("version", "")).lstrip('v')
-            if latest:
-                update_avail = ota_security.is_version_newer(latest, VERSION)
-                sig_valid = ota_security.verify_manifest_signature(data)
-                has_sig = "signature" in data and bool(data["signature"])
-                allow_unsigned = os.getenv("LRP_ALLOW_UNSIGNED_OTA") == "1"
-
-                if has_sig and not sig_valid:
-                    update_avail = False
-                elif not has_sig and not allow_unsigned:
-                    update_avail = False
-
-                return {
-                    "current": VERSION,
-                    "latest": latest if (update_avail or allow_unsigned) else None,
-                    "update_available": update_avail,
-                    "signature_valid": sig_valid
-                }
-    except Exception as e:
-        logger.warning(f"Failed to check update manifest: {e}")
-    return {
-        "current": VERSION,
-        "latest": None,
-        "update_available": False,
-        "signature_valid": False
-    }
-
-
-@app.post("/api/update/apply", dependencies=[Depends(require_token)])
-async def apply_update():
-    # Execute the sudo wrapper instead of the local script directly
-    script_path = "/usr/local/bin/lrp-update"
-    if not os.path.exists(script_path):
-        # Fallback for dev environment
-        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "scripts", "update.sh"))
-        cmd = ["bash", script_path]
-    else:
-        cmd = ["sudo", script_path]
-
-    try:
-        # NO abrir un archivo de log aca. El actualizador redirige su propia salida a
-        # /var/log como primera cosa que hace, asi que capturarla desde
-        # el backend es redundante -- y peligroso: si el archivo pertenece a otro usuario
-        # de una corrida anterior, este `open()` lanza, se devuelve un 500 y el boton
-        # "Actualizar" de la app falla sin que la actualizacion llegue a lanzarse.
-        subprocess.Popen(
-            cmd,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            start_new_session=True
-        )
-        return {"status": "started"}
-    except Exception as e:
-        logger.error(f"Failed to start update script: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
 @app.post("/api/system/update")
 async def system_apply_update(request: Request):
+    # Update clasico (no OTA): lanza scripts/update.sh en background. Se conserva T-150c1;
+    # no depende del manifiesto firmado.
     require_local(request)
     script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "scripts", "update.sh"))
     if not os.path.exists(script_path):

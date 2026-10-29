@@ -519,21 +519,14 @@
                     </div>
                 </details>
 
-                <!-- ACTUALIZACIÓN -->
+                <!-- CERTIFICADO CA (el bloque de Actualización/OTA se retiró en T-150c1) -->
                 <details class="skin-bg-panel rounded-xl border border-gray-700 group overflow-hidden w-full">
                     <summary class="p-3 font-semibold flex justify-between items-center cursor-pointer select-none">
-                        <span>Actualización</span>
+                        <span>Certificado CA</span>
                         <svg viewBox="0 0 24 24" fill="none" class="w-4 h-4 transition-transform group-open:rotate-180"><g transform="scale(1.33333)"><polyline points="15.25 6.5 9 12.75 2.75 6.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></polyline></g></svg>
                     </summary>
                     <div class="p-3 pt-0 border-t border-gray-700 mt-2">
-                        <div class="flex flex-col gap-3 pt-2">
-                            <div class="flex justify-between items-center">
-                                <span id="version-text" class="text-xs text-gray-400">Versión --</span>
-                                <button id="update-btn" onclick="checkUpdate()" class="bg-blue-600 px-3 py-1 rounded text-xs font-bold active:bg-blue-500">Buscar</button>
-                            </div>
-                            <div id="update-notes" class="text-xs text-gray-300 hidden p-2 bg-black/30 rounded border border-gray-700 whitespace-pre-wrap"></div>
-                            <a id="ca-download-link" href="/api/ca" download class="skin-text-main bg-gray-800 hover:bg-gray-700 px-3 py-2 rounded text-xs font-bold text-center block w-full mt-1">Descargar Certificado CA</a>
-                        </div>
+                        <a id="ca-download-link" href="/api/ca" download class="skin-text-main bg-gray-800 hover:bg-gray-700 px-3 py-2 rounded text-xs font-bold text-center block w-full">Descargar Certificado CA</a>
                     </div>
                 </details>
 

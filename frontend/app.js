@@ -83,25 +83,6 @@ const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
 
 let token = 'guest';
 let lastSuggestedKiosks = [];
-let latestUpdateVersion = null;
-let channel = 'stable';
-
-function renderChannel(value) {
-    channel = value === 'beta' ? 'beta' : 'stable';
-    document.documentElement.dataset.lrpChannel = channel;
-
-    let channelEl = document.getElementById('channel-text');
-    if (!channelEl) {
-        channelEl = document.createElement('span');
-        channelEl.id = 'channel-text';
-        channelEl.className = 'text-xs text-gray-400 ml-2';
-        const versionEl = document.getElementById('version-text');
-        if (versionEl && versionEl.parentNode) {
-            versionEl.parentNode.appendChild(channelEl);
-        }
-    }
-    if (channelEl) channelEl.textContent = `Canal ${channel}`;
-}
 
 function toast(message) {
     const el = document.createElement('div');
@@ -209,10 +190,7 @@ async function fetchConfig() {
         if (res.ok) {
             const data = await res.json();
             hostname = data.hostname || '';
-            renderChannel(data.channel);
 
-            const verText = document.getElementById('version-text');
-            if (verText) verText.textContent = `Versión ${data.version || '1.0.0'}`;
             const footerVer = document.getElementById('app-version-footer');
             if (footerVer) footerVer.textContent = `${data.version || '1.0.0'} — LinuxRemotePlayer`;
         }
@@ -1874,58 +1852,6 @@ function closeDrawer() {
 }
 function comingSoon() {
     toast('Esta sección estará disponible próximamente.');
-}
-
-async function checkUpdate() {
-    const btn = document.getElementById('update-btn');
-    if (!btn) return;
-
-    if (latestUpdateVersion) {
-        applyUpdate();
-        return;
-    }
-
-    toast('Buscando actualizaciones...');
-    try {
-        const res = await fetch(`${apiUrl}/update/check`, {
-            headers: { 'X-Auth-Token': token }
-        });
-        if (res.ok) {
-            const data = await res.json();
-            if (data.update_available) {
-                latestUpdateVersion = data.latest;
-                btn.textContent = `Actualizar a v${data.latest}`;
-                btn.className = 'bg-green-600 px-3 py-1 rounded text-xs font-bold active:bg-green-500';
-                toast(`Actualización disponible: v${data.latest}`);
-            } else {
-                toast('La app está actualizada');
-            }
-        } else {
-            toast('Error al comprobar actualizaciones');
-        }
-    } catch (err) {
-        console.error(err);
-        toast('Error de conexión');
-    }
-}
-
-async function applyUpdate() {
-    toast('Aplicando actualización...');
-    try {
-        const res = await fetch(`${apiUrl}/update/apply`, {
-            method: 'POST',
-            headers: { 'X-Auth-Token': token }
-        });
-        if (res.ok) {
-            toast('Actualizando... la app se reconectará sola');
-            closeSettings();
-        } else {
-            toast('Error al aplicar actualización');
-        }
-    } catch (err) {
-        console.error(err);
-        toast('Error de conexión');
-    }
 }
 
 const WEBSITE_URL = 'https://www.linuxremoteplayer.com/';
