@@ -27,8 +27,6 @@ const statusEl = {
 };
 let lastLongPressTime = 0;
 let ws;
-let mediaRecorder;
-let audioChunks = [];
 
 // Resilient token storage helper - CONN-04
 function getDBToken() {
@@ -85,8 +83,6 @@ const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
 
 let token = 'guest';
 let lastSuggestedKiosks = [];
-let buyUrl = 'https://www.linuxremoteplayer.com/';
-let isLicensed = false;
 let latestUpdateVersion = null;
 let channel = 'stable';
 
@@ -141,10 +137,6 @@ async function initToken() {
     if (urlToken) {
         localStorage.setItem('license_token', urlToken);
         await setDBToken(urlToken);
-    }
-    const urlLicense = urlParams.get('license');
-
-    if (urlToken || urlLicense) {
         history.replaceState({}, document.title, window.location.pathname);
     }
 
@@ -156,33 +148,6 @@ async function initToken() {
         }
     }
     token = storedToken || 'guest';
-
-    if (urlLicense) {
-        if (token === 'guest') {
-            // Save as pending license (finding #7)
-            localStorage.setItem('pending_license', urlLicense);
-            toast('Clave guardada. Por favor, empareja tu dispositivo primero.');
-            const input = document.getElementById('license-input');
-            if (input) input.value = urlLicense;
-        } else {
-            setTimeout(async () => {
-                const input = document.getElementById('license-input');
-                if (input) input.value = urlLicense;
-                await activateLicenseKey();
-            }, 1000);
-        }
-    }
-}
-
-// Insecure context (http) -> banner pointing to the HTTPS URL (mic needs HTTPS).
-if (!window.isSecureContext && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
-    const httpsUrl = `https://${location.hostname}:${location.port || '8000'}${location.pathname}`;
-    window.addEventListener('load', () => {
-        const banner = document.createElement('div');
-        banner.style.cssText = 'background:#7f1d1d;color:#fff;padding:8px 12px;font-size:13px;text-align:center';
-        banner.innerHTML = `El micrófono necesita HTTPS. <a href="${httpsUrl}" style="color:#fca5a5;font-weight:bold">Abrir versión segura</a> y acepta el certificado una vez.`;
-        document.body.prepend(banner);
-    });
 }
 
 const port = window.location.port || '8000';
@@ -196,8 +161,7 @@ let hostname = '';
 
 const DEFAULT_SKIN = 'day';
 const SKINS = ['day', 'night', 'cafe', 'anime'];
-// Ids anteriores a v1.9 -> equivalente en la paleta nueva. 'dark' ya no depende de la
-// licencia: era el tema oscuro viejo, ahora simplemente es 'night'.
+// Ids anteriores a v1.9 -> equivalente en la paleta nueva. 'dark' ahora es 'night'.
 const LEGACY_SKINS = { neon: 'night', dark: 'night' };
 const SKIN_THEME_COLOR = {
     day: '#f6f2ea',
@@ -239,49 +203,18 @@ function setSkin(skin) {
 const initialSkin = localStorage.getItem('lrp_skin') || DEFAULT_SKIN;
 setSkin(initialSkin);
 
-async function fetchLicenseStatus() {
-    try {
-        const res = await fetch(`${apiUrl}/license/status`, {
-            headers: { 'X-Auth-Token': token }
-        });
-        if (res.ok) {
-            const data = await res.json();
-            isLicensed = true; // v2.0 offline voice & features are unlocked
-
-            const micRow = document.getElementById('mic-row');
-            const voiceCard = document.getElementById('voice-commands-card');
-            if (micRow) {
-                micRow.style.display = 'flex';
-                if (voiceCard) {
-                    voiceCard.classList.remove('hidden');
-                }
-                
-                if (!localStorage.getItem('lrp_voice_hint_shown')) {
-                    localStorage.setItem('lrp_voice_hint_shown', 'true');
-                    toast("Consejo: mantén pulsado el micrófono y di 'abre youtube'");
-                }
-            }
-        }
-    } catch (err) {
-        console.error('Failed to get license status:', err);
-    }
-}
-
 async function fetchConfig() {
     try {
         const res = await fetch(`${apiUrl}/config`);
         if (res.ok) {
             const data = await res.json();
             hostname = data.hostname || '';
-            buyUrl = data.buy_url || 'https://www.linuxremoteplayer.com/';
             renderChannel(data.channel);
 
             const verText = document.getElementById('version-text');
             if (verText) verText.textContent = `Versión ${data.version || '1.0.0'}`;
             const footerVer = document.getElementById('app-version-footer');
             if (footerVer) footerVer.textContent = `${data.version || '1.0.0'} — LinuxRemotePlayer`;
-
-            await fetchLicenseStatus();
         }
     } catch (err) {
         console.error('Config fetch failed:', err);
@@ -392,9 +325,6 @@ function connect() {
             } else if (res.status === 'success' || res.status === 'error') {
                 statusEl.textContent = res.status === 'error' ? `Error: ${res.message}` : 'Connected';
                 statusEl.className = res.status === 'error' ? 'text-red-500 text-xs font-bold' : 'text-green-500 text-xs font-bold';
-                if (res.status === 'error' && res.code === 'in_use_elsewhere') {
-                    handleLicenseConflict();
-                }
                 if (res.status === 'success' && res.message === 'Authenticated') {
                     const row = document.getElementById('apps-row');
                     if (row && !row.children.length) {
@@ -731,121 +661,6 @@ if (kbInput) {
     kbInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); wsSend({ type: 'input', device: 'gamepad', action: 'press', key: 'KEY_ENTER' }); } });
 }
 
-// --- Voice - COR-02 pointer listeners ---
-let micHeld = false;
-let micStartMs = 0;
-let micTimerId = null;
-let micDisplayTimerId = null;
-let micDiscard = false;
-
-async function startVoice() {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { toast('Captura de audio no soportada (requiere HTTPS).'); return; }
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        if (!micHeld) {
-            // Cancelado durante la espera (ej. iOS delay)
-            stream.getTracks().forEach(t => t.stop());
-            return;
-        }
-        let mimeType = '';
-        if (MediaRecorder.isTypeSupported('audio/webm')) mimeType = 'audio/webm';
-        else if (MediaRecorder.isTypeSupported('audio/mp4')) mimeType = 'audio/mp4';
-        
-        const options = mimeType ? { mimeType } : {};
-        mediaRecorder = new MediaRecorder(stream, options);
-        mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
-        mediaRecorder.onstop = () => {
-            if (!micDiscard && audioChunks.length > 0) {
-                const blob = mimeType ? new Blob(audioChunks, { type: mimeType }) : new Blob(audioChunks);
-                if (ws && ws.readyState === WebSocket.OPEN) ws.send(blob);
-            }
-            audioChunks = [];
-            stream.getTracks().forEach((t) => t.stop());
-        };
-        mediaRecorder.start();
-        micDiscard = false;
-
-        const overlay = document.getElementById('mic-overlay');
-        const timerEl = document.getElementById('mic-timer');
-        if (overlay && timerEl) {
-            overlay.classList.remove('hidden');
-            overlay.classList.add('flex');
-            let secs = 0;
-            timerEl.textContent = '00:00';
-            micDisplayTimerId = setInterval(() => {
-                secs++;
-                timerEl.textContent = '00:0' + secs;
-            }, 1000);
-        }
-
-        micTimerId = setTimeout(() => {
-            stopVoice(false);
-        }, 8000);
-
-        if (navigator.vibrate) navigator.vibrate(50);
-        statusEl.textContent = 'Listening...'; statusEl.className = 'text-blue-400 text-xs font-bold';
-    } catch (e) { console.error('Mic denied', e); toast('Error de micrófono: ' + e.name); }
-}
-
-function stopVoice(cancel) {
-    if (micTimerId) { clearTimeout(micTimerId); micTimerId = null; }
-    if (micDisplayTimerId) { clearInterval(micDisplayTimerId); micDisplayTimerId = null; }
-    
-    const overlay = document.getElementById('mic-overlay');
-    if (overlay) {
-        overlay.classList.add('hidden');
-        overlay.classList.remove('flex');
-    }
-
-    if (mediaRecorder && mediaRecorder.state === 'recording') {
-        micDiscard = cancel;
-        mediaRecorder.stop();
-        if (navigator.vibrate && !cancel) navigator.vibrate([40, 40]);
-        if (!cancel) {
-            statusEl.textContent = 'Processing AI...'; statusEl.className = 'text-purple-400 text-xs font-bold';
-        } else {
-            statusEl.textContent = 'Cancelado'; statusEl.className = 'text-gray-400 text-xs font-bold';
-            setTimeout(() => { if (statusEl.textContent === 'Cancelado') statusEl.textContent = 'Connected'; }, 2000);
-        }
-    }
-}
-
-const micBtn = document.getElementById('mic-btn');
-if (micBtn) {
-    micBtn.addEventListener('contextmenu', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-    });
-    micBtn.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        try { micBtn.setPointerCapture(e.pointerId); } catch(_) {}
-        micHeld = true;
-        micStartMs = Date.now();
-        if (mediaRecorder && mediaRecorder.state === 'recording') return;
-        startVoice();
-    });
-    micBtn.addEventListener('pointerup', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        try { micBtn.releasePointerCapture(e.pointerId); } catch(_) {}
-        micHeld = false;
-        const duration = Date.now() - micStartMs;
-        if (duration < 250) {
-            stopVoice(true);
-            toast('Mantén pulsado para hablar');
-        } else {
-            stopVoice(false);
-        }
-    });
-    micBtn.addEventListener('pointercancel', (e) => {
-        e.preventDefault();
-        try { micBtn.releasePointerCapture(e.pointerId); } catch(_) {}
-        micHeld = false;
-        stopVoice(true);
-    });
-}
-
 // --- App grid (most-used first + more) - SEC-03 XSS DOM construction ---
 function getUsage() { try { return JSON.parse(localStorage.getItem('app_usage') || '{}'); } catch (e) { return {}; } }
 function bumpUsage(id) { const u = getUsage(); u[id] = (u[id] || 0) + 1; localStorage.setItem('app_usage', JSON.stringify(u)); }
@@ -882,13 +697,13 @@ let activeKioskUrl = null;
 
 const BUILTIN_APPS_MAP = {
     netflix: { id: 'netflix', name: 'Netflix', url: 'https://netflix.com', category: 'video', color: '#E50914', iconText: 'Netflix' },
-    youtube: { id: 'youtube', name: 'YouTube', url: 'https://youtube.com/tv', category: 'video', color: '#FF0000', iconText: 'YouTube', hasVoice: true, voiceCommands: ['buscar'] },
+    youtube: { id: 'youtube', name: 'YouTube', url: 'https://youtube.com/tv', category: 'video', color: '#FF0000', iconText: 'YouTube' },
     spotify: { id: 'spotify', name: 'Spotify', url: 'https://open.spotify.com', category: 'music', color: '#1DB954', iconText: 'Spotify' },
     animeav1: { id: 'animeav1', name: 'AnimeAV1', url: 'https://animeav1.com', category: 'video', color: '#7C3AED', iconText: 'AV1' },
     stremio: { id: 'stremio', name: 'Stremio', url: 'https://web.stremio.com', category: 'video', color: '#6A38A0', iconText: 'Stremio' },
     animeflv: { id: 'animeflv', name: 'AnimeFLV', url: 'https://www3.animeflv.net', category: 'video', color: '#EA580C', iconText: 'FLV' },
     crunchyroll: { id: 'crunchyroll', name: 'Crunchyroll', url: 'https://www.crunchyroll.com', category: 'video', color: '#F47521', iconText: 'CR' },
-    youtubetv: { id: 'youtubetv', name: 'YouTube TV', url: 'https://tv.youtube.com', category: 'video', color: '#FF0000', iconText: 'YT TV', hasVoice: true, voiceCommands: ['buscar'] },
+    youtubetv: { id: 'youtubetv', name: 'YouTube TV', url: 'https://tv.youtube.com', category: 'video', color: '#FF0000', iconText: 'YT TV' },
     disneyplus: { id: 'disneyplus', name: 'Disney+', url: 'https://www.disneyplus.com', category: 'video', color: '#113CCF', iconText: 'D+' },
     primevideo: { id: 'primevideo', name: 'Prime Video', url: 'https://www.primevideo.com', category: 'video', color: '#00A8E1', iconText: 'Prime' },
     plutotv: { id: 'plutotv', name: 'Pluto TV', url: 'https://pluto.tv', category: 'video', color: '#FFD700', iconText: 'Pluto' },
@@ -1381,15 +1196,6 @@ function createAppTile(app, isHidden = false) {
         card.style.boxShadow = '0 0 10px rgba(16, 185, 129, 0.25)';
     }
 
-    // Voice badge for apps supporting voice commands (top-left of app card)
-    if (app.hasVoice) {
-        const voiceBadge = document.createElement('div');
-        voiceBadge.className = 'voice-badge';
-        voiceBadge.title = 'Comandos por voz disponibles (ej: Buscar [título])';
-        voiceBadge.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-2.5 h-2.5"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>`;
-        card.appendChild(voiceBadge);
-    }
-
     // Pin badge for apps in Quick Dock (top-right of app card)
     if (app.id && isAppPinned(app.id) && !isEditAppsMode) {
         const pinBadge = document.createElement('div');
@@ -1563,16 +1369,6 @@ function renderApps(kiosks) {
         });
     }
 
-    // Toggle external voice tip banner
-    const voiceTip = document.getElementById('hub-voice-tip');
-    if (voiceTip) {
-        if (appHubCategory === 'voice') {
-            voiceTip.classList.remove('hidden');
-        } else {
-            voiceTip.classList.add('hidden');
-        }
-    }
-
     const drawer = document.getElementById('drawer-grid');
     if (drawer) {
         drawer.innerHTML = '';
@@ -1581,9 +1377,6 @@ function renderApps(kiosks) {
         const candidateApps = isEditAppsMode ? allApps : visibleKiosks;
 
         const filteredForDrawer = candidateApps.filter(app => {
-            if (appHubCategory === 'voice') {
-                return app.hasVoice === true || (app.voiceCommands && app.voiceCommands.length > 0);
-            }
             if (appHubCategory !== 'all') {
                 const cat = app.category || (app.name && /spotify|radio|music/i.test(app.name) ? 'music' : 'video');
                 if (cat !== appHubCategory && (appHubCategory === 'web' && !app.url)) return false;
@@ -1607,7 +1400,7 @@ function renderApps(kiosks) {
         if (sortedDrawerApps.length === 0) {
             const emptyNotice = document.createElement('div');
             emptyNotice.className = 'col-span-4 text-center text-xs text-gray-500 py-4';
-            emptyNotice.textContent = appHubCategory === 'voice' ? 'No hay aplicaciones con comandos de voz en esta categoría' : 'No se encontraron aplicaciones';
+            emptyNotice.textContent = 'No se encontraron aplicaciones';
             drawer.appendChild(emptyNotice);
         } else {
             sortedDrawerApps.forEach((app) => {
@@ -1680,10 +1473,6 @@ async function fetchApps() {
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
         lastSuggestedKiosks = data.suggested_kiosks || [];
-        const voiceList = document.getElementById('voice-apps-list');
-        if (voiceList) {
-            voiceList.innerText = lastSuggestedKiosks.map(k => k.name || k.id).join(', ');
-        }
         renderApps(lastSuggestedKiosks);
         renderNativeList(data.installed_apps || []);
     } catch (e) { console.error('Failed to load apps:', e); }
@@ -2087,73 +1876,6 @@ function comingSoon() {
     toast('Esta sección estará disponible próximamente.');
 }
 
-
-
-async function activateLicenseKey(force = false) {
-    const input = document.getElementById('license-input');
-    if (!input) return;
-    const key = input.value.trim();
-    if (!key) {
-        toast('Por favor, ingresa una clave de licencia.');
-        return;
-    }
-    toast('Activando licencia...');
-    try {
-        const res = await fetch(`${apiUrl}/license/activate`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Auth-Token': token
-            },
-            body: JSON.stringify({ key, force })
-        });
-        if (res.ok) {
-            toast('Licencia activada con éxito. Actualizando...');
-            input.value = '';
-            setTimeout(() => {
-                fetchLicenseStatus();
-            }, 1000);
-        } else if (res.status === 409) {
-            const move = confirm('Esta licencia está activa en otro dispositivo. ¿Mudarla aquí? El otro dispositivo perderá el premium.');
-            if (move) {
-                await activateLicenseKey(true);
-            } else {
-                toast('Activación cancelada.');
-            }
-        } else {
-            const err = await res.json();
-            toast(`Error: ${err.detail || 'Clave inválida'}`);
-        }
-    } catch (err) {
-        console.error('Failed to activate license:', err);
-        toast('Error de red al activar licencia.');
-    }
-}
-
-let licenseConflictPrompted = false;
-async function handleLicenseConflict() {
-    if (licenseConflictPrompted) return;
-    licenseConflictPrompted = true;
-    const move = confirm('Tu licencia está activa en otro dispositivo. ¿Mudarla aquí? El otro dispositivo perderá el premium.');
-    if (move) {
-        try {
-            const res = await fetch(`${apiUrl}/license/takeover`, {
-                method: 'POST',
-                headers: { 'X-Auth-Token': token }
-            });
-            if (res.ok) {
-                toast('Licencia mudada a este dispositivo. Probá la voz de nuevo.');
-            } else {
-                toast('No se pudo mudar la licencia.');
-            }
-        } catch (err) {
-            console.error('Takeover failed:', err);
-            toast('Error de red al mudar la licencia.');
-        }
-    }
-    setTimeout(() => { licenseConflictPrompted = false; }, 10000);
-}
-
 async function checkUpdate() {
     const btn = document.getElementById('update-btn');
     if (!btn) return;
@@ -2206,16 +1928,12 @@ async function applyUpdate() {
     }
 }
 
-function buyLicense() {
-    window.open(buyUrl, '_blank');
-}
-
 const WEBSITE_URL = 'https://www.linuxremoteplayer.com/';
 
 function shareApp() {
     const shareData = {
         title: 'LinuxRemotePlayer',
-        text: '🎬 Convertí mi PC Linux en una Smart TV con control remoto desde el móvil. Touchpad, teclado, apps y voz. Mirá:',
+        text: '🎬 Convertí mi PC Linux en una Smart TV con control remoto desde el móvil. Touchpad, teclado y apps. Mirá:',
         url: WEBSITE_URL
     };
     if (navigator.share) {
@@ -2476,33 +2194,13 @@ async function handlePairingSuccess(val) {
     toast('Dispositivo emparejado con éxito');
     showPairingScreen(false);
 
-    // Always connect after onboarding; activate any pending license afterwards.
     fetchConfig().then(() => {
         connect();
         fetchApps();
     });
-    const pending = localStorage.getItem('pending_license');
-    if (pending) {
-        localStorage.removeItem('pending_license');
-        setTimeout(async () => {
-            const input = document.getElementById('license-input');
-            if (input) input.value = pending;
-            await activateLicenseKey();
-        }, 1200);
-    }
 }
 
 initToken().then(() => {
-    const licenseInput = document.getElementById('license-input');
-    if (licenseInput) {
-        licenseInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                activateLicenseKey();
-            }
-        });
-    }
-
     if (!isStandalone && isMobile) {
         showInstallScreen();
     } else {

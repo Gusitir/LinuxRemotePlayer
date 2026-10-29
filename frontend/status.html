@@ -416,9 +416,9 @@
                         <div class="stat-sub">Servidor API</div>
                     </div>
                     <div class="stat-card">
-                        <h2>Estado Kiosk</h2>
+                        <h2>Reproductor</h2>
                         <div class="stat-value"><span class="badge" id="val-kiosk">Idle</span></div>
-                        <div class="stat-sub">Modo <span id="val-mode">...</span></div>
+                        <div class="stat-sub">Estado de pantalla</div>
                     </div>
                     <div class="stat-card">
                         <h2>Sistema</h2>
@@ -426,19 +426,14 @@
                         <div class="stat-sub">uinput / audio</div>
                     </div>
                     <div class="stat-card">
-                        <h2>Licencia</h2>
-                        <div class="stat-value"><span class="badge error" id="val-license" style="background-color: var(--bg-elevated); color: var(--text-secondary);">Verificando...</span></div>
-                        <div class="stat-sub">Versión <span id="val-version">—</span></div>
-                    </div>
-                    <div class="stat-card">
-                        <h2>Voz (IA)</h2>
-                        <div class="stat-value"><span class="badge" id="val-voice">Activado</span></div>
-                        <div class="stat-sub">Micrófono en móvil</div>
+                        <h2>Versión</h2>
+                        <div class="stat-value" id="val-version">—</div>
+                        <div class="stat-sub">LinuxRemotePlayer</div>
                     </div>
                     <div class="stat-card">
                         <h2>Adblock</h2>
                         <div class="stat-value"><span class="badge" id="val-adblock">Verificando...</span></div>
-                        <div class="stat-sub">Estado del kiosk</div>
+                        <div class="stat-sub">Filtro del navegador</div>
                     </div>
                 </div>
 
@@ -449,18 +444,6 @@
                         <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 6px;" id="update-text">Verificando actualizaciones...</p>
                         <button id="btn-update" class="btn-action" style="display: none; background-color: var(--success); color: #fff; width: auto; padding: 8px 14px; margin-top: 6px;" tabindex="0">Actualizar a vX.Y.Z</button>
                     </div>
-
-                    <details style="font-size: 0.85rem; color: var(--text-secondary);">
-                        <summary style="cursor: pointer; font-weight: 500; color: var(--accent); user-select: none; outline: none;" tabindex="0">Cambiar de modo (TV o Escritorio)</summary>
-                        <div style="margin-top: 10px; padding-left: 10px; border-left: 2px solid rgba(255,255,255,0.1);">
-                            <p style="margin-bottom: 6px;"><strong>TV dedicada:</strong> panel con PIN al encender.</p>
-                            <p style="margin-bottom: 8px;"><strong>Escritorio:</strong> app corre silenciosa de fondo.</p>
-                            <div style="background: rgba(0,0,0,0.3); padding: 6px; border-radius: 6px; font-family: monospace; display: flex; justify-content: space-between; align-items: center;">
-                                <span id="cmd-setup">sudo lrp-setup</span>
-                                <button onclick="navigator.clipboard.writeText('sudo lrp-setup'); this.innerText='¡Copiado!'; setTimeout(()=>this.innerText='Copiar', 2000)" style="background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-primary); padding: 3px 6px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;" tabindex="0">Copiar</button>
-                            </div>
-                        </div>
-                    </details>
                 </div>
             </div>
         </div>
@@ -655,26 +638,13 @@
                         uBadge.className = data.uinput_ok ? "badge" : "badge error";
                     }
 
-                    const vBadge = document.getElementById('val-voice');
-                    if (vBadge) {
-                        vBadge.textContent = data.voice_enabled ? "Activado" : "Desactivado";
-                        vBadge.className = data.voice_enabled ? "badge" : "badge error";
-                    }
-
                     const aBadge = document.getElementById('val-adblock');
                     if (aBadge) {
                         aBadge.textContent = data.adblock_status || "Inactivo";
                         aBadge.className = data.adblock_status ? "badge" : "badge error";
                     }
 
-                    const lBadge = document.getElementById('val-license');
-                    if (lBadge) {
-                        lBadge.textContent = data.licensed ? "Activa (Pro)" : "Sin licencia";
-                        lBadge.className = data.licensed ? "badge" : "badge error";
-                    }
-
                     if (data.version) document.getElementById('val-version').textContent = data.version;
-                    if (data.mode) document.getElementById('val-mode').textContent = data.mode === "desktop" ? "Escritorio" : "TV";
                 }
             } catch (e) {
                 console.error("Status polling failed", e);
