@@ -11,10 +11,10 @@ dirty: true
 assurance: Standard
 active_job: RUN THE LOOP
 active_plan: PLAN_v1.0.0-public.md (approved, D56)
-active_task: T-150a frontend (limpieza comercial, voz oculta y modo appliance) en ejecución
-last_verdict: APTO (T-149) — ciclo legacy cerrado; F1 no tiene veredicto todavía
-verdict_scope: "T-149 quedó APTO y publicado (cde09c8, 3a385c2) con panel y kiosk verificados por captura y auditoría de 289 tests. D56 cambia el producto a ISO open source 1.0.0; desde acá rige PLAN_v1.0.0-public.md."
-next_action: "cerrar T-150 (a frontend, b backend, c OTA, d Supabase), luego T-151 (panel compacto + onboarding QR iOS/Android + B37 + Bluetooth acotado); la ISO se reconstruye recién en T-154."
+active_task: T-150 apto; T-151 (panel compacto + onboarding QR) lista para arrancar
+last_verdict: APTO (T-150, F1)
+verdict_scope: "T-150 (F1) apto el 2026-10-29 en seis commits: GPL-3.0 + NOTICE, frontend sin licencia/voz/modo, backend sin superficie comercial, OTA eliminada de backend/panel/scripts/web, Supabase borrado y modo appliance fuera. Gate de fase: `pytest tests/` = 250 passed; HTPC desplegado y verificado por captura, sin referencias legacy en runtime. B19/B19b/M1 cerrados por eliminación (D56)."
+next_action: "T-151 (F2): barra compacta, onboarding QR con detección iOS/Android, B37 (cable/Wi-Fi) y Bluetooth acotado; después T-152 web/docs, T-153 APK, T-154 ISO y T-155 publicación."
 ```
 
 ## Blockers
@@ -33,6 +33,11 @@ next_action: "cerrar T-150 (a frontend, b backend, c OTA, d Supabase), luego T-1
 
 ## Fresh evidence
 
+- **F1 cerrada (T-150)**: gate de fase `pytest tests/` = **250 passed** (376 s) tras la poda de tests de
+  licencia/OTA/Supabase; commits `ee93f4c`, `30dbd69`, `180f717`, `d5b75f7`, `878d948`, `3cf38ed`,
+  `6df950e`. HTPC desplegado (main.py, run.py, status.html, index.html, app.js): unit activa, kiosk
+  único con `--new-instance`, `/api/status` con 8 claves, `/api/update/check` 404, `ota_security`
+  ausente, 0 referencias Supabase/update en runtime. Captura final sin licencia, voz ni actualización.
 - `legacy/2.0` + tag `v2.0.0-legacy` publicados en `origin`, con `LICENSE` GPL-3.0 y `NOTICE` en el
   commit `e452c9a`. `main` parte de `f698e18`.
 - `LICENSE` de `main` reemplazado por GPL-3.0 (553 líneas) + `NOTICE` con copyright 2026 Gusitir y

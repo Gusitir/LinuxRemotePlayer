@@ -43,7 +43,10 @@ Aprobado por el dueño (D56). El desarrollo previo vive en `legacy/2.0` + tag `v
 
 ### T-150 — F1: limpieza comercial, modo appliance, OTA y Supabase
 
-- Status: in progress (T-150a iniciada el 2026-10-29)
+- Status: **apto** (2026-10-29) — commits `ee93f4c` (GPL/NOTICE), `30dbd69` (frontend),
+  `180f717` (backend), `d5b75f7` (OTA backend/panel), `878d948` (OTA scripts/web), `3cf38ed`
+  (Supabase), `6df950e` (modo). Gate de fase: `pytest tests/` = 250 passed; HTPC verificado por
+  captura y sin referencias legacy en runtime.
 - Objective: eliminar del producto toda superficie comercial (licencia/premium/compra), el modo
   appliance/`lrp-setup`, la OTA completa (updater, firma, manifiestos, canal beta) y Supabase.
 - Sub-tareas:
