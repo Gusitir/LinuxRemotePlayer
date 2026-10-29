@@ -175,12 +175,9 @@ una interfaz `en*` y Wi-Fi no reporta conexión.
 
 ## B38 — Capturas de marketing con marcas de terceros
 
-**Abierto · bloquea la publicación (T-155)**
-
-`website/` y `README.md` usan capturas del control antiguo que incluyen logos de Netflix, YouTube,
-Spotify, TikTok, Prime/Kick y el botón de micrófono (voz diferida). En un repo GPL público eso es
-riesgo de marca y además promete features que 1.0.0 no muestra. Fix: reemplazar por capturas reales del
-panel 1.0.0 (sin logos de terceros, sin micrófono) y actualizar el mock del teléfono.
+**Cerrado (T-154, `0e86e69`)** — hero y sección usan capturas reales del panel 1.0.0
+(`panel_pairing.webp`, `panel_settings.webp`, chip `v1.0.0`), se borraron las seis capturas viejas con
+logos de apps y micrófono, y la web en producción ya sirve las nuevas (las viejas dan 404).
 
 ## B39 — Términos y textos legales sin revisión
 
@@ -191,12 +188,10 @@ una pasada legal antes de publicar, junto con `SECURITY.md` y `THIRD_PARTY_LICEN
 
 ## B40 — El instalador no avisa ni reinicia al terminar
 
-**Abierto · visible en el gate QEMU (T-154)**
-
-Tras copiar el sistema, el instalador deja la sesión live viva: en QEMU hubo que forzar `system_reset`
-a los 24 min. En hierro el usuario puede no saber que debe retirar el USB y reiniciar. Fix: mensaje
-final explícito (“instalación completa: retirá el USB y reiniciá”) y, en modo auto-install, reboot
-automático con contador, sin tocar el flujo interactivo.
+**Cerrado (T-154)** — el instalador imprime “Instalación completa. Retirá el USB y reiniciá…” y, en
+modo desatendido, cuenta 15 s y reinicia. Verificado en QEMU sobre la ISO `b2ada72d…`: reinicio solo
+(`boot_count=2`, sin `system_reset`) y arranque desde disco. El literal no se pudo fotografiar (la
+consola del instalador no es accesible por VT), pero está en el fuente embebido (2 ocurrencias).
 
 # CERRADOS
 

@@ -11,19 +11,16 @@ dirty: true
 assurance: Standard
 active_job: RUN THE LOOP
 active_plan: PLAN_v1.0.0-public.md (approved, D56)
-active_task: T-154 con gate QEMU apto; pendiente prueba física (dueño) y B40; T-153 APK y T-155 publicación después
+active_task: T-154 con gate QEMU apto sobre la ISO final; pendiente prueba física (dueño); T-153 y T-155 después
 last_verdict: APTO (T-150, T-151, T-152 y gate QEMU de T-154)
-verdict_scope: "T-150/T-151/T-152 aptos con evidencia en producción. T-154: ISO 1.0.0 (575d82ba…, 1,95 GiB) construida en clon nativo y verificada en QEMU UEFI: instalación GPT/ESP con shim, arranque desde disco (Boot0004 LRP-OS) y panel v1.0.0 operativo. Falta la prueba física en el HTPC y el aviso/auto-reboot final (B40)."
-next_action: "con el dueño: instalar la ISO 1.0.0 en el HTPC (borra disco) y cerrar T-154; luego T-153 (APK TWA) y T-155 (release + repo público) tras resolver B38 (capturas con marcas) y B39 (revisión legal)."
+verdict_scope: "T-150/T-151/T-152 aptos con evidencia en producción. T-154: ISO final `b2ada72d…` (1,95 GiB) con B40 construida en clon nativo y verificada en QEMU UEFI: instalación sin intervención, **reinicio automático** (boot_count=2, sin system_reset), arranque desde `Boot0004 LRP-OS` y panel v1.0.0 a los 8 min. B38 y B40 cerrados. Falta la prueba física en el HTPC y `dpkg -V` sobre esa instalación."
+next_action: "instalar la ISO `b2ada72d…` en el HTPC con el dueño presente (borra disco) y correr `dpkg -V` + checks de D53; luego T-153 (APK TWA, requiere Java) y T-155 (release + repo público + B39)."
 ```
 
 ## Blockers
 
-- **B38 bloquea la publicación**: las capturas de la web y del README muestran logos de Netflix/
-  YouTube/Spotify/TikTok y el botón de micrófono del control viejo. Hay que reemplazarlas por capturas
-  1.0.0 reales antes de T-155.
 - **B39**: revisión legal de `terminos`/`terms`, `SECURITY.md` y `THIRD_PARTY_LICENSES.md` antes de
-  publicar.
+  publicar (B38 ya cerrado).
 - **Repo público desde el inicio (D56)** exige antes de la primera release: auditoría de secretos en
   toda la historia. Se hace en T-155.
 - **TWA/APK**: dominio decidido `www.linuxremoteplayer.com` (Vercel, `linux-remote-player.vercel.app`
@@ -39,6 +36,14 @@ next_action: "con el dueño: instalar la ISO 1.0.0 en el HTPC (borra disco) y ce
 - `dpkg -V` divergente en el HTPC por despliegue SSH; se normaliza al instalar la ISO 1.0.0 (T-154).
 
 ## Fresh evidence
+
+- **ISO final 1.0.0 `b2ada72d…` + re-gate QEMU (T-154)**: build desde `cacb8da` en clon nativo;
+  `.deb` 400 664 B; ISO 2 093 056 000 B (1,95 GiB), sha
+  `b2ada72ddc8e69e020d87e8483279c9ce41563f0a9ef94f62a11fdb6deb0c15a` (la anterior queda como
+  `.prev-575d82`). QEMU UEFI (TCG): instalación sin intervención, reinicio automático a los 566 s
+  (boot_count=2, `forced=0`), arranque desde `Boot0004 LRP-OS` y panel v1.0.0 a los 8 min. B40 validado
+  por comportamiento y por fuente (2 ocurrencias del aviso); B38 cerrado con capturas reales
+  `panel_pairing.webp`/`panel_settings.webp` (chip v1.0.0) ya servidas en producción (las viejas 404).
 
 - **ISO 1.0.0 + gate QEMU (T-154)**: clon nativo `/root/lrp-100 @ 423de41`, `VERSION=1.0.0`;
   `build_deb.sh` y `build_iso.sh` rc=0. `.deb` 400 336 B (`bb893200…`), ISO 2 093 056 000 B = 1,95 GiB

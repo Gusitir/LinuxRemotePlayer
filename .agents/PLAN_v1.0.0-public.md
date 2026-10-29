@@ -105,10 +105,10 @@ Aprobado por el dueño (D56). El desarrollo previo vive en `legacy/2.0` + tag `v
 
 ### T-154 — F5: ISO 1.0.0 y gates de release
 
-- Status: **gate QEMU apto** (2026-10-29) — ISO 1.0.0 construida (`575d82ba…`, 1,95 GiB) y probada en
-  QEMU UEFI (TCG): boot desde DVD, instalación a GPT/ESP con `EFI/LRP-OS/shimx64.efi`, reinicio manual y
-  arranque desde `Boot0004 LRP-OS` con el panel v1.0.0. **Pendiente**: prueba física en el HTPC (borra
-  disco, requiere al dueño) y el aviso/auto-reboot tras instalar (B40).
+- Status: **gate QEMU apto sobre la ISO final `b2ada72d…`** (2026-10-29) — instalación sin intervención,
+  **reinicio automático** (boot_count=2, `forced=0`) y arranque desde `Boot0004 LRP-OS` con panel 1.0.0
+  a los 8 min. ISO 1,95 GiB, `.deb` 400 664 B. **Pendiente**: prueba física en el HTPC (borra disco,
+  requiere al dueño) y `dpkg -V` sobre la instalación limpia.
 - Objective: reconstruir la ISO una sola vez con todos los deltas y verificar instalación limpia,
   operación sin red, `dpkg -V` y prueba física.
 - Acceptance: ISO instala en UEFI, arranca al panel, control y ajustes sin red, `dpkg -V` limpio.
