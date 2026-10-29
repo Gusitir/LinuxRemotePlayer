@@ -1,156 +1,102 @@
-# Developing LinuxRemotePlayer
+# Desarrollo de LRP OS
 
-> **Start here if you've just joined the project.** This is how to get running, how to make
-> a change safely, and what will bite you. For the shape of the system — components,
-> boundaries, data flow, why things are the way they are — read
-> [`ARCHITECTURE.md`](ARCHITECTURE.md) first; it's a 15-minute read and it will save you
-> from "fixing" something load-bearing.
+Guía para trabajar en LRP OS 1.0.0: entorno, build del paquete y de la ISO, y política de pruebas
+por fase.
 
-Verified against the code: **2026-07-24** · version `1.8.0`
+## 1. Entorno
 
----
-
-## 1. Day one: get it running
-
-You need a Debian 13 stable amd64 minimal machine with the LRP-owned Xorg/Openbox session — this
-project writes to the kernel's virtual input device, so it cannot be meaningfully developed on
-Windows or macOS. Other distributions, GPUs, or desktop environments may work accidentally, but
-are not guaranteed. The initial certified GPU is NVIDIA RTX 3060 12 GB with its Debian-repository
-driver.
+Se desarrolla en Debian 13 (o WSL con Debian 13). El código se ejecuta en Linux: `evdev`/`uinput`
+y `pactl` no existen en Windows.
 
 ```bash
-git clone <repo> && cd linuxremoteplayer
+sudo apt update
+sudo apt install -y python3 python3-venv python3-dev build-essential git \
+    ffmpeg curl ca-certificates openssl wmctrl pulseaudio-utils firefox-esr
+
+python3 -m venv backend/.venv
+backend/.venv/bin/pip install -r backend/requirements.txt
+```
+
+Para desarrollo del panel y de la PWA:
+
+```bash
 cd backend
-pip install -r requirements.txt
-python run.py
+LRP_DEV=true .venv/bin/python run.py     # HTTPS en https://127.0.0.1:8000
 ```
 
-`run.py` generates its own HTTPS certificates on first run (a local CA plus a leaf for your
-IP) and serves the PWA. Open the printed URL on a phone on the same network, accept the
-certificate warning once, and pair with the 6-digit PIN shown on the PC.
+`LRP_DEV=true` habilita `/docs` y `/openapi.json`. Nunca se deja activo en una instalación real.
 
-**If input does nothing:** your user needs access to `/dev/uinput`. The installer creates a
-udev rule for this; in a dev clone you may need to add it yourself or run with elevated
-privileges once to confirm that's the cause.
+## 2. Pruebas (D57: micro-gates por fase)
 
-**Environment variables** live in `backend/.env` (never committed — `.env.example` shows
-the shape). The ones that matter in dev: `PAIRING_TOKEN`, `KEYBOARD_LAYOUT`
-(`us` / `es` / `latam`), `ENABLE_VOICE`, `LRP_MODE`.
+La suite completa **no** se corre en cada tarea. Cada tarea valida solo lo que toca:
 
-## 2. Three things that will bite you
+| Cambio | Micro-gates |
+| --- | --- |
+| Python del backend | `python -m py_compile backend/*.py` y los tests del área |
+| Frontend | `node --check frontend/app.js`, parse del JS inline, `python scripts/check_css_sync.py` |
+| Scripts shell | `bash -n scripts/<archivo>.sh` |
+| Sitio | chequeo de links relativos y grep de términos prohibidos |
 
-These are not style preferences. Each one has cost someone real time.
-
-**The `.deb` must be built from a native Linux filesystem.** Building from a Windows mount
-(`/mnt/...` under WSL) silently truncates files over ~40 KB. The package looks valid, passes
-its checks, and ships a broken `app.js`. Build from a fresh clone inside the Linux home
-directory — nowhere else.
-
-**The frontend has no build step.** `app.js`, `index.html` and the CSS ship exactly as
-written. Don't reach for a bundler; the tooling absence is deliberate (see ARCHITECTURE §7).
-
-**`frontend/skins.css` has a bridge block at the bottom** that remaps Tailwind-ish neutral
-utility classes (`border-gray-700`, `text-gray-300`, `bg-blue-600`…) onto theme variables.
-The markup predates theming and assumes a dark background. **If you add a neutral utility
-class to the markup, bridge it too**, or the light theme — which is the default — breaks
-silently for that element.
-
-## 3. How to make a change
-
-This project runs an executor/auditor workflow: **one task, one commit, evidence, stop.**
-It applies to human contributors exactly as it does to the AI agents. The rules live in
-[`.agents/AGENTS.md`](../.agents/AGENTS.md); the short version:
-
-1. **Read `.agents/CURRENT.md` first.** It's the live state: what's shipped, what's next,
-   what's known broken. Don't start from the code.
-2. **One task per commit**, prefixed `[T-NN]`. Never mix two concerns in one commit.
-3. **`git add` the task's files explicitly.** Never `git add -A` — it sweeps up unrelated
-   work in progress.
-4. **Evidence or it didn't happen.** Paste the real output of the command that proves your
-   change works. "Verified" without output is the one thing that will get a change rejected
-   outright.
-5. **Say what you did NOT verify.** If you couldn't test something (no hardware, another OS,
-   another browser), say so — it becomes an item in `.agents/TESTING.md`. Claiming it works
-   is worse than saying you didn't check.
-6. **Out-of-scope findings go to `CURRENT.md`, not into your commit.** Noticed a bug next to
-   your change? Write it down; don't fix it in the same commit.
-
-Before pushing, run what the build and quality gates run:
+Al **cierre de fase** se corre la suite completa:
 
 ```bash
-python3 scripts/check_css_sync.py    # fails if a CSS class is used but never defined
-node --check frontend/app.js         # syntax
-python -m py_compile backend/*.py    # syntax
-pytest tests -q                      # automated test suite (272 tests passing)
-bash -n scripts/*.sh scripts/debian/*.sh # shell syntax verification
+python -m pytest -q tests/
 ```
 
-The automated test suite in `tests/` covers platform API, NLU intent parsing, local STT benchmarking,
-Astra security/resilience mitigations, kiosk launching, and Debian packaging. Physical and device
-verification is documented in `.agents/TESTING.md`.
+Los tests por área más usados:
 
-## 4. Common changes, and where they go
-
-### Add a streaming site to the launcher
-
-`backend/main.py` → `SUGGESTED_KIOSKS` (~line 117):
-
-```python
-{"id": "twitch", "name": "Twitch", "url": "https://twitch.tv", "color": "#9146FF"},
+```bash
+python -m pytest -q tests/test_local_intent.py tests/test_local_stt.py
+python -m pytest -q tests/test_security_mitigations.py tests/test_system_platform.py
+python -m pytest -q tests/test_kiosk_debian.py
 ```
 
-`SUGGESTED_KIOSKS_MAP` derives from it automatically, and so does the list of valid targets
-handed to the voice model — **the intent model can only ever name a target from this list**,
-which is why it can't be tricked into launching arbitrary URLs. Adding an entry here is all
-that's needed for both the button and the voice command.
+## 3. Build del paquete `.deb`
 
-### Add or fix a media key
+```bash
+./scripts/build_deb.sh
+```
 
-`backend/main.py` → `MEDIA_KEYS` (~line 138). This is a whitelist: anything not in it is
-rejected before reaching the input layer, from both the buttons and the voice path.
+Deja `dist/linuxremoteplayer_<VERSION>_amd64.deb` y su `.sha256`. El script corre el chequeo de CSS
+y falla si el empaquetado queda inconsistente.
 
-### Add or fix a keyboard layout
+## 4. Build de la ISO
 
-`backend/input_emulator.py` → `_build_char_keys()` (~line 28). Layouts branch on
-`KEYBOARD_LAYOUT`; `es` and `latam` share most of the map and diverge at ~line 74.
-Known gaps: `< >` and AltGr bracket characters.
+Requiere `live-build` y un filesystem Linux nativo: `/mnt/*` (WSL/DrvFs) no sirve porque
+`live-build` necesita `mknod` y `chroot`.
 
-**Test it properly:** open a text editor on the machine and type, from the phone, at
-minimum: `hola/mundo @correo.com (test) & "ok" ¿? ; : + * _ =`. Wrong characters fail
-silently — nothing errors, the user just gets the wrong letter.
+```bash
+sudo apt install -y live-build
+./scripts/debian/iso/build_iso.sh \
+    --deb dist/linuxremoteplayer_<VERSION>_amd64.deb \
+    --output dist/lrp-os_<VERSION>_amd64.iso
+```
 
-### Change the phone UI
+Para validar la configuración sin construir:
 
-`frontend/index.html` + `frontend/app.js`. No build step, no framework. Mind the bridge
-block (§2). Re-run `check_css_sync.py`.
+```bash
+./scripts/debian/iso/build_iso.sh --dry-run --deb dist/linuxremoteplayer_<VERSION>_amd64.deb
+```
 
-### Change the voice behaviour
+La ISO es híbrida (BIOS/UEFI). El instalador escribe GRUB, crea la entrada NVRAM `LRP-OS`, deja
+el autologin de `tty1` y el arranque al panel.
 
-The device holds **no AI credentials**. `backend/ai_pipeline.py` only packages audio and
-calls the proxy. The actual pipeline — size cap, kill-switch, quota, speech-to-text, intent
-extraction — lives in `supabase/functions/ai-proxy/index.ts` and is deployed separately from
-the `.deb`. Changing the prompt or the model means deploying that function, not shipping a
-release.
+## 5. Convenciones
 
-## 5. Releasing
+- **Commits:** `[T-NN] descripción corta` para una tarea; `[STATE] descripción` para cambios de
+  estado del proyecto. Sin commits gigantes mezclando tareas.
+- **Ramas/worktrees:** una rama por fase o tarea grande; no se commitea desde un worktree ajeno.
+- **Secretos:** prohibido commitear `.env`, tokens de pairing, claves privadas de la CA o cualquier
+  credencial. `.env` está en `.gitignore`; el token se genera en la PC.
+- **Agentes:** los workers no editan `.agents/` ni commitean. El plano de control vive en `.agents`.
+- **Frontend:** no se agrega `viewport-fit=cover` (rompe el layout de iOS al reabrir la PWA).
 
-Full procedure in [`.agents/AGENTS.md`](../.agents/AGENTS.md). The shape of it: build from a
-fresh native clone, verify the artifact by extracting it (not by trusting the build output),
-publish the `.deb` plus its checksum to `website/downloads/`, and update `website/latest.json`
-— that manifest is what every installed copy polls, so **the checksum must match in all
-three places** or clients refuse the update.
+## 6. Trampas conocidas
 
-`scripts/build_deb.sh` stamps the version into `sw.js`. Without that stamp, installed PWAs
-serve stale assets forever. The build aborts if the stamp is missing.
-
-## 6. Where to look things up
-
-| You want | Read |
-|---|---|
-| The shape of the system, and why | [`ARCHITECTURE.md`](ARCHITECTURE.md) |
-| What file holds what (terse index) | [`.agents/APPCORE.md`](../.agents/APPCORE.md) |
-| Current state: shipped, next, known broken | [`.agents/CURRENT.md`](../.agents/CURRENT.md) |
-| The rules of working here | [`.agents/AGENTS.md`](../.agents/AGENTS.md) |
-| What gets tested on real hardware | [`.agents/TESTING.md`](../.agents/TESTING.md) |
-| Endpoint reference | the running server's `/docs` — only with `LRP_DEV=true` in `backend/.env`; it is off by default so installations do not publish their API surface on the LAN |
-| Why a past decision was made | `ARCHITECTURE.md` §7, then `.agents/CONTEXT.md` |
+- El grupo `input` recién aplica después de reiniciar (teclado/mouse virtuales).
+- El certificado local se regenera cuando cambia la IP: el teléfono debe volver a aceptarlo.
+- Rotar el token de pairing cierra todos los WebSocket activos (código 1008).
+- Firefox ESR kiosk usa un perfil dedicado (`~/.config/lrp-kiosk-firefox`): no lo bloquees con
+  otra instancia del mismo perfil.
+- La voz es 100% local; si `whisper-cli` o el modelo no están, el pipeline devuelve error sin
+  bloquear el resto del control.
