@@ -2001,6 +2001,70 @@ function relaunchTour() {
 }
 
 // --- Browser tab vs installed app ---
+// T-151c: banner de instalacion en la web destino del QR (no bloquea el control).
+const APK_URL = '/downloads/lrp.apk';
+const APK_AVAILABLE = false;
+const INSTALL_BANNER_DISMISSED = 'lrp_install_banner_dismissed';
+
+function detectInstallPlatform() {
+    const forced = new URLSearchParams(location.search).get('platform');
+    if (forced === 'ios' || forced === 'android' || forced === 'desktop') return forced;
+    const ua = navigator.userAgent || '';
+    if (/iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) return 'ios';
+    if (/android/i.test(ua)) return 'android';
+    return 'desktop';
+}
+
+function dismissInstallBanner() {
+    const banner = document.getElementById('install-banner');
+    if (banner) banner.hidden = true;
+    try { localStorage.setItem(INSTALL_BANNER_DISMISSED, '1'); } catch (e) {}
+}
+
+function renderInstallBanner() {
+    const banner = document.getElementById('install-banner');
+    if (!banner) return;
+    if (isStandalone) {
+        banner.hidden = true;
+        return;
+    }
+    try {
+        if (localStorage.getItem(INSTALL_BANNER_DISMISSED) === '1') {
+            banner.hidden = true;
+            return;
+        }
+    } catch (e) {}
+    const platform = detectInstallPlatform();
+    if (platform === 'desktop') {
+        banner.hidden = true;
+        return;
+    }
+    const title = document.getElementById('install-banner-title');
+    const desc = document.getElementById('install-banner-desc');
+    const action = document.getElementById('install-banner-action');
+    if (platform === 'ios') {
+        if (title) title.textContent = 'Añadir a pantalla de inicio';
+        if (desc) desc.textContent = 'Compartir → Añadir a pantalla de inicio';
+        if (action) action.hidden = true;
+    } else {
+        const apkReady = APK_AVAILABLE;
+        if (title) title.textContent = 'Instalar la app';
+        if (action) {
+            action.hidden = false;
+            action.textContent = apkReady ? 'Descargar APK' : 'APK próximamente';
+            action.classList.toggle('is-disabled', !apkReady);
+            if (apkReady) action.href = APK_URL;
+            else action.removeAttribute('href');
+        }
+        if (desc) {
+            desc.textContent = apkReady
+                ? 'Descargá el APK para usar LRP como app en tu Android.'
+                : 'APK próximamente. Mientras tanto: Chrome → menú ⋮ → Instalar aplicación.';
+        }
+    }
+    banner.hidden = false;
+}
+
 const isStandalone = window.matchMedia('(display-mode: standalone)').matches
     || window.matchMedia('(display-mode: fullscreen)').matches
     || window.matchMedia('(display-mode: minimal-ui)').matches
@@ -2107,18 +2171,16 @@ async function handlePairingSuccess(val) {
 }
 
 initToken().then(() => {
-    if (!isStandalone && isMobile) {
-        showInstallScreen();
+    // T-151c: la web muestra un banner descartable en vez del tutorial a pantalla completa.
+    renderInstallBanner();
+    if (token === 'guest') {
+        showPairingScreen(true);
     } else {
-        if (token === 'guest') {
-            showPairingScreen(true);
-        } else {
-            showPairingScreen(false);
-            fetchConfig().then(() => {
-                connect();
-                fetchApps();
-            });
-        }
+        showPairingScreen(false);
+        fetchConfig().then(() => {
+            connect();
+            fetchApps();
+        });
     }
 });
 

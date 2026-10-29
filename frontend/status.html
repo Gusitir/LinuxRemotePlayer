@@ -258,83 +258,6 @@
             font-weight: 700;
         }
 
-        /* T-151a: seccion Instalar la app */
-        .install-col {
-            justify-content: flex-start;
-            text-align: left;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .install-title {
-            font-size: 1.15rem;
-            font-weight: 800;
-            letter-spacing: -0.01em;
-        }
-
-        .install-sub {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            margin-bottom: 2px;
-        }
-
-        .install-cards {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .install-card {
-            background-color: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 12px 14px;
-            transition: border-color 0.2s ease, background-color 0.2s ease;
-        }
-
-        .install-card h3 {
-            font-size: 0.95rem;
-            font-weight: 700;
-            margin-bottom: 6px;
-            color: var(--text-primary);
-        }
-
-        .install-card p {
-            font-size: 0.82rem;
-            line-height: 1.45;
-            color: var(--text-secondary);
-        }
-
-        .install-card.highlight {
-            border-color: rgba(59, 130, 246, 0.5);
-            background-color: rgba(59, 130, 246, 0.08);
-        }
-
-        .install-card.collapsed .install-body {
-            display: none;
-        }
-
-        .install-note {
-            font-size: 0.78rem;
-            color: #f59e0b;
-            margin: 6px 0;
-        }
-
-        .apk-btn {
-            width: 100%;
-            margin: 2px 0;
-        }
-
-        .apk-btn.disabled,
-        .apk-btn[disabled] {
-            opacity: 0.5;
-            cursor: not-allowed;
-            background-color: var(--bg-elevated);
-            color: var(--text-secondary);
-            border: 1px solid var(--border);
-        }
-
         .btn-action {
             display: inline-flex;
             align-items: center;
@@ -501,29 +424,8 @@
                 <div class="qr-box">
                     <img src="/api/pairing-qr" alt="Código QR para acceso local">
                 </div>
-            </div>
 
-            <div class="right-col install-col">
-                <h2 class="install-title">Instalar la app</h2>
-                <p class="install-sub">Añadí LRP a la pantalla de inicio de tu teléfono.</p>
-
-                <div class="install-cards">
-                    <div class="install-card" id="install-ios">
-                        <h3>iPhone / iPad</h3>
-                        <div class="install-body">
-                            <p>Abrí esta página en Safari → Compartir → Añadir a pantalla de inicio → abrí LRP y emparejá con el PIN.</p>
-                        </div>
-                    </div>
-
-                    <div class="install-card" id="install-android">
-                        <h3>Android</h3>
-                        <div class="install-body">
-                            <button id="apk-btn" type="button" class="btn-action apk-btn" disabled>Descargar APK</button>
-                            <p class="install-note" id="apk-note">Disponible en la próxima release</p>
-                            <p>Mientras tanto: Chrome → menú ⋮ → Instalar aplicación.</p>
-                        </div>
-                    </div>
-                </div>
+                <p class="instructions" style="margin-bottom: 0;">Escaneá el código con el teléfono para instalar y controlar</p>
             </div>
         </div>
 
@@ -638,42 +540,8 @@
         let selectedWifiSsid = "";
         let bluetoothPowered = false;
 
-        // T-151a: instalacion por plataforma y chips de estado.
+        // Chips de estado (red derivada de network_ips).
         let lastNetworkIps = [];
-        const APK_AVAILABLE = false;
-        const APK_URL = '/downloads/lrp.apk';
-
-        function detectPlatform() {
-            const forced = new URLSearchParams(location.search).get('platform');
-            if (forced === 'ios' || forced === 'android' || forced === 'desktop') return forced;
-            const ua = navigator.userAgent || '';
-            if (/iPad|iPhone|iPod/.test(ua)) return 'ios';
-            if (/Android/i.test(ua)) return 'android';
-            return 'desktop';
-        }
-
-        function applyInstallPlatform() {
-            const platform = detectPlatform();
-            const iosCard = document.getElementById('install-ios');
-            const androidCard = document.getElementById('install-android');
-            if (iosCard && androidCard) {
-                iosCard.classList.remove('highlight', 'collapsed');
-                androidCard.classList.remove('highlight', 'collapsed');
-                if (platform === 'ios') {
-                    iosCard.classList.add('highlight');
-                    androidCard.classList.add('collapsed');
-                } else if (platform === 'android') {
-                    androidCard.classList.add('highlight');
-                    iosCard.classList.add('collapsed');
-                }
-            }
-            const apkBtn = document.getElementById('apk-btn');
-            if (apkBtn) {
-                apkBtn.disabled = !APK_AVAILABLE;
-                apkBtn.classList.toggle('disabled', !APK_AVAILABLE);
-                apkBtn.onclick = APK_AVAILABLE ? () => { window.location.href = APK_URL; } : null;
-            }
-        }
 
         function hasInterface(prefixes) {
             return lastNetworkIps.some(entry => {
@@ -1038,7 +906,6 @@
             updateStatus();
             updatePin();
             checkOnboarding();
-            applyInstallPlatform();
         };
     </script>
 </body>
