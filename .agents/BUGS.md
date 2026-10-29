@@ -189,6 +189,15 @@ panel 1.0.0 (sin logos de terceros, sin micrófono) y actualizar el mock del tel
 `website/terminos.html` y `es/terms.html` se reescribieron de condiciones de venta a GPL-3.0; conviene
 una pasada legal antes de publicar, junto con `SECURITY.md` y `THIRD_PARTY_LICENSES.md`.
 
+## B40 — El instalador no avisa ni reinicia al terminar
+
+**Abierto · visible en el gate QEMU (T-154)**
+
+Tras copiar el sistema, el instalador deja la sesión live viva: en QEMU hubo que forzar `system_reset`
+a los 24 min. En hierro el usuario puede no saber que debe retirar el USB y reiniciar. Fix: mensaje
+final explícito (“instalación completa: retirá el USB y reiniciá”) y, en modo auto-install, reboot
+automático con contador, sin tocar el flujo interactivo.
+
 # CERRADOS
 
 ## B1 — HUD desplazado en iPhone

@@ -11,10 +11,10 @@ dirty: true
 assurance: Standard
 active_job: RUN THE LOOP
 active_plan: PLAN_v1.0.0-public.md (approved, D56)
-active_task: T-152 apto; T-154 (ISO 1.0.0 + gates) siguiente; T-153 APK y T-155 publicación después
-last_verdict: APTO (T-150, T-151 y T-152)
-verdict_scope: "T-150 (F1) apto: GPL-3.0, sin licencia/voz/modo, sin OTA ni Supabase; gate de fase 250 passed. T-151 (F2) apto: panel compacto, Bluetooth on/off real, B37 y onboarding web por plataforma. T-152 (F3) apto: web 1.0.0 desplegada y verificada en producción (`e9c67c7`, Vercel, 0 rastros comerciales) y documentación completa (`f152331`: README, arquitectura, build, DEPLOY, SECURITY, terceros)."
-next_action: "T-154: medir/construir la ISO 1.0.0 en WSL (clon nativo bajo ~), verificar instalación limpia en el HTPC y `dpkg -V`; en paralelo o después T-153 (APK TWA); cerrar con T-155 (release + repo público + B38/B39)."
+active_task: T-154 con gate QEMU apto; pendiente prueba física (dueño) y B40; T-153 APK y T-155 publicación después
+last_verdict: APTO (T-150, T-151, T-152 y gate QEMU de T-154)
+verdict_scope: "T-150/T-151/T-152 aptos con evidencia en producción. T-154: ISO 1.0.0 (575d82ba…, 1,95 GiB) construida en clon nativo y verificada en QEMU UEFI: instalación GPT/ESP con shim, arranque desde disco (Boot0004 LRP-OS) y panel v1.0.0 operativo. Falta la prueba física en el HTPC y el aviso/auto-reboot final (B40)."
+next_action: "con el dueño: instalar la ISO 1.0.0 en el HTPC (borra disco) y cerrar T-154; luego T-153 (APK TWA) y T-155 (release + repo público) tras resolver B38 (capturas con marcas) y B39 (revisión legal)."
 ```
 
 ## Blockers
@@ -39,6 +39,13 @@ next_action: "T-154: medir/construir la ISO 1.0.0 en WSL (clon nativo bajo ~), v
 - `dpkg -V` divergente en el HTPC por despliegue SSH; se normaliza al instalar la ISO 1.0.0 (T-154).
 
 ## Fresh evidence
+
+- **ISO 1.0.0 + gate QEMU (T-154)**: clon nativo `/root/lrp-100 @ 423de41`, `VERSION=1.0.0`;
+  `build_deb.sh` y `build_iso.sh` rc=0. `.deb` 400 336 B (`bb893200…`), ISO 2 093 056 000 B = 1,95 GiB
+  (`575d82ba…`), hashes iguales en sidecar, original y copia en `G:\…\lrp-iso\`. QEMU UEFI (TCG, sin
+  KVM): instalación a GPT con ESP (`EFI/LRP-OS/shimx64.efi`), reinicio manual y arranque desde
+  `Boot0004 LRP-OS` con panel v1.0.0 (chips, PIN y QR) — captura `qemu_disk.png`. El instalador no
+  reinicia ni avisa solo (B40).
 
 - **T-152 apto (F3)**: `e9c67c7` publica la web 1.0.0 (ES/EN) y Vercel la sirve con deploy nuevo
   (`x-vercel-id` distinto, `age: 0`, `last-modified` = `date`): HTTP 200, “1.0.0”, “GPL”, enlaces a

@@ -105,7 +105,10 @@ Aprobado por el dueño (D56). El desarrollo previo vive en `legacy/2.0` + tag `v
 
 ### T-154 — F5: ISO 1.0.0 y gates de release
 
-- Status: ready (T-152 apto; la ISO no depende del APK)
+- Status: **gate QEMU apto** (2026-10-29) — ISO 1.0.0 construida (`575d82ba…`, 1,95 GiB) y probada en
+  QEMU UEFI (TCG): boot desde DVD, instalación a GPT/ESP con `EFI/LRP-OS/shimx64.efi`, reinicio manual y
+  arranque desde `Boot0004 LRP-OS` con el panel v1.0.0. **Pendiente**: prueba física en el HTPC (borra
+  disco, requiere al dueño) y el aviso/auto-reboot tras instalar (B40).
 - Objective: reconstruir la ISO una sola vez con todos los deltas y verificar instalación limpia,
   operación sin red, `dpkg -V` y prueba física.
 - Acceptance: ISO instala en UEFI, arranca al panel, control y ajustes sin red, `dpkg -V` limpio.
