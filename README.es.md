@@ -82,12 +82,12 @@ El script es de solo lectura por defecto; para aplicarlo hay que usar `--apply -
 
 ## Descarga y verificación
 
-Obtén la versión desde [GitHub Releases v1.0.0](https://github.com/Gusitir/LinuxRemotePlayer/releases/tag/v1.0.0):
+Obtén la versión desde [GitHub Releases v1.0.1](https://github.com/Gusitir/LinuxRemotePlayer/releases/tag/v1.0.1):
 
 | Archivo | Notas |
 | --- | --- |
-| `lrp-os_1.0.0_amd64.iso` | ISO híbrida, aproximadamente 1,95 GiB. |
-| `lrp-1.0.0.apk` | Aplicación de control remoto para Android, 24.400 bytes. |
+| `lrp-os_1.0.1_amd64.iso` | ISO híbrida, 2.097.152.000 bytes (aprox. 1,95 GiB). |
+| `lrp-1.0.1.apk` | Aplicación de control remoto para Android, 24.404 bytes. |
 | `SHA256SUMS` | Sumas de verificación de ambos archivos. |
 
 Coloca los archivos en un mismo directorio y verifica:
@@ -99,20 +99,20 @@ sha256sum -c SHA256SUMS
 Si solo descargaste la ISO:
 
 ```bash
-sha256sum lrp-os_1.0.0_amd64.iso
+sha256sum lrp-os_1.0.1_amd64.iso
 ```
 
-Para 1.0.0 los valores esperados son:
+Para 1.0.1 los valores esperados son:
 
 ```
-5cc67f101bb507b590085183817ac87f8b1ccd04e2becb1c5e4d5d8972c9f5b2  lrp-os_1.0.0_amd64.iso
-fcfb76e0383f5e3e7b72d7805618143945fd24a608ad4dd42df3d159b19c0bef  lrp-1.0.0.apk
+affcb6517e389fea2269e538de09364f745bdb4f33ba430ee4e95adeb5931d71  lrp-os_1.0.1_amd64.iso
+a56245615e393e06c7e6d14d20e788312449cd0b97ee5f557f7fb811beaa0b6b  lrp-1.0.1.apk
 ```
 
 En Windows:
 
 ```powershell
-Get-FileHash .\lrp-os_1.0.0_amd64.iso -Algorithm SHA256
+Get-FileHash .\lrp-os_1.0.1_amd64.iso -Algorithm SHA256
 ```
 
 ## Instalación
@@ -123,7 +123,7 @@ Get-FileHash .\lrp-os_1.0.0_amd64.iso -Algorithm SHA256
 2. Escribe la ISO en un pendrive con Rufus (usa el modo DD si lo pregunta), Ventoy o `dd`:
 
    ```bash
-   sudo dd if=lrp-os_1.0.0_amd64.iso of=/dev/sdX bs=4M status=progress oflag=sync
+   sudo dd if=lrp-os_1.0.1_amd64.iso of=/dev/sdX bs=4M status=progress oflag=sync
    ```
 
    `/dev/sdX` es el dispositivo USB completo, no una partición. Si escribes en el dispositivo equivocado, destruyes sus datos.
@@ -148,7 +148,7 @@ El instalador ejecuta `wipefs` y `sgdisk --zap-all`, crea una GPT nueva, formate
 
 ### Android: la APK es la aplicación de control remoto
 
-1. Descarga `lrp-1.0.0.apk` desde la release.
+1. Descarga `lrp-1.0.1.apk` desde la release.
 2. Permite la instalación desde el navegador o el gestor de archivos que uses (**Instalar apps de origen desconocido**). La APK no se distribuye por Google Play.
 3. Abre **LRP Remote**, escribe la IP o el nombre de host de la PC (el valor por defecto es `lrp.local`) y conecta. Si omites el puerto, la app usa HTTPS en el puerto 8000.
 4. La app abre el control web en un WebView. Escribe el PIN de 6 dígitos que aparece en la TV.

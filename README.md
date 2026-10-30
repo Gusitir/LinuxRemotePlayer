@@ -82,12 +82,12 @@ The script is read-only by default; applying requires `--apply --approve`, never
 
 ## Download and verify
 
-Get the release from [GitHub Releases v1.0.0](https://github.com/Gusitir/LinuxRemotePlayer/releases/tag/v1.0.0):
+Get the release from [GitHub Releases v1.0.1](https://github.com/Gusitir/LinuxRemotePlayer/releases/tag/v1.0.1):
 
 | Asset | Notes |
 | --- | --- |
-| `lrp-os_1.0.0_amd64.iso` | Hybrid ISO, about 1.95 GiB. |
-| `lrp-1.0.0.apk` | Android remote app, 24,400 bytes. |
+| `lrp-os_1.0.1_amd64.iso` | Hybrid ISO, 2,097,152,000 bytes (about 1.95 GiB). |
+| `lrp-1.0.1.apk` | Android remote app, 24,404 bytes. |
 | `SHA256SUMS` | Checksums for both files. |
 
 Place the files in one directory and verify:
@@ -99,20 +99,20 @@ sha256sum -c SHA256SUMS
 If you only downloaded the ISO:
 
 ```bash
-sha256sum lrp-os_1.0.0_amd64.iso
+sha256sum lrp-os_1.0.1_amd64.iso
 ```
 
-For 1.0.0 the expected values are:
+For 1.0.1 the expected values are:
 
 ```
-5cc67f101bb507b590085183817ac87f8b1ccd04e2becb1c5e4d5d8972c9f5b2  lrp-os_1.0.0_amd64.iso
-fcfb76e0383f5e3e7b72d7805618143945fd24a608ad4dd42df3d159b19c0bef  lrp-1.0.0.apk
+affcb6517e389fea2269e538de09364f745bdb4f33ba430ee4e95adeb5931d71  lrp-os_1.0.1_amd64.iso
+a56245615e393e06c7e6d14d20e788312449cd0b97ee5f557f7fb811beaa0b6b  lrp-1.0.1.apk
 ```
 
 On Windows:
 
 ```powershell
-Get-FileHash .\lrp-os_1.0.0_amd64.iso -Algorithm SHA256
+Get-FileHash .\lrp-os_1.0.1_amd64.iso -Algorithm SHA256
 ```
 
 ## Install
@@ -123,7 +123,7 @@ Get-FileHash .\lrp-os_1.0.0_amd64.iso -Algorithm SHA256
 2. Write the ISO to a USB drive with Rufus (use DD mode if it asks), Ventoy, or `dd`:
 
    ```bash
-   sudo dd if=lrp-os_1.0.0_amd64.iso of=/dev/sdX bs=4M status=progress oflag=sync
+   sudo dd if=lrp-os_1.0.1_amd64.iso of=/dev/sdX bs=4M status=progress oflag=sync
    ```
 
    `/dev/sdX` is the whole USB device, not a partition. Writing to the wrong device destroys its data.
@@ -148,7 +148,7 @@ The installer calls `wipefs` and `sgdisk --zap-all`, creates a fresh GPT, format
 
 ### Android: the APK is the remote app
 
-1. Download `lrp-1.0.0.apk` from the release.
+1. Download `lrp-1.0.1.apk` from the release.
 2. Allow installation from the browser or file manager you use (**Install unknown apps**). The APK is not distributed through Google Play.
 3. Open **LRP Remote**, enter the PC's IP or host name (the default is `lrp.local`), and connect. If you omit the port, the app uses HTTPS on port 8000.
 4. The app opens the web control in a WebView. Enter the 6-digit PIN shown on the TV.
