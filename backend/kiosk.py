@@ -12,6 +12,9 @@ logger = logging.getLogger("kiosk")
 _kiosk_proc = None
 _kiosk_url = None
 _native_procs = []
+_panel_window_id = None
+_panel_launched_at = 0.0
+_wmctrl_warned = False
 
 
 def find_browser():
@@ -289,7 +292,7 @@ def close_all():
 
 
 def kill_existing_kiosks():
-    global _kiosk_proc, _kiosk_url
+    global _kiosk_proc, _kiosk_url, _panel_window_id
     
     # SEC-05: Process group kiosk termination
     if _kiosk_proc is not None and _kiosk_proc.poll() is None:
@@ -313,6 +316,7 @@ def kill_existing_kiosks():
             logger.error(f"Error terminating tracked kiosk process: {e}")
         _kiosk_proc = None
         _kiosk_url = None
+        _panel_window_id = None
         return
 
     logger.info("No active tracked kiosk process found. Running Firefox ESR fallback cleanup...")
@@ -324,6 +328,7 @@ def kill_existing_kiosks():
         )
     except Exception as e:
         logger.error(f"Error running fallback pkill: {e}")
+    _panel_window_id = None
 
 
 def adblock_status() -> str:
@@ -332,12 +337,101 @@ def adblock_status() -> str:
         if os.path.exists("/etc/firefox/policies/policies.json"):
             try:
                 with open("/etc/firefox/policies/policies.json", "r") as f:
-                    if "ublock" in f.read().lower():
-                        return "ubo-firefox"
+                    if "ublock0@raymondhill.net" in f.read().lower():
+                        return "ublock"
             except Exception:
                 pass
         return "none"
     return "none"
+
+
+# --- T-156: watchdog de ventanas del panel (anti-popunder) ---
+
+def _panel_window_title(title: str) -> bool:
+    lower = title.lower()
+    return "estado del sistema" in lower or "lrp os" in lower
+
+
+def _wmctrl_windows() -> list:
+    """Return [(window_id, wm_class, title)] using wmctrl -lx (2s timeout)."""
+    if os.name != "posix" or not shutil.which("wmctrl"):
+        return []
+    try:
+        out = subprocess.check_output(
+            ["wmctrl", "-lx"],
+            env=gui_env(),
+            text=True,
+            stderr=subprocess.DEVNULL,
+            timeout=2.0,
+        )
+    except Exception:
+        return []
+    windows = []
+    for line in out.splitlines():
+        parts = line.split(None, 4)
+        if len(parts) >= 5 and parts[0].startswith("0x"):
+            windows.append((parts[0], parts[2], parts[4]))
+        elif len(parts) >= 4 and parts[0].startswith("0x"):
+            windows.append((parts[0], "", parts[3]))
+    return windows
+
+
+def record_panel_window() -> str:
+    """Guarda el window id del panel recien lanzado (para el watchdog)."""
+    global _panel_window_id, _panel_launched_at
+    _panel_launched_at = time.time()
+    panel_id = ""
+    fallback = ""
+    for wid, wm_class, title in _wmctrl_windows():
+        if _panel_window_title(title):
+            panel_id = wid
+            break
+        if not fallback and "firefox" in wm_class.lower():
+            fallback = wid
+    _panel_window_id = panel_id or fallback or None
+    if _panel_window_id:
+        logger.debug(f"Panel window tracked: {_panel_window_id}")
+    return _panel_window_id or ""
+
+
+def enforce_panel_window(max_seconds: float = 10.0) -> bool:
+    """Cierra ventanas de Firefox ajenas al panel; False si el panel desaparecio."""
+    global _panel_window_id, _wmctrl_warned
+    if os.name != "posix":
+        return True
+    if not shutil.which("wmctrl"):
+        if not _wmctrl_warned:
+            logger.warning("wmctrl no disponible: anti-popunder deshabilitado")
+            _wmctrl_warned = True
+        return True
+    windows = _wmctrl_windows()
+    panel_id = ""
+    others = []
+    for wid, wm_class, title in windows:
+        if wid == _panel_window_id or _panel_window_title(title):
+            panel_id = panel_id or wid
+        elif "firefox" in wm_class.lower() or "navigator" in wm_class.lower():
+            others.append(wid)
+    if not panel_id:
+        if _panel_launched_at and (time.time() - _panel_launched_at) < max_seconds:
+            return True
+        return False
+    if panel_id != _panel_window_id:
+        _panel_window_id = panel_id
+    for wid in others:
+        try:
+            subprocess.run(
+                ["wmctrl", "-ic", wid],
+                env=gui_env(),
+                check=False,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=2.0,
+            )
+            logger.info(f"Cerrada ventana emergente del kiosk: {wid}")
+        except Exception as e:
+            logger.debug(f"No se pudo cerrar la ventana {wid}: {e}")
+    return True
 
 def is_display_ready() -> bool:
     """Return True if X11 server is reachable and accepting commands on DISPLAY."""
@@ -442,6 +536,8 @@ def launch_kiosk(url: str) -> bool:
             _kiosk_proc = None
             return False
         _kiosk_url = url
+        # T-156: recordar que ventana es el panel para el watchdog anti-popunder.
+        record_panel_window()
         return True
     except Exception as e:
         logger.error(f"Failed to launch kiosk: {e}")

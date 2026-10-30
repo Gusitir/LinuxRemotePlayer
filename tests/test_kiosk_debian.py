@@ -165,11 +165,28 @@ def test_window_cleanup_uses_wmctrl_without_desktop_fallback(monkeypatch):
 
 def test_adblock_status_reports_firefox_policy_only(monkeypatch, tmp_path):
     policy = tmp_path / "policies.json"
-    policy.write_text('{"uBlock": true}')
+    policy.write_text('{"ExtensionSettings": {"uBlock0@raymondhill.net": {"installation_mode": "force_installed"}}}')
     monkeypatch.setattr(kiosk, "find_browser", lambda: ("/usr/bin/firefox-esr", "firefox-esr"))
     monkeypatch.setattr(kiosk.os.path, "exists", lambda path: path == "/etc/firefox/policies/policies.json")
     monkeypatch.setattr(kiosk, "open", lambda *args, **kwargs: policy.open(*args[1:], **kwargs), raising=False)
-    assert kiosk.adblock_status() == "ubo-firefox"
+    assert kiosk.adblock_status() == "ublock"
+
+
+def test_watchdog_closes_foreign_firefox_window(monkeypatch):
+    calls = []
+    windows = (
+        "0x1  0 Navigator.Firefox host Estado del Sistema — LinuxRemotePlayer\n"
+        "0x2  0 Navigator.Firefox host Popup\n"
+    )
+    monkeypatch.setattr(kiosk, "_panel_window_id", "0x1")
+    monkeypatch.setattr(kiosk, "_panel_launched_at", time.time())
+    monkeypatch.setattr(kiosk.os, "name", "posix")
+    monkeypatch.setattr(kiosk.shutil, "which", lambda name: "/usr/bin/wmctrl" if name == "wmctrl" else None)
+    monkeypatch.setattr(kiosk.subprocess, "check_output", lambda *args, **kwargs: windows)
+    monkeypatch.setattr(kiosk.subprocess, "run", lambda *args, **kwargs: calls.append(args[0]))
+    assert kiosk.enforce_panel_window() is True
+    assert calls == [["wmctrl", "-ic", "0x2"]]
+    assert kiosk._panel_window_id == "0x1"
 
 
 def test_runtime_has_no_forbidden_browser_or_desktop_paths():

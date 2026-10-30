@@ -101,9 +101,18 @@ cat <<'EOF' > /home/lrp/.config/openbox/autostart
 xset s off -dpms 2>/dev/null || true
 EOF
 
-# 3b. Firefox confia en la CA local generada por el backend.
+# 3b. Firefox confia en la CA local y trae uBlock Origin vendorizado (T-156).
 # Sin esto el panel abre en la pantalla "Be careful. Something doesn't look right"
 # y el usuario tendria que aceptar el riesgo a mano en la TV.
+# El XPI lo copia build_iso.sh a includes.chroot/usr/share/lrp/extensions/.
+UBO_XPI=/usr/share/lrp/extensions/uBlock0.xpi
+mkdir -p /usr/share/lrp/extensions
+if [ -f "$UBO_XPI" ]; then
+    chmod 0644 "$UBO_XPI"
+    echo "[LRP-CHROOT-HOOK] uBlock Origin vendorizado: $UBO_XPI"
+else
+    echo "[LRP-CHROOT-HOOK] WARN: falta $UBO_XPI; la ISO queda sin adblock offline." >&2
+fi
 mkdir -p /etc/firefox/policies /etc/firefox-esr/policies
 cat <<'EOF' > /etc/firefox/policies/policies.json
 {
@@ -111,6 +120,24 @@ cat <<'EOF' > /etc/firefox/policies/policies.json
     "Certificates": {
       "Install": ["/var/lib/linuxremoteplayer/certs/ca.pem"],
       "ImportEnterpriseRoots": true
+    },
+    "ExtensionSettings": {
+      "uBlock0@raymondhill.net": {
+        "installation_mode": "force_installed",
+        "install_url": "file:///usr/share/lrp/extensions/uBlock0.xpi",
+        "updates_disabled": true
+      }
+    },
+    "Preferences": {
+      "browser.link.open_newwindow": 1,
+      "browser.link.open_newwindow.restriction": 0,
+      "dom.disable_open_during_load": true,
+      "privacy.popups.disable_from_plugins": 3,
+      "dom.disable_window_move_resize": true,
+      "browser.tabs.warnOnOpen": false,
+      "browser.newtabpage.enabled": false,
+      "extensions.autoDisableScopes": 0,
+      "extensions.enabledScopes": 15
     },
     "OverrideFirstRunPage": "",
     "OverridePostUpdatePage": ""

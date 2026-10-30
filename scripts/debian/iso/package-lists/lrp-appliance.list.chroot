@@ -30,6 +30,8 @@ xserver-xorg-input-libinput
 openbox
 lightdm
 lightdm-gtk-greeter
+# Watchdog de ventanas del panel (anti-popunder, T-156).
+wmctrl
 firefox-esr
 
 # Audio Subsystem (PipeWire)

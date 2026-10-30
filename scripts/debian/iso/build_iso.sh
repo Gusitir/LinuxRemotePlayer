@@ -176,6 +176,18 @@ else
     echo "[LRP-ISO] Nota: Paquete deb no encontrado en $DEB_PATH (se omite pre-instalación en staging)"
 fi
 
+# 8. uBlock Origin vendorizado (T-156). El XPI lo deja el asistente en vendor/;
+# el build NO lo descarga. Si falta, la ISO se construye sin adblock offline.
+VENDOR_UBO="$SCRIPT_DIR/vendor/uBlock0.xpi"
+mkdir -p "$WORKDIR/config/includes.chroot/usr/share/lrp/extensions"
+if [ -f "$VENDOR_UBO" ]; then
+    cp "$VENDOR_UBO" "$WORKDIR/config/includes.chroot/usr/share/lrp/extensions/uBlock0.xpi"
+    chmod 0644 "$WORKDIR/config/includes.chroot/usr/share/lrp/extensions/uBlock0.xpi"
+    echo "[LRP-ISO] uBlock Origin vendorizado incluido."
+else
+    echo "[LRP-ISO] ADVERTENCIA: falta $VENDOR_UBO; la ISO no incluira uBlock Origin." >&2
+fi
+
 # Configuración live-build (lb config)
 LB_CONFIG_CMD=(
     lb config

@@ -221,6 +221,17 @@ cat <<EOFJSON > /etc/firefox/policies/policies.json
     },
     "EncryptedMediaExtensions": { "Enabled": true },
     "DisableFirefoxStudies": true,
+    "Preferences": {
+      "browser.link.open_newwindow": 1,
+      "browser.link.open_newwindow.restriction": 0,
+      "dom.disable_open_during_load": true,
+      "privacy.popups.disable_from_plugins": 3,
+      "dom.disable_window_move_resize": true,
+      "browser.tabs.warnOnOpen": false,
+      "browser.newtabpage.enabled": false,
+      "extensions.autoDisableScopes": 0,
+      "extensions.enabledScopes": 15
+    },
     "OverrideFirstRunPage": "",
     "NoDefaultBookmarks": true
   }

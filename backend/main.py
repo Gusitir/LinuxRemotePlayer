@@ -176,10 +176,19 @@ async def check_and_launch_status_panel() -> bool:
 
 async def monitor_idle_panel():
     """T-132: Monitor TV state and show status panel when desktop is empty,
-    preserving 45s safety delay ONLY if client disconnected during active media."""
+    preserving 45s safety delay ONLY if client disconnected during active media.
+
+    T-156: mientras el panel esta en pantalla, cierra popups/ventanas de Firefox ajenas.
+    """
     while True:
         await asyncio.sleep(5)
         try:
+            import kiosk
+            if kiosk.is_kiosk_running() and kiosk.is_status_panel_running():
+                still_there = await asyncio.to_thread(kiosk.enforce_panel_window)
+                if not still_there:
+                    logger.info("Panel window disappeared; relaunching the status panel.")
+                    await asyncio.to_thread(kiosk.kill_existing_kiosks)
             await check_and_launch_status_panel()
         except Exception as e:
             logger.debug(f"Error in monitor_idle_panel: {e}")

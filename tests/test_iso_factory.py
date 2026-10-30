@@ -110,6 +110,15 @@ def test_zram_and_offline_boot_configs():
     assert "includes.chroot/etc/hosts" in build
 
 
+def test_package_list_includes_wmctrl_for_window_watchdog():
+    packages = {
+        line.strip()
+        for line in PKG_LIST.read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.strip().startswith("#")
+    }
+    assert "wmctrl" in packages
+
+
 def test_iso_bash_syntax_checks():
     if not shutil.which(BASH) and not Path(BASH).exists():
         pytest.skip("Bash executable not available")
