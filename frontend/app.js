@@ -192,7 +192,7 @@ async function fetchConfig() {
             hostname = data.hostname || '';
 
             const footerVer = document.getElementById('app-version-footer');
-            if (footerVer) footerVer.textContent = `${data.version || '1.0.0'} — LinuxRemotePlayer`;
+            if (footerVer) footerVer.textContent = `${data.version || '1.0.1'} — LinuxRemotePlayer`;
         }
     } catch (err) {
         console.error('Config fetch failed:', err);

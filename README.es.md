@@ -2,11 +2,11 @@
 
 [English](README.md) | **Español**
 
-LRP OS 1.0.0 es una ISO de Debian 13 que convierte una PC x86_64 en un equipo de TV. La PC arranca directamente en un panel kiosk y tu teléfono pasa a ser el control remoto. El control se queda en la red local: sin dependencia de la nube, sin cuentas, sin claves de licencia, sin telemetría y sin actualizaciones OTA.
+LRP OS 1.0.1 es una ISO de Debian 13 que convierte una PC x86_64 en un equipo de TV. La PC arranca directamente en un panel kiosk y tu teléfono pasa a ser el control remoto. El control se queda en la red local: sin dependencia de la nube, sin cuentas, sin claves de licencia, sin telemetría y sin actualizaciones OTA.
 
 LinuxRemotePlayer es software libre bajo la GNU General Public License v3.0.
 
-![Panel de emparejamiento de LRP OS 1.0.0 en una TV](website/screenshots/panel_pairing.webp)
+![Panel de emparejamiento de LRP OS 1.0.1 en una TV](website/screenshots/panel_pairing.webp)
 
 ## Qué es y qué no es
 
@@ -176,7 +176,7 @@ Referencias: [`backend/main.py:337`](backend/main.py#L337) (PIN), [`backend/main
 
 ## Qué puedes controlar
 
-| Área | Qué expone 1.0.0 | Código |
+| Área | Qué expone 1.0.1 | Código |
 | --- | --- | --- |
 | Touchpad | Puntero relativo, clic izquierdo/derecho y franja de desplazamiento; eventos de puntero por `/ws`. | [`frontend/index.html:177`](frontend/index.html#L177), [`backend/main.py:901`](backend/main.py#L901) |
 | Teclado | Inyección de texto y teclas (Retroceso, Intro, Meta, flechas, espacio); el texto se limita a 500 caracteres. | [`frontend/index.html:222`](frontend/index.html#L222), [`backend/main.py:909`](backend/main.py#L909) |
@@ -184,15 +184,20 @@ Referencias: [`backend/main.py:337`](backend/main.py#L337) (PIN), [`backend/main
 | Apps | Servicios de streaming sugeridos, apps con URL personalizada, apps nativas `.desktop`, búsqueda y fijación de apps. | [`backend/main.py:202`](backend/main.py#L202), [`backend/main.py:567`](backend/main.py#L567), [`backend/main.py:627`](backend/main.py#L627) |
 | Multimedia | Reproducir/pausar, detener, siguiente/anterior, avance/retroceso, volumen y silencio por uinput; el volumen usa PipeWire cuando está disponible. | [`backend/main.py:222`](backend/main.py#L222), [`backend/main.py:928`](backend/main.py#L928) |
 | Volumen y salida de audio | Selecciona la salida (sink) de PipeWire, ajusta el volumen (0-150 en el teléfono, 0-100 en el panel de la TV) y silencia. | [`backend/system_platform.py:173`](backend/system_platform.py#L173), [`backend/system_platform.py:178`](backend/system_platform.py#L178), [`backend/system_platform.py:196`](backend/system_platform.py#L196) |
-| Pantalla | Lee la salida activa, la resolución y la frecuencia actuales y los modos disponibles por xrandr. **Cambiar el modo no está expuesto en 1.0.0.** | [`backend/system_platform.py:512`](backend/system_platform.py#L512), [`frontend/status.html:495`](frontend/status.html#L495) |
-| Wi-Fi | Escanea y conecta mediante NetworkManager (`nmcli`); el punto de acceso de configuración se informa en el panel y tiene endpoints de API, pero la interfaz de 1.0.0 no tiene un botón para iniciarlo o detenerlo. | [`backend/system_platform.py:308`](backend/system_platform.py#L308), [`backend/system_platform.py:313`](backend/system_platform.py#L313), [`backend/system_platform.py:691`](backend/system_platform.py#L691) |
-| Bluetooth | Enciende y apaga el adaptador desde el panel de la TV; la API también lista dispositivos y estado de emparejamiento con `bluetoothctl`, pero 1.0.0 no tiene lista de dispositivos ni interfaz de emparejamiento. | [`backend/system_platform.py:402`](backend/system_platform.py#L402), [`backend/system_platform.py:433`](backend/system_platform.py#L433) |
+| Pantalla | Lee la salida activa, la resolución y la frecuencia actuales y los modos disponibles por xrandr. **Cambiar el modo no está expuesto en 1.0.1.** | [`backend/system_platform.py:512`](backend/system_platform.py#L512), [`frontend/status.html:495`](frontend/status.html#L495) |
+| Wi-Fi | Escanea y conecta mediante NetworkManager (`nmcli`); el punto de acceso de configuración se informa en el panel y tiene endpoints de API, pero la interfaz de 1.0.1 no tiene un botón para iniciarlo o detenerlo. | [`backend/system_platform.py:308`](backend/system_platform.py#L308), [`backend/system_platform.py:313`](backend/system_platform.py#L313), [`backend/system_platform.py:691`](backend/system_platform.py#L691) |
+| Bluetooth | Enciende y apaga el adaptador desde el panel de la TV; la API también lista dispositivos y estado de emparejamiento con `bluetoothctl`, pero 1.0.1 no tiene lista de dispositivos ni interfaz de emparejamiento. | [`backend/system_platform.py:402`](backend/system_platform.py#L402), [`backend/system_platform.py:433`](backend/system_platform.py#L433) |
 | Energía | Suspender, reiniciar, apagar y reiniciar el servicio `linuxremoteplayer` desde los ajustes del teléfono. | [`backend/system_platform.py:736`](backend/system_platform.py#L736), [`frontend/index.html:492`](frontend/index.html#L492) |
 | Panel de la TV | PIN/QR de emparejamiento, ajustes del sistema (audio, Wi-Fi, pantalla, Bluetooth) y estado de clientes, latencia y versión. | [`frontend/status.html:397`](frontend/status.html#L397) |
 
+- **Bloqueo de anuncios y protección contra ventanas emergentes:** uBlock Origin viene incluido
+  y forzado por política, así que funciona sin red; las listas de filtros se actualizan cuando la
+  PC tiene internet. Las ventanas emergentes inesperadas se cierran automáticamente y el panel
+  conserva el foco.
+
 ## Actualizaciones
 
-No hay OTA ni canal de autoactualización en 1.0.0. Cada versión se instala desde su ISO. La ruta soportada es arrancar la ISO nueva y reinstalar; el instalador borra el disco destino, así que los ajustes y los datos no se conservan. Planifica una copia de seguridad antes de actualizar. No hay una actualización de paquetes en el lugar desde la TV ni desde el teléfono.
+No hay OTA ni canal de autoactualización en 1.0.1. Cada versión se instala desde su ISO. La ruta soportada es arrancar la ISO nueva y reinstalar; el instalador borra el disco destino, así que los ajustes y los datos no se conservan. Planifica una copia de seguridad antes de actualizar. No hay una actualización de paquetes en el lugar desde la TV ni desde el teléfono.
 
 ## Privacidad
 
@@ -206,10 +211,10 @@ No hay OTA ni canal de autoactualización en 1.0.0. Cada versión se instala des
 
 - **APK de Android no probada en hardware físico.** Compila y se publica, pero el autor no la ha validado en un dispositivo físico.
 - **Instalación física pendiente de validación por el autor.** La ISO, el instalador y la ruta de arranque están implementados, pero una instalación completa en hardware real sigue pendiente de la validación del autor.
-- **La voz y el micrófono están ocultos en 1.0.0.** El backend contiene un pipeline local de STT/NLU, pero la interfaz del teléfono no expone micrófono; está previsto para una versión posterior.
+- **La voz y el micrófono están ocultos en 1.0.1.** El backend contiene un pipeline local de STT/NLU, pero la interfaz del teléfono no expone micrófono; está previsto para una versión posterior.
 - **Los ajustes de pantalla son de solo lectura.** El panel informa la salida de xrandr; no cambia la resolución ni la disposición.
 - **El emparejamiento Bluetooth no está expuesto.** La interfaz solo permite encender y apagar el adaptador; no hay lista de dispositivos ni pantalla de emparejamiento.
-- **El botón de pantalla completa de la rueda no funciona en 1.0.0.** Envía `KEY_F11` ([`frontend/index.html:296`](frontend/index.html#L296)), que no está en la lista blanca de teclas del backend ([`input_emulator.py:16`](backend/input_emulator.py#L16)); el kiosk ya se ejecuta en pantalla completa.
+- **El botón de pantalla completa de la rueda no funciona en 1.0.1.** Envía `KEY_F11` ([`frontend/index.html:296`](frontend/index.html#L296)), que no está en la lista blanca de teclas del backend ([`input_emulator.py:16`](backend/input_emulator.py#L16)); el kiosk ya se ejecuta en pantalla completa.
 - **No hay controlador NVIDIA en la ISO.** El soporte de RTX 3060 es el bootstrap opcional descrito arriba y requiere Secure Boot desactivado.
 - **No hay OTA.** Reinstalar desde una ISO nueva borra el disco.
 - **La APK de Android omite a propósito la validación del certificado TLS.** Es una decisión de diseño para LAN, no apta para redes no confiables.
@@ -225,17 +230,17 @@ sudo apt update
 sudo apt install -y python3 python3-venv python3-dev build-essential git \
   ffmpeg curl ca-certificates openssl wmctrl pulseaudio-utils firefox-esr live-build
 
-# 1. Paquete .deb -> dist/linuxremoteplayer_1.0.0_amd64.deb
+# 1. Paquete .deb -> dist/linuxremoteplayer_1.0.1_amd64.deb
 ./scripts/build_deb.sh
 
 # 2. ISO híbrida con el .deb dentro
 ./scripts/debian/iso/build_iso.sh \
-  --deb dist/linuxremoteplayer_1.0.0_amd64.deb \
-  --output dist/lrp-os_1.0.0_amd64.iso
+  --deb dist/linuxremoteplayer_1.0.1_amd64.deb \
+  --output dist/lrp-os_1.0.1_amd64.iso
 
 # Validar la configuración de la ISO sin construir
 ./scripts/debian/iso/build_iso.sh --dry-run \
-  --deb dist/linuxremoteplayer_1.0.0_amd64.deb
+  --deb dist/linuxremoteplayer_1.0.1_amd64.deb
 
 # Pruebas
 python -m pytest -q tests/

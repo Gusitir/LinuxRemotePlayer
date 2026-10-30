@@ -1,6 +1,6 @@
 # Arquitectura de LRP OS
 
-LRP OS 1.0.0 es una imagen Debian 13 (`trixie`, amd64) armada con `live-build` que se instala en
+LRP OS 1.0.1 es una imagen Debian 13 (`trixie`, amd64) armada con `live-build` que se instala en
 disco y arranca directamente en el panel de LinuxRemotePlayer. El teléfono controla la PC por la
 red local; no hay servicios en la nube, cuentas ni telemetría.
 
@@ -98,7 +98,7 @@ sin conocer el token.
   tiempo hasta el panel.
 - **Firefox ESR kiosk:** un único perfil dedicado, con política de confianza en la CA local.
 - **Voz local:** el pipeline de STT/NLU corre en la PC; no hay proveedor externo ni cuota.
-- **Sin actualizador remoto en 1.0.0:** la versión se instala desde la ISO publicada.
+- **Sin actualizador remoto en 1.0.1:** la versión se instala desde la ISO publicada.
 
 ## Limitaciones conocidas
 
@@ -111,5 +111,5 @@ sin conocer el token.
 - Intel HD 2500 es la GPU integrada validada por el autor; el kiosk ajusta su ruta VA-API para H.264.
 - El APK de Android se publica con la release, pero todavía no se probó en hardware físico.
 - La instalación física quedó pendiente de validación del autor.
-- La voz existe en el backend, pero en 1.0.0 la interfaz del teléfono no expone micrófono.
+- La voz existe en el backend, pero en 1.0.1 la interfaz del teléfono no expone micrófono.
 - Los ajustes de pantalla son de solo lectura y Bluetooth solo permite encendido/apagado y listado por API, sin emparejamiento.

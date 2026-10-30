@@ -2,11 +2,11 @@
 
 **English** | [Español](README.es.md)
 
-LRP OS 1.0.0 is a Debian 13 ISO that turns an x86_64 PC into a TV appliance. The PC boots directly into a kiosk panel and your phone becomes the remote. Control stays on the local network: no cloud dependency, no accounts, no license keys, no telemetry, and no OTA updates.
+LRP OS 1.0.1 is a Debian 13 ISO that turns an x86_64 PC into a TV appliance. The PC boots directly into a kiosk panel and your phone becomes the remote. Control stays on the local network: no cloud dependency, no accounts, no license keys, no telemetry, and no OTA updates.
 
 LinuxRemotePlayer is free software under the GNU General Public License v3.0.
 
-![LRP OS 1.0.0 pairing panel on a TV](website/screenshots/panel_pairing.webp)
+![LRP OS 1.0.1 pairing panel on a TV](website/screenshots/panel_pairing.webp)
 
 ## What it is — and what it is not
 
@@ -176,7 +176,7 @@ References: [`backend/main.py:337`](backend/main.py#L337) (PIN), [`backend/main.
 
 ## What you can control
 
-| Area | What 1.0.0 exposes | Code |
+| Area | What 1.0.1 exposes | Code |
 | --- | --- | --- |
 | Touchpad | Relative pointer, left/right click, scroll strip; pointer events over `/ws`. | [`frontend/index.html:177`](frontend/index.html#L177), [`backend/main.py:901`](backend/main.py#L901) |
 | Keyboard | Text injection and keys (Backspace, Enter, Meta, arrows, space); text is capped at 500 characters. | [`frontend/index.html:222`](frontend/index.html#L222), [`backend/main.py:909`](backend/main.py#L909) |
@@ -184,15 +184,19 @@ References: [`backend/main.py:337`](backend/main.py#L337) (PIN), [`backend/main.
 | Apps | Suggested streaming services, custom URL apps, native `.desktop` apps, app search and pinning. | [`backend/main.py:202`](backend/main.py#L202), [`backend/main.py:567`](backend/main.py#L567), [`backend/main.py:627`](backend/main.py#L627) |
 | Media | Play/pause, stop, next/previous, seek, volume, mute via uinput; volume uses PipeWire when available. | [`backend/main.py:222`](backend/main.py#L222), [`backend/main.py:928`](backend/main.py#L928) |
 | Volume and audio output | Select the PipeWire sink, set volume (0-150 on the phone, 0-100 on the TV panel), mute. | [`backend/system_platform.py:173`](backend/system_platform.py#L173), [`backend/system_platform.py:178`](backend/system_platform.py#L178), [`backend/system_platform.py:196`](backend/system_platform.py#L196) |
-| Screen | Read the active output, current resolution/refresh rate, and available modes via xrandr. **Changing the mode is not exposed in 1.0.0.** | [`backend/system_platform.py:512`](backend/system_platform.py#L512), [`frontend/status.html:495`](frontend/status.html#L495) |
-| Wi-Fi | Scan and connect through NetworkManager (`nmcli`); the onboarding hotspot is reported in the panel and has API endpoints, but 1.0.0 has no start/stop button for it in the UI. | [`backend/system_platform.py:308`](backend/system_platform.py#L308), [`backend/system_platform.py:313`](backend/system_platform.py#L313), [`backend/system_platform.py:691`](backend/system_platform.py#L691) |
-| Bluetooth | Power the adapter on/off from the TV panel; the API also lists devices and paired state through `bluetoothctl`, but 1.0.0 has no device list or pairing UI. | [`backend/system_platform.py:402`](backend/system_platform.py#L402), [`backend/system_platform.py:433`](backend/system_platform.py#L433) |
+| Screen | Read the active output, current resolution/refresh rate, and available modes via xrandr. **Changing the mode is not exposed in 1.0.1.** | [`backend/system_platform.py:512`](backend/system_platform.py#L512), [`frontend/status.html:495`](frontend/status.html#L495) |
+| Wi-Fi | Scan and connect through NetworkManager (`nmcli`); the onboarding hotspot is reported in the panel and has API endpoints, but 1.0.1 has no start/stop button for it in the UI. | [`backend/system_platform.py:308`](backend/system_platform.py#L308), [`backend/system_platform.py:313`](backend/system_platform.py#L313), [`backend/system_platform.py:691`](backend/system_platform.py#L691) |
+| Bluetooth | Power the adapter on/off from the TV panel; the API also lists devices and paired state through `bluetoothctl`, but 1.0.1 has no device list or pairing UI. | [`backend/system_platform.py:402`](backend/system_platform.py#L402), [`backend/system_platform.py:433`](backend/system_platform.py#L433) |
 | Power | Suspend, reboot, power off, and restart the `linuxremoteplayer` service from the phone settings. | [`backend/system_platform.py:736`](backend/system_platform.py#L736), [`frontend/index.html:492`](frontend/index.html#L492) |
 | TV panel | Pairing PIN/QR, system settings (audio, Wi-Fi, display, Bluetooth), client/latency/version status. | [`frontend/status.html:397`](frontend/status.html#L397) |
 
+- **Ad blocking and popup protection:** uBlock Origin is bundled and forced by policy, so it
+  works offline; the filter lists refresh when the PC has internet. Unexpected popup/popunder
+  windows are closed automatically and the panel keeps focus.
+
 ## Updates
 
-There is no OTA and no self-update channel in 1.0.0. Each release is installed from its ISO. The supported path is to boot the new ISO and reinstall; the installer erases the target disk, so settings and data are not preserved. Plan a backup before upgrading. Do not expect an in-place package upgrade from the TV or the phone.
+There is no OTA and no self-update channel in 1.0.1. Each release is installed from its ISO. The supported path is to boot the new ISO and reinstall; the installer erases the target disk, so settings and data are not preserved. Plan a backup before upgrading. Do not expect an in-place package upgrade from the TV or the phone.
 
 ## Privacy
 
@@ -206,10 +210,10 @@ There is no OTA and no self-update channel in 1.0.0. Each release is installed f
 
 - **Android APK not tested on physical hardware.** It builds and ships, but the author has not validated it on a physical device.
 - **Physical installation pending validation by the author.** The ISO, installer, and boot path are implemented, but a full install on real hardware is still pending the author's validation.
-- **Voice and microphone are hidden in 1.0.0.** The backend contains a local STT/NLU pipeline, but the phone UI does not expose a microphone; it is planned for a later version.
+- **Voice and microphone are hidden in 1.0.1.** The backend contains a local STT/NLU pipeline, but the phone UI does not expose a microphone; it is planned for a later version.
 - **Screen settings are read-only.** The panel reports xrandr output; it does not change resolution or layout.
 - **Bluetooth pairing is not exposed.** The UI only offers adapter power; there is no device list or pairing screen.
-- **The fullscreen wheel button does not work in 1.0.0.** It sends `KEY_F11` ([`frontend/index.html:296`](frontend/index.html#L296)), which is not in the backend key whitelist ([`input_emulator.py:16`](backend/input_emulator.py#L16)); the kiosk already runs fullscreen.
+- **The fullscreen wheel button does not work in 1.0.1.** It sends `KEY_F11` ([`frontend/index.html:296`](frontend/index.html#L296)), which is not in the backend key whitelist ([`input_emulator.py:16`](backend/input_emulator.py#L16)); the kiosk already runs fullscreen.
 - **No NVIDIA driver in the ISO.** RTX 3060 support is the opt-in bootstrap described above and requires Secure Boot disabled.
 - **No OTA.** Reinstalling from a new ISO erases the disk.
 - **The Android APK deliberately skips TLS certificate validation.** That is a LAN-only design decision, not suitable for untrusted networks.
@@ -225,17 +229,17 @@ sudo apt update
 sudo apt install -y python3 python3-venv python3-dev build-essential git \
   ffmpeg curl ca-certificates openssl wmctrl pulseaudio-utils firefox-esr live-build
 
-# 1. .deb package -> dist/linuxremoteplayer_1.0.0_amd64.deb
+# 1. .deb package -> dist/linuxremoteplayer_1.0.1_amd64.deb
 ./scripts/build_deb.sh
 
 # 2. Hybrid ISO with the .deb inside
 ./scripts/debian/iso/build_iso.sh \
-  --deb dist/linuxremoteplayer_1.0.0_amd64.deb \
-  --output dist/lrp-os_1.0.0_amd64.iso
+  --deb dist/linuxremoteplayer_1.0.1_amd64.deb \
+  --output dist/lrp-os_1.0.1_amd64.iso
 
 # Validate the ISO configuration without building
 ./scripts/debian/iso/build_iso.sh --dry-run \
-  --deb dist/linuxremoteplayer_1.0.0_amd64.deb
+  --deb dist/linuxremoteplayer_1.0.1_amd64.deb
 
 # Tests
 python -m pytest -q tests/

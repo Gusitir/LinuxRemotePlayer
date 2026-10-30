@@ -1,6 +1,6 @@
 # Desarrollo de LRP OS
 
-Guía para trabajar en LRP OS 1.0.0: entorno, build del paquete y de la ISO, y política de pruebas
+Guía para trabajar en LRP OS 1.0.1: entorno, build del paquete y de la ISO, y política de pruebas
 por fase.
 
 ## 1. Entorno

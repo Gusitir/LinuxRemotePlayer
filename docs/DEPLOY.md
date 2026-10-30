@@ -1,6 +1,6 @@
 # Despliegue
 
-Este documento cubre los dos canales de publicación de LRP OS 1.0.0: el sitio estático en Vercel y
+Este documento cubre los dos canales de publicación de LRP OS 1.0.1: el sitio estático en Vercel y
 los binarios (ISO/APK/SHA256SUMS) en GitHub Releases.
 
 ## 1. Sitio web (Vercel)
@@ -44,16 +44,16 @@ La ISO y el APK se publican como assets de un release. Los checksums van siempre
 
 ```bash
 # Generar checksums
-sha256sum dist/lrp-os_1.0.0_amd64.iso dist/lrp-1.0.0.apk > dist/SHA256SUMS
+sha256sum dist/lrp-os_1.0.1_amd64.iso dist/lrp-1.0.0.apk > dist/SHA256SUMS
 
 # Publicar el release
-gh release create v1.0.0 \
-  dist/lrp-os_1.0.0_amd64.iso \
+gh release create v1.0.1 \
+  dist/lrp-os_1.0.1_amd64.iso \
   dist/lrp-1.0.0.apk \
   dist/SHA256SUMS \
   --repo Gusitir/LinuxRemotePlayer \
-  --title "LRP OS 1.0.0" \
-  --notes "LRP OS 1.0.0 — ISO Debian para x86_64 (UEFI). Verificar con SHA256SUMS."
+  --title "LRP OS 1.0.1" \
+  --notes "LRP OS 1.0.1 — ISO Debian para x86_64 (UEFI). Verificar con SHA256SUMS."
 ```
 
 El botón de descarga del sitio apunta a `https://github.com/Gusitir/LinuxRemotePlayer/releases/latest`.
@@ -71,7 +71,7 @@ GitHub Releases acepta como máximo **2 GiB por archivo**. Si la ISO se acerca o
 
 ### APK
 
-El APK de Android (`lrp-1.0.0.apk`) se adjunta al release v1.0.0. No se publica en Google Play; la
+El APK de Android (`lrp-1.0.0.apk`) se adjunta al release v1.0.1. No se publica en Google Play; la
 descarga se hace desde el release y el teléfono debe permitir apps de origen desconocido.
 
 ## 3. Reglas

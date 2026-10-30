@@ -11,7 +11,7 @@ VERSION_FILE="$REPO_ROOT/VERSION"
 if [ -f "$VERSION_FILE" ]; then
     VERSION="$(tr -d '[:space:]' < "$VERSION_FILE")"
 else
-    VERSION="1.0.0"
+    VERSION="1.0.1"
 fi
 
 DRY_RUN=0
