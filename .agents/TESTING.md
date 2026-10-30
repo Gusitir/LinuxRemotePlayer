@@ -14,11 +14,11 @@ BETA-FOUNDATION están archivadas en `archive/TESTING_beta-foundation_1.99.1.md`
 
 ### Resultado de baseline (T-122, cerrado)
 
-- `TST-DEBIAN-BASE-001` `[OK]` — AI: Debian 13 trixie amd64 (UEFI), RTX 3060 PCI `10de:2504` con
+- `TST-DEBIAN-BASE-001` `[OK]`  EAI: Debian 13 trixie amd64 (UEFI), RTX 3060 PCI `10de:2504` con
   módulo `nouveau` activo, Secure Boot `disabled` (Setup Mode), fuentes apt oficiales
   `main`+`non-free-firmware` sin repositorios de terceros; contract de paquetes D32 verificado en
   sandbox aislado oficial. Evidencia cruda no persistida en el vivo.
-- `TST-DEBIAN-BASE-HUMAN-001` `[OK]` — dueño: instalación netinst minimal sin desktop, login de
+- `TST-DEBIAN-BASE-HUMAN-001` `[OK]`  Edueño: instalación netinst minimal sin desktop, login de
   consola y red confirmados, GPU RTX 3060 física y pantalla conectadas, backup/reinstalación
   disponibles.
 
@@ -136,17 +136,17 @@ extra y listo para la baseline read-only de T-122.
 
 ### IDs futuros (diferidos hasta fundación Debian cerrada)
 
-- `TST-NVIDIA-001` `[OK]` — NVIDIA bootstrap/recovery; driver `550.163.01` activo en RTX 3060,
+- `TST-NVIDIA-001` `[OK]`  ENVIDIA bootstrap/recovery; driver `550.163.01` activo en RTX 3060,
   `nouveau` ausente, reinicio resumido exit 0; renderer diferido a T-124. (Evidencia concisa; crudo
   fuera del vivo.)
-- `TST-SESSION-001` `[OK]` — reboot físico con LightDM/autologin, Xorg y Openbox bajo `lrp`; renderer
+- `TST-SESSION-001` `[OK]`  Ereboot físico con LightDM/autologin, Xorg y Openbox bajo `lrp`; renderer
   NVIDIA activo, sin `llvmpipe`, package integrity y resume exit 0 estado `complete`.
-- `TST-DEBIAN-SERVICES-001` `[OK]` — physical reboot verifies uinput, PipeWire/WirePlumber, Avahi,
+- `TST-DEBIAN-SERVICES-001` `[OK]`  Ephysical reboot verifies uinput, PipeWire/WirePlumber, Avahi,
   UFW 8000/tcp+5353/udp IPv4/IPv6, sleep/DPMS, local HTTPS CA attachment and NVIDIA HDMI selection.
 - `TST-BETA-UPDATE-002` `[OK: public 1.99.1 -> 1.99.2 updater installed amd64, retained beta channel,
   config, pairing token and CA; legacy-uinput migration verified on HTPC; D35 rebuilt artifact/manifest
   reconciliation remains before closure.]`
-- `TST-DEBIAN-UX-001` `[OK]` — owner paired the remote and verified apps, controls and audible HDMI;
+- `TST-DEBIAN-UX-001` `[OK]`  Eowner paired the remote and verified apps, controls and audible HDMI;
   AI verified boot/autologin, kiosk panel recovery, input routing and service health.
 - `TST-DEBIAN-ROLLBACK-001` `[OK: AI physical dry-run, strict rollback, retained-state sweep and
   full reapply/reboot passed; owner visually confirmed text console and subsequent QR pairing panel on screen.]`
@@ -161,7 +161,7 @@ extra y listo para la baseline read-only de T-122.
 Los resultados crudos de BETA-FOUNDATION son históricos; no copiar ni usarlos para certificar
 `2.0.0`.
 
-## COMANDO LRP — SOLO CON AUTORIZACIÓN EXPLÍCITA
+## COMANDO LRP  ESOLO CON AUTORIZACIÓN EXPLÍCITA
 
 ```bash
 curl -fsSL https://www.linuxremoteplayer.com/beta/install.sh | sudo bash
@@ -183,20 +183,20 @@ archivos por despliegue fuera del paquete: se corrige al empaquetar 2.0.0 en T-1
 cerraron por **captura real del panel** (`scrot`, 1920x1080) en vez de confirmación ocular; splash y
 puntero siguen pendientes del dueño.
 
-- `TST-LRP-IRON-BOOT-001` `[OK]` — dueño: la ISO instala y el disco arranca en UEFI; el fallo previo
+- `TST-LRP-IRON-BOOT-001` `[OK]`  Edueño: la ISO instala y el disco arranca en UEFI; el fallo previo
   era el `BootOrder` del firmware priorizando la entrada legacy, no la escritura del instalador.
-  Evidencia AI: `efibootmgr -v` (`Boot0002` → `\EFI\BOOT\BOOTX64.EFI`) y `/var/log/lrp-install-report.txt`.
-- `TST-LRP-PAIR-001` `[OK]` — dueño: PIN + QR emparejan el móvil; panel y control responden
-  (`Connection: Stable`, latencia 6–10 ms, 1 teléfono conectado).
-- `TST-LRP-SPLASH-001` `[pendiente]` — splash de arranque: GRUB y plymouth en verde `#10B981` con el
+  Evidencia AI: `efibootmgr -v` (`Boot0002` ↁE`\EFI\BOOT\BOOTX64.EFI`) y `/var/log/lrp-install-report.txt`.
+- `TST-LRP-PAIR-001` `[OK]`  Edueño: PIN + QR emparejan el móvil; panel y control responden
+  (`Connection: Stable`, latencia 6 E0 ms, 1 teléfono conectado).
+- `TST-LRP-SPLASH-001` `[pendiente]`  Esplash de arranque: GRUB y plymouth en verde `#10B981` con el
   icono LRP, sin artwork de Debian, y arranque posterior al panel.
-- `TST-LRP-PANEL-001` `[OK: captura 2026-10-29]` — panel a `min(1500px, 94vw)` en TV 1080p; un pane
+- `TST-LRP-PANEL-001` `[OK: captura 2026-10-29]`  Epanel a `min(1500px, 94vw)` en TV 1080p; un pane
   por vez (B27), Ajustes en grilla 2x2 (B32) y sin recorte.
-- `TST-LRP-AUDIO-001` `[OK: captura 2026-10-29]` — Ajustes muestra `Built-in Audio Digital Stereo
-  (HDMI)` con volumen 40 %; sin “Cargando salidas…”.
-- `TST-LRP-WIFI-DISPLAY-BT-001` `[OK: captura 2026-10-29]` — Wi-Fi lista 5 redes con señal, Pantalla
-  `HDMI-1 1920x1080 @ 60.00 Hz` con modos, Bluetooth “Encendido (0 dispositivos)”.
-- `TST-LRP-POINTER-001` `[pendiente]` — con mouse 2.4G conectado, el puntero se ve y se mueve sobre el
+- `TST-LRP-AUDIO-001` `[OK: captura 2026-10-29]`  EAjustes muestra `Built-in Audio Digital Stereo
+  (HDMI)` con volumen 40 %; sin “Cargando salidas… E
+- `TST-LRP-WIFI-DISPLAY-BT-001` `[OK: captura 2026-10-29]`  EWi-Fi lista 5 redes con señal, Pantalla
+  `HDMI-1 1920x1080 @ 60.00 Hz` con modos, Bluetooth “Encendido (0 dispositivos) E
+- `TST-LRP-POINTER-001` `[pendiente]`  Econ mouse 2.4G conectado, el puntero se ve y se mueve sobre el
   panel tras el fix B26 (`startx` sin `-nocursor`). Si no aparece, revisar tema/cursor de Openbox antes
   que el flag de Xorg.
 
@@ -205,9 +205,9 @@ puntero siguen pendientes del dueño.
 Checks del dueño sobre los artefactos publicados en
 `https://github.com/Gusitir/LinuxRemotePlayer/releases/tag/v1.0.0`.
 
-- `TST-ISO-PHYS-001` `[pendiente]` — instalar `lrp-os_1.0.0_amd64.iso` en el HTPC (borra disco):
+- `TST-ISO-PHYS-001` `[pendiente]`  Einstalar `lrp-os_1.0.1_amd64.iso` en el HTPC (borra disco):
   verificar aviso final + reinicio, arranque desde disco, panel con PIN/QR, splash verde con icono,
   puntero visible, audio HDMI, Wi-Fi/Pantalla/Bluetooth, y `dpkg -V linuxremoteplayer` limpio.
-- `TST-APK-001` `[pendiente]` — instalar `lrp-1.0.0.apk` en un Android real: aviso de certificado,
-  conexión a `https://<IP>:8000` con el PIN, control del equipo, y que el banner “Descargar APK” del
+- `TST-APK-001` `[pendiente]`  Einstalar `lrp-1.0.1.apk` en un Android real: aviso de certificado,
+  conexión a `https://<IP>:8000` con el PIN, control del equipo, y que el banner “Descargar APK Edel
   panel sirva el archivo desde el propio equipo.

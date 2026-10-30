@@ -11,10 +11,10 @@ dirty: false
 assurance: Standard
 active_job: PAUSED (esperando checks del dueño; retomable con T-154c)
 active_plan: PLAN_v1.0.0-public.md (D56; T-150..T-153 y T-155 aptos, T-154 con gate QEMU y física pendiente)
-active_task: T-154 pendiente solo de instalación física; T-157 (voz) diferida
-last_verdict: APTO (T-150, T-151, T-152, T-153, T-155) + gate QEMU de T-154
-verdict_scope: "LRP OS 1.0.0 publicado: repo público, release v1.0.0 con ISO/APK/SHA256SUMS, web 1.0.0 en producción, documentación GPL-3.0. Quedan como checks exclusivos del dueño la instalación física de la ISO, el APK en un Android real y la revisión legal de términos (B39)."
-next_action: "cuando el dueño retome: instalar lrp-os_1.0.0_amd64.iso en el HTPC, correr `dpkg -V` y los checks de TESTING (splash, puntero, audio, red, pantalla, BT), probar lrp-1.0.0.apk en Android, y luego cerrar T-154 y el plan (CLOSE)."
+active_task: T-156 apto; T-154 pendiente solo de instalación física sobre la ISO 1.0.1; T-157 voz diferida
+last_verdict: APTO (T-150..T-153, T-155 y T-156) + gate QEMU de T-154 sobre la ISO 1.0.1
+verdict_scope: "LRP OS 1.0.1 publicado con adblock real y anti-popunder: uBlock Origin 1.75.0 vendorizado y forzado por política (offline), prefs anti-popup, watchdog que cierra ventanas ajenas y devuelve el foco, y wmctrl en la ISO. ISO `affcb651…` (1,95 GiB) verificada en QEMU UEFI con panel v1.0.1 desde disco; APK 1.0.1 (`a5624561…`, versionCode 2) dentro del rootfs y publicada. Quedan checks del dueño (instalación física, APK en Android) y B39 legal."
+next_action: "con el dueño: instalar `lrp-os_1.0.1_amd64.iso` en el HTPC, `dpkg -V` y checks de TESTING; probar `lrp-1.0.1.apk` en Android; luego CLOSE del plan."
 ```
 
 ## Blockers
@@ -27,6 +27,17 @@ next_action: "cuando el dueño retome: instalar lrp-os_1.0.0_amd64.iso en el HTP
 - No hay OTA (D56): cada release se instala desde la ISO; no reintroducir updater.
 
 ## Fresh evidence
+
+- **LRP OS 1.0.1 (adblock + anti-popunder)**: ISO `affcb6517e389fea2269e538de09364f745bdb4f33ba430ee4e95adeb5931d71`
+  (2 097 152 000 B, 1,95 GiB) construida desde `3baa610`; dentro del rootfs: `VERSION` 1.0.1,
+  `wmctrl`, `uBlock0.xpi` (4 650 100 B) y `frontend/downloads/lrp.apk` con sha `a5624561…`. Gate QEMU
+  UEFI: instalación sin intervención, auto-reboot (boot_count=2) y panel **v1.0.1** desde disco.
+  Release `v1.0.1` (latest) con ISO, APK `a5624561…` (24 404 B, versionCode 2) y `SHA256SUMS`
+  recalculado; los tres assets responden 200.
+- **Adblock verificado en hierro**: `adblock_status=ublock`, `extensions.json` con
+  `uBlock0@raymondhill.net` activo (1.75.0) y popups cerrados en 3 s y 3 s sin perder el panel.
+- **Documentación y web 1.0.1**: README EN/ES, landings y docs apuntan a `v1.0.1` con los hashes
+  nuevos (`affcb651…`, `a5624561…`); 0 referencias a artefactos 1.0.0.
 
 - **Documentación y web 1.0.0 (2026-10-29)**: `README.md` reescrito en inglés (principal) con
   `README.es.md` en español neutro y enlace cruzado; `docs/GITHUB_ABOUT.md` con descripción, topics y

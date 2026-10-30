@@ -192,6 +192,22 @@ explica que 1.0.0 inicia la etapa open source y que lo anterior describe el prod
 marca pasa a “LRP OS”, se oculta la nav, el CTA se compacta y el header usa `nowrap` con `min-width:0`;
 el hero SVG gana `role="img"` + `aria-label` descriptivo en ES/EN.
 
+## B43 — ISO sin adblock (uBO solo existía en el flujo manual)
+
+**Cerrado (`554d1d3`, ISO 1.0.1 `affcb651…`)** — el hook de la ISO no instalaba uBlock Origin, por eso
+`adblock_status` daba `none`. Ahora la ISO vendoriza `uBlock0_1.75.0` (`scripts/debian/iso/vendor/`,
+GPL-3.0, SHA256 `5b744158…`), lo fuerza por `ExtensionSettings` con `file://` (offline,
+`updates_disabled`) y agrega prefs anti-popup. Verificado en el HTPC: `extensions.json` con
+`uBlock0@raymondhill.net` activo y `adblock_status=ublock`; en QEMU el XPI viaja dentro del rootfs.
+
+## B44 — Un popunder dejaba sin acceso al panel
+
+**Cerrado (`186b3b8`, ISO 1.0.1)** — no había vigilancia de ventanas: una pestaña/popup nueva se
+quedaba con el foco. Ahora `kiosk.record_panel_window()` registra el panel por título (sin adivinar),
+`enforce_panel_window()` reintenta el registro en cada tick, cierra ventanas Firefox/Navigator que no
+sean el panel, reenfoca con `wmctrl -ia` y respeta una gracia de 20 s. Requiere `wmctrl`, incluido en el
+package list. Verificado en hierro: popups cerrados en 3 s y 3 s, panel vivo.
+
 ## B39 — Términos y textos legales sin revisión
 
 **Abierto · no bloquea el código, sí la publicación**
