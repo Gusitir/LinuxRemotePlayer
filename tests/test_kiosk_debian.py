@@ -223,6 +223,21 @@ def test_watchdog_grace_blocks_enforcement_after_launch(monkeypatch):
     assert calls == []
 
 
+def test_watchdog_self_heals_missing_panel_registration(monkeypatch):
+    calls = []
+    windows = (
+        "0x1  0 Navigator.Firefox host Estado del Sistema — LinuxRemotePlayer\n"
+        "0x2  0 Navigator.Firefox host Popup\n"
+    )
+    _mock_wmctrl(monkeypatch, windows, calls)
+    monkeypatch.setattr(kiosk, "_panel_window_id", None)
+    monkeypatch.setattr(kiosk, "_panel_miss_logged", False)
+    monkeypatch.setattr(kiosk, "_last_launch_at", 0.0)
+    assert kiosk.enforce_panel_window() is True
+    assert kiosk._panel_window_id == "0x1"
+    assert calls == [["wmctrl", "-ic", "0x2"], ["wmctrl", "-ia", "0x1"]]
+
+
 def test_runtime_has_no_forbidden_browser_or_desktop_paths():
     source = (ROOT / "backend" / "kiosk.py").read_text()
     for forbidden in ("brave", "chromium", "/snap/", "qdbus", "KWin", "WAYLAND_DISPLAY", "gdm", "plasma", "krunner"):

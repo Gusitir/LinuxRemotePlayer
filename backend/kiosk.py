@@ -407,13 +407,17 @@ def enforce_panel_window(max_seconds: float = 20.0) -> bool:
     global _panel_window_id, _wmctrl_warned
     if os.name != "posix":
         return True
-    if _panel_window_id is None:
-        return True
     if not shutil.which("wmctrl"):
         if not _wmctrl_warned:
             logger.warning("wmctrl no disponible: anti-popunder deshabilitado")
             _wmctrl_warned = True
         return True
+    # T-156e: el panel puede no estar mapeado cuando se registro tras el launch.
+    # Reintentar el registro en cada tick; la gracia solo aplica al cierre.
+    if _panel_window_id is None:
+        record_panel_window()
+        if _panel_window_id is None:
+            return True
     if _last_launch_at and (time.time() - _last_launch_at) < max_seconds:
         return True
     windows = _wmctrl_windows()
