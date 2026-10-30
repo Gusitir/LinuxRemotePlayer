@@ -14,6 +14,8 @@ _kiosk_url = None
 _native_procs = []
 _panel_window_id = None
 _panel_launched_at = 0.0
+_last_launch_at = 0.0
+_panel_miss_logged = False
 _wmctrl_warned = False
 
 
@@ -377,60 +379,73 @@ def _wmctrl_windows() -> list:
 
 
 def record_panel_window() -> str:
-    """Guarda el window id del panel recien lanzado (para el watchdog)."""
-    global _panel_window_id, _panel_launched_at
+    """Registra SOLO la ventana cuyo titulo es el panel; sin adivinar por Firefox."""
+    global _panel_window_id, _panel_launched_at, _panel_miss_logged
     _panel_launched_at = time.time()
     panel_id = ""
-    fallback = ""
-    for wid, wm_class, title in _wmctrl_windows():
+    for wid, _wm_class, title in _wmctrl_windows():
         if _panel_window_title(title):
             panel_id = wid
             break
-        if not fallback and "firefox" in wm_class.lower():
-            fallback = wid
-    _panel_window_id = panel_id or fallback or None
+    _panel_window_id = panel_id or None
     if _panel_window_id:
+        _panel_miss_logged = False
         logger.debug(f"Panel window tracked: {_panel_window_id}")
+    elif not _panel_miss_logged:
+        logger.debug("Panel window not found yet; watchdog disabled until it appears.")
+        _panel_miss_logged = True
     return _panel_window_id or ""
 
 
-def enforce_panel_window(max_seconds: float = 10.0) -> bool:
-    """Cierra ventanas de Firefox ajenas al panel; False si el panel desaparecio."""
+def enforce_panel_window(max_seconds: float = 20.0) -> bool:
+    """Cierra ventanas de Firefox ajenas al panel; False si el panel desaparecio.
+
+    Conservador a proposito: sin identidad confirmada no toca nada y espera una
+    gracia de `max_seconds` desde el ultimo launch_kiosk para no matar el panel
+    recien abierto.
+    """
     global _panel_window_id, _wmctrl_warned
     if os.name != "posix":
+        return True
+    if _panel_window_id is None:
         return True
     if not shutil.which("wmctrl"):
         if not _wmctrl_warned:
             logger.warning("wmctrl no disponible: anti-popunder deshabilitado")
             _wmctrl_warned = True
         return True
+    if _last_launch_at and (time.time() - _last_launch_at) < max_seconds:
+        return True
     windows = _wmctrl_windows()
-    panel_id = ""
-    others = []
-    for wid, wm_class, title in windows:
-        if wid == _panel_window_id or _panel_window_title(title):
-            panel_id = panel_id or wid
-        elif "firefox" in wm_class.lower() or "navigator" in wm_class.lower():
-            others.append(wid)
-    if not panel_id:
-        if _panel_launched_at and (time.time() - _panel_launched_at) < max_seconds:
-            return True
+    if not any(wid == _panel_window_id for wid, _cls, _title in windows):
         return False
-    if panel_id != _panel_window_id:
-        _panel_window_id = panel_id
-    for wid in others:
-        try:
-            subprocess.run(
-                ["wmctrl", "-ic", wid],
-                env=gui_env(),
-                check=False,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                timeout=2.0,
-            )
-            logger.info(f"Cerrada ventana emergente del kiosk: {wid}")
-        except Exception as e:
-            logger.debug(f"No se pudo cerrar la ventana {wid}: {e}")
+    for wid, wm_class, _title in windows:
+        if wid == _panel_window_id:
+            continue
+        if "firefox" in wm_class.lower() or "navigator" in wm_class.lower():
+            try:
+                subprocess.run(
+                    ["wmctrl", "-ic", wid],
+                    env=gui_env(),
+                    check=False,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    timeout=2.0,
+                )
+                logger.info(f"Cerrada ventana emergente del kiosk: {wid}")
+            except Exception as e:
+                logger.debug(f"No se pudo cerrar la ventana {wid}: {e}")
+    try:
+        subprocess.run(
+            ["wmctrl", "-ia", _panel_window_id],
+            env=gui_env(),
+            check=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=2.0,
+        )
+    except Exception as e:
+        logger.debug(f"No se pudo reenfocar el panel {_panel_window_id}: {e}")
     return True
 
 def is_display_ready() -> bool:
@@ -463,7 +478,8 @@ def wait_for_display(timeout: float = 12.0) -> bool:
 
 
 def launch_kiosk(url: str) -> bool:
-    global _kiosk_proc, _kiosk_url
+    global _kiosk_proc, _kiosk_url, _last_launch_at
+    _last_launch_at = time.time()
     kill_existing_kiosks()
     # B34: no lanzar encima de un Firefox que aun esta muriendo. Si sigue vivo se
     # degrada el log y se continua (el perfil puede estar en mal estado).

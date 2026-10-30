@@ -172,21 +172,55 @@ def test_adblock_status_reports_firefox_policy_only(monkeypatch, tmp_path):
     assert kiosk.adblock_status() == "ublock"
 
 
-def test_watchdog_closes_foreign_firefox_window(monkeypatch):
+def _mock_wmctrl(monkeypatch, output, calls):
+    monkeypatch.setattr(kiosk.os, "name", "posix")
+    monkeypatch.setattr(kiosk.shutil, "which", lambda name: "/usr/bin/wmctrl" if name == "wmctrl" else None)
+    monkeypatch.setattr(kiosk.subprocess, "check_output", lambda *args, **kwargs: output)
+    monkeypatch.setattr(kiosk.subprocess, "run", lambda *args, **kwargs: calls.append(args[0]))
+
+
+def test_watchdog_does_nothing_without_registered_panel(monkeypatch):
+    calls = []
+    _mock_wmctrl(monkeypatch, "0x2  0 Navigator.Firefox host Popup\n", calls)
+    monkeypatch.setattr(kiosk, "_panel_window_id", None)
+    monkeypatch.setattr(kiosk, "_last_launch_at", 0.0)
+    assert kiosk.enforce_panel_window() is True
+    assert calls == []
+
+
+def test_watchdog_returns_false_when_panel_is_missing(monkeypatch):
+    calls = []
+    _mock_wmctrl(monkeypatch, "0x2  0 Navigator.Firefox host Popup\n", calls)
+    monkeypatch.setattr(kiosk, "_panel_window_id", "0x1")
+    monkeypatch.setattr(kiosk, "_last_launch_at", 0.0)
+    assert kiosk.enforce_panel_window() is False
+    assert calls == []
+
+
+def test_watchdog_closes_intruder_and_refocuses_panel(monkeypatch):
     calls = []
     windows = (
         "0x1  0 Navigator.Firefox host Estado del Sistema — LinuxRemotePlayer\n"
         "0x2  0 Navigator.Firefox host Popup\n"
     )
+    _mock_wmctrl(monkeypatch, windows, calls)
     monkeypatch.setattr(kiosk, "_panel_window_id", "0x1")
-    monkeypatch.setattr(kiosk, "_panel_launched_at", time.time())
-    monkeypatch.setattr(kiosk.os, "name", "posix")
-    monkeypatch.setattr(kiosk.shutil, "which", lambda name: "/usr/bin/wmctrl" if name == "wmctrl" else None)
-    monkeypatch.setattr(kiosk.subprocess, "check_output", lambda *args, **kwargs: windows)
-    monkeypatch.setattr(kiosk.subprocess, "run", lambda *args, **kwargs: calls.append(args[0]))
+    monkeypatch.setattr(kiosk, "_last_launch_at", 0.0)
     assert kiosk.enforce_panel_window() is True
-    assert calls == [["wmctrl", "-ic", "0x2"]]
-    assert kiosk._panel_window_id == "0x1"
+    assert calls == [["wmctrl", "-ic", "0x2"], ["wmctrl", "-ia", "0x1"]]
+
+
+def test_watchdog_grace_blocks_enforcement_after_launch(monkeypatch):
+    calls = []
+    windows = (
+        "0x1  0 Navigator.Firefox host Estado del Sistema — LinuxRemotePlayer\n"
+        "0x2  0 Navigator.Firefox host Popup\n"
+    )
+    _mock_wmctrl(monkeypatch, windows, calls)
+    monkeypatch.setattr(kiosk, "_panel_window_id", "0x1")
+    monkeypatch.setattr(kiosk, "_last_launch_at", time.time())
+    assert kiosk.enforce_panel_window() is True
+    assert calls == []
 
 
 def test_runtime_has_no_forbidden_browser_or_desktop_paths():
